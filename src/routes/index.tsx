@@ -1,4 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useAuth } from "@/context/AuthContext";
+import { signOut } from "@/services/firebase/auth";
 import {
   Search, ShoppingCart, Heart, User, ChevronDown, ChevronLeft, ChevronRight,
   Menu, Flame, Shirt, Smartphone, Apple, Sparkles, Sofa, Headphones, Gamepad2, Baby,
@@ -128,16 +130,10 @@ function Index() {
             </div>
           </div>
           <div className="ml-auto flex items-center gap-5">
-            <a href="#" className="hidden items-center gap-2 text-sm md:flex">
-              <User className="h-5 w-5" />
-              <div className="leading-tight">
-                <div className="text-xs text-muted-foreground">Account</div>
-                <div className="font-medium">Login / Register</div>
-              </div>
-            </a>
-            <a href="#" className="hidden items-center gap-1.5 text-sm md:flex">
+            <AccountMenu />
+            <Link to="/account" className="hidden items-center gap-1.5 text-sm md:flex">
               <Heart className="h-5 w-5" /> Wishlist
-            </a>
+            </Link>
             <a href="#" className="relative flex items-center gap-1.5 text-sm">
               <ShoppingCart className="h-5 w-5" /> Cart
               <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-accent-foreground">0</span>
