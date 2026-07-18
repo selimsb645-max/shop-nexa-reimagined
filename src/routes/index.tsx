@@ -91,6 +91,61 @@ function Stars({ rating }: { rating: number }) {
   );
 }
 
+function AccountMenu() {
+  const { user, profile, loading } = useAuth();
+  if (loading) {
+    return <div className="hidden h-8 w-24 animate-pulse rounded bg-muted md:block" />;
+  }
+  if (!user) {
+    return (
+      <div className="hidden items-center gap-2 text-sm md:flex">
+        <User className="h-5 w-5" />
+        <div className="leading-tight">
+          <div className="text-xs text-muted-foreground">Account</div>
+          <div className="flex items-center gap-1 font-medium">
+            <Link to="/login" className="hover:text-primary">Login</Link>
+            <span className="text-muted-foreground">/</span>
+            <Link to="/register" className="hover:text-primary">Register</Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  const name = profile?.displayName || user.displayName || user.email?.split("@")[0] || "Account";
+  return (
+    <div className="group relative hidden md:block">
+      <Link to="/account" className="flex items-center gap-2 text-sm">
+        {(profile?.photoURL || user.photoURL) ? (
+          <img src={profile?.photoURL || user.photoURL || ""} alt="" className="h-7 w-7 rounded-full object-cover" />
+        ) : (
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+            {name.charAt(0).toUpperCase()}
+          </div>
+        )}
+        <div className="leading-tight">
+          <div className="text-xs text-muted-foreground">Hi, {name.split(" ")[0]}</div>
+          <div className="font-medium">My Account</div>
+        </div>
+      </Link>
+      <div className="invisible absolute right-0 top-full z-30 mt-1 w-48 rounded-md border bg-background py-1 opacity-0 shadow-lg transition group-hover:visible group-hover:opacity-100">
+        <Link to="/account" className="block px-3 py-2 text-sm hover:bg-muted">Profile</Link>
+        <Link to="/orders" className="block px-3 py-2 text-sm hover:bg-muted">Orders</Link>
+        <Link to="/seller" className="block px-3 py-2 text-sm hover:bg-muted">Seller Panel</Link>
+        {profile?.role === "admin" && (
+          <Link to="/admin" className="block px-3 py-2 text-sm hover:bg-muted">Admin</Link>
+        )}
+        <button
+          onClick={() => signOut()}
+          className="block w-full px-3 py-2 text-left text-sm text-destructive hover:bg-muted"
+        >
+          Sign out
+        </button>
+      </div>
+    </div>
+  );
+}
+
+
 function Index() {
   return (
     <div className="min-h-screen bg-background">
