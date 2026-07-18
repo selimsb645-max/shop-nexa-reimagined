@@ -77,14 +77,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "ShopNexa - Shop Smarter. Live Better." },
+      { name: "description", content: "ShopNexa is your one-stop online shop for electronics, fashion, grocery, beauty and more. Top quality products at unbeatable prices with free delivery over $50." },
+      { name: "author", content: "ShopNexa" },
+      { property: "og:title", content: "ShopNexa - Shop Smarter. Live Better." },
+      { property: "og:description", content: "Everything you need in one place. Top quality products at unbeatable prices." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:site", content: "@ShopNexa" },
     ],
     links: [
       {
