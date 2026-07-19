@@ -10,6 +10,8 @@ import {
 import { useEffect, type ReactNode } from "react";
 import { Toaster } from "sonner";
 import { AuthProvider } from "../context/AuthContext";
+import { CartProvider } from "../context/CartContext";
+import { WishlistProvider } from "../context/WishlistContext";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -122,9 +124,13 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
-        <Toaster position="top-right" richColors />
+        <CartProvider>
+          <WishlistProvider>
+            {/* Required: nested routes render here. */}
+            <Outlet />
+            <Toaster position="top-right" richColors />
+          </WishlistProvider>
+        </CartProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
