@@ -27,12 +27,14 @@ export function computeShipping(subtotalAfterDiscount: number): number {
 
 export interface CreateOrderInput {
   userId: string;
+  buyerEmail?: string | null;
   items: CartItem[];
   shippingAddress: ShippingAddress;
   paymentMethod: PaymentMethod;
   couponCode: string | null;
   discount: number;
 }
+
 
 function nowMs() {
   return Date.now();
