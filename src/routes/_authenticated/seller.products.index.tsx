@@ -13,7 +13,7 @@ import { mapFirebaseError } from "@/utils/errors";
 import { formatPrice } from "@/utils/format";
 import type { Product } from "@/types/commerce";
 
-export const Route = createFileRoute("/_authenticated/seller/products")({
+export const Route = createFileRoute("/_authenticated/seller/products/")({
   component: () => (
     <SellerGate>{(profile) => <ProductsPage sellerId={profile.uid} />}</SellerGate>
   ),
