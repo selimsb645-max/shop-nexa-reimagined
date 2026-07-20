@@ -13,7 +13,7 @@ import { Spinner } from "@/components/common/Spinner";
 import { listSellerProducts } from "@/services/firebase/sellerProducts";
 import { listSellerOrders } from "@/services/firebase/sellerOrders";
 import { countUnreadNotifications } from "@/services/firebase/sellers";
-import { formatMoney } from "@/utils/format";
+import { formatPrice } from "@/utils/format";
 import type { Product } from "@/types/commerce";
 import type { SellerOrder } from "@/types/seller";
 
@@ -88,7 +88,7 @@ function Dashboard({ sellerId }: { sellerId: string }) {
             <StatCard
               icon={<DollarSign className="h-5 w-5" />}
               label="Gross earnings"
-              value={formatMoney(stats.totalEarnings)}
+              value={formatPrice(stats.totalEarnings)}
               accent="bg-primary/10 text-primary"
             />
             <StatCard
@@ -172,7 +172,7 @@ function Dashboard({ sellerId }: { sellerId: string }) {
                     </div>
                     <div className="text-right">
                       <div className="text-sm font-semibold">
-                        {formatMoney(o.subtotal)}
+                        {formatPrice(o.subtotal)}
                       </div>
                       <StatusChip status={o.status} />
                     </div>
@@ -208,7 +208,7 @@ function Dashboard({ sellerId }: { sellerId: string }) {
                       <div className="min-w-0 flex-1">
                         <div className="truncate text-sm font-medium">{p.title}</div>
                         <div className="text-xs text-muted-foreground">
-                          Stock: {p.stock} · {formatMoney(p.price)}
+                          Stock: {p.stock} · {formatPrice(p.price)}
                         </div>
                       </div>
                       <Link
