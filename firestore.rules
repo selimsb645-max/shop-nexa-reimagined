@@ -1,0 +1,71 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() { return request.auth != null; }
+    function isSelf(uid) { return isSignedIn() && request.auth.uid == uid; }
+    function isApprovedSeller() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/sellers/$(request.auth.uid))
+        && get(/databases/$(database)/documents/sellers/$(request.auth.uid)).data.status == 'approved';
+    }
+
+    // Public catalog
+    match /categories/{cat} {
+      allow read: if true;
+      allow write: if false;
+      match /subcategories/{sub} {
+        allow read: if true;
+        allow write: if false;
+      }
+    }
+
+    match /products/{id} {
+      allow read: if true;
+      allow create: if isApprovedSeller()
+        && request.resource.data.sellerId == request.auth.uid;
+      allow update, delete: if isApprovedSeller()
+        && resource.data.sellerId == request.auth.uid;
+
+      match /reviews/{rid} {
+        allow read: if true;
+        allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+        allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      }
+    }
+
+    match /coupons/{code} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // User-owned data
+    match /users/{uid} {
+      allow read, write: if isSelf(uid);
+      match /{sub=**} {
+        allow read, write: if isSelf(uid);
+      }
+    }
+
+    // Sellers
+    match /sellers/{uid} {
+      allow read: if isSelf(uid);
+      allow create: if isSelf(uid)
+        && request.resource.data.status == 'pending';
+      allow update: if isSelf(uid)
+        && request.resource.data.status == resource.data.status;
+
+      match /orders/{orderId} {
+        allow read: if isSelf(uid);
+        // Buyers create seller mirror during checkout transaction.
+        allow create: if isSignedIn();
+        allow update: if isSelf(uid);
+      }
+      match /notifications/{nid} {
+        allow read: if isSelf(uid);
+        allow create: if isSignedIn();
+        allow update: if isSelf(uid);
+        allow delete: if isSelf(uid);
+      }
+    }
+  }
+}
