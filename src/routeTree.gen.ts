@@ -27,6 +27,7 @@ import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedSellerIndexRouteImport } from './routes/_authenticated/seller.index'
 import { Route as AuthenticatedSellerRegisterRouteImport } from './routes/_authenticated/seller.register'
 import { Route as AuthenticatedSellerProductsRouteImport } from './routes/_authenticated/seller.products'
+import { Route as AuthenticatedSellerOrdersRouteImport } from './routes/_authenticated/seller.orders'
 import { Route as AuthenticatedOrderOrderIdRouteImport } from './routes/_authenticated/order.$orderId'
 import { Route as AuthenticatedSellerProductsIndexRouteImport } from './routes/_authenticated/seller.products.index'
 import { Route as AuthenticatedSellerProductsNewRouteImport } from './routes/_authenticated/seller.products.new'
@@ -124,6 +125,12 @@ const AuthenticatedSellerProductsRoute =
     path: '/products',
     getParentRoute: () => AuthenticatedSellerRoute,
   } as any)
+const AuthenticatedSellerOrdersRoute =
+  AuthenticatedSellerOrdersRouteImport.update({
+    id: '/orders',
+    path: '/orders',
+    getParentRoute: () => AuthenticatedSellerRoute,
+  } as any)
 const AuthenticatedOrderOrderIdRoute =
   AuthenticatedOrderOrderIdRouteImport.update({
     id: '/order/$orderId',
@@ -165,6 +172,7 @@ export interface FileRoutesByFullPath {
   '/seller': typeof AuthenticatedSellerRouteWithChildren
   '/product/$slug': typeof ProductSlugRoute
   '/order/$orderId': typeof AuthenticatedOrderOrderIdRoute
+  '/seller/orders': typeof AuthenticatedSellerOrdersRoute
   '/seller/products': typeof AuthenticatedSellerProductsRouteWithChildren
   '/seller/register': typeof AuthenticatedSellerRegisterRoute
   '/seller/': typeof AuthenticatedSellerIndexRoute
@@ -187,6 +195,7 @@ export interface FileRoutesByTo {
   '/orders': typeof AuthenticatedOrdersRoute
   '/product/$slug': typeof ProductSlugRoute
   '/order/$orderId': typeof AuthenticatedOrderOrderIdRoute
+  '/seller/orders': typeof AuthenticatedSellerOrdersRoute
   '/seller/register': typeof AuthenticatedSellerRegisterRoute
   '/seller': typeof AuthenticatedSellerIndexRoute
   '/seller/products/new': typeof AuthenticatedSellerProductsNewRoute
@@ -211,6 +220,7 @@ export interface FileRoutesById {
   '/_authenticated/seller': typeof AuthenticatedSellerRouteWithChildren
   '/product/$slug': typeof ProductSlugRoute
   '/_authenticated/order/$orderId': typeof AuthenticatedOrderOrderIdRoute
+  '/_authenticated/seller/orders': typeof AuthenticatedSellerOrdersRoute
   '/_authenticated/seller/products': typeof AuthenticatedSellerProductsRouteWithChildren
   '/_authenticated/seller/register': typeof AuthenticatedSellerRegisterRoute
   '/_authenticated/seller/': typeof AuthenticatedSellerIndexRoute
@@ -236,6 +246,7 @@ export interface FileRouteTypes {
     | '/seller'
     | '/product/$slug'
     | '/order/$orderId'
+    | '/seller/orders'
     | '/seller/products'
     | '/seller/register'
     | '/seller/'
@@ -258,6 +269,7 @@ export interface FileRouteTypes {
     | '/orders'
     | '/product/$slug'
     | '/order/$orderId'
+    | '/seller/orders'
     | '/seller/register'
     | '/seller'
     | '/seller/products/new'
@@ -281,6 +293,7 @@ export interface FileRouteTypes {
     | '/_authenticated/seller'
     | '/product/$slug'
     | '/_authenticated/order/$orderId'
+    | '/_authenticated/seller/orders'
     | '/_authenticated/seller/products'
     | '/_authenticated/seller/register'
     | '/_authenticated/seller/'
@@ -430,6 +443,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSellerProductsRouteImport
       parentRoute: typeof AuthenticatedSellerRoute
     }
+    '/_authenticated/seller/orders': {
+      id: '/_authenticated/seller/orders'
+      path: '/orders'
+      fullPath: '/seller/orders'
+      preLoaderRoute: typeof AuthenticatedSellerOrdersRouteImport
+      parentRoute: typeof AuthenticatedSellerRoute
+    }
     '/_authenticated/order/$orderId': {
       id: '/_authenticated/order/$orderId'
       path: '/order/$orderId'
@@ -482,12 +502,14 @@ const AuthenticatedSellerProductsRouteWithChildren =
   )
 
 interface AuthenticatedSellerRouteChildren {
+  AuthenticatedSellerOrdersRoute: typeof AuthenticatedSellerOrdersRoute
   AuthenticatedSellerProductsRoute: typeof AuthenticatedSellerProductsRouteWithChildren
   AuthenticatedSellerRegisterRoute: typeof AuthenticatedSellerRegisterRoute
   AuthenticatedSellerIndexRoute: typeof AuthenticatedSellerIndexRoute
 }
 
 const AuthenticatedSellerRouteChildren: AuthenticatedSellerRouteChildren = {
+  AuthenticatedSellerOrdersRoute: AuthenticatedSellerOrdersRoute,
   AuthenticatedSellerProductsRoute:
     AuthenticatedSellerProductsRouteWithChildren,
   AuthenticatedSellerRegisterRoute: AuthenticatedSellerRegisterRoute,
