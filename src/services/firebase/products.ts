@@ -47,9 +47,13 @@ export interface ListProductsOpts {
   sort?: "newest" | "price-asc" | "price-desc" | "rating";
 }
 
+function isPublic(p: Product): boolean {
+  return (p.status ?? "published") === "published";
+}
+
 export async function listAllProducts(): Promise<Product[]> {
   const snap = await getDocs(collection(getDb(), "products"));
-  return snap.docs.map((d) => toProduct(d.id, d.data()));
+  return snap.docs.map((d) => toProduct(d.id, d.data())).filter(isPublic);
 }
 
 export async function listProducts(opts: ListProductsOpts = {}): Promise<Product[]> {
@@ -71,7 +75,7 @@ export async function listProducts(opts: ListProductsOpts = {}): Promise<Product
     fbLimit(opts.limit ?? 60),
   );
   const snap = await getDocs(q);
-  return snap.docs.map((d) => toProduct(d.id, d.data()));
+  return snap.docs.map((d) => toProduct(d.id, d.data())).filter(isPublic);
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
