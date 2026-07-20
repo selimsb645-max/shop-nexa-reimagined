@@ -1,0 +1,109 @@
+import { Link, useNavigate } from "@tanstack/react-router";
+import type { ReactNode } from "react";
+import {
+  Bell,
+  LayoutDashboard,
+  LogOut,
+  Package,
+  Settings,
+  ShoppingBag,
+  Store,
+  TrendingUp,
+} from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { signOut } from "@/services/firebase/auth";
+import { toast } from "sonner";
+
+interface Props {
+  children: ReactNode;
+  shopName?: string | null;
+}
+
+export function SellerShell({ children, shopName }: Props) {
+  const { user, profile } = useAuth();
+  const navigate = useNavigate();
+
+  const onSignOut = async () => {
+    await signOut();
+    toast.success("Signed out");
+    navigate({ to: "/" });
+  };
+
+  return (
+    <div className="min-h-screen bg-muted/30">
+      <header className="border-b bg-background">
+        <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-4">
+          <Link to="/" className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <Store className="h-5 w-5" />
+            </div>
+            <div className="flex flex-col leading-tight">
+              <span className="text-sm font-semibold">
+                <span className="text-primary">Shop</span>
+                <span className="text-accent">Nexa</span>{" "}
+                <span className="text-muted-foreground">Seller</span>
+              </span>
+              {shopName && (
+                <span className="text-xs text-muted-foreground">{shopName}</span>
+              )}
+            </div>
+          </Link>
+          <div className="ml-auto flex items-center gap-3 text-sm">
+            <span className="hidden text-muted-foreground md:inline">
+              {profile?.displayName || user?.email}
+            </span>
+            <Link
+              to="/account"
+              className="rounded-md border px-3 py-1.5 hover:bg-muted"
+            >
+              My Account
+            </Link>
+            <button
+              onClick={onSignOut}
+              className="flex items-center gap-1.5 rounded-md border px-3 py-1.5 hover:bg-muted"
+            >
+              <LogOut className="h-4 w-4" /> Sign out
+            </button>
+          </div>
+        </div>
+      </header>
+      <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 md:grid-cols-[220px_1fr]">
+        <aside className="rounded-lg border bg-background p-3">
+          <nav className="space-y-1 text-sm">
+            <SItem to="/seller" icon={<LayoutDashboard className="h-4 w-4" />} label="Dashboard" exact />
+            <SItem to="/seller/products" icon={<Package className="h-4 w-4" />} label="Products" />
+            <SItem to="/seller/orders" icon={<ShoppingBag className="h-4 w-4" />} label="Orders" />
+            <SItem to="/seller/analytics" icon={<TrendingUp className="h-4 w-4" />} label="Analytics" />
+            <SItem to="/seller/notifications" icon={<Bell className="h-4 w-4" />} label="Notifications" />
+            <SItem to="/seller/settings" icon={<Settings className="h-4 w-4" />} label="Settings" />
+          </nav>
+        </aside>
+        <main className="min-w-0">{children}</main>
+      </div>
+    </div>
+  );
+}
+
+function SItem({
+  to,
+  icon,
+  label,
+  exact,
+}: {
+  to: string;
+  icon: ReactNode;
+  label: string;
+  exact?: boolean;
+}) {
+  return (
+    <Link
+      to={to}
+      activeOptions={exact ? { exact: true } : undefined}
+      activeProps={{ className: "bg-primary/10 text-primary" }}
+      className="flex items-center gap-2 rounded-md px-3 py-2 hover:bg-muted"
+    >
+      {icon}
+      {label}
+    </Link>
+  );
+}
