@@ -29,6 +29,11 @@ function toProduct(id: string, data: Record<string, unknown>): Product {
     reviewCount: Number(data.reviewCount ?? 0),
     tags: Array.isArray(data.tags) ? (data.tags as string[]) : [],
     featured: Boolean(data.featured),
+    sellerId: data.sellerId ? String(data.sellerId) : null,
+    sku: data.sku ? String(data.sku) : null,
+    status: (data.status as "draft" | "published" | "archived") ?? "published",
+    colors: Array.isArray(data.colors) ? (data.colors as string[]) : [],
+    sizes: Array.isArray(data.sizes) ? (data.sizes as string[]) : [],
     createdAt: typeof data.createdAt === "number" ? data.createdAt : Date.now(),
     updatedAt: typeof data.updatedAt === "number" ? data.updatedAt : Date.now(),
   };
