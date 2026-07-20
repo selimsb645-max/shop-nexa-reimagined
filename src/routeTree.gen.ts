@@ -28,6 +28,7 @@ import { Route as AuthenticatedSellerIndexRouteImport } from './routes/_authenti
 import { Route as AuthenticatedSellerRegisterRouteImport } from './routes/_authenticated/seller.register'
 import { Route as AuthenticatedSellerProductsRouteImport } from './routes/_authenticated/seller.products'
 import { Route as AuthenticatedSellerOrdersRouteImport } from './routes/_authenticated/seller.orders'
+import { Route as AuthenticatedSellerAnalyticsRouteImport } from './routes/_authenticated/seller.analytics'
 import { Route as AuthenticatedOrderOrderIdRouteImport } from './routes/_authenticated/order.$orderId'
 import { Route as AuthenticatedSellerProductsIndexRouteImport } from './routes/_authenticated/seller.products.index'
 import { Route as AuthenticatedSellerOrdersIndexRouteImport } from './routes/_authenticated/seller.orders.index'
@@ -133,6 +134,12 @@ const AuthenticatedSellerOrdersRoute =
     path: '/orders',
     getParentRoute: () => AuthenticatedSellerRoute,
   } as any)
+const AuthenticatedSellerAnalyticsRoute =
+  AuthenticatedSellerAnalyticsRouteImport.update({
+    id: '/analytics',
+    path: '/analytics',
+    getParentRoute: () => AuthenticatedSellerRoute,
+  } as any)
 const AuthenticatedOrderOrderIdRoute =
   AuthenticatedOrderOrderIdRouteImport.update({
     id: '/order/$orderId',
@@ -186,6 +193,7 @@ export interface FileRoutesByFullPath {
   '/seller': typeof AuthenticatedSellerRouteWithChildren
   '/product/$slug': typeof ProductSlugRoute
   '/order/$orderId': typeof AuthenticatedOrderOrderIdRoute
+  '/seller/analytics': typeof AuthenticatedSellerAnalyticsRoute
   '/seller/orders': typeof AuthenticatedSellerOrdersRouteWithChildren
   '/seller/products': typeof AuthenticatedSellerProductsRouteWithChildren
   '/seller/register': typeof AuthenticatedSellerRegisterRoute
@@ -211,6 +219,7 @@ export interface FileRoutesByTo {
   '/orders': typeof AuthenticatedOrdersRoute
   '/product/$slug': typeof ProductSlugRoute
   '/order/$orderId': typeof AuthenticatedOrderOrderIdRoute
+  '/seller/analytics': typeof AuthenticatedSellerAnalyticsRoute
   '/seller/register': typeof AuthenticatedSellerRegisterRoute
   '/seller': typeof AuthenticatedSellerIndexRoute
   '/seller/orders/$orderId': typeof AuthenticatedSellerOrdersOrderIdRoute
@@ -237,6 +246,7 @@ export interface FileRoutesById {
   '/_authenticated/seller': typeof AuthenticatedSellerRouteWithChildren
   '/product/$slug': typeof ProductSlugRoute
   '/_authenticated/order/$orderId': typeof AuthenticatedOrderOrderIdRoute
+  '/_authenticated/seller/analytics': typeof AuthenticatedSellerAnalyticsRoute
   '/_authenticated/seller/orders': typeof AuthenticatedSellerOrdersRouteWithChildren
   '/_authenticated/seller/products': typeof AuthenticatedSellerProductsRouteWithChildren
   '/_authenticated/seller/register': typeof AuthenticatedSellerRegisterRoute
@@ -265,6 +275,7 @@ export interface FileRouteTypes {
     | '/seller'
     | '/product/$slug'
     | '/order/$orderId'
+    | '/seller/analytics'
     | '/seller/orders'
     | '/seller/products'
     | '/seller/register'
@@ -290,6 +301,7 @@ export interface FileRouteTypes {
     | '/orders'
     | '/product/$slug'
     | '/order/$orderId'
+    | '/seller/analytics'
     | '/seller/register'
     | '/seller'
     | '/seller/orders/$orderId'
@@ -315,6 +327,7 @@ export interface FileRouteTypes {
     | '/_authenticated/seller'
     | '/product/$slug'
     | '/_authenticated/order/$orderId'
+    | '/_authenticated/seller/analytics'
     | '/_authenticated/seller/orders'
     | '/_authenticated/seller/products'
     | '/_authenticated/seller/register'
@@ -474,6 +487,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSellerOrdersRouteImport
       parentRoute: typeof AuthenticatedSellerRoute
     }
+    '/_authenticated/seller/analytics': {
+      id: '/_authenticated/seller/analytics'
+      path: '/analytics'
+      fullPath: '/seller/analytics'
+      preLoaderRoute: typeof AuthenticatedSellerAnalyticsRouteImport
+      parentRoute: typeof AuthenticatedSellerRoute
+    }
     '/_authenticated/order/$orderId': {
       id: '/_authenticated/order/$orderId'
       path: '/order/$orderId'
@@ -557,6 +577,7 @@ const AuthenticatedSellerProductsRouteWithChildren =
   )
 
 interface AuthenticatedSellerRouteChildren {
+  AuthenticatedSellerAnalyticsRoute: typeof AuthenticatedSellerAnalyticsRoute
   AuthenticatedSellerOrdersRoute: typeof AuthenticatedSellerOrdersRouteWithChildren
   AuthenticatedSellerProductsRoute: typeof AuthenticatedSellerProductsRouteWithChildren
   AuthenticatedSellerRegisterRoute: typeof AuthenticatedSellerRegisterRoute
@@ -564,6 +585,7 @@ interface AuthenticatedSellerRouteChildren {
 }
 
 const AuthenticatedSellerRouteChildren: AuthenticatedSellerRouteChildren = {
+  AuthenticatedSellerAnalyticsRoute: AuthenticatedSellerAnalyticsRoute,
   AuthenticatedSellerOrdersRoute: AuthenticatedSellerOrdersRouteWithChildren,
   AuthenticatedSellerProductsRoute:
     AuthenticatedSellerProductsRouteWithChildren,
