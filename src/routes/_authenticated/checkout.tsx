@@ -84,7 +84,9 @@ function CheckoutPage() {
     try {
       const orderId = await createOrder({
         userId: user.uid,
+        buyerEmail: user.email ?? null,
         items,
+
         shippingAddress: {
           fullName: v.fullName,
           phone: v.phone,

@@ -29,6 +29,11 @@ function toProduct(id: string, data: Record<string, unknown>): Product {
     reviewCount: Number(data.reviewCount ?? 0),
     tags: Array.isArray(data.tags) ? (data.tags as string[]) : [],
     featured: Boolean(data.featured),
+    sellerId: data.sellerId ? String(data.sellerId) : null,
+    sku: data.sku ? String(data.sku) : null,
+    status: (data.status as "draft" | "published" | "archived") ?? "published",
+    colors: Array.isArray(data.colors) ? (data.colors as string[]) : [],
+    sizes: Array.isArray(data.sizes) ? (data.sizes as string[]) : [],
     createdAt: typeof data.createdAt === "number" ? data.createdAt : Date.now(),
     updatedAt: typeof data.updatedAt === "number" ? data.updatedAt : Date.now(),
   };
@@ -42,9 +47,13 @@ export interface ListProductsOpts {
   sort?: "newest" | "price-asc" | "price-desc" | "rating";
 }
 
+function isPublic(p: Product): boolean {
+  return (p.status ?? "published") === "published";
+}
+
 export async function listAllProducts(): Promise<Product[]> {
   const snap = await getDocs(collection(getDb(), "products"));
-  return snap.docs.map((d) => toProduct(d.id, d.data()));
+  return snap.docs.map((d) => toProduct(d.id, d.data())).filter(isPublic);
 }
 
 export async function listProducts(opts: ListProductsOpts = {}): Promise<Product[]> {
@@ -66,7 +75,7 @@ export async function listProducts(opts: ListProductsOpts = {}): Promise<Product
     fbLimit(opts.limit ?? 60),
   );
   const snap = await getDocs(q);
-  return snap.docs.map((d) => toProduct(d.id, d.data()));
+  return snap.docs.map((d) => toProduct(d.id, d.data())).filter(isPublic);
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
