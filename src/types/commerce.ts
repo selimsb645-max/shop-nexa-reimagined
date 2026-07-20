@@ -31,9 +31,15 @@ export interface Product {
   reviewCount: number;
   tags: string[];
   featured: boolean;
+  sellerId?: string | null;
+  sku?: string | null;
+  status?: "draft" | "published" | "archived";
+  colors?: string[];
+  sizes?: string[];
   createdAt: number;
   updatedAt: number;
 }
+
 
 export interface Review {
   id: string;
