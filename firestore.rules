@@ -3,68 +3,92 @@ service cloud.firestore {
   match /databases/{database}/documents {
     function isSignedIn() { return request.auth != null; }
     function isSelf(uid) { return isSignedIn() && request.auth.uid == uid; }
+    function isAdmin() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
     function isApprovedSeller() {
       return isSignedIn()
         && exists(/databases/$(database)/documents/sellers/$(request.auth.uid))
         && get(/databases/$(database)/documents/sellers/$(request.auth.uid)).data.status == 'approved';
     }
 
-    // Public catalog
+    // Categories - admin managed
     match /categories/{cat} {
       allow read: if true;
-      allow write: if false;
+      allow write: if isAdmin();
       match /subcategories/{sub} {
         allow read: if true;
-        allow write: if false;
+        allow write: if isAdmin();
       }
     }
 
     match /products/{id} {
       allow read: if true;
-      allow create: if isApprovedSeller()
-        && request.resource.data.sellerId == request.auth.uid;
-      allow update, delete: if isApprovedSeller()
-        && resource.data.sellerId == request.auth.uid;
+      allow create: if isAdmin() ||
+        (isApprovedSeller() && request.resource.data.sellerId == request.auth.uid);
+      allow update, delete: if isAdmin() ||
+        (isApprovedSeller() && resource.data.sellerId == request.auth.uid);
 
       match /reviews/{rid} {
         allow read: if true;
         allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-        allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+        allow update, delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
       }
     }
 
     match /coupons/{code} {
       allow read: if true;
-      allow write: if false;
+      allow write: if isAdmin();
     }
 
-    // User-owned data
+    // Banners - public read, admin write
+    match /banners/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Site settings - public read, admin write
+    match /settings/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Activity logs - admin only
+    match /activityLogs/{id} {
+      allow read: if isAdmin();
+      allow create: if isAdmin();
+      allow update, delete: if false;
+    }
+
+    // Users
     match /users/{uid} {
-      allow read, write: if isSelf(uid);
+      allow read: if isSelf(uid) || isAdmin();
+      allow create: if isSelf(uid);
+      allow update: if isSelf(uid) || isAdmin();
+      allow delete: if isAdmin();
       match /{sub=**} {
-        allow read, write: if isSelf(uid);
+        allow read, write: if isSelf(uid) || isAdmin();
       }
     }
 
     // Sellers
     match /sellers/{uid} {
-      allow read: if isSelf(uid);
-      allow create: if isSelf(uid)
-        && request.resource.data.status == 'pending';
-      allow update: if isSelf(uid)
-        && request.resource.data.status == resource.data.status;
+      allow read: if isSelf(uid) || isAdmin();
+      allow create: if isSelf(uid) && request.resource.data.status == 'pending';
+      allow update: if (isSelf(uid) && request.resource.data.status == resource.data.status) || isAdmin();
+      allow delete: if isAdmin();
 
       match /orders/{orderId} {
-        allow read: if isSelf(uid);
-        // Buyers create seller mirror during checkout transaction.
+        allow read: if isSelf(uid) || isAdmin();
         allow create: if isSignedIn();
-        allow update: if isSelf(uid);
+        allow update: if isSelf(uid) || isAdmin();
       }
       match /notifications/{nid} {
-        allow read: if isSelf(uid);
-        allow create: if isSignedIn();
-        allow update: if isSelf(uid);
-        allow delete: if isSelf(uid);
+        allow read: if isSelf(uid) || isAdmin();
+        allow create: if isSignedIn() || isAdmin();
+        allow update, delete: if isSelf(uid) || isAdmin();
       }
     }
   }
