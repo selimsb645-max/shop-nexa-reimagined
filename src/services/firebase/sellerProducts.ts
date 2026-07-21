@@ -107,6 +107,7 @@ export async function createSellerProduct(
     sellerId,
     rating: 0,
     reviewCount: 0,
+    approved: false,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });

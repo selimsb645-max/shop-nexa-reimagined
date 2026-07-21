@@ -11,7 +11,7 @@ import {
 import { getDb } from "./config";
 import type { Product } from "@/types/commerce";
 
-function toProduct(id: string, data: Record<string, unknown>): Product {
+function toProduct(id: string, data: Record<string, unknown>): Product & { approved: boolean } {
   return {
     id,
     title: String(data.title ?? ""),
@@ -36,6 +36,7 @@ function toProduct(id: string, data: Record<string, unknown>): Product {
     sizes: Array.isArray(data.sizes) ? (data.sizes as string[]) : [],
     createdAt: typeof data.createdAt === "number" ? data.createdAt : Date.now(),
     updatedAt: typeof data.updatedAt === "number" ? data.updatedAt : Date.now(),
+    approved: data.approved !== false,
   };
 }
 
@@ -47,8 +48,8 @@ export interface ListProductsOpts {
   sort?: "newest" | "price-asc" | "price-desc" | "rating";
 }
 
-function isPublic(p: Product): boolean {
-  return (p.status ?? "published") === "published";
+function isPublic(p: Product & { approved?: boolean }): boolean {
+  return (p.status ?? "published") === "published" && p.approved !== false;
 }
 
 export async function listAllProducts(): Promise<Product[]> {
