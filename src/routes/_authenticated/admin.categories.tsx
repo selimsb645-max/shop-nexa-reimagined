@@ -52,7 +52,8 @@ function CategoriesAdmin() {
   }, []);
 
   const loadSubs = async (catId: string) => {
-    setSubMap((m) => ({ ...m, [catId]: await listSubcategoriesAdmin(catId) }));
+    const subs = await listSubcategoriesAdmin(catId);
+    setSubMap((m) => ({ ...m, [catId]: subs }));
   };
 
   const onAddCat = async () => {
