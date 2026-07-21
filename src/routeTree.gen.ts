@@ -33,6 +33,7 @@ import { Route as AuthenticatedSellerOrdersRouteImport } from './routes/_authent
 import { Route as AuthenticatedSellerNotificationsRouteImport } from './routes/_authenticated/seller.notifications'
 import { Route as AuthenticatedSellerAnalyticsRouteImport } from './routes/_authenticated/seller.analytics'
 import { Route as AuthenticatedOrderOrderIdRouteImport } from './routes/_authenticated/order.$orderId'
+import { Route as AuthenticatedAdminProductsRouteImport } from './routes/_authenticated/admin.products'
 import { Route as AuthenticatedSellerProductsIndexRouteImport } from './routes/_authenticated/seller.products.index'
 import { Route as AuthenticatedSellerOrdersIndexRouteImport } from './routes/_authenticated/seller.orders.index'
 import { Route as AuthenticatedSellerProductsNewRouteImport } from './routes/_authenticated/seller.products.new'
@@ -166,6 +167,12 @@ const AuthenticatedOrderOrderIdRoute =
     path: '/order/$orderId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminProductsRoute =
+  AuthenticatedAdminProductsRouteImport.update({
+    id: '/products',
+    path: '/products',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedSellerProductsIndexRoute =
   AuthenticatedSellerProductsIndexRouteImport.update({
     id: '/',
@@ -212,6 +219,7 @@ export interface FileRoutesByFullPath {
   '/orders': typeof AuthenticatedOrdersRoute
   '/seller': typeof AuthenticatedSellerRouteWithChildren
   '/product/$slug': typeof ProductSlugRoute
+  '/admin/products': typeof AuthenticatedAdminProductsRoute
   '/order/$orderId': typeof AuthenticatedOrderOrderIdRoute
   '/seller/analytics': typeof AuthenticatedSellerAnalyticsRoute
   '/seller/notifications': typeof AuthenticatedSellerNotificationsRoute
@@ -240,6 +248,7 @@ export interface FileRoutesByTo {
   '/checkout': typeof AuthenticatedCheckoutRoute
   '/orders': typeof AuthenticatedOrdersRoute
   '/product/$slug': typeof ProductSlugRoute
+  '/admin/products': typeof AuthenticatedAdminProductsRoute
   '/order/$orderId': typeof AuthenticatedOrderOrderIdRoute
   '/seller/analytics': typeof AuthenticatedSellerAnalyticsRoute
   '/seller/notifications': typeof AuthenticatedSellerNotificationsRoute
@@ -270,6 +279,7 @@ export interface FileRoutesById {
   '/_authenticated/orders': typeof AuthenticatedOrdersRoute
   '/_authenticated/seller': typeof AuthenticatedSellerRouteWithChildren
   '/product/$slug': typeof ProductSlugRoute
+  '/_authenticated/admin/products': typeof AuthenticatedAdminProductsRoute
   '/_authenticated/order/$orderId': typeof AuthenticatedOrderOrderIdRoute
   '/_authenticated/seller/analytics': typeof AuthenticatedSellerAnalyticsRoute
   '/_authenticated/seller/notifications': typeof AuthenticatedSellerNotificationsRoute
@@ -302,6 +312,7 @@ export interface FileRouteTypes {
     | '/orders'
     | '/seller'
     | '/product/$slug'
+    | '/admin/products'
     | '/order/$orderId'
     | '/seller/analytics'
     | '/seller/notifications'
@@ -330,6 +341,7 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/orders'
     | '/product/$slug'
+    | '/admin/products'
     | '/order/$orderId'
     | '/seller/analytics'
     | '/seller/notifications'
@@ -359,6 +371,7 @@ export interface FileRouteTypes {
     | '/_authenticated/orders'
     | '/_authenticated/seller'
     | '/product/$slug'
+    | '/_authenticated/admin/products'
     | '/_authenticated/order/$orderId'
     | '/_authenticated/seller/analytics'
     | '/_authenticated/seller/notifications'
@@ -558,6 +571,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrderOrderIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/products': {
+      id: '/_authenticated/admin/products'
+      path: '/products'
+      fullPath: '/admin/products'
+      preLoaderRoute: typeof AuthenticatedAdminProductsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/seller/products/': {
       id: '/_authenticated/seller/products/'
       path: '/'
@@ -597,10 +617,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminProductsRoute: typeof AuthenticatedAdminProductsRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminProductsRoute: AuthenticatedAdminProductsRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
 }
 
