@@ -20,7 +20,7 @@ export function LoginForm() {
   } = useForm<LoginValues>({ resolver: zodResolver(loginSchema) });
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  const redirectTo = search.redirect && search.redirect.startsWith("/") ? search.redirect : "/account";
+  const redirectTo = "/";
 
   const onSubmit = async (values: LoginValues) => {
     if (!firebaseConfigured) {

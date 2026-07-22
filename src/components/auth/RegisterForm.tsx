@@ -42,7 +42,7 @@ export function RegisterForm() {
     try {
       await signInWithGoogle();
       toast.success("Welcome to ShopNexa");
-      navigate({ to: "/account" });
+      navigate({ to: "/" });
     } catch (err) {
       toast.error(mapFirebaseError(err));
     } finally {
