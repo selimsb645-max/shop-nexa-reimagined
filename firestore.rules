@@ -28,8 +28,19 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isAdmin() ||
         (isApprovedSeller() && request.resource.data.sellerId == request.auth.uid);
-      allow update, delete: if isAdmin() ||
+      allow delete: if isAdmin() ||
         (isApprovedSeller() && resource.data.sellerId == request.auth.uid);
+      // Owning seller or admin can update freely; any signed-in buyer may ONLY
+      // decrement stock (and touch updatedAt) as part of placing an order.
+      allow update: if isAdmin()
+        || (isApprovedSeller() && resource.data.sellerId == request.auth.uid)
+        || (
+          isSignedIn()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stock', 'updatedAt'])
+          && request.resource.data.stock is int
+          && request.resource.data.stock >= 0
+          && request.resource.data.stock < resource.data.stock
+        );
 
       match /reviews/{rid} {
         allow read: if true;
@@ -40,7 +51,14 @@ service cloud.firestore {
 
     match /coupons/{code} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow create, delete: if isAdmin();
+      // Admin can edit anything; any signed-in user may only increment `uses` by 1 at checkout.
+      allow update: if isAdmin()
+        || (
+          isSignedIn()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['uses'])
+          && request.resource.data.uses == resource.data.uses + 1
+        );
     }
 
     // Banners - public read, admin write
