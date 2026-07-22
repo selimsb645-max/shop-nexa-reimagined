@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link, useNavigate, useSearch } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { loginSchema, type LoginValues } from "@/utils/validation";
 import { signInWithEmail, signInWithGoogle } from "@/services/firebase/auth";
@@ -12,7 +12,6 @@ import { firebaseConfigured } from "@/services/firebase/config";
 
 export function LoginForm() {
   const navigate = useNavigate();
-  const search = useSearch({ strict: false }) as { redirect?: string };
   const {
     register,
     handleSubmit,
