@@ -1,5 +1,6 @@
 import {
   createUserWithEmailAndPassword,
+  onAuthStateChanged,
   sendEmailVerification,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
@@ -9,6 +10,36 @@ import {
   type User,
 } from "firebase/auth";
 import { getFirebaseAuth, googleProvider } from "./config";
+
+/**
+ * Resolves once Firebase has hydrated the auth state with a signed-in user.
+ * Prevents redirecting before AuthContext's onAuthStateChanged has fired.
+ */
+export function waitForAuthUser(timeoutMs = 8000): Promise<User> {
+  const auth = getFirebaseAuth();
+  if (auth.currentUser) return Promise.resolve(auth.currentUser);
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      unsub();
+      reject(new Error("Timed out waiting for authentication"));
+    }, timeoutMs);
+    const unsub = onAuthStateChanged(
+      auth,
+      (u) => {
+        if (u) {
+          clearTimeout(timer);
+          unsub();
+          resolve(u);
+        }
+      },
+      (err) => {
+        clearTimeout(timer);
+        unsub();
+        reject(err);
+      },
+    );
+  });
+}
 import { ensureUserProfile, updateUserProfile } from "./firestore";
 
 export async function signUpWithEmail(
