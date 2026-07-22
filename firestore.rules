@@ -62,14 +62,40 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // Users
+    // Users - role & blocked flag can only be changed by admins
     match /users/{uid} {
       allow read: if isSelf(uid) || isAdmin();
-      allow create: if isSelf(uid);
-      allow update: if isSelf(uid) || isAdmin();
+      allow create: if isSelf(uid)
+        && (!('role' in request.resource.data) || request.resource.data.role == 'customer')
+        && (!('blocked' in request.resource.data) || request.resource.data.blocked == false);
+      allow update: if isAdmin() ||
+        (isSelf(uid)
+          && request.resource.data.role == resource.data.role
+          && (!('blocked' in request.resource.data) ? true : request.resource.data.blocked == resource.data.blocked));
       allow delete: if isAdmin();
-      match /{sub=**} {
+
+      // Cart and wishlist - owner-editable
+      match /cart/{itemId} {
         allow read, write: if isSelf(uid) || isAdmin();
+      }
+      match /wishlist/{itemId} {
+        allow read, write: if isSelf(uid) || isAdmin();
+      }
+
+      // Orders - buyer can read; creation only via trusted checkout (buyer creating own order with valid initial state); updates/deletes admin-only
+      match /orders/{orderId} {
+        allow read: if isSelf(uid) || isAdmin();
+        allow create: if isSelf(uid)
+          && request.resource.data.userId == request.auth.uid
+          && request.resource.data.status == 'pending'
+          && request.resource.data.payment.status in ['pending', 'unpaid'];
+        allow update, delete: if isAdmin();
+      }
+
+      // Any other user-owned subcollection remains owner-scoped
+      match /{sub}/{docId} {
+        allow read, write: if (isSelf(uid) || isAdmin())
+          && !(sub in ['orders']);
       }
     }
 
@@ -82,12 +108,22 @@ service cloud.firestore {
 
       match /orders/{orderId} {
         allow read: if isSelf(uid) || isAdmin();
-        allow create: if isSignedIn();
+        // Only the buyer can create the seller mirror, and only with matching sellerId/buyerId + safe initial state
+        allow create: if isSignedIn()
+          && request.resource.data.sellerId == uid
+          && request.resource.data.buyerId == request.auth.uid
+          && request.resource.data.status == 'pending'
+          && request.resource.data.paymentStatus in ['pending', 'unpaid'];
         allow update: if isSelf(uid) || isAdmin();
+        allow delete: if isAdmin();
       }
       match /notifications/{nid} {
         allow read: if isSelf(uid) || isAdmin();
-        allow create: if isSignedIn() || isAdmin();
+        // Buyers may create notifications only tied to their own order action; seller/admin can create freely
+        allow create: if isAdmin() || isSelf(uid) ||
+          (isSignedIn()
+            && request.resource.data.read == false
+            && request.resource.data.type == 'order');
         allow update, delete: if isSelf(uid) || isAdmin();
       }
     }
