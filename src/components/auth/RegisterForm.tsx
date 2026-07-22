@@ -1,23 +1,29 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { registerSchema, type RegisterValues } from "@/utils/validation";
-import { signInWithGoogle, signUpWithEmail } from "@/services/firebase/auth";
+import { signInWithGoogle, signUpWithEmail, waitForAuthUser } from "@/services/firebase/auth";
 import { mapFirebaseError } from "@/utils/errors";
 import { Spinner } from "@/components/common/Spinner";
 import { GoogleButton } from "./GoogleButton";
 import { firebaseConfigured } from "@/services/firebase/config";
+import { useAuth } from "@/context/AuthContext";
 
 export function RegisterForm() {
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<RegisterValues>({ resolver: zodResolver(registerSchema) });
   const [googleLoading, setGoogleLoading] = useState(false);
+
+  useEffect(() => {
+    if (!loading && user) navigate({ to: "/", replace: true });
+  }, [loading, user, navigate]);
 
   const onSubmit = async (values: RegisterValues) => {
     if (!firebaseConfigured) {
@@ -26,8 +32,9 @@ export function RegisterForm() {
     }
     try {
       await signUpWithEmail(values.email, values.password, values.displayName);
+      await waitForAuthUser();
       toast.success("Account created — check your inbox to verify your email");
-      navigate({ to: "/" });
+      navigate({ to: "/", replace: true });
     } catch (err) {
       toast.error(mapFirebaseError(err));
     }
@@ -41,14 +48,16 @@ export function RegisterForm() {
     setGoogleLoading(true);
     try {
       await signInWithGoogle();
+      await waitForAuthUser();
       toast.success("Welcome to ShopNexa");
-      navigate({ to: "/" });
+      navigate({ to: "/", replace: true });
     } catch (err) {
       toast.error(mapFirebaseError(err));
     } finally {
       setGoogleLoading(false);
     }
   };
+
 
   return (
     <div className="space-y-4">
