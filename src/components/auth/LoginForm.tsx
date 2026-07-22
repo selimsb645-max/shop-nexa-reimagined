@@ -35,8 +35,9 @@ export function LoginForm() {
     }
     try {
       await signInWithEmail(values.email, values.password);
+      await waitForAuthUser();
       toast.success("Signed in");
-      navigate({ to: redirectTo });
+      navigate({ to: redirectTo, replace: true });
     } catch (err) {
       toast.error(mapFirebaseError(err));
     }
@@ -50,14 +51,16 @@ export function LoginForm() {
     setGoogleLoading(true);
     try {
       await signInWithGoogle();
+      await waitForAuthUser();
       toast.success("Signed in");
-      navigate({ to: redirectTo });
+      navigate({ to: redirectTo, replace: true });
     } catch (err) {
       toast.error(mapFirebaseError(err));
     } finally {
       setGoogleLoading(false);
     }
   };
+
 
   return (
     <div className="space-y-4">
