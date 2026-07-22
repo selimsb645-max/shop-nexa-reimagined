@@ -1,17 +1,19 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { loginSchema, type LoginValues } from "@/utils/validation";
-import { signInWithEmail, signInWithGoogle } from "@/services/firebase/auth";
+import { signInWithEmail, signInWithGoogle, waitForAuthUser } from "@/services/firebase/auth";
 import { mapFirebaseError } from "@/utils/errors";
 import { Spinner } from "@/components/common/Spinner";
 import { GoogleButton } from "./GoogleButton";
 import { firebaseConfigured } from "@/services/firebase/config";
+import { useAuth } from "@/context/AuthContext";
 
 export function LoginForm() {
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
   const {
     register,
     handleSubmit,
@@ -20,6 +22,11 @@ export function LoginForm() {
   const [googleLoading, setGoogleLoading] = useState(false);
 
   const redirectTo = "/";
+
+  useEffect(() => {
+    if (!loading && user) navigate({ to: redirectTo, replace: true });
+  }, [loading, user, navigate]);
+
 
   const onSubmit = async (values: LoginValues) => {
     if (!firebaseConfigured) {
