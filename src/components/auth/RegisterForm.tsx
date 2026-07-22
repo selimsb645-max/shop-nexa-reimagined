@@ -27,7 +27,7 @@ export function RegisterForm() {
     try {
       await signUpWithEmail(values.email, values.password, values.displayName);
       toast.success("Account created — check your inbox to verify your email");
-      navigate({ to: "/verify-email" });
+      navigate({ to: "/" });
     } catch (err) {
       toast.error(mapFirebaseError(err));
     }
