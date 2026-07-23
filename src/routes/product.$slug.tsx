@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -47,6 +48,11 @@ function ProductPage() {
 
   const product = productQuery.data;
   const outOfStock = !product || product.stock <= 0;
+  const { track } = useRecentlyViewed();
+  useEffect(() => {
+    if (product?.id) track(product.id);
+  }, [product?.id, track]);
+
 
   const relatedQuery = useQuery({
     queryKey: ["related", product?.categorySlug ?? ""],
