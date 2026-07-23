@@ -1,12 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
-  ChevronLeft, ChevronRight, Sparkles,
-  Truck, ShieldCheck, Package, Headset, Award, ArrowRight,
+  Sparkles, ArrowRight,
   Shirt, Smartphone, Apple, Sofa, Headphones, Gamepad2, Baby,
-  Tag,
+  Tag, Truck, ShieldCheck, Package, Headset, Award,
+  TrendingUp, Star, Trophy, Wand2, History,
 } from "lucide-react";
-import heroImg from "@/assets/hero.jpg";
+import { useMemo } from "react";
 import dealGrocery from "@/assets/deal-grocery.jpg";
 import dealElectronics from "@/assets/deal-electronics.jpg";
 import dealFashion from "@/assets/deal-fashion.jpg";
@@ -17,10 +17,14 @@ import blog4 from "@/assets/blog-4.jpg";
 import { SiteHeader, TopBar } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { WhatsAppFab } from "@/components/layout/SiteChrome";
-import { ProductCard, ProductCardSkeleton } from "@/components/product/ProductCard";
+import { PromoCarousel } from "@/components/home/PromoCarousel";
+import { FlashSale } from "@/components/home/FlashSale";
+import { ProductRow } from "@/components/home/ProductRow";
 import { listCategories } from "@/services/firebase/categories";
 import { listProducts } from "@/services/firebase/products";
 import { firebaseConfigured } from "@/services/firebase/config";
+import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
+import type { Product } from "@/types/commerce";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -41,7 +45,6 @@ const blogs = [
   { title: "How We Ensure Fast and Safe Delivery", date: "May 8, 2024", img: blog4 },
 ];
 
-// Icon lookup used to render categories from Firestore consistently.
 const CATEGORY_ICONS: Record<string, { icon: typeof Shirt; color: string }> = {
   fashion: { icon: Shirt, color: "bg-blue-100 text-blue-600" },
   electronics: { icon: Smartphone, color: "bg-indigo-100 text-indigo-600" },
@@ -64,73 +67,62 @@ function Index() {
     queryFn: () => listProducts({ featured: true, limit: 12 }),
     enabled: firebaseConfigured,
   });
+  const newestQuery = useQuery({
+    queryKey: ["products", "newest"],
+    queryFn: () => listProducts({ sort: "newest", limit: 12 }),
+    enabled: firebaseConfigured,
+  });
+  const topRatedQuery = useQuery({
+    queryKey: ["products", "rating"],
+    queryFn: () => listProducts({ sort: "rating", limit: 12 }),
+    enabled: firebaseConfigured,
+  });
+
+  const { ids: recentIds } = useRecentlyViewed();
+  const pool: Product[] = useMemo(() => {
+    const map = new Map<string, Product>();
+    [...(featuredQuery.data ?? []), ...(newestQuery.data ?? []), ...(topRatedQuery.data ?? [])]
+      .forEach((p) => map.set(p.id, p));
+    return Array.from(map.values());
+  }, [featuredQuery.data, newestQuery.data, topRatedQuery.data]);
+
+  const recent = useMemo(() => {
+    const byId = new Map(pool.map((p) => [p.id, p]));
+    return recentIds.map((id) => byId.get(id)).filter((p): p is Product => Boolean(p));
+  }, [recentIds, pool]);
+
+  // Recommended: highest rated among featured that haven't been recently viewed.
+  const recommended = useMemo(() => {
+    const recentSet = new Set(recentIds);
+    return [...pool]
+      .filter((p) => !recentSet.has(p.id))
+      .sort((a, b) => b.rating * b.reviewCount - a.rating * a.reviewCount)
+      .slice(0, 12);
+  }, [pool, recentIds]);
 
   return (
     <div className="min-h-screen bg-background">
       <TopBar />
       <SiteHeader />
 
-      {/* Hero */}
-      <section className="mx-auto max-w-7xl px-4 py-6">
-        <div className="relative overflow-hidden rounded-xl bg-blue-50">
-          <div className="grid items-center gap-6 md:grid-cols-2">
-            <div className="p-8 md:p-12">
-              <div className="mb-3 flex items-center gap-2 text-sm font-medium text-accent">
-                <Sparkles className="h-4 w-4" /> Best Quality, Best Price
-              </div>
-              <h1 className="text-4xl font-bold leading-tight md:text-5xl">
-                Shop Smarter.
-                <br />
-                <span className="text-primary">Live Better.</span>
-              </h1>
-              <p className="mt-4 text-muted-foreground">
-                Everything you need in one place.
-                <br />
-                Top quality products at unbeatable prices.
-              </p>
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Link to="/shop" className="rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:opacity-90">
-                  Shop Now
-                </Link>
-                <Link to="/shop" className="rounded-md border border-primary bg-background px-6 py-3 text-sm font-medium text-primary hover:bg-primary/5">
-                  Browse Categories
-                </Link>
-              </div>
-            </div>
-            <div className="relative">
-              <img src={heroImg} alt="ShopNexa featured products" width={1200} height={800} className="h-full w-full object-cover" />
-              <div className="absolute right-6 top-6 flex h-24 w-24 flex-col items-center justify-center rounded-full bg-primary text-center text-primary-foreground shadow-lg md:h-28 md:w-28">
-                <span className="text-xs font-medium">BIG</span>
-                <span className="text-lg font-bold leading-none">SALE</span>
-                <span className="mt-1 text-[9px]">UP TO 70% OFF</span>
-              </div>
-            </div>
-          </div>
-          <button className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-2 shadow hover:bg-background" aria-label="Previous slide">
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <button className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-2 shadow hover:bg-background" aria-label="Next slide">
-            <ChevronRight className="h-5 w-5" />
-          </button>
-        </div>
-      </section>
+      <PromoCarousel />
 
       {/* Categories */}
-      <section id="categories" className="mx-auto max-w-7xl px-4 py-8">
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Shop by Category</h2>
+      <section id="categories" className="mx-auto max-w-7xl px-4 py-6">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-xl font-bold md:text-2xl">Shop by Category</h2>
           <Link to="/shop" className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
-            View All Categories <ArrowRight className="h-4 w-4" />
+            View All <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
         {categoriesQuery.isLoading ? (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-8">
+          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-8">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="h-32 animate-pulse rounded-lg bg-muted" />
+              <div key={i} className="h-28 animate-pulse rounded-lg bg-muted" />
             ))}
           </div>
         ) : categoriesQuery.data && categoriesQuery.data.length > 0 ? (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-8">
+          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-8">
             {categoriesQuery.data.map((c) => {
               const cfg = CATEGORY_ICONS[c.slug] ?? { icon: Tag, color: "bg-primary/10 text-primary" };
               const Icon = cfg.icon;
@@ -139,12 +131,12 @@ function Index() {
                   key={c.id}
                   to="/shop"
                   search={{ category: c.slug }}
-                  className="group flex flex-col items-center rounded-lg border bg-card p-4 transition hover:border-primary hover:shadow-md"
+                  className="group flex flex-col items-center rounded-lg border bg-card p-3 transition hover:-translate-y-0.5 hover:border-primary hover:shadow-md"
                 >
-                  <div className={`mb-3 flex h-16 w-16 items-center justify-center rounded-full ${cfg.color}`}>
-                    <Icon className="h-8 w-8" />
+                  <div className={`mb-2 flex h-14 w-14 items-center justify-center rounded-full ${cfg.color} transition group-hover:scale-110`}>
+                    <Icon className="h-7 w-7" />
                   </div>
-                  <span className="text-center text-sm font-medium">{c.name}</span>
+                  <span className="line-clamp-1 text-center text-xs font-medium md:text-sm">{c.name}</span>
                 </Link>
               );
             })}
@@ -156,41 +148,53 @@ function Index() {
         )}
       </section>
 
-      {/* Featured Products */}
-      <section id="products" className="mx-auto max-w-7xl px-4 py-8">
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Featured Products</h2>
-          <Link to="/shop" className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
-            View All Products <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-        {featuredQuery.isLoading ? (
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <ProductCardSkeleton key={i} />
-            ))}
-          </div>
-        ) : featuredQuery.data && featuredQuery.data.length > 0 ? (
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-            {featuredQuery.data.slice(0, 12).map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-lg border bg-card p-10 text-center">
-            <Package className="mx-auto h-10 w-10 text-muted-foreground" />
-            <p className="mt-3 text-sm text-muted-foreground">
-              Featured products will appear here once the store is stocked.
-            </p>
-            <Link to="/shop" className="mt-4 inline-block text-sm font-medium text-primary hover:underline">
-              Browse all products →
-            </Link>
-          </div>
-        )}
-      </section>
+      <FlashSale products={featuredQuery.data} loading={featuredQuery.isLoading} />
+
+      <ProductRow
+        title="Trending Products"
+        icon={TrendingUp}
+        accent="bg-destructive/10 text-destructive"
+        products={topRatedQuery.data}
+        loading={topRatedQuery.isLoading}
+        emptyHint="Trending products will appear here once the store is stocked."
+      />
+
+      <ProductRow
+        title="New Arrivals"
+        icon={Sparkles}
+        accent="bg-accent/15 text-accent"
+        products={newestQuery.data}
+        loading={newestQuery.isLoading}
+      />
+
+      <ProductRow
+        title="Best Sellers"
+        icon={Trophy}
+        accent="bg-primary/10 text-primary"
+        products={featuredQuery.data}
+        loading={featuredQuery.isLoading}
+      />
+
+      <ProductRow
+        title="Recommended For You"
+        icon={Wand2}
+        accent="bg-green-100 text-green-600"
+        products={recommended}
+        loading={featuredQuery.isLoading || topRatedQuery.isLoading}
+      />
+
+      {recent.length > 0 && (
+        <ProductRow
+          title="Recently Viewed"
+          icon={History}
+          accent="bg-muted text-foreground"
+          products={recent}
+          loading={false}
+        />
+      )}
 
       {/* Deal banners */}
-      <section className="mx-auto max-w-7xl px-4 py-8">
+      <section className="mx-auto max-w-7xl px-4 py-6">
         <div className="grid gap-4 md:grid-cols-3">
           <div className="relative overflow-hidden rounded-lg bg-green-50 p-6">
             <div className="relative z-10 max-w-[55%]">
@@ -223,17 +227,17 @@ function Index() {
       </section>
 
       {/* Why choose */}
-      <section className="mx-auto max-w-7xl px-4 py-10">
-        <h2 className="mb-8 text-center text-2xl font-bold">Why Choose ShopNexa?</h2>
-        <div className="grid grid-cols-2 gap-6 md:grid-cols-5">
+      <section className="mx-auto max-w-7xl px-4 py-8">
+        <h2 className="mb-6 text-center text-xl font-bold md:text-2xl">Why Choose ShopNexa?</h2>
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
           {features.map((f) => (
-            <div key={f.title} className="flex items-center gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <f.icon className="h-6 w-6" />
+            <div key={f.title} className="flex items-center gap-3 rounded-lg border bg-card p-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <f.icon className="h-5 w-5" />
               </div>
-              <div>
-                <div className="text-sm font-semibold">{f.title}</div>
-                <div className="text-xs text-muted-foreground">{f.desc}</div>
+              <div className="min-w-0">
+                <div className="truncate text-sm font-semibold">{f.title}</div>
+                <div className="truncate text-xs text-muted-foreground">{f.desc}</div>
               </div>
             </div>
           ))}
@@ -241,18 +245,21 @@ function Index() {
       </section>
 
       {/* Blog */}
-      <section className="mx-auto max-w-7xl px-4 py-8">
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Latest From Blog</h2>
+      <section className="mx-auto max-w-7xl px-4 py-6">
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Star className="h-5 w-5 text-accent" />
+            <h2 className="text-xl font-bold md:text-2xl">Latest From Blog</h2>
+          </div>
           <a href="#" className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
             View All Posts <ArrowRight className="h-4 w-4" />
           </a>
         </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {blogs.map((b) => (
-            <a key={b.title} href="#" className="group overflow-hidden rounded-lg border bg-card transition hover:shadow-md">
+            <a key={b.title} href="#" className="group overflow-hidden rounded-lg border bg-card transition hover:-translate-y-0.5 hover:shadow-md">
               <div className="aspect-[4/3] overflow-hidden bg-muted">
-                <img src={b.img} alt={b.title} loading="lazy" className="h-full w-full object-cover transition group-hover:scale-105" />
+                <img src={b.img} alt={b.title} loading="lazy" className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
               </div>
               <div className="p-4">
                 <div className="text-xs text-muted-foreground">{b.date}</div>

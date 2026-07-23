@@ -12,6 +12,7 @@ import { Toaster } from "sonner";
 import { AuthProvider } from "../context/AuthContext";
 import { CartProvider } from "../context/CartContext";
 import { WishlistProvider } from "../context/WishlistContext";
+import { MobileBottomNav } from "../components/layout/MobileBottomNav";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -127,7 +128,10 @@ function RootComponent() {
         <CartProvider>
           <WishlistProvider>
             {/* Required: nested routes render here. */}
-            <Outlet />
+            <div className="pb-16 md:pb-0">
+              <Outlet />
+            </div>
+            <MobileBottomNav />
             <Toaster position="top-right" richColors />
           </WishlistProvider>
         </CartProvider>
@@ -135,3 +139,4 @@ function RootComponent() {
     </QueryClientProvider>
   );
 }
+
