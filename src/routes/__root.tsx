@@ -128,7 +128,7 @@ function RootComponent() {
         <CartProvider>
           <WishlistProvider>
             {/* Required: nested routes render here. */}
-            <div className="pb-16 md:pb-0">
+            <div className="animate-fade-in pb-24 md:pb-0">
               <Outlet />
             </div>
             <MobileBottomNav />

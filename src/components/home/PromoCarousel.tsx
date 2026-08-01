@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Sparkles, Flame, Tag, Zap } from "lucide-react";
 import heroImg from "@/assets/hero.jpg";
 import dealElectronics from "@/assets/deal-electronics.jpg";
