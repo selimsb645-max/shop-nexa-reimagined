@@ -108,22 +108,22 @@ function Index() {
       <PromoCarousel />
 
       {/* Categories */}
-      <section id="categories" className="mx-auto max-w-7xl px-4 py-6">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold md:text-2xl">Shop by Category</h2>
+      <section id="categories" className="mx-auto max-w-7xl px-3 py-5 md:px-4 md:py-6">
+        <div className="mb-3 flex items-center justify-between md:mb-4">
+          <h2 className="text-lg font-bold md:text-2xl">Shop by Category</h2>
           <Link to="/shop" className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
             View All <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
         {categoriesQuery.isLoading ? (
-          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-8">
+          <div className="grid grid-cols-4 gap-2.5 sm:grid-cols-4 md:gap-3 lg:grid-cols-8">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="h-28 animate-pulse rounded-lg bg-muted" />
+              <div key={i} className="skeleton h-[104px] rounded-2xl md:h-28" />
             ))}
           </div>
         ) : categoriesQuery.data && categoriesQuery.data.length > 0 ? (
-          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-8">
-            {categoriesQuery.data.map((c) => {
+          <div className="grid grid-cols-4 gap-2.5 sm:grid-cols-4 md:gap-3 lg:grid-cols-8">
+            {categoriesQuery.data.map((c, idx) => {
               const cfg = CATEGORY_ICONS[c.slug] ?? { icon: Tag, color: "bg-primary/10 text-primary" };
               const Icon = cfg.icon;
               return (
@@ -131,22 +131,24 @@ function Index() {
                   key={c.id}
                   to="/shop"
                   search={{ category: c.slug }}
-                  className="group flex flex-col items-center rounded-lg border bg-card p-3 transition hover:-translate-y-0.5 hover:border-primary hover:shadow-md"
+                  style={{ animationDelay: `${Math.min(idx, 8) * 40}ms` }}
+                  className="group flex animate-fade-up flex-col items-center justify-center rounded-2xl border bg-card p-2.5 transition duration-200 hover:-translate-y-0.5 hover:border-primary hover:shadow-md active:scale-95 md:p-3"
                 >
-                  <div className={`mb-2 flex h-14 w-14 items-center justify-center rounded-full ${cfg.color} transition group-hover:scale-110`}>
-                    <Icon className="h-7 w-7" />
+                  <div className={`mb-2 flex h-12 w-12 items-center justify-center rounded-full ${cfg.color} transition group-hover:scale-110 md:h-14 md:w-14`}>
+                    <Icon className="h-6 w-6 md:h-7 md:w-7" />
                   </div>
-                  <span className="line-clamp-1 text-center text-xs font-medium md:text-sm">{c.name}</span>
+                  <span className="line-clamp-2 text-center text-[11px] font-medium leading-tight md:text-sm">{c.name}</span>
                 </Link>
               );
             })}
           </div>
         ) : (
-          <div className="rounded-lg border bg-card p-8 text-center text-sm text-muted-foreground">
+          <div className="rounded-2xl border bg-card p-8 text-center text-sm text-muted-foreground">
             Categories will appear here once added by the admin.
           </div>
         )}
       </section>
+
 
       <FlashSale products={featuredQuery.data} loading={featuredQuery.isLoading} />
 
