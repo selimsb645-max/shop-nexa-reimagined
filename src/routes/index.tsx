@@ -108,22 +108,22 @@ function Index() {
       <PromoCarousel />
 
       {/* Categories */}
-      <section id="categories" className="mx-auto max-w-7xl px-4 py-6">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold md:text-2xl">Shop by Category</h2>
+      <section id="categories" className="mx-auto max-w-7xl px-3 py-5 md:px-4 md:py-6">
+        <div className="mb-3 flex items-center justify-between md:mb-4">
+          <h2 className="text-lg font-bold md:text-2xl">Shop by Category</h2>
           <Link to="/shop" className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
             View All <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
         {categoriesQuery.isLoading ? (
-          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-8">
+          <div className="grid grid-cols-4 gap-2.5 sm:grid-cols-4 md:gap-3 lg:grid-cols-8">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="h-28 animate-pulse rounded-lg bg-muted" />
+              <div key={i} className="skeleton h-[104px] rounded-2xl md:h-28" />
             ))}
           </div>
         ) : categoriesQuery.data && categoriesQuery.data.length > 0 ? (
-          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-8">
-            {categoriesQuery.data.map((c) => {
+          <div className="grid grid-cols-4 gap-2.5 sm:grid-cols-4 md:gap-3 lg:grid-cols-8">
+            {categoriesQuery.data.map((c, idx) => {
               const cfg = CATEGORY_ICONS[c.slug] ?? { icon: Tag, color: "bg-primary/10 text-primary" };
               const Icon = cfg.icon;
               return (
@@ -131,22 +131,24 @@ function Index() {
                   key={c.id}
                   to="/shop"
                   search={{ category: c.slug }}
-                  className="group flex flex-col items-center rounded-lg border bg-card p-3 transition hover:-translate-y-0.5 hover:border-primary hover:shadow-md"
+                  style={{ animationDelay: `${Math.min(idx, 8) * 40}ms` }}
+                  className="group flex animate-fade-up flex-col items-center justify-center rounded-2xl border bg-card p-2.5 transition duration-200 hover:-translate-y-0.5 hover:border-primary hover:shadow-md active:scale-95 md:p-3"
                 >
-                  <div className={`mb-2 flex h-14 w-14 items-center justify-center rounded-full ${cfg.color} transition group-hover:scale-110`}>
-                    <Icon className="h-7 w-7" />
+                  <div className={`mb-2 flex h-12 w-12 items-center justify-center rounded-full ${cfg.color} transition group-hover:scale-110 md:h-14 md:w-14`}>
+                    <Icon className="h-6 w-6 md:h-7 md:w-7" />
                   </div>
-                  <span className="line-clamp-1 text-center text-xs font-medium md:text-sm">{c.name}</span>
+                  <span className="line-clamp-2 text-center text-[11px] font-medium leading-tight md:text-sm">{c.name}</span>
                 </Link>
               );
             })}
           </div>
         ) : (
-          <div className="rounded-lg border bg-card p-8 text-center text-sm text-muted-foreground">
+          <div className="rounded-2xl border bg-card p-8 text-center text-sm text-muted-foreground">
             Categories will appear here once added by the admin.
           </div>
         )}
       </section>
+
 
       <FlashSale products={featuredQuery.data} loading={featuredQuery.isLoading} />
 
@@ -194,50 +196,51 @@ function Index() {
       )}
 
       {/* Deal banners */}
-      <section className="mx-auto max-w-7xl px-4 py-6">
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="relative overflow-hidden rounded-lg bg-green-50 p-6">
+      <section className="mx-auto max-w-7xl px-3 py-5 md:px-4 md:py-6">
+        <div className="grid gap-3 md:grid-cols-3 md:gap-4">
+          <div className="relative min-h-[136px] overflow-hidden rounded-2xl bg-green-50 p-5 md:p-6">
             <div className="relative z-10 max-w-[55%]">
-              <div className="text-sm font-medium text-green-700">Super Value Deals</div>
-              <div className="mt-1 text-2xl font-bold text-green-800">Up to 50% Off</div>
-              <div className="mt-1 text-sm text-green-700">On Grocery Items</div>
-              <Link to="/shop" search={{ category: "grocery" }} className="mt-4 inline-block rounded-md bg-green-600 px-4 py-2 text-xs font-medium text-white hover:bg-green-700">Shop Now</Link>
+              <div className="text-xs font-medium text-green-700 md:text-sm">Super Value Deals</div>
+              <div className="mt-1 text-xl font-bold text-green-800 md:text-2xl">Up to 50% Off</div>
+              <div className="mt-1 text-xs text-green-700 md:text-sm">On Grocery Items</div>
+              <Link to="/shop" search={{ category: "grocery" }} className="ripple mt-3 inline-flex min-h-10 items-center rounded-xl bg-green-600 px-4 text-xs font-semibold text-white hover:bg-green-700 md:mt-4">Shop Now</Link>
             </div>
-            <img src={dealGrocery} alt="Grocery deals" loading="lazy" className="absolute right-0 top-0 h-full w-1/2 object-cover" />
+            <img src={dealGrocery} alt="Grocery deals" loading="lazy" decoding="async" className="absolute right-0 top-0 h-full w-1/2 object-cover" />
           </div>
-          <div className="relative overflow-hidden rounded-lg bg-blue-50 p-6">
+          <div className="relative min-h-[136px] overflow-hidden rounded-2xl bg-blue-50 p-5 md:p-6">
             <div className="relative z-10 max-w-[55%]">
-              <div className="text-sm font-medium text-primary">Electronics Sale</div>
-              <div className="mt-1 text-2xl font-bold">Up to 60% Off</div>
-              <div className="mt-1 text-sm text-muted-foreground">On Selected Items</div>
-              <Link to="/shop" search={{ category: "electronics" }} className="mt-4 inline-block rounded-md bg-primary px-4 py-2 text-xs font-medium text-primary-foreground hover:opacity-90">Shop Now</Link>
+              <div className="text-xs font-medium text-primary md:text-sm">Electronics Sale</div>
+              <div className="mt-1 text-xl font-bold md:text-2xl">Up to 60% Off</div>
+              <div className="mt-1 text-xs text-muted-foreground md:text-sm">On Selected Items</div>
+              <Link to="/shop" search={{ category: "electronics" }} className="ripple mt-3 inline-flex min-h-10 items-center rounded-xl bg-primary px-4 text-xs font-semibold text-primary-foreground hover:opacity-90 md:mt-4">Shop Now</Link>
             </div>
-            <img src={dealElectronics} alt="Electronics deals" loading="lazy" className="absolute right-0 top-0 h-full w-1/2 object-cover" />
+            <img src={dealElectronics} alt="Electronics deals" loading="lazy" decoding="async" className="absolute right-0 top-0 h-full w-1/2 object-cover" />
           </div>
-          <div className="relative overflow-hidden rounded-lg bg-orange-50 p-6">
+          <div className="relative min-h-[136px] overflow-hidden rounded-2xl bg-orange-50 p-5 md:p-6">
             <div className="relative z-10 max-w-[55%]">
-              <div className="text-sm font-medium text-orange-700">Fashion Sale</div>
-              <div className="mt-1 text-2xl font-bold text-orange-900">Up to 70% Off</div>
-              <div className="mt-1 text-sm text-orange-800">On Top Brands</div>
-              <Link to="/shop" search={{ category: "fashion" }} className="mt-4 inline-block rounded-md bg-accent px-4 py-2 text-xs font-medium text-accent-foreground hover:opacity-90">Shop Now</Link>
+              <div className="text-xs font-medium text-orange-700 md:text-sm">Fashion Sale</div>
+              <div className="mt-1 text-xl font-bold text-orange-900 md:text-2xl">Up to 70% Off</div>
+              <div className="mt-1 text-xs text-orange-800 md:text-sm">On Top Brands</div>
+              <Link to="/shop" search={{ category: "fashion" }} className="ripple mt-3 inline-flex min-h-10 items-center rounded-xl bg-accent px-4 text-xs font-semibold text-accent-foreground hover:opacity-90 md:mt-4">Shop Now</Link>
             </div>
-            <img src={dealFashion} alt="Fashion deals" loading="lazy" className="absolute right-0 top-0 h-full w-1/2 object-cover" />
+            <img src={dealFashion} alt="Fashion deals" loading="lazy" decoding="async" className="absolute right-0 top-0 h-full w-1/2 object-cover" />
           </div>
         </div>
       </section>
 
+
       {/* Why choose */}
-      <section className="mx-auto max-w-7xl px-4 py-8">
-        <h2 className="mb-6 text-center text-xl font-bold md:text-2xl">Why Choose ShopNexa?</h2>
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
+      <section className="mx-auto max-w-7xl px-3 py-6 md:px-4 md:py-8">
+        <h2 className="mb-4 text-center text-lg font-bold md:mb-6 md:text-2xl">Why Choose ShopNexa?</h2>
+        <div className="grid grid-cols-2 gap-2.5 md:grid-cols-5 md:gap-4">
           {features.map((f) => (
-            <div key={f.title} className="flex items-center gap-3 rounded-lg border bg-card p-3">
+            <div key={f.title} className="flex items-center gap-2.5 rounded-2xl border bg-card p-3">
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
                 <f.icon className="h-5 w-5" />
               </div>
               <div className="min-w-0">
-                <div className="truncate text-sm font-semibold">{f.title}</div>
-                <div className="truncate text-xs text-muted-foreground">{f.desc}</div>
+                <div className="truncate text-[13px] font-semibold md:text-sm">{f.title}</div>
+                <div className="truncate text-[11px] text-muted-foreground md:text-xs">{f.desc}</div>
               </div>
             </div>
           ))}
@@ -245,30 +248,31 @@ function Index() {
       </section>
 
       {/* Blog */}
-      <section className="mx-auto max-w-7xl px-4 py-6">
-        <div className="mb-4 flex items-center justify-between">
+      <section className="mx-auto max-w-7xl px-3 py-5 md:px-4 md:py-6">
+        <div className="mb-3 flex items-center justify-between md:mb-4">
           <div className="flex items-center gap-2">
             <Star className="h-5 w-5 text-accent" />
-            <h2 className="text-xl font-bold md:text-2xl">Latest From Blog</h2>
+            <h2 className="text-lg font-bold md:text-2xl">Latest From Blog</h2>
           </div>
           <a href="#" className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
-            View All Posts <ArrowRight className="h-4 w-4" />
+            View All <ArrowRight className="h-4 w-4" />
           </a>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-2 md:gap-4 lg:grid-cols-4">
           {blogs.map((b) => (
-            <a key={b.title} href="#" className="group overflow-hidden rounded-lg border bg-card transition hover:-translate-y-0.5 hover:shadow-md">
+            <a key={b.title} href="#" className="group overflow-hidden rounded-2xl border bg-card shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99]">
               <div className="aspect-[4/3] overflow-hidden bg-muted">
-                <img src={b.img} alt={b.title} loading="lazy" className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
+                <img src={b.img} alt={b.title} loading="lazy" decoding="async" className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
               </div>
-              <div className="p-4">
-                <div className="text-xs text-muted-foreground">{b.date}</div>
-                <h3 className="mt-1 line-clamp-2 text-sm font-semibold group-hover:text-primary">{b.title}</h3>
+              <div className="p-3 md:p-4">
+                <div className="text-[11px] text-muted-foreground">{b.date}</div>
+                <h3 className="mt-1 line-clamp-2 text-[13px] font-semibold leading-tight group-hover:text-primary md:text-sm">{b.title}</h3>
               </div>
             </a>
           ))}
         </div>
       </section>
+
 
       <SiteFooter />
       <WhatsAppFab />

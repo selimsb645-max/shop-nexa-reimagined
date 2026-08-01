@@ -39,24 +39,24 @@ export function FlashSale({
   if (!loading && items.length === 0) return null;
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-6">
-      <div className="overflow-hidden rounded-xl border bg-gradient-to-r from-destructive/5 via-accent/5 to-transparent">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b bg-background/60 px-4 py-3">
+    <section className="mx-auto max-w-7xl px-3 py-5 md:px-4 md:py-6">
+      <div className="overflow-hidden rounded-2xl border bg-gradient-to-r from-destructive/5 via-accent/5 to-transparent">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b bg-background/60 px-3 py-2.5 md:px-4 md:py-3">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-destructive text-destructive-foreground">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-destructive text-destructive-foreground">
               <Zap className="h-4 w-4" />
             </div>
             <div>
-              <h2 className="text-lg font-bold leading-tight">Flash Sale</h2>
+              <h2 className="text-base font-bold leading-tight md:text-lg">Flash Sale</h2>
               <p className="text-[11px] text-muted-foreground">Limited time offers</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-xs">
-            <span className="text-muted-foreground">Ends in</span>
+          <div className="flex items-center gap-1.5 text-xs">
+            <span className="hidden text-muted-foreground sm:inline">Ends in</span>
             {[h, m, s].map((v, i) => (
               <span
                 key={i}
-                className="rounded bg-foreground px-2 py-1 font-mono text-sm font-bold tabular-nums text-background"
+                className="rounded-md bg-foreground px-2 py-1 font-mono text-sm font-bold tabular-nums text-background"
               >
                 {v}
               </span>
@@ -70,8 +70,8 @@ export function FlashSale({
             View All <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
-        <div className="p-4">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+        <div className="p-3 md:p-4">
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4 md:gap-3 lg:grid-cols-6">
             {loading
               ? Array.from({ length: 6 }).map((_, i) => <ProductCardSkeleton key={i} />)
               : items.map((p) => <ProductCard key={p.id} product={p} />)}
@@ -79,5 +79,6 @@ export function FlashSale({
         </div>
       </div>
     </section>
+
   );
 }
