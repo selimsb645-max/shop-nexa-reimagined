@@ -1,5 +1,22 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ShoppingCart, User, LogOut, Package, Store, Shield } from "lucide-react";
+import {
+  ShoppingCart,
+  User,
+  LogOut,
+  Package,
+  Store,
+  Shield,
+  MapPin,
+  Heart,
+  Bell,
+  MessageCircle,
+  TicketPercent,
+  Wallet,
+  Sparkles,
+  UserPlus,
+  LifeBuoy,
+  Settings,
+} from "lucide-react";
 import type { ReactNode } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { signOut } from "@/services/firebase/auth";
@@ -45,7 +62,17 @@ export function AppShell({ children }: { children: ReactNode }) {
         <aside className="rounded-lg border bg-background p-3">
           <nav className="space-y-1 text-sm">
             <NavItem to="/account" icon={<User className="h-4 w-4" />} label="Profile" />
+            <NavItem to="/addresses" icon={<MapPin className="h-4 w-4" />} label="Address Book" />
             <NavItem to="/orders" icon={<Package className="h-4 w-4" />} label="Orders" />
+            <NavItem to="/wishlist" icon={<Heart className="h-4 w-4" />} label="Wishlist" />
+            <NavItem to="/notifications" icon={<Bell className="h-4 w-4" />} label="Notifications" />
+            <NavItem to="/messages" icon={<MessageCircle className="h-4 w-4" />} label="Messages" />
+            <NavItem to="/coupons" icon={<TicketPercent className="h-4 w-4" />} label="Coupons" />
+            <NavItem to="/wallet" icon={<Wallet className="h-4 w-4" />} label="Wallet" />
+            <NavItem to="/rewards" icon={<Sparkles className="h-4 w-4" />} label="Rewards" />
+            <NavItem to="/referral" icon={<UserPlus className="h-4 w-4" />} label="Refer & Earn" />
+            <NavItem to="/support" icon={<LifeBuoy className="h-4 w-4" />} label="Support" />
+            <NavItem to="/settings" icon={<Settings className="h-4 w-4" />} label="Settings" />
             <NavItem to="/seller" icon={<Store className="h-4 w-4" />} label="Seller Panel" />
             {profile?.role === "admin" && (
               <NavItem to="/admin" icon={<Shield className="h-4 w-4" />} label="Admin" />
