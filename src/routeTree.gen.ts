@@ -28,6 +28,7 @@ import { Route as AuthenticatedReferralRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated/orders'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
+import { Route as AuthenticatedCouponsRouteImport } from './routes/_authenticated/coupons'
 import { Route as AuthenticatedCheckoutRouteImport } from './routes/_authenticated/checkout'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAddressesRouteImport } from './routes/_authenticated/addresses'
@@ -153,6 +154,11 @@ const AuthenticatedNotificationsRoute =
 const AuthenticatedMessagesRoute = AuthenticatedMessagesRouteImport.update({
   id: '/messages',
   path: '/messages',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCouponsRoute = AuthenticatedCouponsRouteImport.update({
+  id: '/coupons',
+  path: '/coupons',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedCheckoutRoute = AuthenticatedCheckoutRouteImport.update({
@@ -348,6 +354,7 @@ export interface FileRoutesByFullPath {
   '/addresses': typeof AuthenticatedAddressesRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/checkout': typeof AuthenticatedCheckoutRoute
+  '/coupons': typeof AuthenticatedCouponsRoute
   '/messages': typeof AuthenticatedMessagesRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/orders': typeof AuthenticatedOrdersRoute
@@ -398,6 +405,7 @@ export interface FileRoutesByTo {
   '/account': typeof AuthenticatedAccountRoute
   '/addresses': typeof AuthenticatedAddressesRoute
   '/checkout': typeof AuthenticatedCheckoutRoute
+  '/coupons': typeof AuthenticatedCouponsRoute
   '/messages': typeof AuthenticatedMessagesRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/orders': typeof AuthenticatedOrdersRoute
@@ -448,6 +456,7 @@ export interface FileRoutesById {
   '/_authenticated/addresses': typeof AuthenticatedAddressesRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/checkout': typeof AuthenticatedCheckoutRoute
+  '/_authenticated/coupons': typeof AuthenticatedCouponsRoute
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/orders': typeof AuthenticatedOrdersRoute
@@ -501,6 +510,7 @@ export interface FileRouteTypes {
     | '/addresses'
     | '/admin'
     | '/checkout'
+    | '/coupons'
     | '/messages'
     | '/notifications'
     | '/orders'
@@ -551,6 +561,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/addresses'
     | '/checkout'
+    | '/coupons'
     | '/messages'
     | '/notifications'
     | '/orders'
@@ -600,6 +611,7 @@ export interface FileRouteTypes {
     | '/_authenticated/addresses'
     | '/_authenticated/admin'
     | '/_authenticated/checkout'
+    | '/_authenticated/coupons'
     | '/_authenticated/messages'
     | '/_authenticated/notifications'
     | '/_authenticated/orders'
@@ -785,6 +797,13 @@ declare module '@tanstack/react-router' {
       path: '/messages'
       fullPath: '/messages'
       preLoaderRoute: typeof AuthenticatedMessagesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/coupons': {
+      id: '/_authenticated/coupons'
+      path: '/coupons'
+      fullPath: '/coupons'
+      preLoaderRoute: typeof AuthenticatedCouponsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/checkout': {
@@ -1136,6 +1155,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAddressesRoute: typeof AuthenticatedAddressesRoute
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedCheckoutRoute: typeof AuthenticatedCheckoutRoute
+  AuthenticatedCouponsRoute: typeof AuthenticatedCouponsRoute
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedOrdersRoute: typeof AuthenticatedOrdersRoute
@@ -1153,6 +1173,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAddressesRoute: AuthenticatedAddressesRoute,
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedCheckoutRoute: AuthenticatedCheckoutRoute,
+  AuthenticatedCouponsRoute: AuthenticatedCouponsRoute,
   AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedOrdersRoute: AuthenticatedOrdersRoute,
