@@ -19,6 +19,7 @@ import { Route as CartRouteImport } from './routes/cart'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductSlugRouteImport } from './routes/product.$slug'
+import { Route as AuthenticatedWalletRouteImport } from './routes/_authenticated/wallet'
 import { Route as AuthenticatedSellerRouteImport } from './routes/_authenticated/seller'
 import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated/orders'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
@@ -103,6 +104,11 @@ const ProductSlugRoute = ProductSlugRouteImport.update({
   id: '/product/$slug',
   path: '/product/$slug',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedWalletRoute = AuthenticatedWalletRouteImport.update({
+  id: '/wallet',
+  path: '/wallet',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedSellerRoute = AuthenticatedSellerRouteImport.update({
   id: '/seller',
@@ -322,6 +328,7 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/orders': typeof AuthenticatedOrdersRoute
   '/seller': typeof AuthenticatedSellerRouteWithChildren
+  '/wallet': typeof AuthenticatedWalletRoute
   '/product/$slug': typeof ProductSlugRoute
   '/admin/banners': typeof AuthenticatedAdminBannersRoute
   '/admin/categories': typeof AuthenticatedAdminCategoriesRoute
@@ -366,6 +373,7 @@ export interface FileRoutesByTo {
   '/messages': typeof AuthenticatedMessagesRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/orders': typeof AuthenticatedOrdersRoute
+  '/wallet': typeof AuthenticatedWalletRoute
   '/product/$slug': typeof ProductSlugRoute
   '/admin/banners': typeof AuthenticatedAdminBannersRoute
   '/admin/categories': typeof AuthenticatedAdminCategoriesRoute
@@ -412,6 +420,7 @@ export interface FileRoutesById {
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/orders': typeof AuthenticatedOrdersRoute
   '/_authenticated/seller': typeof AuthenticatedSellerRouteWithChildren
+  '/_authenticated/wallet': typeof AuthenticatedWalletRoute
   '/product/$slug': typeof ProductSlugRoute
   '/_authenticated/admin/banners': typeof AuthenticatedAdminBannersRoute
   '/_authenticated/admin/categories': typeof AuthenticatedAdminCategoriesRoute
@@ -460,6 +469,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/orders'
     | '/seller'
+    | '/wallet'
     | '/product/$slug'
     | '/admin/banners'
     | '/admin/categories'
@@ -504,6 +514,7 @@ export interface FileRouteTypes {
     | '/messages'
     | '/notifications'
     | '/orders'
+    | '/wallet'
     | '/product/$slug'
     | '/admin/banners'
     | '/admin/categories'
@@ -549,6 +560,7 @@ export interface FileRouteTypes {
     | '/_authenticated/notifications'
     | '/_authenticated/orders'
     | '/_authenticated/seller'
+    | '/_authenticated/wallet'
     | '/product/$slug'
     | '/_authenticated/admin/banners'
     | '/_authenticated/admin/categories'
@@ -663,6 +675,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/product/$slug'
       preLoaderRoute: typeof ProductSlugRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/wallet': {
+      id: '/_authenticated/wallet'
+      path: '/wallet'
+      fullPath: '/wallet'
+      preLoaderRoute: typeof AuthenticatedWalletRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/seller': {
       id: '/_authenticated/seller'
@@ -1045,6 +1064,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedOrdersRoute: typeof AuthenticatedOrdersRoute
   AuthenticatedSellerRoute: typeof AuthenticatedSellerRouteWithChildren
+  AuthenticatedWalletRoute: typeof AuthenticatedWalletRoute
   AuthenticatedOrderOrderIdRoute: typeof AuthenticatedOrderOrderIdRoute
 }
 
@@ -1057,6 +1077,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedOrdersRoute: AuthenticatedOrdersRoute,
   AuthenticatedSellerRoute: AuthenticatedSellerRouteWithChildren,
+  AuthenticatedWalletRoute: AuthenticatedWalletRoute,
   AuthenticatedOrderOrderIdRoute: AuthenticatedOrderOrderIdRoute,
 }
 
