@@ -1,5 +1,22 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ShoppingCart, User, LogOut, Package, Store, Shield } from "lucide-react";
+import {
+  ShoppingCart,
+  User,
+  LogOut,
+  Package,
+  Store,
+  Shield,
+  MapPin,
+  Heart,
+  Bell,
+  MessageCircle,
+  TicketPercent,
+  Wallet,
+  Sparkles,
+  UserPlus,
+  LifeBuoy,
+  Settings,
+} from "lucide-react";
 import type { ReactNode } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { signOut } from "@/services/firebase/auth";
