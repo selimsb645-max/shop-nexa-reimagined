@@ -53,7 +53,7 @@ function SettingsPage() {
     }
   };
 
-  const resetPassword = async () => {
+  const sendResetLink = async () => {
     if (!user?.email) return;
     setResetting(true);
     try {
@@ -181,7 +181,7 @@ function SettingsPage() {
               </p>
             </div>
             <button
-              onClick={() => void resetPassword()}
+              onClick={() => void sendResetLink()}
               disabled={resetting}
               className="flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-60"
             >
