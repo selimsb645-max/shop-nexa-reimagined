@@ -7,7 +7,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { Spinner } from "@/components/common/Spinner";
 import { useAuth } from "@/context/AuthContext";
 import { getCustomerSettings, saveCustomerSettings } from "@/services/firebase/customerSettings";
-import { sendReset } from "@/services/firebase/auth";
+import { resetPassword } from "@/services/firebase/auth";
 import { DEFAULT_SETTINGS, type CustomerSettings } from "@/types/customer";
 
 export const Route = createFileRoute("/_authenticated/settings")({
@@ -57,7 +57,7 @@ function SettingsPage() {
     if (!user?.email) return;
     setResetting(true);
     try {
-      await sendReset(user.email);
+      await resetPassword(user.email);
       toast.success("Password reset email sent");
     } catch {
       toast.error("Could not send the reset email");
