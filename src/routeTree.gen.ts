@@ -22,6 +22,7 @@ import { Route as ProductSlugRouteImport } from './routes/product.$slug'
 import { Route as AuthenticatedWalletRouteImport } from './routes/_authenticated/wallet'
 import { Route as AuthenticatedSellerRouteImport } from './routes/_authenticated/seller'
 import { Route as AuthenticatedRewardsRouteImport } from './routes/_authenticated/rewards'
+import { Route as AuthenticatedReferralRouteImport } from './routes/_authenticated/referral'
 import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated/orders'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
@@ -119,6 +120,11 @@ const AuthenticatedSellerRoute = AuthenticatedSellerRouteImport.update({
 const AuthenticatedRewardsRoute = AuthenticatedRewardsRouteImport.update({
   id: '/rewards',
   path: '/rewards',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedReferralRoute = AuthenticatedReferralRouteImport.update({
+  id: '/referral',
+  path: '/referral',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedOrdersRoute = AuthenticatedOrdersRouteImport.update({
@@ -333,6 +339,7 @@ export interface FileRoutesByFullPath {
   '/messages': typeof AuthenticatedMessagesRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/orders': typeof AuthenticatedOrdersRoute
+  '/referral': typeof AuthenticatedReferralRoute
   '/rewards': typeof AuthenticatedRewardsRoute
   '/seller': typeof AuthenticatedSellerRouteWithChildren
   '/wallet': typeof AuthenticatedWalletRoute
@@ -380,6 +387,7 @@ export interface FileRoutesByTo {
   '/messages': typeof AuthenticatedMessagesRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/orders': typeof AuthenticatedOrdersRoute
+  '/referral': typeof AuthenticatedReferralRoute
   '/rewards': typeof AuthenticatedRewardsRoute
   '/wallet': typeof AuthenticatedWalletRoute
   '/product/$slug': typeof ProductSlugRoute
@@ -427,6 +435,7 @@ export interface FileRoutesById {
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/orders': typeof AuthenticatedOrdersRoute
+  '/_authenticated/referral': typeof AuthenticatedReferralRoute
   '/_authenticated/rewards': typeof AuthenticatedRewardsRoute
   '/_authenticated/seller': typeof AuthenticatedSellerRouteWithChildren
   '/_authenticated/wallet': typeof AuthenticatedWalletRoute
@@ -477,6 +486,7 @@ export interface FileRouteTypes {
     | '/messages'
     | '/notifications'
     | '/orders'
+    | '/referral'
     | '/rewards'
     | '/seller'
     | '/wallet'
@@ -524,6 +534,7 @@ export interface FileRouteTypes {
     | '/messages'
     | '/notifications'
     | '/orders'
+    | '/referral'
     | '/rewards'
     | '/wallet'
     | '/product/$slug'
@@ -570,6 +581,7 @@ export interface FileRouteTypes {
     | '/_authenticated/messages'
     | '/_authenticated/notifications'
     | '/_authenticated/orders'
+    | '/_authenticated/referral'
     | '/_authenticated/rewards'
     | '/_authenticated/seller'
     | '/_authenticated/wallet'
@@ -707,6 +719,13 @@ declare module '@tanstack/react-router' {
       path: '/rewards'
       fullPath: '/rewards'
       preLoaderRoute: typeof AuthenticatedRewardsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/referral': {
+      id: '/_authenticated/referral'
+      path: '/referral'
+      fullPath: '/referral'
+      preLoaderRoute: typeof AuthenticatedReferralRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/orders': {
@@ -1082,6 +1101,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedOrdersRoute: typeof AuthenticatedOrdersRoute
+  AuthenticatedReferralRoute: typeof AuthenticatedReferralRoute
   AuthenticatedRewardsRoute: typeof AuthenticatedRewardsRoute
   AuthenticatedSellerRoute: typeof AuthenticatedSellerRouteWithChildren
   AuthenticatedWalletRoute: typeof AuthenticatedWalletRoute
@@ -1096,6 +1116,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedOrdersRoute: AuthenticatedOrdersRoute,
+  AuthenticatedReferralRoute: AuthenticatedReferralRoute,
   AuthenticatedRewardsRoute: AuthenticatedRewardsRoute,
   AuthenticatedSellerRoute: AuthenticatedSellerRouteWithChildren,
   AuthenticatedWalletRoute: AuthenticatedWalletRoute,
