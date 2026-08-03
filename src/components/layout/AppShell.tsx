@@ -73,10 +73,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <NavItem to="/referral" icon={<UserPlus className="h-4 w-4" />} label="Refer & Earn" />
             <NavItem to="/support" icon={<LifeBuoy className="h-4 w-4" />} label="Support" />
             <NavItem to="/settings" icon={<Settings className="h-4 w-4" />} label="Settings" />
-            <NavItem to="/seller" icon={<Store className="h-4 w-4" />} label="Seller Panel" />
-            {profile?.role === "admin" && (
-              <NavItem to="/admin" icon={<Shield className="h-4 w-4" />} label="Admin" />
-            )}
+
           </nav>
         </aside>
         <main>{children}</main>
