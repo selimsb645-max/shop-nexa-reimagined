@@ -94,7 +94,7 @@ function AccountMenu() {
         <Link to="/account" className="block px-3 py-2 text-sm hover:bg-muted">Profile</Link>
         <Link to="/orders" className="block px-3 py-2 text-sm hover:bg-muted">Orders</Link>
         <Link to="/wishlist" className="block px-3 py-2 text-sm hover:bg-muted">Wishlist</Link>
-        <Link to="/seller" className="block px-3 py-2 text-sm hover:bg-muted">Seller Panel</Link>
+        <Link to="/wallet" className="block px-3 py-2 text-sm hover:bg-muted">Wallet</Link>
         {profile?.role === "admin" && (
           <Link to="/admin" className="block px-3 py-2 text-sm hover:bg-muted">Admin</Link>
         )}

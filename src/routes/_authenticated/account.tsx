@@ -1,26 +1,128 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
+import { useQuery } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { CheckCircle2, AlertCircle, Upload } from "lucide-react";
-import { AppShell } from "@/components/layout/AppShell";
+import {
+  CheckCircle2,
+  AlertCircle,
+  Upload,
+  Bell,
+  Settings,
+  Wallet,
+  TicketPercent,
+  Sparkles,
+  UserPlus,
+  Heart,
+  History,
+  MapPin,
+  MessageCircle,
+  LifeBuoy,
+  BookOpen,
+  Phone,
+  ChevronRight,
+  Clock3,
+  Loader,
+  Box,
+  Truck,
+  Bike,
+  PackageCheck,
+  Undo2,
+  BadgeDollarSign,
+  ShieldCheck,
+  LogOut,
+  ArrowLeft,
+} from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useWishlist } from "@/context/WishlistContext";
+import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { profileSchema, type ProfileValues } from "@/utils/validation";
-import { setDisplayName, setPhotoURL, resendVerification } from "@/services/firebase/auth";
+import { setDisplayName, setPhotoURL, resendVerification, signOut } from "@/services/firebase/auth";
 import { uploadAvatar } from "@/services/firebase/storage";
 import { mapFirebaseError } from "@/utils/errors";
 import { Spinner } from "@/components/common/Spinner";
+import { firebaseConfigured } from "@/services/firebase/config";
+import { listOrders } from "@/services/firebase/orders";
+import { getWalletBalance, getRewardPoints } from "@/services/firebase/wallet";
+import { listAvailableCoupons } from "@/services/firebase/customerCoupons";
+import { countUnreadNotifications } from "@/services/firebase/notifications";
+import { countUnreadMessages } from "@/services/firebase/messages";
+import { listAddresses } from "@/services/firebase/addresses";
+import { formatPrice } from "@/utils/format";
+import type { Order } from "@/types/commerce";
 
 export const Route = createFileRoute("/_authenticated/account")({
   component: AccountPage,
 });
 
+function isOutForDelivery(o: Order) {
+  return o.tracking?.some((t) => /out for delivery/i.test(t.note ?? "")) ?? false;
+}
+
+function bucketOrders(orders: Order[]) {
+  const out = orders.filter((o) => o.status === "shipped" && isOutForDelivery(o));
+  const outIds = new Set(out.map((o) => o.id));
+  return {
+    pending: orders.filter((o) => o.status === "pending").length,
+    processing: orders.filter((o) => o.status === "processing").length,
+    packed: orders.filter((o) => o.status === "confirmed").length,
+    shipped: orders.filter((o) => o.status === "shipped" && !outIds.has(o.id)).length,
+    outForDelivery: out.length,
+    delivered: orders.filter((o) => o.status === "delivered").length,
+    returns: orders.filter((o) => o.status === "cancelled").length,
+    refunds: orders.filter((o) => o.payment?.status === "refunded").length,
+  };
+}
+
 function AccountPage() {
   const { user, profile, refreshProfile } = useAuth();
+  const { count: wishlistCount } = useWishlist();
+  const { ids: recentIds } = useRecentlyViewed();
+  const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [resending, setResending] = useState(false);
+  const [editing, setEditing] = useState(false);
+
+  const enabled = Boolean(user && firebaseConfigured);
+  const uid = user?.uid;
+
+  const { data: orders } = useQuery({
+    queryKey: ["orders", uid],
+    queryFn: () => listOrders(uid!),
+    enabled,
+  });
+  const { data: balance } = useQuery({
+    queryKey: ["wallet", "balance", uid],
+    queryFn: () => getWalletBalance(uid!),
+    enabled,
+  });
+  const { data: points } = useQuery({
+    queryKey: ["rewards", "points", uid],
+    queryFn: () => getRewardPoints(uid!),
+    enabled,
+  });
+  const { data: coupons } = useQuery({
+    queryKey: ["coupons", "available"],
+    queryFn: () => listAvailableCoupons(),
+    enabled,
+  });
+  const { data: unreadNotifs } = useQuery({
+    queryKey: ["notifications", "unread", uid],
+    queryFn: () => countUnreadNotifications(uid!),
+    enabled,
+  });
+  const { data: unreadMsgs } = useQuery({
+    queryKey: ["messages", "unread", uid],
+    queryFn: () => countUnreadMessages(uid!),
+    enabled,
+  });
+  const { data: addresses } = useQuery({
+    queryKey: ["addresses", uid],
+    queryFn: () => listAddresses(uid!),
+    enabled,
+  });
 
   const {
     register,
@@ -33,6 +135,8 @@ function AccountPage() {
   });
 
   if (!user) return null;
+
+  const counts = bucketOrders(orders ?? []);
 
   const onSave = async (v: ProfileValues) => {
     try {
@@ -74,111 +178,500 @@ function AccountPage() {
     }
   };
 
+  const onSignOut = async () => {
+    await signOut();
+    toast.success("Signed out");
+    navigate({ to: "/" });
+  };
+
   const avatar = profile?.photoURL || user.photoURL;
-  const initial = (profile?.displayName || user.displayName || user.email || "?").charAt(0).toUpperCase();
+  const name = profile?.displayName || user.displayName || user.email || "Shopper";
+  const initial = name.charAt(0).toUpperCase();
 
   return (
-    <AppShell>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">My Profile</h1>
-          <p className="text-sm text-muted-foreground">Manage your ShopNexa account</p>
-        </div>
+    <div className="min-h-screen bg-muted/30 pb-10">
+      {/* Premium gradient profile header */}
+      <header className="relative overflow-hidden bg-gradient-to-br from-primary via-primary to-accent text-primary-foreground">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-primary-foreground/10 blur-2xl"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -bottom-24 -left-16 h-56 w-56 rounded-full bg-primary-foreground/10 blur-2xl"
+        />
+        <div className="relative mx-auto max-w-5xl px-4 pb-20 pt-5 sm:px-6">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+            <Link
+              to="/"
+              className="inline-flex min-w-0 items-center gap-1.5 text-sm font-medium text-primary-foreground/85 transition hover:text-primary-foreground"
+            >
+              <ArrowLeft className="h-4 w-4 shrink-0" strokeWidth={2} />
+              <span className="truncate">Continue shopping</span>
+            </Link>
+            <div className="flex shrink-0 items-center gap-2">
+              <Link
+                to="/notifications"
+                aria-label="Notifications"
+                className="relative grid h-10 w-10 place-items-center rounded-full bg-primary-foreground/15 backdrop-blur transition hover:bg-primary-foreground/25 active:scale-95"
+              >
+                <Bell className="h-5 w-5" strokeWidth={2} />
+                {Boolean(unreadNotifs) && (
+                  <span className="absolute -right-0.5 -top-0.5 grid h-5 min-w-5 place-items-center rounded-full bg-accent px-1 text-[10px] font-bold text-accent-foreground">
+                    {unreadNotifs! > 9 ? "9+" : unreadNotifs}
+                  </span>
+                )}
+              </Link>
+              <Link
+                to="/settings"
+                aria-label="Settings"
+                className="grid h-10 w-10 place-items-center rounded-full bg-primary-foreground/15 backdrop-blur transition hover:bg-primary-foreground/25 active:scale-95"
+              >
+                <Settings className="h-5 w-5" strokeWidth={2} />
+              </Link>
+            </div>
+          </div>
 
-        <section className="rounded-lg border bg-background p-6">
-          <div className="flex items-center gap-5">
-            <div className="relative">
+          <div className="mt-6 flex min-w-0 items-center gap-4">
+            <div className="relative shrink-0">
               {avatar ? (
-                <img src={avatar} alt="Avatar" className="h-20 w-20 rounded-full object-cover" />
+                <img
+                  src={avatar}
+                  alt={name}
+                  className="h-20 w-20 rounded-2xl border-2 border-primary-foreground/40 object-cover shadow-lg sm:h-24 sm:w-24"
+                />
               ) : (
-                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground">
+                <div className="grid h-20 w-20 place-items-center rounded-2xl border-2 border-primary-foreground/40 bg-primary-foreground/15 text-3xl font-bold shadow-lg sm:h-24 sm:w-24">
                   {initial}
                 </div>
               )}
-              {uploading && (
-                <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 text-white">
-                  <Spinner />
-                </div>
-              )}
-            </div>
-            <div>
               <button
                 type="button"
                 onClick={() => fileRef.current?.click()}
                 disabled={uploading}
-                className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted disabled:opacity-60"
+                aria-label="Change avatar"
+                className="absolute -bottom-1.5 -right-1.5 grid h-8 w-8 place-items-center rounded-full bg-accent text-accent-foreground shadow-md transition hover:opacity-90 active:scale-95 disabled:opacity-60"
               >
-                <Upload className="h-4 w-4" /> Change avatar
+                {uploading ? <Spinner /> : <Upload className="h-4 w-4" strokeWidth={2} />}
               </button>
-              <p className="mt-1 text-xs text-muted-foreground">JPG or PNG, up to 5MB</p>
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                onChange={onFile}
-                className="hidden"
-              />
+              <input ref={fileRef} type="file" accept="image/*" onChange={onFile} className="hidden" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="truncate text-xl font-bold sm:text-2xl">{name}</h1>
+              <p className="truncate text-sm text-primary-foreground/80">{user.email}</p>
+              <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-primary-foreground/15 px-2.5 py-1 text-[11px] font-semibold backdrop-blur">
+                <ShieldCheck className="h-3.5 w-3.5" strokeWidth={2} />
+                Shop Nexa Member
+              </span>
             </div>
           </div>
+        </div>
+      </header>
+
+      <div className="mx-auto -mt-14 max-w-5xl space-y-6 px-4 sm:px-6">
+        {/* Stat strip */}
+        <section className="grid grid-cols-3 gap-3 rounded-2xl border bg-background p-4 shadow-sm">
+          <StatTile
+            to="/wallet"
+            icon={<Wallet className="h-5 w-5" strokeWidth={2} />}
+            label="Wallet"
+            value={formatPrice(balance ?? 0)}
+          />
+          <StatTile
+            to="/wishlist"
+            icon={<Heart className="h-5 w-5" strokeWidth={2} />}
+            label="Wishlist"
+            value={String(wishlistCount)}
+          />
+          <StatTile
+            to="/coupons"
+            icon={<TicketPercent className="h-5 w-5" strokeWidth={2} />}
+            label="Coupons"
+            value={String(coupons?.length ?? 0)}
+          />
         </section>
 
-        <form onSubmit={handleSubmit(onSave)} className="space-y-4 rounded-lg border bg-background p-6">
-          <div>
-            <label className="mb-1 block text-sm font-medium">Display name</label>
-            <input
-              {...register("displayName")}
-              className="w-full rounded-md border px-3 py-2.5 text-sm outline-none focus:border-primary"
+        {/* Quick services */}
+        <Section title="Quick services">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <ServiceCard
+              to="/wallet"
+              icon={<Wallet className="h-6 w-6" strokeWidth={2} />}
+              label="Wallet"
+              hint={formatPrice(balance ?? 0)}
             />
-            {errors.displayName && (
-              <p className="mt-1 text-xs text-destructive">{errors.displayName.message}</p>
-            )}
+            <ServiceCard
+              to="/coupons"
+              icon={<TicketPercent className="h-6 w-6" strokeWidth={2} />}
+              label="Coupons"
+              hint={`${coupons?.length ?? 0} available`}
+            />
+            <ServiceCard
+              to="/rewards"
+              icon={<Sparkles className="h-6 w-6" strokeWidth={2} />}
+              label="Rewards"
+              hint={`${points ?? 0} points`}
+            />
+            <ServiceCard
+              to="/referral"
+              icon={<UserPlus className="h-6 w-6" strokeWidth={2} />}
+              label="Refer & Earn"
+              hint="Invite friends"
+            />
           </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium">Email</label>
-            <div className="flex items-center gap-2">
-              <input
-                value={user.email ?? ""}
-                readOnly
-                className="w-full rounded-md border bg-muted px-3 py-2.5 text-sm text-muted-foreground"
-              />
-              {user.emailVerified ? (
-                <span className="flex items-center gap-1 whitespace-nowrap rounded-md bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
-                  <CheckCircle2 className="h-3.5 w-3.5" /> Verified
-                </span>
-              ) : (
-                <span className="flex items-center gap-1 whitespace-nowrap rounded-md bg-yellow-100 px-2 py-1 text-xs font-medium text-yellow-800">
-                  <AlertCircle className="h-3.5 w-3.5" /> Unverified
-                </span>
-              )}
+        </Section>
+
+        {/* My orders */}
+        <Section
+          title="My orders"
+          action={
+            <Link to="/orders" className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">
+              View all <ChevronRight className="h-4 w-4" strokeWidth={2} />
+            </Link>
+          }
+        >
+          <div className="grid grid-cols-4 gap-2 sm:grid-cols-8">
+            <OrderTile icon={<Clock3 className="h-6 w-6" strokeWidth={2} />} label="Pending" count={counts.pending} />
+            <OrderTile icon={<Loader className="h-6 w-6" strokeWidth={2} />} label="Processing" count={counts.processing} />
+            <OrderTile icon={<Box className="h-6 w-6" strokeWidth={2} />} label="Packed" count={counts.packed} />
+            <OrderTile icon={<Truck className="h-6 w-6" strokeWidth={2} />} label="Shipped" count={counts.shipped} />
+            <OrderTile icon={<Bike className="h-6 w-6" strokeWidth={2} />} label="On the way" count={counts.outForDelivery} />
+            <OrderTile icon={<PackageCheck className="h-6 w-6" strokeWidth={2} />} label="Delivered" count={counts.delivered} />
+            <OrderTile icon={<Undo2 className="h-6 w-6" strokeWidth={2} />} label="Returns" count={counts.returns} />
+            <OrderTile icon={<BadgeDollarSign className="h-6 w-6" strokeWidth={2} />} label="Refunds" count={counts.refunds} />
+          </div>
+        </Section>
+
+        {/* Shopping */}
+        <Section title="Shopping">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <RowCard
+              to="/wishlist"
+              icon={<Heart className="h-5 w-5" strokeWidth={2} />}
+              label="Wishlist"
+              hint={`${wishlistCount} saved item${wishlistCount === 1 ? "" : "s"}`}
+            />
+            <RowCard
+              to="/"
+              icon={<History className="h-5 w-5" strokeWidth={2} />}
+              label="Recently viewed"
+              hint={`${recentIds.length} product${recentIds.length === 1 ? "" : "s"}`}
+            />
+            <RowCard
+              to="/addresses"
+              icon={<MapPin className="h-5 w-5" strokeWidth={2} />}
+              label="Saved addresses"
+              hint={`${addresses?.length ?? 0} address${(addresses?.length ?? 0) === 1 ? "" : "es"}`}
+            />
+          </div>
+        </Section>
+
+        {/* Communication */}
+        <Section title="Communication">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <RowCard
+              to="/messages"
+              icon={<MessageCircle className="h-5 w-5" strokeWidth={2} />}
+              label="Messages"
+              hint={unreadMsgs ? `${unreadMsgs} unread` : "All caught up"}
+              badge={unreadMsgs || 0}
+            />
+            <RowCard
+              to="/notifications"
+              icon={<Bell className="h-5 w-5" strokeWidth={2} />}
+              label="Notifications"
+              hint={unreadNotifs ? `${unreadNotifs} unread` : "All caught up"}
+              badge={unreadNotifs || 0}
+            />
+          </div>
+        </Section>
+
+        {/* Support */}
+        <Section title="Support">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <RowCard
+              to="/support"
+              icon={<LifeBuoy className="h-5 w-5" strokeWidth={2} />}
+              label="Customer support"
+              hint="Open a ticket"
+            />
+            <RowCard
+              to="/support"
+              icon={<BookOpen className="h-5 w-5" strokeWidth={2} />}
+              label="Help center"
+              hint="FAQs & guides"
+            />
+            <ExternalRowCard
+              href="https://wa.me/8801324997271"
+              icon={<Phone className="h-5 w-5" strokeWidth={2} />}
+              label="Contact us"
+              hint="WhatsApp 01324997271"
+            />
+          </div>
+        </Section>
+
+        {/* Settings & account */}
+        <Section
+          title="Settings"
+          action={
+            <button
+              type="button"
+              onClick={() => setEditing((v) => !v)}
+              className="text-sm font-semibold text-primary hover:underline"
+            >
+              {editing ? "Close" : "Edit profile"}
+            </button>
+          }
+        >
+          <div className="grid gap-3 sm:grid-cols-2">
+            <RowCard
+              to="/settings"
+              icon={<Settings className="h-5 w-5" strokeWidth={2} />}
+              label="Preferences"
+              hint="Notifications, currency & language"
+            />
+            <div className="flex items-center gap-3 rounded-2xl border bg-background p-4 shadow-sm">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                {user.emailVerified ? (
+                  <CheckCircle2 className="h-5 w-5" strokeWidth={2} />
+                ) : (
+                  <AlertCircle className="h-5 w-5" strokeWidth={2} />
+                )}
+              </span>
+              <div className="min-w-0">
+                <div className="truncate text-sm font-semibold">
+                  {user.emailVerified ? "Email verified" : "Email not verified"}
+                </div>
+                {user.emailVerified ? (
+                  <div className="truncate text-xs text-muted-foreground">{user.email}</div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={onResend}
+                    disabled={resending}
+                    className="text-xs font-medium text-primary hover:underline disabled:opacity-60"
+                  >
+                    {resending ? "Sending..." : "Resend verification email"}
+                  </button>
+                )}
+              </div>
             </div>
-            {!user.emailVerified && (
+          </div>
+
+          {editing && (
+            <form
+              onSubmit={handleSubmit(onSave)}
+              className="mt-3 animate-fade-in space-y-4 rounded-2xl border bg-background p-5 shadow-sm"
+            >
+              <div>
+                <label className="mb-1 block text-sm font-medium">Display name</label>
+                <input
+                  {...register("displayName")}
+                  className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:border-primary"
+                />
+                {errors.displayName && (
+                  <p className="mt-1 text-xs text-destructive">{errors.displayName.message}</p>
+                )}
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium">Email</label>
+                <input
+                  value={user.email ?? ""}
+                  readOnly
+                  className="w-full rounded-xl border bg-muted px-3 py-2.5 text-sm text-muted-foreground"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium">Account type</label>
+                <input
+                  value={profile?.role ?? "customer"}
+                  readOnly
+                  className="w-full rounded-xl border bg-muted px-3 py-2.5 text-sm capitalize text-muted-foreground"
+                />
+              </div>
               <button
-                type="button"
-                onClick={onResend}
-                disabled={resending}
-                className="mt-2 text-xs text-primary hover:underline disabled:opacity-60"
+                type="submit"
+                disabled={isSubmitting || !isDirty}
+                className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition hover:opacity-90 active:scale-[0.98] disabled:opacity-60"
               >
-                {resending ? "Sending..." : "Resend verification email"}
+                {isSubmitting && <Spinner />} Save changes
               </button>
-            )}
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium">Account type</label>
-            <input
-              value={profile?.role ?? "customer"}
-              readOnly
-              className="w-full rounded-md border bg-muted px-3 py-2.5 text-sm capitalize text-muted-foreground"
-            />
-          </div>
+            </form>
+          )}
+
           <button
-            type="submit"
-            disabled={isSubmitting || !isDirty}
-            className="flex items-center gap-2 rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-60"
+            type="button"
+            onClick={onSignOut}
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border bg-background px-4 py-3 text-sm font-semibold text-destructive shadow-sm transition hover:bg-destructive/5 active:scale-[0.99]"
           >
-            {isSubmitting && <Spinner />} Save changes
+            <LogOut className="h-5 w-5" strokeWidth={2} /> Sign out
           </button>
-        </form>
+        </Section>
       </div>
-    </AppShell>
+    </div>
+  );
+}
+
+function Section({
+  title,
+  action,
+  children,
+}: {
+  title: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="animate-fade-in">
+      <div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+        <h2 className="truncate text-base font-bold tracking-tight">{title}</h2>
+        {action}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function StatTile({
+  to,
+  icon,
+  label,
+  value,
+}: {
+  to: string;
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}) {
+  return (
+    <Link
+      to={to}
+      className="flex flex-col items-center gap-1 rounded-xl px-2 py-1 text-center transition hover:bg-muted/60 active:scale-[0.98]"
+    >
+      <span className="text-primary">{icon}</span>
+      <span className="truncate text-sm font-bold">{value}</span>
+      <span className="text-[11px] text-muted-foreground">{label}</span>
+    </Link>
+  );
+}
+
+function ServiceCard({
+  to,
+  icon,
+  label,
+  hint,
+}: {
+  to: string;
+  icon: React.ReactNode;
+  label: string;
+  hint: string;
+}) {
+  return (
+    <Link
+      to={to}
+      className="group flex flex-col items-start gap-3 rounded-2xl border bg-background p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md active:scale-[0.98]"
+    >
+      <span className="grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
+        {icon}
+      </span>
+      <span className="min-w-0">
+        <span className="block truncate text-sm font-semibold">{label}</span>
+        <span className="block truncate text-xs text-muted-foreground">{hint}</span>
+      </span>
+    </Link>
+  );
+}
+
+function OrderTile({
+  icon,
+  label,
+  count,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  count: number;
+}) {
+  return (
+    <Link
+      to="/orders"
+      className="group relative flex flex-col items-center gap-2 rounded-2xl border bg-background px-2 py-4 text-center shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md active:scale-[0.98]"
+    >
+      <span className="relative grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
+        {icon}
+        {count > 0 && (
+          <span className="absolute -right-1.5 -top-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-accent px-1 text-[10px] font-bold text-accent-foreground">
+            {count > 99 ? "99+" : count}
+          </span>
+        )}
+      </span>
+      <span className="text-[11px] font-medium leading-tight text-muted-foreground">{label}</span>
+    </Link>
+  );
+}
+
+function RowCard({
+  to,
+  icon,
+  label,
+  hint,
+  badge = 0,
+}: {
+  to: string;
+  icon: React.ReactNode;
+  label: string;
+  hint: string;
+  badge?: number;
+}) {
+  return (
+    <Link
+      to={to}
+      className="group grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border bg-background p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md active:scale-[0.99]"
+    >
+      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
+        {icon}
+      </span>
+      <span className="min-w-0">
+        <span className="flex items-center gap-2">
+          <span className="truncate text-sm font-semibold">{label}</span>
+          {badge > 0 && (
+            <span className="grid h-5 min-w-5 place-items-center rounded-full bg-accent px-1 text-[10px] font-bold text-accent-foreground">
+              {badge > 9 ? "9+" : badge}
+            </span>
+          )}
+        </span>
+        <span className="block truncate text-xs text-muted-foreground">{hint}</span>
+      </span>
+      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
+    </Link>
+  );
+}
+
+function ExternalRowCard({
+  href,
+  icon,
+  label,
+  hint,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  label: string;
+  hint: string;
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="group grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border bg-background p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md active:scale-[0.99]"
+    >
+      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
+        {icon}
+      </span>
+      <span className="min-w-0">
+        <span className="block truncate text-sm font-semibold">{label}</span>
+        <span className="block truncate text-xs text-muted-foreground">{hint}</span>
+      </span>
+      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
+    </a>
   );
 }
