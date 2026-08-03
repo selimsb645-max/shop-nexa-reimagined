@@ -4,8 +4,6 @@ import {
   User,
   LogOut,
   Package,
-  Store,
-  Shield,
   MapPin,
   Heart,
   Bell,
@@ -17,6 +15,7 @@ import {
   LifeBuoy,
   Settings,
 } from "lucide-react";
+
 import type { ReactNode } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { signOut } from "@/services/firebase/auth";
