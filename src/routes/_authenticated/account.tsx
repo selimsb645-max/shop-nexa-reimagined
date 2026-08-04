@@ -686,7 +686,7 @@ function OrderTile({
   return (
     <Link
       to="/orders"
-      className="group relative flex flex-col items-center gap-2 rounded-2xl border bg-background px-2 py-4 text-center shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md active:scale-[0.98]"
+      className="group flex w-[84px] shrink-0 flex-col items-center gap-1.5 rounded-2xl px-1 py-2 text-center transition hover:bg-muted/60 active:scale-[0.97] sm:w-auto sm:flex-1"
     >
       <span className="relative grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
         {icon}
@@ -697,8 +697,10 @@ function OrderTile({
         )}
       </span>
       <span className="text-[11px] font-medium leading-tight text-muted-foreground">{label}</span>
+      <span className="text-sm font-bold leading-none">{count}</span>
     </Link>
   );
+
 }
 
 function RowCard({
