@@ -26,7 +26,6 @@ import {
   Loader,
   Box,
   Package,
-
   Truck,
   Bike,
   PackageCheck,
@@ -35,6 +34,13 @@ import {
   ShieldCheck,
   LogOut,
   ArrowLeft,
+  Store,
+  Star,
+  Eye,
+  Gift,
+  CreditCard,
+  Headphones,
+  Info,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useWishlist } from "@/context/WishlistContext";
@@ -128,7 +134,6 @@ function AccountPage() {
     ...live,
   });
 
-
   const {
     register,
     handleSubmit,
@@ -192,37 +197,40 @@ function AccountPage() {
   const avatar = profile?.photoURL || user.photoURL;
   const name = profile?.displayName || user.displayName || user.email || "Shopper";
   const initial = name.charAt(0).toUpperCase();
+  const totalOrders = orders?.length ?? 0;
 
   return (
-    <div className="min-h-screen bg-muted/30 pb-10">
-      {/* Premium gradient profile header */}
-      <header className="relative overflow-hidden bg-gradient-to-br from-primary via-primary to-accent text-primary-foreground">
+    <div className="min-h-screen bg-gray-50 pb-6">
+      {/* ===== Daraz-style Orange Header ===== */}
+      <header className="relative overflow-hidden bg-gradient-to-r from-orange-500 via-orange-500 to-orange-600 text-white">
         <div
           aria-hidden
-          className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-primary-foreground/10 blur-2xl"
+          className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-white/10 blur-2xl"
         />
         <div
           aria-hidden
-          className="pointer-events-none absolute -bottom-24 -left-16 h-56 w-56 rounded-full bg-primary-foreground/10 blur-2xl"
+          className="pointer-events-none absolute -bottom-20 -left-10 h-40 w-40 rounded-full bg-white/10 blur-2xl"
         />
-        <div className="relative mx-auto max-w-5xl px-4 pb-20 pt-5 sm:px-6">
-          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+
+        <div className="relative mx-auto max-w-5xl px-4 pb-6 pt-4 sm:px-6">
+          {/* Top bar */}
+          <div className="flex items-center justify-between">
             <Link
               to="/"
-              className="inline-flex min-w-0 items-center gap-1.5 text-sm font-medium text-primary-foreground/85 transition hover:text-primary-foreground"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-white/90 transition hover:text-white"
             >
               <ArrowLeft className="h-4 w-4 shrink-0" strokeWidth={2} />
-              <span className="truncate">Continue shopping</span>
+              <span className="truncate">Back to Home</span>
             </Link>
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="flex items-center gap-2">
               <Link
                 to="/notifications"
                 aria-label="Notifications"
-                className="relative grid h-10 w-10 place-items-center rounded-full bg-primary-foreground/15 backdrop-blur transition hover:bg-primary-foreground/25 active:scale-95"
+                className="relative grid h-9 w-9 place-items-center rounded-full bg-white/15 transition hover:bg-white/25 active:scale-95"
               >
                 <Bell className="h-5 w-5" strokeWidth={2} />
                 {Boolean(unreadNotifs) && (
-                  <span className="absolute -right-0.5 -top-0.5 grid h-5 min-w-5 place-items-center rounded-full bg-accent px-1 text-[10px] font-bold text-accent-foreground">
+                  <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
                     {unreadNotifs! > 9 ? "9+" : unreadNotifs}
                   </span>
                 )}
@@ -230,23 +238,24 @@ function AccountPage() {
               <Link
                 to="/settings"
                 aria-label="Settings"
-                className="grid h-10 w-10 place-items-center rounded-full bg-primary-foreground/15 backdrop-blur transition hover:bg-primary-foreground/25 active:scale-95"
+                className="grid h-9 w-9 place-items-center rounded-full bg-white/15 transition hover:bg-white/25 active:scale-95"
               >
                 <Settings className="h-5 w-5" strokeWidth={2} />
               </Link>
             </div>
           </div>
 
-          <div className="mt-6 flex min-w-0 items-center gap-4">
+          {/* User info row */}
+          <div className="mt-5 flex items-center gap-4">
             <div className="relative shrink-0">
               {avatar ? (
                 <img
                   src={avatar}
                   alt={name}
-                  className="h-20 w-20 rounded-2xl border-2 border-primary-foreground/40 object-cover shadow-lg sm:h-24 sm:w-24"
+                  className="h-16 w-16 rounded-full border-2 border-white/50 object-cover shadow-lg sm:h-20 sm:w-20"
                 />
               ) : (
-                <div className="grid h-20 w-20 place-items-center rounded-2xl border-2 border-primary-foreground/40 bg-primary-foreground/15 text-3xl font-bold shadow-lg sm:h-24 sm:w-24">
+                <div className="grid h-16 w-16 place-items-center rounded-full border-2 border-white/50 bg-white/15 text-2xl font-bold shadow-lg sm:h-20 sm:w-20">
                   {initial}
                 </div>
               )}
@@ -255,285 +264,179 @@ function AccountPage() {
                 onClick={() => fileRef.current?.click()}
                 disabled={uploading}
                 aria-label="Change avatar"
-                className="absolute -bottom-1.5 -right-1.5 grid h-8 w-8 place-items-center rounded-full bg-accent text-accent-foreground shadow-md transition hover:opacity-90 active:scale-95 disabled:opacity-60"
+                className="absolute -bottom-1 -right-1 grid h-7 w-7 place-items-center rounded-full bg-white text-orange-500 shadow-md transition hover:opacity-90 active:scale-95 disabled:opacity-60"
               >
-                {uploading ? <Spinner /> : <Upload className="h-4 w-4" strokeWidth={2} />}
+                {uploading ? <Spinner /> : <Upload className="h-3.5 w-3.5" strokeWidth={2.5} />}
               </button>
               <input ref={fileRef} type="file" accept="image/*" onChange={onFile} className="hidden" />
             </div>
-            <div className="min-w-0">
-              <h1 className="truncate text-xl font-bold sm:text-2xl">{name}</h1>
-              <p className="truncate text-sm text-primary-foreground/80">{user.email}</p>
-              <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-primary-foreground/15 px-2.5 py-1 text-[11px] font-semibold backdrop-blur">
-                <ShieldCheck className="h-3.5 w-3.5" strokeWidth={2} />
-                Shop Nexa Member
-              </span>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <h1 className="truncate text-lg font-bold sm:text-xl">{name}</h1>
+                {profile?.role === "seller" && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-bold">
+                    <Store className="h-3 w-3" /> SELLER
+                  </span>
+                )}
+              </div>
+              <p className="truncate text-sm text-white/80">{user.email}</p>
+              <button
+                type="button"
+                onClick={() => setEditing((v) => !v)}
+                className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-white/90 underline-offset-2 hover:underline"
+              >
+                <Settings className="h-3 w-3" /> Edit Profile
+              </button>
             </div>
           </div>
 
-          {/* Member strip — real reward points & wallet cashback */}
-          <Link
-            to="/rewards"
-            className="mt-5 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-2xl bg-primary-foreground/12 p-4 backdrop-blur transition hover:bg-primary-foreground/20 active:scale-[0.99]"
-          >
-            <div className="grid min-w-0 grid-cols-2 gap-3 sm:grid-cols-3">
-              <div className="hidden min-w-0 items-center gap-2 sm:flex">
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary-foreground/15">
-                  <ShieldCheck className="h-5 w-5" strokeWidth={2} />
-                </span>
-                <span className="min-w-0">
-                  <span className="block truncate text-sm font-bold">Member benefits</span>
-                  <span className="block truncate text-[11px] text-primary-foreground/75">
-                    Earn on every order
-                  </span>
-                </span>
-              </div>
-              <div className="flex min-w-0 items-center gap-2">
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary-foreground/15">
-                  <Sparkles className="h-5 w-5" strokeWidth={2} />
-                </span>
-                <span className="min-w-0">
-                  <span className="block truncate text-sm font-bold">{points ?? 0}</span>
-                  <span className="block truncate text-[11px] text-primary-foreground/75">
-                    {points ? "Points" : "No Rewards"}
-                  </span>
-                </span>
-              </div>
-              <div className="flex min-w-0 items-center gap-2">
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary-foreground/15">
-                  <Wallet className="h-5 w-5" strokeWidth={2} />
-                </span>
-                <span className="min-w-0">
-                  <span className="block truncate text-sm font-bold">
-                    {formatPrice(balance ?? 0)}
-                  </span>
-                  <span className="block truncate text-[11px] text-primary-foreground/75">
-                    {balance ? "Cashback" : "No Cashback"}
-                  </span>
-                </span>
-              </div>
-            </div>
-            <ChevronRight className="h-5 w-5 shrink-0 text-primary-foreground/80" strokeWidth={2} />
-          </Link>
+          {/* Wallet + Rewards + Vouchers strip */}
+          <div className="mt-4 grid grid-cols-3 gap-2 rounded-2xl bg-white/15 p-3 backdrop-blur">
+            <Link to="/wallet" className="flex flex-col items-center gap-0.5 rounded-xl py-1.5 transition hover:bg-white/10">
+              <Wallet className="h-5 w-5" strokeWidth={2} />
+              <span className="text-sm font-bold">{formatPrice(balance ?? 0)}</span>
+              <span className="text-[10px] text-white/80">Wallet</span>
+            </Link>
+            <Link to="/rewards" className="flex flex-col items-center gap-0.5 rounded-xl py-1.5 transition hover:bg-white/10">
+              <Sparkles className="h-5 w-5" strokeWidth={2} />
+              <span className="text-sm font-bold">{points ?? 0}</span>
+              <span className="text-[10px] text-white/80">Reward Points</span>
+            </Link>
+            <Link to="/coupons" className="flex flex-col items-center gap-0.5 rounded-xl py-1.5 transition hover:bg-white/10">
+              <TicketPercent className="h-5 w-5" strokeWidth={2} />
+              <span className="text-sm font-bold">{coupons?.length ?? 0}</span>
+              <span className="text-[10px] text-white/80">Vouchers</span>
+            </Link>
+          </div>
         </div>
       </header>
 
-      <div className="mx-auto -mt-14 max-w-5xl space-y-6 px-4 sm:px-6">
-        {/* Account summary — live Firestore values */}
-        <section className="grid grid-cols-4 divide-x rounded-2xl border bg-background p-4 shadow-sm">
-          <StatTile
-            to="/wallet"
-            icon={<Wallet className="h-5 w-5" strokeWidth={2} />}
-            label="Wallet"
-            value={formatPrice(balance ?? 0)}
+      <div className="mx-auto max-w-5xl space-y-4 px-4 sm:px-6">
+        {/* ===== My Orders ===== */}
+        <DarazCard>
+          <DarazCardHeader
+            title="My Orders"
+            action={
+              <Link to="/orders" className="inline-flex items-center gap-1 text-xs font-semibold text-orange-500 hover:underline">
+                View All <ChevronRight className="h-3.5 w-3.5" strokeWidth={2.5} />
+              </Link>
+            }
           />
-          <StatTile
-            to="/wishlist"
-            icon={<Heart className="h-5 w-5" strokeWidth={2} />}
-            label="Wishlist"
-            value={String(wishlistCount)}
-          />
-          <StatTile
-            to="/coupons"
-            icon={<TicketPercent className="h-5 w-5" strokeWidth={2} />}
-            label="Coupons"
-            value={String(coupons?.length ?? 0)}
-          />
-          <StatTile
-            to="/orders"
-            icon={<Package className="h-5 w-5" strokeWidth={2} />}
-            label="Orders"
-            value={String(orders?.length ?? 0)}
-          />
-        </section>
-
-        {/* Quick services */}
-        <Section title="Quick services">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <ServiceCard
-              to="/wallet"
-              icon={<Wallet className="h-6 w-6" strokeWidth={2} />}
-              label="Wallet"
-              hint={balance ? formatPrice(balance) : "No Wallet Balance"}
-            />
-            <ServiceCard
-              to="/coupons"
-              icon={<TicketPercent className="h-6 w-6" strokeWidth={2} />}
-              label="Coupons"
-              hint={coupons?.length ? `${coupons.length} available` : "No Coupons"}
-            />
-            <ServiceCard
-              to="/rewards"
-              icon={<Sparkles className="h-6 w-6" strokeWidth={2} />}
-              label="Rewards"
-              hint={points ? `${points} points` : "No Rewards"}
-            />
-            <ServiceCard
-              to="/referral"
-              icon={<UserPlus className="h-6 w-6" strokeWidth={2} />}
-              label="Refer & Earn"
-              hint="Invite friends"
-            />
-            <ServiceCard
-              to="/messages"
-              icon={<MessageCircle className="h-6 w-6" strokeWidth={2} />}
-              label="Messages"
-              hint={unreadMsgs ? `${unreadMsgs} unread` : "See all"}
-              badge={unreadMsgs || 0}
-            />
-            <ServiceCard
-              to="/addresses"
-              icon={<MapPin className="h-6 w-6" strokeWidth={2} />}
-              label="Addresses"
-              hint={addresses?.length ? `${addresses.length} saved` : "No addresses"}
-            />
-            <ServiceCard
-              to="/support"
-              icon={<LifeBuoy className="h-6 w-6" strokeWidth={2} />}
-              label="Support"
-              hint="Get help"
-            />
-            <ServiceCard
-              to="/settings"
-              icon={<Settings className="h-6 w-6" strokeWidth={2} />}
-              label="Settings"
-              hint="Manage account"
-            />
+          <div className="grid grid-cols-5 gap-1 px-2 py-3">
+            <DarazOrderIcon to="/orders" icon={<Clock3 className="h-6 w-6" />} label="Pending" count={counts.pending} />
+            <DarazOrderIcon to="/orders" icon={<Loader className="h-6 w-6" />} label="Processing" count={counts.processing} />
+            <DarazOrderIcon to="/orders" icon={<Truck className="h-6 w-6" />} label="Shipped" count={counts.shipped} />
+            <DarazOrderIcon to="/orders" icon={<Bike className="h-6 w-6" />} label="Delivery" count={counts.outForDelivery} />
+            <DarazOrderIcon to="/orders" icon={<PackageCheck className="h-6 w-6" />} label="Delivered" count={counts.delivered} />
           </div>
-        </Section>
+          <div className="grid grid-cols-5 gap-1 px-2 pb-3">
+            <DarazOrderIcon to="/orders" icon={<Undo2 className="h-6 w-6" />} label="Returns" count={counts.returns} />
+            <DarazOrderIcon to="/orders" icon={<BadgeDollarSign className="h-6 w-6" />} label="Refunds" count={counts.refunds} />
+            <DarazOrderIcon to="/orders" icon={<Box className="h-6 w-6" />} label="Packed" count={counts.packed} />
+          </div>
+        </DarazCard>
 
-        {/* My orders */}
-        <Section
-          title="My orders"
-          action={
-            <Link to="/orders" className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">
-              View all orders <ChevronRight className="h-4 w-4" strokeWidth={2} />
-            </Link>
-          }
-        >
-          <div className="-mx-4 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:px-0">
-            <div className="flex min-w-max gap-2 rounded-2xl border bg-background p-3 shadow-sm sm:min-w-0 sm:justify-between">
-              <OrderTile icon={<Clock3 className="h-6 w-6" strokeWidth={2} />} label="Pending" count={counts.pending} />
-              <OrderTile icon={<Loader className="h-6 w-6" strokeWidth={2} />} label="Processing" count={counts.processing} />
-              <OrderTile icon={<Box className="h-6 w-6" strokeWidth={2} />} label="Packed" count={counts.packed} />
-              <OrderTile icon={<Truck className="h-6 w-6" strokeWidth={2} />} label="Shipped" count={counts.shipped} />
-              <OrderTile icon={<Bike className="h-6 w-6" strokeWidth={2} />} label="Out for Delivery" count={counts.outForDelivery} />
-              <OrderTile icon={<PackageCheck className="h-6 w-6" strokeWidth={2} />} label="Delivered" count={counts.delivered} />
-              <OrderTile icon={<Undo2 className="h-6 w-6" strokeWidth={2} />} label="Returns" count={counts.returns} />
-              <OrderTile icon={<BadgeDollarSign className="h-6 w-6" strokeWidth={2} />} label="Refunds" count={counts.refunds} />
+        {/* ===== My Services ===== */}
+        <DarazCard>
+          <DarazCardHeader title="My Services" />
+          <div className="grid grid-cols-4 gap-1 px-2 py-3 sm:grid-cols-5">
+            <DarazServiceIcon to="/wishlist" icon={<Heart className="h-6 w-6" />} label="Wishlist" badge={wishlistCount} />
+            <DarazServiceIcon to="/coupons" icon={<TicketPercent className="h-6 w-6" />} label="Vouchers" badge={coupons?.length ?? 0} />
+            <DarazServiceIcon to="/rewards" icon={<Gift className="h-6 w-6" />} label="Rewards" />
+            <DarazServiceIcon to="/referral" icon={<UserPlus className="h-6 w-6" />} label="Refer & Earn" />
+            <DarazServiceIcon to="/wallet" icon={<Wallet className="h-6 w-6" />} label="Wallet" />
+            <DarazServiceIcon to="/messages" icon={<MessageCircle className="h-6 w-6" />} label="Messages" badge={unreadMsgs || 0} />
+            <DarazServiceIcon to="/addresses" icon={<MapPin className="h-6 w-6" />} label="Addresses" badge={addresses?.length ?? 0} />
+            <DarazServiceIcon to="/notifications" icon={<Bell className="h-6 w-6" />} label="Notifs" badge={unreadNotifs || 0} />
+            <DarazServiceIcon to="/" icon={<History className="h-6 w-6" />} label="Recently Viewed" badge={recentIds.length} />
+            <DarazServiceIcon to="/seller.register" icon={<Store className="h-6 w-6" />} label="Be a Seller" highlight />
+          </div>
+        </DarazCard>
+
+        {/* ===== Become a Seller banner ===== */}
+        {profile?.role !== "seller" && (
+          <Link
+            to="/seller.register"
+            className="flex items-center gap-3 rounded-2xl bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 p-4 transition hover:shadow-md active:scale-[0.99]"
+          >
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-orange-500 text-white shadow-md">
+              <Store className="h-6 w-6" strokeWidth={2} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-sm font-bold text-gray-900">Become a Seller on Shop Nexa</h3>
+              <p className="truncate text-xs text-gray-500">Start selling your products to thousands of customers</p>
             </div>
+            <ChevronRight className="h-5 w-5 shrink-0 text-orange-500" strokeWidth={2.5} />
+          </Link>
+        )}
+
+        {/* ===== Account Settings ===== */}
+        <DarazCard>
+          <DarazCardHeader title="Account Settings" />
+          <div className="divide-y divide-gray-100">
+            <DarazListRow to="/settings" icon={<Settings className="h-5 w-5" />} label="Account Preferences" hint="Notifications, currency & language" />
+            <DarazListRow to="/addresses" icon={<MapPin className="h-5 w-5" />} label="Address Book" hint={`${addresses?.length ?? 0} saved address${(addresses?.length ?? 0) === 1 ? "" : "es"}`} />
+            <DarazListRow to="/wallet" icon={<CreditCard className="h-5 w-5" />} label="Payment & Wallet" hint={balance ? formatPrice(balance) : "Manage payment methods"} />
+            <DarazListRow to="/coupons" icon={<TicketPercent className="h-5 w-5" />} label="My Vouchers" hint={coupons?.length ? `${coupons.length} available` : "No vouchers yet"} />
+            <DarazListRow to="/referral" icon={<UserPlus className="h-5 w-5" />} label="Refer & Earn" hint="Invite friends & earn rewards" />
+            <DarazListRow to="/rewards" icon={<Sparkles className="h-5 w-5" />} label="Reward Points" hint={points ? `${points} points` : "Earn on every order"} />
           </div>
-        </Section>
+        </DarazCard>
 
-
-        {/* Shopping */}
-        <Section title="Shopping">
-          <div className="grid gap-3 sm:grid-cols-3">
-            <RowCard
-              to="/wishlist"
-              icon={<Heart className="h-5 w-5" strokeWidth={2} />}
-              label="Wishlist"
-              hint={`${wishlistCount} saved item${wishlistCount === 1 ? "" : "s"}`}
-            />
-            <RowCard
-              to="/"
-              icon={<History className="h-5 w-5" strokeWidth={2} />}
-              label="Recently viewed"
-              hint={`${recentIds.length} product${recentIds.length === 1 ? "" : "s"}`}
-            />
-            <RowCard
-              to="/addresses"
-              icon={<MapPin className="h-5 w-5" strokeWidth={2} />}
-              label="Saved addresses"
-              hint={`${addresses?.length ?? 0} address${(addresses?.length ?? 0) === 1 ? "" : "es"}`}
-            />
+        {/* ===== My Shopping ===== */}
+        <DarazCard>
+          <DarazCardHeader title="My Shopping" />
+          <div className="divide-y divide-gray-100">
+            <DarazListRow to="/wishlist" icon={<Heart className="h-5 w-5" />} label="My Wishlist" hint={`${wishlistCount} saved item${wishlistCount === 1 ? "" : "s"}`} badge={wishlistCount} />
+            <DarazListRow to="/" icon={<Eye className="h-5 w-5" />} label="Recently Viewed" hint={`${recentIds.length} product${recentIds.length === 1 ? "" : "s"}`} />
+            <DarazListRow to="/orders" icon={<Package className="h-5 w-5" />} label="Order History" hint={`${totalOrders} total order${totalOrders === 1 ? "" : "s"}`} />
           </div>
-        </Section>
+        </DarazCard>
 
-        {/* Communication */}
-        <Section title="Communication">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <RowCard
-              to="/messages"
-              icon={<MessageCircle className="h-5 w-5" strokeWidth={2} />}
-              label="Messages"
-              hint={unreadMsgs ? `${unreadMsgs} unread` : "All caught up"}
-              badge={unreadMsgs || 0}
-            />
-            <RowCard
-              to="/notifications"
-              icon={<Bell className="h-5 w-5" strokeWidth={2} />}
-              label="Notifications"
-              hint={unreadNotifs ? `${unreadNotifs} unread` : "All caught up"}
-              badge={unreadNotifs || 0}
-            />
+        {/* ===== Communication ===== */}
+        <DarazCard>
+          <DarazCardHeader title="Communication" />
+          <div className="divide-y divide-gray-100">
+            <DarazListRow to="/messages" icon={<MessageCircle className="h-5 w-5" />} label="Messages" hint={unreadMsgs ? `${unreadMsgs} unread` : "All caught up"} badge={unreadMsgs || 0} />
+            <DarazListRow to="/notifications" icon={<Bell className="h-5 w-5" />} label="Notifications" hint={unreadNotifs ? `${unreadNotifs} unread` : "All caught up"} badge={unreadNotifs || 0} />
           </div>
-        </Section>
+        </DarazCard>
 
-        {/* Support */}
-        <Section title="Support">
-          <div className="grid gap-3 sm:grid-cols-3">
-            <RowCard
-              to="/support"
-              icon={<LifeBuoy className="h-5 w-5" strokeWidth={2} />}
-              label="Customer support"
-              hint="Open a ticket"
-            />
-            <RowCard
-              to="/support"
-              icon={<BookOpen className="h-5 w-5" strokeWidth={2} />}
-              label="Help center"
-              hint="FAQs & guides"
-            />
-            <ExternalRowCard
-              href="https://wa.me/8801324997271"
-              icon={<Phone className="h-5 w-5" strokeWidth={2} />}
-              label="Contact us"
-              hint="WhatsApp 01324997271"
-            />
+        {/* ===== Help & Support ===== */}
+        <DarazCard>
+          <DarazCardHeader title="Help & Support" />
+          <div className="divide-y divide-gray-100">
+            <DarazListRow to="/support" icon={<Headphones className="h-5 w-5" />} label="Customer Service" hint="Chat with our support team" />
+            <DarazListRow to="/support" icon={<BookOpen className="h-5 w-5" />} label="Help Center" hint="FAQs & guides" />
+            <DarazExternalRow href="https://wa.me/8801324997271" icon={<Phone className="h-5 w-5" />} label="Contact Us" hint="WhatsApp: 01324997271" />
           </div>
-        </Section>
+        </DarazCard>
 
-        {/* Settings & account */}
-        <Section
-          title="Settings"
-          action={
-            <button
-              type="button"
-              onClick={() => setEditing((v) => !v)}
-              className="text-sm font-semibold text-primary hover:underline"
-            >
-              {editing ? "Close" : "Edit profile"}
-            </button>
-          }
-        >
-          <div className="grid gap-3 sm:grid-cols-2">
-            <RowCard
-              to="/settings"
-              icon={<Settings className="h-5 w-5" strokeWidth={2} />}
-              label="Preferences"
-              hint="Notifications, currency & language"
-            />
-            <div className="flex items-center gap-3 rounded-2xl border bg-background p-4 shadow-sm">
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+        {/* ===== About ===== */}
+        <DarazCard>
+          <DarazCardHeader title="About" />
+          <div className="divide-y divide-gray-100">
+            <DarazListRow to="/support" icon={<Info className="h-5 w-5" />} label="About Shop Nexa" hint="Smart Shopping, Better Life" />
+            <div className="flex items-center gap-3 p-4">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gray-100 text-gray-600">
                 {user.emailVerified ? (
-                  <CheckCircle2 className="h-5 w-5" strokeWidth={2} />
+                  <CheckCircle2 className="h-5 w-5 text-green-500" strokeWidth={2} />
                 ) : (
-                  <AlertCircle className="h-5 w-5" strokeWidth={2} />
+                  <AlertCircle className="h-5 w-5 text-orange-500" strokeWidth={2} />
                 )}
               </span>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-semibold">
-                  {user.emailVerified ? "Email verified" : "Email not verified"}
+                  {user.emailVerified ? "Email Verified" : "Email Not Verified"}
                 </div>
                 {user.emailVerified ? (
-                  <div className="truncate text-xs text-muted-foreground">{user.email}</div>
+                  <div className="truncate text-xs text-gray-500">{user.email}</div>
                 ) : (
                   <button
                     type="button"
                     onClick={onResend}
                     disabled={resending}
-                    className="text-xs font-medium text-primary hover:underline disabled:opacity-60"
+                    className="text-xs font-medium text-orange-500 hover:underline disabled:opacity-60"
                   >
                     {resending ? "Sending..." : "Resend verification email"}
                   </button>
@@ -541,169 +444,165 @@ function AccountPage() {
               </div>
             </div>
           </div>
+        </DarazCard>
 
-          {editing && (
-            <form
-              onSubmit={handleSubmit(onSave)}
-              className="mt-3 animate-fade-in space-y-4 rounded-2xl border bg-background p-5 shadow-sm"
-            >
+        {/* ===== Edit Profile Form ===== */}
+        {editing && (
+          <DarazCard>
+            <DarazCardHeader
+              title="Edit Profile"
+              action={
+                <button
+                  type="button"
+                  onClick={() => setEditing(false)}
+                  className="text-xs font-semibold text-gray-500 hover:text-gray-700"
+                >
+                  Close
+                </button>
+              }
+            />
+            <form onSubmit={handleSubmit(onSave)} className="space-y-4 p-4">
               <div>
-                <label className="mb-1 block text-sm font-medium">Display name</label>
+                <label className="mb-1 block text-sm font-medium text-gray-700">Display Name</label>
                 <input
                   {...register("displayName")}
-                  className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:border-primary"
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none transition focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
                 />
                 {errors.displayName && (
-                  <p className="mt-1 text-xs text-destructive">{errors.displayName.message}</p>
+                  <p className="mt-1 text-xs text-red-500">{errors.displayName.message}</p>
                 )}
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">Email</label>
+                <label className="mb-1 block text-sm font-medium text-gray-700">Email</label>
                 <input
                   value={user.email ?? ""}
                   readOnly
-                  className="w-full rounded-xl border bg-muted px-3 py-2.5 text-sm text-muted-foreground"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-500"
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">Account type</label>
+                <label className="mb-1 block text-sm font-medium text-gray-700">Account Type</label>
                 <input
                   value={profile?.role ?? "customer"}
                   readOnly
-                  className="w-full rounded-xl border bg-muted px-3 py-2.5 text-sm capitalize text-muted-foreground"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm capitalize text-gray-500"
                 />
               </div>
               <button
                 type="submit"
                 disabled={isSubmitting || !isDirty}
-                className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition hover:opacity-90 active:scale-[0.98] disabled:opacity-60"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-medium text-white shadow-md transition hover:bg-orange-600 active:scale-[0.98] disabled:opacity-50"
               >
-                {isSubmitting && <Spinner />} Save changes
+                {isSubmitting && <Spinner />} Save Changes
               </button>
             </form>
-          )}
+          </DarazCard>
+        )}
 
-          <button
-            type="button"
-            onClick={onSignOut}
-            className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border bg-background px-4 py-3 text-sm font-semibold text-destructive shadow-sm transition hover:bg-destructive/5 active:scale-[0.99]"
-          >
-            <LogOut className="h-5 w-5" strokeWidth={2} /> Sign out
-          </button>
-        </Section>
+        {/* ===== Sign Out ===== */}
+        <button
+          type="button"
+          onClick={onSignOut}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-red-100 bg-white px-4 py-3.5 text-sm font-semibold text-red-500 shadow-sm transition hover:bg-red-50 active:scale-[0.99]"
+        >
+          <LogOut className="h-5 w-5" strokeWidth={2} /> Sign Out
+        </button>
+
+        {/* ===== Footer ===== */}
+        <div className="pt-2 text-center">
+          <p className="text-xs text-gray-400">Shop Nexa — Smart Shopping, Better Life</p>
+        </div>
       </div>
     </div>
   );
 }
 
-function Section({
-  title,
-  action,
-  children,
-}: {
-  title: string;
-  action?: React.ReactNode;
-  children: React.ReactNode;
-}) {
+/* ===== Daraz-style Components ===== */
+
+function DarazCard({ children }: { children: React.ReactNode }) {
   return (
-    <section className="animate-fade-in">
-      <div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
-        <h2 className="truncate text-base font-bold tracking-tight">{title}</h2>
-        {action}
-      </div>
+    <section className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
       {children}
     </section>
   );
 }
 
-function StatTile({
-  to,
-  icon,
-  label,
-  value,
-}: {
-  to: string;
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
+function DarazCardHeader({ title, action }: { title: string; action?: React.ReactNode }) {
   return (
-    <Link
-      to={to}
-      className="flex flex-col items-center gap-1 rounded-xl px-2 py-1 text-center transition hover:bg-muted/60 active:scale-[0.98]"
-    >
-      <span className="text-primary">{icon}</span>
-      <span className="truncate text-sm font-bold">{value}</span>
-      <span className="text-[11px] text-muted-foreground">{label}</span>
-    </Link>
+    <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50/50 px-4 py-2.5">
+      <h2 className="text-sm font-bold text-gray-800">{title}</h2>
+      {action}
+    </div>
   );
 }
 
-function ServiceCard({
+function DarazOrderIcon({
   to,
-  icon,
-  label,
-  hint,
-  badge = 0,
-}: {
-  to: string;
-  icon: React.ReactNode;
-  label: string;
-  hint: string;
-  badge?: number;
-}) {
-  return (
-    <Link
-      to={to}
-      className="group flex flex-col items-start gap-3 rounded-2xl border bg-background p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md active:scale-[0.98]"
-    >
-      <span className="relative grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
-        {icon}
-        {badge > 0 && (
-          <span className="absolute -right-1.5 -top-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-accent px-1 text-[10px] font-bold text-accent-foreground">
-            {badge > 9 ? "9+" : badge}
-          </span>
-        )}
-      </span>
-      <span className="min-w-0">
-        <span className="block truncate text-sm font-semibold">{label}</span>
-        <span className="block truncate text-xs text-muted-foreground">{hint}</span>
-      </span>
-    </Link>
-  );
-}
-
-
-function OrderTile({
   icon,
   label,
   count,
 }: {
+  to: string;
   icon: React.ReactNode;
   label: string;
   count: number;
 }) {
   return (
     <Link
-      to="/orders"
-      className="group flex w-[84px] shrink-0 flex-col items-center gap-1.5 rounded-2xl px-1 py-2 text-center transition hover:bg-muted/60 active:scale-[0.97] sm:w-auto sm:flex-1"
+      to={to}
+      className="group flex flex-col items-center gap-1.5 rounded-xl px-1 py-2 transition hover:bg-orange-50 active:scale-95"
     >
-      <span className="relative grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
+      <span className="relative text-gray-500 transition group-hover:text-orange-500">
         {icon}
         {count > 0 && (
-          <span className="absolute -right-1.5 -top-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-accent px-1 text-[10px] font-bold text-accent-foreground">
+          <span className="absolute -right-3 -top-2 grid h-5 min-w-5 place-items-center rounded-full bg-orange-500 px-1 text-[10px] font-bold text-white">
             {count > 99 ? "99+" : count}
           </span>
         )}
       </span>
-      <span className="text-[11px] font-medium leading-tight text-muted-foreground">{label}</span>
-      <span className="text-sm font-bold leading-none">{count}</span>
+      <span className="text-[11px] font-medium leading-tight text-gray-600">{label}</span>
     </Link>
   );
-
 }
 
-function RowCard({
+function DarazServiceIcon({
+  to,
+  icon,
+  label,
+  badge = 0,
+  highlight = false,
+}: {
+  to: string;
+  icon: React.ReactNode;
+  label: string;
+  badge?: number;
+  highlight?: boolean;
+}) {
+  return (
+    <Link
+      to={to}
+      className="group flex flex-col items-center gap-2 rounded-xl px-1.5 py-3 transition hover:bg-orange-50 active:scale-95"
+    >
+      <span
+        className={`relative grid h-12 w-12 place-items-center rounded-2xl transition ${
+          highlight
+            ? "bg-gradient-to-br from-orange-400 to-orange-600 text-white shadow-md"
+            : "bg-orange-50 text-orange-500 group-hover:bg-orange-100"
+        }`}
+      >
+        {icon}
+        {badge > 0 && (
+          <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white shadow-sm">
+            {badge > 9 ? "9+" : badge}
+          </span>
+        )}
+      </span>
+      <span className="text-center text-[11px] font-medium leading-tight text-gray-600">{label}</span>
+    </Link>
+  );
+}
+
+function DarazListRow({
   to,
   icon,
   label,
@@ -719,28 +618,28 @@ function RowCard({
   return (
     <Link
       to={to}
-      className="group grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border bg-background p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md active:scale-[0.99]"
+      className="group flex items-center gap-3 p-4 transition hover:bg-gray-50 active:scale-[0.99]"
     >
-      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
+      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-orange-50 text-orange-500 transition group-hover:bg-orange-100">
         {icon}
       </span>
-      <span className="min-w-0">
-        <span className="flex items-center gap-2">
-          <span className="truncate text-sm font-semibold">{label}</span>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <span className="truncate text-sm font-semibold text-gray-800">{label}</span>
           {badge > 0 && (
-            <span className="grid h-5 min-w-5 place-items-center rounded-full bg-accent px-1 text-[10px] font-bold text-accent-foreground">
+            <span className="grid h-5 min-w-5 place-items-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
               {badge > 9 ? "9+" : badge}
             </span>
           )}
-        </span>
-        <span className="block truncate text-xs text-muted-foreground">{hint}</span>
-      </span>
-      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
+        </div>
+        <span className="block truncate text-xs text-gray-500">{hint}</span>
+      </div>
+      <ChevronRight className="h-4 w-4 shrink-0 text-gray-300" strokeWidth={2.5} />
     </Link>
   );
 }
 
-function ExternalRowCard({
+function DarazExternalRow({
   href,
   icon,
   label,
@@ -756,16 +655,16 @@ function ExternalRowCard({
       href={href}
       target="_blank"
       rel="noreferrer"
-      className="group grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border bg-background p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md active:scale-[0.99]"
+      className="group flex items-center gap-3 p-4 transition hover:bg-gray-50 active:scale-[0.99]"
     >
-      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
+      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-orange-50 text-orange-500 transition group-hover:bg-orange-100">
         {icon}
       </span>
-      <span className="min-w-0">
-        <span className="block truncate text-sm font-semibold">{label}</span>
-        <span className="block truncate text-xs text-muted-foreground">{hint}</span>
-      </span>
-      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
+      <div className="min-w-0 flex-1">
+        <span className="block truncate text-sm font-semibold text-gray-800">{label}</span>
+        <span className="block truncate text-xs text-gray-500">{hint}</span>
+      </div>
+      <ChevronRight className="h-4 w-4 shrink-0 text-gray-300" strokeWidth={2.5} />
     </a>
   );
 }
