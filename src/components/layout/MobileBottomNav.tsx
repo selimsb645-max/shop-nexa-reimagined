@@ -1,8 +1,11 @@
 import { Link } from "@tanstack/react-router";
 import { Home, LayoutGrid, MessageCircle, ShoppingCart, User } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
-import { useActiveOrdersCount } from "@/hooks/useActiveOrdersCount";
+import { countUnreadMessages } from "@/services/firebase/messages";
+import { firebaseConfigured } from "@/services/firebase/config";
+
 
 function Badge({ n }: { n: number }) {
   if (!n) return null;
@@ -26,7 +29,13 @@ function Indicator() {
 export function MobileBottomNav() {
   const { count: cartCount } = useCart();
   const { user } = useAuth();
-  const msgCount = useActiveOrdersCount();
+  const { data: msgCount = 0 } = useQuery({
+    queryKey: ["messages", "unread", user?.uid],
+    queryFn: () => countUnreadMessages(user!.uid),
+    enabled: Boolean(user && firebaseConfigured),
+    refetchInterval: 30_000,
+  });
+
 
   return (
     <nav
@@ -44,7 +53,7 @@ export function MobileBottomNav() {
           <LayoutGrid className="h-[26px] w-[26px]" strokeWidth={1.8} />
           <span>Categories</span>
         </Link>
-        <Link to="/orders" activeProps={{ className: activeCls }} className={itemCls}>
+        <Link to={user ? "/messages" : "/login"} activeProps={{ className: activeCls }} className={itemCls}>
           <Indicator />
           <span className="relative">
             <MessageCircle className="h-[26px] w-[26px]" strokeWidth={1.8} />
@@ -52,6 +61,7 @@ export function MobileBottomNav() {
           </span>
           <span>Messages</span>
         </Link>
+
         <Link to="/cart" activeProps={{ className: activeCls }} className={itemCls}>
           <Indicator />
           <span className="relative">

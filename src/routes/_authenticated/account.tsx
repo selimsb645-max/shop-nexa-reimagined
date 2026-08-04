@@ -25,6 +25,8 @@ import {
   Clock3,
   Loader,
   Box,
+  Package,
+
   Truck,
   Bike,
   PackageCheck,
@@ -88,41 +90,44 @@ function AccountPage() {
   const enabled = Boolean(user && firebaseConfigured);
   const uid = user?.uid;
 
+  const live = { enabled, refetchInterval: 15_000, refetchOnWindowFocus: true } as const;
+
   const { data: orders } = useQuery({
     queryKey: ["orders", uid],
     queryFn: () => listOrders(uid!),
-    enabled,
+    ...live,
   });
   const { data: balance } = useQuery({
     queryKey: ["wallet", "balance", uid],
     queryFn: () => getWalletBalance(uid!),
-    enabled,
+    ...live,
   });
   const { data: points } = useQuery({
     queryKey: ["rewards", "points", uid],
     queryFn: () => getRewardPoints(uid!),
-    enabled,
+    ...live,
   });
   const { data: coupons } = useQuery({
     queryKey: ["coupons", "available"],
     queryFn: () => listAvailableCoupons(),
-    enabled,
+    ...live,
   });
   const { data: unreadNotifs } = useQuery({
     queryKey: ["notifications", "unread", uid],
     queryFn: () => countUnreadNotifications(uid!),
-    enabled,
+    ...live,
   });
   const { data: unreadMsgs } = useQuery({
     queryKey: ["messages", "unread", uid],
     queryFn: () => countUnreadMessages(uid!),
-    enabled,
+    ...live,
   });
   const { data: addresses } = useQuery({
     queryKey: ["addresses", uid],
     queryFn: () => listAddresses(uid!),
-    enabled,
+    ...live,
   });
+
 
   const {
     register,
@@ -265,12 +270,57 @@ function AccountPage() {
               </span>
             </div>
           </div>
+
+          {/* Member strip — real reward points & wallet cashback */}
+          <Link
+            to="/rewards"
+            className="mt-5 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-2xl bg-primary-foreground/12 p-4 backdrop-blur transition hover:bg-primary-foreground/20 active:scale-[0.99]"
+          >
+            <div className="grid min-w-0 grid-cols-2 gap-3 sm:grid-cols-3">
+              <div className="hidden min-w-0 items-center gap-2 sm:flex">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary-foreground/15">
+                  <ShieldCheck className="h-5 w-5" strokeWidth={2} />
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-bold">Member benefits</span>
+                  <span className="block truncate text-[11px] text-primary-foreground/75">
+                    Earn on every order
+                  </span>
+                </span>
+              </div>
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary-foreground/15">
+                  <Sparkles className="h-5 w-5" strokeWidth={2} />
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-bold">{points ?? 0}</span>
+                  <span className="block truncate text-[11px] text-primary-foreground/75">
+                    {points ? "Points" : "No Rewards"}
+                  </span>
+                </span>
+              </div>
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary-foreground/15">
+                  <Wallet className="h-5 w-5" strokeWidth={2} />
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-bold">
+                    {formatPrice(balance ?? 0)}
+                  </span>
+                  <span className="block truncate text-[11px] text-primary-foreground/75">
+                    {balance ? "Cashback" : "No Cashback"}
+                  </span>
+                </span>
+              </div>
+            </div>
+            <ChevronRight className="h-5 w-5 shrink-0 text-primary-foreground/80" strokeWidth={2} />
+          </Link>
         </div>
       </header>
 
       <div className="mx-auto -mt-14 max-w-5xl space-y-6 px-4 sm:px-6">
-        {/* Stat strip */}
-        <section className="grid grid-cols-3 gap-3 rounded-2xl border bg-background p-4 shadow-sm">
+        {/* Account summary — live Firestore values */}
+        <section className="grid grid-cols-4 divide-x rounded-2xl border bg-background p-4 shadow-sm">
           <StatTile
             to="/wallet"
             icon={<Wallet className="h-5 w-5" strokeWidth={2} />}
@@ -289,6 +339,12 @@ function AccountPage() {
             label="Coupons"
             value={String(coupons?.length ?? 0)}
           />
+          <StatTile
+            to="/orders"
+            icon={<Package className="h-5 w-5" strokeWidth={2} />}
+            label="Orders"
+            value={String(orders?.length ?? 0)}
+          />
         </section>
 
         {/* Quick services */}
@@ -298,25 +354,50 @@ function AccountPage() {
               to="/wallet"
               icon={<Wallet className="h-6 w-6" strokeWidth={2} />}
               label="Wallet"
-              hint={formatPrice(balance ?? 0)}
+              hint={balance ? formatPrice(balance) : "No Wallet Balance"}
             />
             <ServiceCard
               to="/coupons"
               icon={<TicketPercent className="h-6 w-6" strokeWidth={2} />}
               label="Coupons"
-              hint={`${coupons?.length ?? 0} available`}
+              hint={coupons?.length ? `${coupons.length} available` : "No Coupons"}
             />
             <ServiceCard
               to="/rewards"
               icon={<Sparkles className="h-6 w-6" strokeWidth={2} />}
               label="Rewards"
-              hint={`${points ?? 0} points`}
+              hint={points ? `${points} points` : "No Rewards"}
             />
             <ServiceCard
               to="/referral"
               icon={<UserPlus className="h-6 w-6" strokeWidth={2} />}
               label="Refer & Earn"
               hint="Invite friends"
+            />
+            <ServiceCard
+              to="/messages"
+              icon={<MessageCircle className="h-6 w-6" strokeWidth={2} />}
+              label="Messages"
+              hint={unreadMsgs ? `${unreadMsgs} unread` : "See all"}
+              badge={unreadMsgs || 0}
+            />
+            <ServiceCard
+              to="/addresses"
+              icon={<MapPin className="h-6 w-6" strokeWidth={2} />}
+              label="Addresses"
+              hint={addresses?.length ? `${addresses.length} saved` : "No addresses"}
+            />
+            <ServiceCard
+              to="/support"
+              icon={<LifeBuoy className="h-6 w-6" strokeWidth={2} />}
+              label="Support"
+              hint="Get help"
+            />
+            <ServiceCard
+              to="/settings"
+              icon={<Settings className="h-6 w-6" strokeWidth={2} />}
+              label="Settings"
+              hint="Manage account"
             />
           </div>
         </Section>
@@ -326,21 +407,24 @@ function AccountPage() {
           title="My orders"
           action={
             <Link to="/orders" className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">
-              View all <ChevronRight className="h-4 w-4" strokeWidth={2} />
+              View all orders <ChevronRight className="h-4 w-4" strokeWidth={2} />
             </Link>
           }
         >
-          <div className="grid grid-cols-4 gap-2 sm:grid-cols-8">
-            <OrderTile icon={<Clock3 className="h-6 w-6" strokeWidth={2} />} label="Pending" count={counts.pending} />
-            <OrderTile icon={<Loader className="h-6 w-6" strokeWidth={2} />} label="Processing" count={counts.processing} />
-            <OrderTile icon={<Box className="h-6 w-6" strokeWidth={2} />} label="Packed" count={counts.packed} />
-            <OrderTile icon={<Truck className="h-6 w-6" strokeWidth={2} />} label="Shipped" count={counts.shipped} />
-            <OrderTile icon={<Bike className="h-6 w-6" strokeWidth={2} />} label="On the way" count={counts.outForDelivery} />
-            <OrderTile icon={<PackageCheck className="h-6 w-6" strokeWidth={2} />} label="Delivered" count={counts.delivered} />
-            <OrderTile icon={<Undo2 className="h-6 w-6" strokeWidth={2} />} label="Returns" count={counts.returns} />
-            <OrderTile icon={<BadgeDollarSign className="h-6 w-6" strokeWidth={2} />} label="Refunds" count={counts.refunds} />
+          <div className="-mx-4 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:px-0">
+            <div className="flex min-w-max gap-2 rounded-2xl border bg-background p-3 shadow-sm sm:min-w-0 sm:justify-between">
+              <OrderTile icon={<Clock3 className="h-6 w-6" strokeWidth={2} />} label="Pending" count={counts.pending} />
+              <OrderTile icon={<Loader className="h-6 w-6" strokeWidth={2} />} label="Processing" count={counts.processing} />
+              <OrderTile icon={<Box className="h-6 w-6" strokeWidth={2} />} label="Packed" count={counts.packed} />
+              <OrderTile icon={<Truck className="h-6 w-6" strokeWidth={2} />} label="Shipped" count={counts.shipped} />
+              <OrderTile icon={<Bike className="h-6 w-6" strokeWidth={2} />} label="Out for Delivery" count={counts.outForDelivery} />
+              <OrderTile icon={<PackageCheck className="h-6 w-6" strokeWidth={2} />} label="Delivered" count={counts.delivered} />
+              <OrderTile icon={<Undo2 className="h-6 w-6" strokeWidth={2} />} label="Returns" count={counts.returns} />
+              <OrderTile icon={<BadgeDollarSign className="h-6 w-6" strokeWidth={2} />} label="Refunds" count={counts.refunds} />
+            </div>
           </div>
         </Section>
+
 
         {/* Shopping */}
         <Section title="Shopping">
@@ -560,19 +644,26 @@ function ServiceCard({
   icon,
   label,
   hint,
+  badge = 0,
 }: {
   to: string;
   icon: React.ReactNode;
   label: string;
   hint: string;
+  badge?: number;
 }) {
   return (
     <Link
       to={to}
       className="group flex flex-col items-start gap-3 rounded-2xl border bg-background p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md active:scale-[0.98]"
     >
-      <span className="grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
+      <span className="relative grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
         {icon}
+        {badge > 0 && (
+          <span className="absolute -right-1.5 -top-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-accent px-1 text-[10px] font-bold text-accent-foreground">
+            {badge > 9 ? "9+" : badge}
+          </span>
+        )}
       </span>
       <span className="min-w-0">
         <span className="block truncate text-sm font-semibold">{label}</span>
@@ -581,6 +672,7 @@ function ServiceCard({
     </Link>
   );
 }
+
 
 function OrderTile({
   icon,
@@ -594,7 +686,7 @@ function OrderTile({
   return (
     <Link
       to="/orders"
-      className="group relative flex flex-col items-center gap-2 rounded-2xl border bg-background px-2 py-4 text-center shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md active:scale-[0.98]"
+      className="group flex w-[84px] shrink-0 flex-col items-center gap-1.5 rounded-2xl px-1 py-2 text-center transition hover:bg-muted/60 active:scale-[0.97] sm:w-auto sm:flex-1"
     >
       <span className="relative grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
         {icon}
@@ -605,8 +697,10 @@ function OrderTile({
         )}
       </span>
       <span className="text-[11px] font-medium leading-tight text-muted-foreground">{label}</span>
+      <span className="text-sm font-bold leading-none">{count}</span>
     </Link>
   );
+
 }
 
 function RowCard({
