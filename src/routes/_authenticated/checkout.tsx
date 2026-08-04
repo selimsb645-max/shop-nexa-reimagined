@@ -16,7 +16,7 @@ import type { PaymentMethod, Coupon } from "@/types/commerce";
 
 export const Route = createFileRoute("/_authenticated/checkout")({
   component: CheckoutPage,
-  validateSearch: (s: Record<string, unknown>) => ({
+  validateSearch: (s: Record<string, unknown>): { code?: string } => ({
     code: typeof s.code === "string" ? s.code : undefined,
   }),
 });
