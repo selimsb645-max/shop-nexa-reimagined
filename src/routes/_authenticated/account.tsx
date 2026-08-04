@@ -88,41 +88,44 @@ function AccountPage() {
   const enabled = Boolean(user && firebaseConfigured);
   const uid = user?.uid;
 
+  const live = { enabled, refetchInterval: 15_000, refetchOnWindowFocus: true } as const;
+
   const { data: orders } = useQuery({
     queryKey: ["orders", uid],
     queryFn: () => listOrders(uid!),
-    enabled,
+    ...live,
   });
   const { data: balance } = useQuery({
     queryKey: ["wallet", "balance", uid],
     queryFn: () => getWalletBalance(uid!),
-    enabled,
+    ...live,
   });
   const { data: points } = useQuery({
     queryKey: ["rewards", "points", uid],
     queryFn: () => getRewardPoints(uid!),
-    enabled,
+    ...live,
   });
   const { data: coupons } = useQuery({
     queryKey: ["coupons", "available"],
     queryFn: () => listAvailableCoupons(),
-    enabled,
+    ...live,
   });
   const { data: unreadNotifs } = useQuery({
     queryKey: ["notifications", "unread", uid],
     queryFn: () => countUnreadNotifications(uid!),
-    enabled,
+    ...live,
   });
   const { data: unreadMsgs } = useQuery({
     queryKey: ["messages", "unread", uid],
     queryFn: () => countUnreadMessages(uid!),
-    enabled,
+    ...live,
   });
   const { data: addresses } = useQuery({
     queryKey: ["addresses", uid],
     queryFn: () => listAddresses(uid!),
-    enabled,
+    ...live,
   });
+
 
   const {
     register,
