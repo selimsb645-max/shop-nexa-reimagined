@@ -29,7 +29,13 @@ function Indicator() {
 export function MobileBottomNav() {
   const { count: cartCount } = useCart();
   const { user } = useAuth();
-  const msgCount = useActiveOrdersCount();
+  const { data: msgCount = 0 } = useQuery({
+    queryKey: ["messages", "unread", user?.uid],
+    queryFn: () => countUnreadMessages(user!.uid),
+    enabled: Boolean(user && firebaseConfigured),
+    refetchInterval: 30_000,
+  });
+
 
   return (
     <nav
