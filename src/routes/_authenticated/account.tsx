@@ -644,19 +644,26 @@ function ServiceCard({
   icon,
   label,
   hint,
+  badge = 0,
 }: {
   to: string;
   icon: React.ReactNode;
   label: string;
   hint: string;
+  badge?: number;
 }) {
   return (
     <Link
       to={to}
       className="group flex flex-col items-start gap-3 rounded-2xl border bg-background p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md active:scale-[0.98]"
     >
-      <span className="grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
+      <span className="relative grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
         {icon}
+        {badge > 0 && (
+          <span className="absolute -right-1.5 -top-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-accent px-1 text-[10px] font-bold text-accent-foreground">
+            {badge > 9 ? "9+" : badge}
+          </span>
+        )}
       </span>
       <span className="min-w-0">
         <span className="block truncate text-sm font-semibold">{label}</span>
@@ -665,6 +672,7 @@ function ServiceCard({
     </Link>
   );
 }
+
 
 function OrderTile({
   icon,
