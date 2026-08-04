@@ -1,5 +1,5 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState, useMemo, useCallback } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -12,7 +12,6 @@ import {
   Bell,
   Megaphone,
   MessageCircle,
-  ShoppingBag,
   Truck,
   Wallet,
   Gift,
@@ -24,23 +23,16 @@ import {
   Plus,
   Paperclip,
   Smile,
-  Image as ImageIcon,
   Mic,
   CheckCheck,
-  Filter,
-  Archive,
-  ChevronRight,
   Store,
-  TrendingDown,
   Sparkles,
   FileText,
   AlertCircle,
   XCircle,
   Loader,
-  RefreshCw,
   Pin,
-  ThumbsUp,
-  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
@@ -54,7 +46,6 @@ import {
   createThread,
   sendMessage,
   markThreadRead,
-  deleteThread,
   countUnreadMessages,
 } from "@/services/firebase/messages";
 import {
@@ -67,16 +58,14 @@ import {
   listTickets,
   createTicket,
   listTicketMessages,
-  sendTicketMessage,
+  replyToTicket,
 } from "@/services/firebase/support";
 import { listOrders } from "@/services/firebase/orders";
-import { listAllProducts } from "@/services/firebase/products";
-import { formatPrice, formatDateTime, formatDate } from "@/utils/format";
+import { formatPrice, formatDate } from "@/utils/format";
 import type { MessageThread, ChatMessage } from "@/types/customer";
 import type { CustomerNotification, NotificationType } from "@/types/customer";
-import type { SupportTicket, TicketMessage } from "@/types/customer";
+import type { SupportTicket } from "@/types/customer";
 import type { Order } from "@/types/commerce";
-import type { Product } from "@/types/commerce";
 
 export const Route = createFileRoute("/_authenticated/messages")({
   ssr: false,
@@ -347,7 +336,6 @@ function TabBar({
             >
               {tab.icon}
               <span className="whitespace-nowrap">{tab.label}</span>
-              {tab.badge ? tab.badge > 0 : null}
               {tab.badge !== undefined && tab.badge > 0 && (
                 <span className={`flex h-5 min-w-[20px] items-center justify-center rounded-full px-1 text-[10px] font-bold ${
                   isActive ? "bg-white/25 text-white" : "bg-accent text-accent-foreground"
@@ -698,7 +686,7 @@ function OrderConversationView({
           <div className="mb-4 flex items-center justify-between">
             <div>
               <h2 className="text-lg font-bold">Order #{order.id.slice(0, 8)}</h2>
-              <p className="text-xs text-muted-foreground">{formatDateTime(order.createdAt)}</p>
+              <p className="text-xs text-muted-foreground">{formatDate(order.createdAt)}</p>
             </div>
             <OrderStatusBadge status={order.status} />
           </div>
@@ -1180,7 +1168,6 @@ function NotificationCenter({
   notifications,
   searchQuery,
   onMarkRead,
-  onMarkAllRead,
   userId,
 }: {
   notifications: CustomerNotification[];
@@ -1289,7 +1276,6 @@ function AnnouncementCenter() {
     {
       title: "Mega Flash Sale",
       desc: "Up to 70% off on electronics, fashion & more!",
-      type: "sale",
       gradient: "from-orange-500 to-red-500",
       icon: <Zap className="h-8 w-8" />,
       cta: "Shop Now",
@@ -1298,7 +1284,6 @@ function AnnouncementCenter() {
     {
       title: "New Seller Programs",
       desc: "Join Shop Nexa as a seller and reach millions of customers",
-      type: "promo",
       gradient: "from-blue-500 to-indigo-600",
       icon: <Store className="h-8 w-8" />,
       cta: "Become a Seller",
@@ -1307,7 +1292,6 @@ function AnnouncementCenter() {
     {
       title: "Nexa Prime Membership",
       desc: "Free shipping, exclusive deals & 3x reward points",
-      type: "promo",
       gradient: "from-purple-500 to-pink-600",
       icon: <Sparkles className="h-8 w-8" />,
       cta: "Join Now",
@@ -1316,7 +1300,6 @@ function AnnouncementCenter() {
     {
       title: "Gift Cards Available",
       desc: "Perfect gifts for any occasion — starting from ৳500",
-      type: "promo",
       gradient: "from-green-500 to-teal-600",
       icon: <Gift className="h-8 w-8" />,
       cta: "Buy Gift Card",
@@ -1325,7 +1308,6 @@ function AnnouncementCenter() {
     {
       title: "System Maintenance",
       desc: "Scheduled maintenance on Aug 10, 2:00 AM - 4:00 AM BST",
-      type: "notice",
       gradient: "from-gray-600 to-gray-800",
       icon: <AlertCircle className="h-8 w-8" />,
       cta: null,
@@ -1458,9 +1440,8 @@ function ChatView({ threadId, onBack, userId }: { threadId: string; onBack: () =
                 <Pin className="h-3 w-3" /> {activeThread?.subject}
               </span>
             </div>
-            {messages.data.map((msg, i) => {
+            {messages.data.map((msg) => {
               const isMe = msg.from === "customer";
-              const showAvatar = i === 0 || messages.data[i - 1].from !== msg.from;
               return (
                 <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
                   <div className={`max-w-[75%] ${isMe ? "items-end" : "items-start"} flex flex-col`}>
@@ -1574,7 +1555,7 @@ function TicketChatView({ ticketId, onBack, userId }: { ticketId: string; onBack
   }, [messages.data]);
 
   const sendMutation = useMutation({
-    mutationFn: () => sendTicketMessage(userId, ticketId, draft.trim()),
+    mutationFn: () => replyToTicket(userId, ticketId, draft.trim()),
     onSuccess: () => {
       setDraft("");
       queryClient.invalidateQueries({ queryKey: ["ticketMessages", userId, ticketId] });
@@ -1586,7 +1567,7 @@ function TicketChatView({ ticketId, onBack, userId }: { ticketId: string; onBack
   return (
     <div className="flex h-screen flex-col bg-muted/30">
       {/* Header */}
-      <div className="flex items-center gap-3 border-b bg-background px-4 py-3 shadow-sm">
+      <div className="flex items-center gap-3 border-t bg-background px-4 py-3 shadow-sm">
         <button onClick={onBack} className="rounded-full p-1.5 hover:bg-muted">
           <ArrowLeft className="h-5 w-5" />
         </button>
