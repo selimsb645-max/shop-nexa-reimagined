@@ -59,7 +59,7 @@ export function MobileBottomNav() {
             <MessageCircle className="h-[26px] w-[26px]" strokeWidth={1.8} />
             <Badge n={msgCount} />
           </span>
-          <span>Messages</span>
+          <span>Inbox</span>
         </Link>
 
         <Link to="/cart" activeProps={{ className: activeCls }} className={itemCls}>
