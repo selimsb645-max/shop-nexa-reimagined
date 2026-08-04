@@ -44,7 +44,7 @@ export function MobileBottomNav() {
           <LayoutGrid className="h-[26px] w-[26px]" strokeWidth={1.8} />
           <span>Categories</span>
         </Link>
-        <Link to="/orders" activeProps={{ className: activeCls }} className={itemCls}>
+        <Link to={user ? "/messages" : "/login"} activeProps={{ className: activeCls }} className={itemCls}>
           <Indicator />
           <span className="relative">
             <MessageCircle className="h-[26px] w-[26px]" strokeWidth={1.8} />
@@ -52,6 +52,7 @@ export function MobileBottomNav() {
           </span>
           <span>Messages</span>
         </Link>
+
         <Link to="/cart" activeProps={{ className: activeCls }} className={itemCls}>
           <Indicator />
           <span className="relative">
