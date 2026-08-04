@@ -25,6 +25,8 @@ import {
   Clock3,
   Loader,
   Box,
+  Package,
+
   Truck,
   Bike,
   PackageCheck,
