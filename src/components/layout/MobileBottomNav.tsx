@@ -1,8 +1,11 @@
 import { Link } from "@tanstack/react-router";
 import { Home, LayoutGrid, MessageCircle, ShoppingCart, User } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
-import { useActiveOrdersCount } from "@/hooks/useActiveOrdersCount";
+import { countUnreadMessages } from "@/services/firebase/messages";
+import { firebaseConfigured } from "@/services/firebase/config";
+
 
 function Badge({ n }: { n: number }) {
   if (!n) return null;
