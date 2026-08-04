@@ -268,12 +268,57 @@ function AccountPage() {
               </span>
             </div>
           </div>
+
+          {/* Member strip — real reward points & wallet cashback */}
+          <Link
+            to="/rewards"
+            className="mt-5 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-2xl bg-primary-foreground/12 p-4 backdrop-blur transition hover:bg-primary-foreground/20 active:scale-[0.99]"
+          >
+            <div className="grid min-w-0 grid-cols-2 gap-3 sm:grid-cols-3">
+              <div className="hidden min-w-0 items-center gap-2 sm:flex">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary-foreground/15">
+                  <ShieldCheck className="h-5 w-5" strokeWidth={2} />
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-bold">Member benefits</span>
+                  <span className="block truncate text-[11px] text-primary-foreground/75">
+                    Earn on every order
+                  </span>
+                </span>
+              </div>
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary-foreground/15">
+                  <Sparkles className="h-5 w-5" strokeWidth={2} />
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-bold">{points ?? 0}</span>
+                  <span className="block truncate text-[11px] text-primary-foreground/75">
+                    {points ? "Points" : "No Rewards"}
+                  </span>
+                </span>
+              </div>
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary-foreground/15">
+                  <Wallet className="h-5 w-5" strokeWidth={2} />
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-bold">
+                    {formatPrice(balance ?? 0)}
+                  </span>
+                  <span className="block truncate text-[11px] text-primary-foreground/75">
+                    {balance ? "Cashback" : "No Cashback"}
+                  </span>
+                </span>
+              </div>
+            </div>
+            <ChevronRight className="h-5 w-5 shrink-0 text-primary-foreground/80" strokeWidth={2} />
+          </Link>
         </div>
       </header>
 
       <div className="mx-auto -mt-14 max-w-5xl space-y-6 px-4 sm:px-6">
-        {/* Stat strip */}
-        <section className="grid grid-cols-3 gap-3 rounded-2xl border bg-background p-4 shadow-sm">
+        {/* Account summary — live Firestore values */}
+        <section className="grid grid-cols-4 divide-x rounded-2xl border bg-background p-4 shadow-sm">
           <StatTile
             to="/wallet"
             icon={<Wallet className="h-5 w-5" strokeWidth={2} />}
@@ -292,6 +337,12 @@ function AccountPage() {
             label="Coupons"
             value={String(coupons?.length ?? 0)}
           />
+          <StatTile
+            to="/orders"
+            icon={<Package className="h-5 w-5" strokeWidth={2} />}
+            label="Orders"
+            value={String(orders?.length ?? 0)}
+          />
         </section>
 
         {/* Quick services */}
@@ -301,25 +352,50 @@ function AccountPage() {
               to="/wallet"
               icon={<Wallet className="h-6 w-6" strokeWidth={2} />}
               label="Wallet"
-              hint={formatPrice(balance ?? 0)}
+              hint={balance ? formatPrice(balance) : "No Wallet Balance"}
             />
             <ServiceCard
               to="/coupons"
               icon={<TicketPercent className="h-6 w-6" strokeWidth={2} />}
               label="Coupons"
-              hint={`${coupons?.length ?? 0} available`}
+              hint={coupons?.length ? `${coupons.length} available` : "No Coupons"}
             />
             <ServiceCard
               to="/rewards"
               icon={<Sparkles className="h-6 w-6" strokeWidth={2} />}
               label="Rewards"
-              hint={`${points ?? 0} points`}
+              hint={points ? `${points} points` : "No Rewards"}
             />
             <ServiceCard
               to="/referral"
               icon={<UserPlus className="h-6 w-6" strokeWidth={2} />}
               label="Refer & Earn"
               hint="Invite friends"
+            />
+            <ServiceCard
+              to="/messages"
+              icon={<MessageCircle className="h-6 w-6" strokeWidth={2} />}
+              label="Messages"
+              hint={unreadMsgs ? `${unreadMsgs} unread` : "See all"}
+              badge={unreadMsgs || 0}
+            />
+            <ServiceCard
+              to="/addresses"
+              icon={<MapPin className="h-6 w-6" strokeWidth={2} />}
+              label="Addresses"
+              hint={addresses?.length ? `${addresses.length} saved` : "No addresses"}
+            />
+            <ServiceCard
+              to="/support"
+              icon={<LifeBuoy className="h-6 w-6" strokeWidth={2} />}
+              label="Support"
+              hint="Get help"
+            />
+            <ServiceCard
+              to="/settings"
+              icon={<Settings className="h-6 w-6" strokeWidth={2} />}
+              label="Settings"
+              hint="Manage account"
             />
           </div>
         </Section>
@@ -329,21 +405,24 @@ function AccountPage() {
           title="My orders"
           action={
             <Link to="/orders" className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">
-              View all <ChevronRight className="h-4 w-4" strokeWidth={2} />
+              View all orders <ChevronRight className="h-4 w-4" strokeWidth={2} />
             </Link>
           }
         >
-          <div className="grid grid-cols-4 gap-2 sm:grid-cols-8">
-            <OrderTile icon={<Clock3 className="h-6 w-6" strokeWidth={2} />} label="Pending" count={counts.pending} />
-            <OrderTile icon={<Loader className="h-6 w-6" strokeWidth={2} />} label="Processing" count={counts.processing} />
-            <OrderTile icon={<Box className="h-6 w-6" strokeWidth={2} />} label="Packed" count={counts.packed} />
-            <OrderTile icon={<Truck className="h-6 w-6" strokeWidth={2} />} label="Shipped" count={counts.shipped} />
-            <OrderTile icon={<Bike className="h-6 w-6" strokeWidth={2} />} label="On the way" count={counts.outForDelivery} />
-            <OrderTile icon={<PackageCheck className="h-6 w-6" strokeWidth={2} />} label="Delivered" count={counts.delivered} />
-            <OrderTile icon={<Undo2 className="h-6 w-6" strokeWidth={2} />} label="Returns" count={counts.returns} />
-            <OrderTile icon={<BadgeDollarSign className="h-6 w-6" strokeWidth={2} />} label="Refunds" count={counts.refunds} />
+          <div className="-mx-4 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:px-0">
+            <div className="flex min-w-max gap-2 rounded-2xl border bg-background p-3 shadow-sm sm:min-w-0 sm:justify-between">
+              <OrderTile icon={<Clock3 className="h-6 w-6" strokeWidth={2} />} label="Pending" count={counts.pending} />
+              <OrderTile icon={<Loader className="h-6 w-6" strokeWidth={2} />} label="Processing" count={counts.processing} />
+              <OrderTile icon={<Box className="h-6 w-6" strokeWidth={2} />} label="Packed" count={counts.packed} />
+              <OrderTile icon={<Truck className="h-6 w-6" strokeWidth={2} />} label="Shipped" count={counts.shipped} />
+              <OrderTile icon={<Bike className="h-6 w-6" strokeWidth={2} />} label="Out for Delivery" count={counts.outForDelivery} />
+              <OrderTile icon={<PackageCheck className="h-6 w-6" strokeWidth={2} />} label="Delivered" count={counts.delivered} />
+              <OrderTile icon={<Undo2 className="h-6 w-6" strokeWidth={2} />} label="Returns" count={counts.returns} />
+              <OrderTile icon={<BadgeDollarSign className="h-6 w-6" strokeWidth={2} />} label="Refunds" count={counts.refunds} />
+            </div>
           </div>
         </Section>
+
 
         {/* Shopping */}
         <Section title="Shopping">
