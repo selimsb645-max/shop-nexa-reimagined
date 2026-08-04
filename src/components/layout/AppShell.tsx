@@ -65,7 +65,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <NavItem to="/orders" icon={<Package className="h-4 w-4" />} label="Orders" />
             <NavItem to="/wishlist" icon={<Heart className="h-4 w-4" />} label="Wishlist" />
             <NavItem to="/notifications" icon={<Bell className="h-4 w-4" />} label="Notifications" />
-            <NavItem to="/messages" icon={<MessageCircle className="h-4 w-4" />} label="Messages" />
+            <NavItem to="/messages" icon={<MessageCircle className="h-4 w-4" />} label="Inbox" />
             <NavItem to="/coupons" icon={<TicketPercent className="h-4 w-4" />} label="Coupons" />
             <NavItem to="/wallet" icon={<Wallet className="h-4 w-4" />} label="Wallet" />
             <NavItem to="/rewards" icon={<Sparkles className="h-4 w-4" />} label="Rewards" />
