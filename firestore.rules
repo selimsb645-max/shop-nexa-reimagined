@@ -13,6 +13,16 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/sellers/$(request.auth.uid))
         && get(/databases/$(database)/documents/sellers/$(request.auth.uid)).data.status == 'approved';
     }
+    // True when the caller is the seller assigned to this order (buyer-side copy).
+    function isOrderSeller() {
+      return isApprovedSeller()
+        && 'sellerIds' in resource.data
+        && request.auth.uid in resource.data.sellerIds;
+    }
+    // Restrict an update to only touch an allow-listed set of fields.
+    function onlyChanges(allowed) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowed);
+    }
 
     // Categories - admin managed
     match /categories/{cat} {
@@ -30,16 +40,18 @@ service cloud.firestore {
         (isApprovedSeller() && request.resource.data.sellerId == request.auth.uid);
       allow delete: if isAdmin() ||
         (isApprovedSeller() && resource.data.sellerId == request.auth.uid);
-      // Owning seller or admin can update freely; any signed-in buyer may ONLY
-      // decrement stock (and touch updatedAt) as part of placing an order.
+      // Owning seller or admin can update freely. Any signed-in buyer may ONLY
+      // decrement stock (and touch updatedAt) as part of placing a real order,
+      // by at most a small, sane quantity — never increase or zero out stock.
       allow update: if isAdmin()
         || (isApprovedSeller() && resource.data.sellerId == request.auth.uid)
         || (
           isSignedIn()
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stock', 'updatedAt'])
+          && onlyChanges(['stock', 'updatedAt'])
           && request.resource.data.stock is int
           && request.resource.data.stock >= 0
           && request.resource.data.stock < resource.data.stock
+          && resource.data.stock - request.resource.data.stock <= 50
         );
 
       match /reviews/{rid} {
@@ -52,12 +64,20 @@ service cloud.firestore {
     match /coupons/{code} {
       allow read: if true;
       allow create, delete: if isAdmin();
-      // Admin can edit anything; any signed-in user may only increment `uses` by 1 at checkout.
+      // Admin can edit anything; any signed-in user may only increment `uses`
+      // by exactly 1 per write, and only while the coupon is still active and
+      // under its usage limit — matches applying a coupon at checkout.
       allow update: if isAdmin()
         || (
           isSignedIn()
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['uses'])
+          && onlyChanges(['uses'])
+          && resource.data.active == true
           && request.resource.data.uses == resource.data.uses + 1
+          && (
+            !('usageLimit' in resource.data)
+            || resource.data.usageLimit == null
+            || resource.data.uses < resource.data.usageLimit
+          )
         );
     }
 
@@ -100,20 +120,57 @@ service cloud.firestore {
         allow read, write: if isSelf(uid) || isAdmin();
       }
 
-      // Orders - buyer can read; creation only via trusted checkout (buyer creating own order with valid initial state); updates/deletes admin-only
+      // Orders - buyer can read; buyer may create (once, via checkout) with a
+      // structurally + arithmetically consistent payload; buyers can NEVER
+      // update or delete an order after creation. Only the assigned seller
+      // (status/tracking only) or an admin (any field) may update it.
       match /orders/{orderId} {
         allow read: if isSelf(uid) || isAdmin();
         allow create: if isSelf(uid)
           && request.resource.data.userId == request.auth.uid
           && request.resource.data.status == 'pending'
-          && request.resource.data.payment.status in ['pending', 'unpaid'];
-        allow update, delete: if isAdmin();
+          && request.resource.data.payment.status in ['pending', 'unpaid']
+          && request.resource.data.items is list
+          && request.resource.data.items.size() > 0
+          && request.resource.data.subtotal is number && request.resource.data.subtotal >= 0
+          && request.resource.data.discount is number
+          && request.resource.data.discount >= 0
+          && request.resource.data.discount <= request.resource.data.subtotal
+          && request.resource.data.shipping is number && request.resource.data.shipping >= 0
+          // total must equal subtotal - discount + shipping (small float tolerance)
+          && request.resource.data.total is number
+          && request.resource.data.total - (request.resource.data.subtotal - request.resource.data.discount + request.resource.data.shipping) <= 0.01
+          && (request.resource.data.subtotal - request.resource.data.discount + request.resource.data.shipping) - request.resource.data.total <= 0.01;
+        allow update: if isAdmin()
+          || (isOrderSeller() && onlyChanges(['status', 'tracking', 'updatedAt']));
+        allow delete: if isAdmin();
+      }
+
+      // Wallet ledger - server-controlled only. Clients (including the owner)
+      // may never write cashback/refund/topup/spend entries directly; only a
+      // trusted admin/server context can. Owners may only read their own.
+      match /walletTx/{txId} {
+        allow read: if isSelf(uid) || isAdmin();
+        allow write: if isAdmin();
+      }
+
+      // Reward points ledger - server-controlled only, same reasoning as wallet.
+      match /rewardTx/{txId} {
+        allow read: if isSelf(uid) || isAdmin();
+        allow write: if isAdmin();
+      }
+
+      // Referral records - server-controlled only (bonusPoints is a balance-
+      // affecting field, so referral crediting must not be client-writable).
+      match /referrals/{refId} {
+        allow read: if isSelf(uid) || isAdmin();
+        allow write: if isAdmin();
       }
 
       // Any other user-owned subcollection remains owner-scoped
       match /{sub}/{docId} {
         allow read, write: if (isSelf(uid) || isAdmin())
-          && !(sub in ['orders']);
+          && !(sub in ['orders', 'walletTx', 'rewardTx', 'referrals']);
       }
     }
 
@@ -132,7 +189,9 @@ service cloud.firestore {
           && request.resource.data.buyerId == request.auth.uid
           && request.resource.data.status == 'pending'
           && request.resource.data.paymentStatus in ['pending', 'unpaid'];
-        allow update: if isSelf(uid) || isAdmin();
+        // Seller may only progress status/tracking on their own mirror; admin can do anything.
+        allow update: if isAdmin()
+          || (isSelf(uid) && onlyChanges(['status', 'tracking', 'updatedAt']));
         allow delete: if isAdmin();
       }
       match /notifications/{nid} {
