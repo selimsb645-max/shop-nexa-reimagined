@@ -36,7 +36,5 @@ export const claimReferralBonus = createServerFn({ method: "POST" })
       displayName: data.displayName,
       code: data.code,
       referrerId: data.referrerId,
-      referralBonusPoints: data.referralBonusPoints,
-      welcomePoints: data.welcomePoints,
     });
   });
