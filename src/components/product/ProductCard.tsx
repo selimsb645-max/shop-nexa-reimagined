@@ -1,129 +1,389 @@
-import { Link } from "@tanstack/react-router";
-import { ShoppingCart, Heart, Store } from "lucide-react";
-import { Stars } from "./Stars";
-import { useCart } from "@/context/CartContext";
-import { useWishlist } from "@/context/WishlistContext";
-import { formatPrice } from "@/utils/format";
-import type { Product } from "@/types/commerce";
+import React, { useState, useCallback } from 'react';
+import { Link } from '@tanstack/react-router';
+import { Heart, Star, ShoppingCart } from 'lucide-react';
+import type { Product } from '@/types/commerce';
+import { formatPrice } from '@/utils/format';
+import { useWishlist } from '@/context/WishlistContext';
 
-/** Cloudinary-hosted images get width/quality/format transforms; others pass through. */
-function optimizedSrc(url: string, width = 400) {
-  if (!url.includes("res.cloudinary.com") || url.includes("/upload/f_")) return url;
-  return url.replace("/upload/", `/upload/f_auto,q_auto,w_${width},c_limit/`);
+export interface ProductCardProps {
+  product: Product;
+  onAddToCart?: (product: Product, e: React.MouseEvent<HTMLButtonElement>) => void;
+  className?: string;
+  showLocation?: boolean;
 }
 
-export function ProductCard({ product }: { product: Product }) {
-  const { add } = useCart();
-  const { has, toggle } = useWishlist();
-  const wished = has(product.id);
-  const outOfStock = product.stock <= 0;
-  const lowStock = !outOfStock && product.stock <= 5;
+export interface ProductCardCompactProps {
+  product: Product;
+  onAddToCart?: (product: Product, e: React.MouseEvent<HTMLButtonElement>) => void;
+  className?: string;
+  soldCount?: number;
+  totalStock?: number;
+}
 
-  const discount =
-    product.compareAtPrice && product.compareAtPrice > product.price
-      ? Math.round((1 - product.price / product.compareAtPrice) * 100)
-      : 0;
+export interface ProductCardSkeletonProps {
+  className?: string;
+}
 
-  const img = product.images[0];
+/**
+ * Helper to safely extract main image URL from product object
+ */
+function getProductImage(product: Partial<Product>): string {
+  if (typeof product.images?.[0] === 'string' && product.images?.[0]) return product.images?.[0];
+  if (Array.isArray((product as any).images) && (product as any).images.length > 0) {
+    const firstImg = (product as any).images[0];
+    if (typeof firstImg === 'string') return firstImg;
+    if (firstImg && typeof firstImg.url === 'string') return firstImg.url;
+  }
+  if (typeof (product as any).imageUrl === 'string' && (product as any).imageUrl) {
+    return (product as any).imageUrl;
+  }
+  if (typeof (product as any).thumbnail === 'string' && (product as any).thumbnail) {
+    return (product as any).thumbnail;
+  }
+  return 'https://via.placeholder.com/300x300?text=No+Image';
+}
+
+/**
+ * Helper to compute discount percentage format "-XX%"
+ */
+function getDiscountPercentage(price: number, originalPrice?: number, discount?: number): number {
+  if (typeof discount === 'number' && discount > 0) {
+    return Math.round(discount);
+  }
+  if (typeof originalPrice === 'number' && originalPrice > price) {
+    return Math.round(((originalPrice - price) / originalPrice) * 100);
+  }
+  return 0;
+}
+
+/**
+ * Standard Daraz-style Full Product Card Component
+ */
+export const ProductCard: React.FC<ProductCardProps> = ({
+  product,
+  onAddToCart,
+  className = '',
+  showLocation = true,
+}) => {
+  const [imageError, setImageError] = useState(false);
+  const { isInWishlist, toggleWishlist } = useWishlist();
+
+  const isWishlisted = isInWishlist ? isInWishlist(String(product.id)) : false;
+
+  const originalPrice = product.compareAtPrice ?? (product as any).oldPrice;
+  const discountPct = getDiscountPercentage(product.price, originalPrice, (product as any).discount);
+  const imageUrl = imageError ? 'https://via.placeholder.com/300x300?text=No+Image' : getProductImage(product);
+  const rating = product.rating ?? (product as any).ratings ?? 0;
+  const reviewCount = (product as any).reviewCount ?? (product as any).reviewsCount ?? (product as any).ratingsCount ?? 0;
+  const location = (product as any).location ?? (product as any).sellerLocation ?? (product as any).seller?.location ?? 'Dhaka';
+
+  const handleWishlistClick = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (toggleWishlist) {
+        toggleWishlist(product);
+      }
+    },
+    [toggleWishlist, product]
+  );
+
+  const handleAddToCartClick = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (onAddToCart) {
+        onAddToCart(product, e);
+      }
+    },
+    [onAddToCart, product]
+  );
+
+  const productIdStr = String(product.id);
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-2xl border bg-card shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg active:scale-[0.99]">
-      {/* Badges */}
-      <div className="pointer-events-none absolute left-2 top-2 z-10 flex flex-col gap-1">
-        {discount > 0 && (
-          <span className="rounded-md bg-destructive px-1.5 py-0.5 text-[10px] font-bold text-destructive-foreground shadow">
-            -{discount}%
-          </span>
-        )}
-        {outOfStock ? (
-          <span className="rounded-md bg-foreground/80 px-1.5 py-0.5 text-[10px] font-semibold text-background">
-            Out of stock
-          </span>
-        ) : lowStock ? (
-          <span className="rounded-md bg-accent px-1.5 py-0.5 text-[10px] font-semibold text-accent-foreground">
-            Only {product.stock} left
-          </span>
-        ) : null}
-      </div>
-
-      <button
-        onClick={() => void toggle(product)}
-        aria-label={wished ? "Remove from wishlist" : "Add to wishlist"}
-        className="absolute right-1.5 top-1.5 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-background/95 shadow transition hover:scale-110 hover:bg-background active:scale-90"
+    <div
+      className={`group relative bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-slate-100 flex flex-col h-full overflow-hidden select-none ${className}`}
+    >
+      <Link
+        to="/product/$productId"
+        params={{ productId: productIdStr }}
+        className="flex flex-col h-full text-inherit no-underline focus:outline-none focus:ring-2 focus:ring-orange-500 rounded-lg"
       >
-        <Heart className={`h-[18px] w-[18px] transition ${wished ? "fill-destructive text-destructive" : ""}`} />
-      </button>
+        {/* Image Container */}
+        <div className="relative w-full aspect-square overflow-hidden bg-slate-50 rounded-t-lg">
+          <img
+            src={imageUrl}
+            alt={product.title || (product as any).name || 'Product image'}
+            onError={() => setImageError(true)}
+            loading="lazy"
+            className="w-full h-full object-cover rounded-t-lg group-hover:scale-105 transition-transform duration-300 ease-in-out"
+          />
 
-      <Link to="/product/$slug" params={{ slug: product.slug }} className="block">
-        <div className="aspect-square overflow-hidden bg-muted">
-          {img ? (
-            <img
-              src={optimizedSrc(img)}
-              srcSet={`${optimizedSrc(img, 300)} 300w, ${optimizedSrc(img, 600)} 600w`}
-              sizes="(min-width: 1024px) 200px, 45vw"
-              alt={product.title}
-              width={400}
-              height={400}
-              loading="lazy"
-              decoding="async"
-              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
-              No image
+          {/* Discount Badge */}
+          {discountPct > 0 && (
+            <div className="absolute top-2 left-2 z-10 bg-[#f57224] text-white text-[11px] font-bold px-1.5 py-0.5 rounded shadow-sm pointer-events-none">
+              -{discountPct}%
             </div>
           )}
+
+          {/* Wishlist Heart Icon Toggle */}
+          <button
+            type="button"
+            onClick={handleWishlistClick}
+            aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+            className={`absolute top-2 right-2 z-10 p-1.5 rounded-full bg-white/80 hover:bg-white backdrop-blur-sm shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-rose-400 ${
+              isWishlisted ? 'text-rose-500 hover:text-rose-600' : 'text-slate-500 hover:text-rose-500'
+            }`}
+          >
+            <Heart
+              className={`w-4 h-4 transition-transform active:scale-125 ${
+                isWishlisted ? 'fill-rose-500 text-rose-500' : 'fill-none'
+              }`}
+            />
+          </button>
         </div>
-        <div className="flex flex-col gap-1 p-2.5 md:p-3">
-          <h3 className="line-clamp-2 min-h-[2.5rem] text-[13px] font-medium leading-tight group-hover:text-primary md:text-sm">
-            {product.title}
-          </h3>
-          <div className="flex flex-wrap items-baseline gap-x-2">
-            <div className="text-base font-bold text-primary md:text-lg">{formatPrice(product.price)}</div>
-            {product.compareAtPrice && product.compareAtPrice > product.price && (
-              <div className="text-xs text-muted-foreground line-through">
-                {formatPrice(product.compareAtPrice)}
+
+        {/* Content Body */}
+        <div className="p-3 flex flex-col flex-1 justify-between bg-white">
+          <div>
+            {/* Title */}
+            <h3 className="text-sm font-medium text-slate-800 group-hover:text-[#f57224] transition-colors line-clamp-2 leading-snug h-10 mb-1.5 overflow-hidden">
+              {product.title || (product as any).name || 'Untitled Product'}
+            </h3>
+
+            {/* Price Row */}
+            <div className="flex items-baseline gap-1.5 flex-wrap my-1">
+              <span className="text-lg font-bold text-[#0f172a] tracking-tight">
+                {formatPrice(product.price)}
+              </span>
+              {originalPrice && originalPrice > product.price && (
+                <span className="text-xs text-slate-400 line-through font-normal">
+                  {formatPrice(originalPrice)}
+                </span>
+              )}
+            </div>
+
+            {/* Rating Row */}
+            <div className="flex items-center gap-1 text-xs text-slate-500 mt-1">
+              <div className="flex items-center text-amber-400">
+                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                <span className="ml-1 text-xs font-semibold text-slate-700">
+                  {rating > 0 ? rating.toFixed(1) : '4.5'}
+                </span>
               </div>
-            )}
+              <span className="text-xs text-slate-400">({reviewCount})</span>
+            </div>
           </div>
-          <div className="flex items-center gap-1.5">
-            <Stars rating={product.rating} />
-            <span className="text-[11px] text-muted-foreground">
-              ({product.reviewCount}{product.reviewCount > 0 ? " sold" : ""})
-            </span>
-          </div>
-          {product.sellerId && (
-            <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
-              <Store className="h-3 w-3 shrink-0" />
-              <span className="truncate">Marketplace seller</span>
+
+          {/* Location / Seller */}
+          {showLocation && (
+            <div className="mt-2 text-xs text-slate-400 truncate">
+              {location}
             </div>
           )}
         </div>
       </Link>
 
-      <div className="mt-auto px-2.5 pb-2.5 md:px-3 md:pb-3">
+      {/* Add to Cart Button (Appears on Hover at Bottom) */}
+      <div className="p-2 pt-0 bg-white opacity-0 group-hover:opacity-100 transition-opacity duration-200">
         <button
-          onClick={() => !outOfStock && void add(product)}
-          disabled={outOfStock}
-          className="ripple flex min-h-10 w-full items-center justify-center gap-1.5 rounded-xl bg-primary py-2 text-xs font-medium text-primary-foreground shadow-sm transition hover:opacity-90 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50"
+          type="button"
+          onClick={handleAddToCartClick}
+          className="w-full bg-[#0f172a] hover:bg-slate-800 active:bg-slate-900 text-white text-xs font-medium py-2 px-3 rounded flex items-center justify-center gap-1.5 transition-colors duration-150 shadow-sm"
         >
-          <ShoppingCart className="h-3.5 w-3.5" />
-          {outOfStock ? "Out of stock" : "Add to Cart"}
+          <ShoppingCart className="w-3.5 h-3.5" />
+          <span>Add to Cart</span>
         </button>
       </div>
     </div>
   );
-}
+};
 
-export function ProductCardSkeleton() {
+/**
+ * Compact Variant for Flash Sale Horizontal Scroll
+ */
+export const ProductCardCompact: React.FC<ProductCardCompactProps> = ({
+  product,
+  onAddToCart,
+  className = '',
+  soldCount,
+  totalStock,
+}) => {
+  const [imageError, setImageError] = useState(false);
+  const { isInWishlist, toggleWishlist } = useWishlist();
+
+  const isWishlisted = isInWishlist ? isInWishlist(String(product.id)) : false;
+
+  const originalPrice = product.compareAtPrice ?? (product as any).oldPrice;
+  const discountPct = getDiscountPercentage(product.price, originalPrice, (product as any).discount);
+  const imageUrl = imageError ? 'https://via.placeholder.com/300x300?text=No+Image' : getProductImage(product);
+
+  const handleWishlistClick = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (toggleWishlist) {
+        toggleWishlist(product);
+      }
+    },
+    [toggleWishlist, product]
+  );
+
+  const handleAddToCartClick = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (onAddToCart) {
+        onAddToCart(product, e);
+      }
+    },
+    [onAddToCart, product]
+  );
+
+  const productIdStr = String(product.id);
+  const soldPercent =
+    soldCount && totalStock && totalStock > 0
+      ? Math.min(100, Math.round((soldCount / totalStock) * 100))
+      : null;
+
   return (
-    <div className="overflow-hidden rounded-2xl border bg-card">
-      <div className="skeleton aspect-square" />
-      <div className="space-y-2 p-3">
-        <div className="skeleton h-4 w-3/4 rounded" />
-        <div className="skeleton h-4 w-1/2 rounded" />
-        <div className="skeleton h-10 w-full rounded-xl" />
+    <div
+      className={`group relative w-36 sm:w-40 flex-shrink-0 bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-slate-100 flex flex-col overflow-hidden select-none ${className}`}
+    >
+      <Link
+        to="/product/$productId"
+        params={{ productId: productIdStr }}
+        className="flex flex-col h-full text-inherit no-underline focus:outline-none"
+      >
+        {/* Compact Square Image */}
+        <div className="relative w-full aspect-square overflow-hidden bg-slate-50 rounded-t-lg">
+          <img
+            src={imageUrl}
+            alt={product.title || (product as any).name || 'Product image'}
+            onError={() => setImageError(true)}
+            loading="lazy"
+            className="w-full h-full object-cover rounded-t-lg group-hover:scale-105 transition-transform duration-300"
+          />
+
+          {/* Discount Badge */}
+          {discountPct > 0 && (
+            <div className="absolute top-1.5 left-1.5 z-10 bg-[#f57224] text-white text-[10px] font-bold px-1 py-0.5 rounded shadow-sm pointer-events-none">
+              -{discountPct}%
+            </div>
+          )}
+
+          {/* Wishlist Heart Icon */}
+          <button
+            type="button"
+            onClick={handleWishlistClick}
+            aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+            className={`absolute top-1.5 right-1.5 z-10 p-1 rounded-full bg-white/80 hover:bg-white backdrop-blur-sm shadow-sm transition-all duration-200 ${
+              isWishlisted ? 'text-rose-500' : 'text-slate-500 hover:text-rose-500'
+            }`}
+          >
+            <Heart
+              className={`w-3.5 h-3.5 ${
+                isWishlisted ? 'fill-rose-500 text-rose-500' : 'fill-none'
+              }`}
+            />
+          </button>
+        </div>
+
+        {/* Compact Body */}
+        <div className="p-2 flex flex-col justify-between flex-1 bg-white">
+          <div>
+            <h4 className="text-xs font-medium text-slate-800 group-hover:text-[#f57224] transition-colors line-clamp-2 h-8 leading-tight mb-1">
+              {product.title || (product as any).name || 'Untitled Product'}
+            </h4>
+
+            <div className="flex flex-col">
+              <span className="text-sm font-bold text-[#0f172a] leading-none">
+                {formatPrice(product.price)}
+              </span>
+              {originalPrice && originalPrice > product.price && (
+                <span className="text-[10px] text-slate-400 line-through mt-0.5">
+                  {formatPrice(originalPrice)}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Sold Stock Progress Bar for Flash Sale */}
+          {soldPercent !== null && (
+            <div className="mt-2">
+              <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                <div
+                  className="bg-[#f57224] h-full rounded-full"
+                  style={{ width: `${soldPercent}%` }}
+                />
+              </div>
+              <div className="text-[9px] text-slate-400 mt-0.5 font-medium">
+                {soldPercent}% sold
+              </div>
+            </div>
+          )}
+        </div>
+      </Link>
+
+      {/* Quick Add Button on Hover */}
+      <div className="p-1.5 pt-0 bg-white opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        <button
+          type="button"
+          onClick={handleAddToCartClick}
+          className="w-full bg-[#0f172a] hover:bg-slate-800 text-white text-[10px] font-semibold py-1.5 px-2 rounded flex items-center justify-center gap-1 transition-colors"
+        >
+          <ShoppingCart className="w-3 h-3" />
+          <span>Add</span>
+        </button>
       </div>
     </div>
   );
-}
+};
+
+/**
+ * Skeleton Loading Component with Pulse Animation
+ */
+export const ProductCardSkeleton: React.FC<ProductCardSkeletonProps> = ({
+  className = '',
+}) => {
+  return (
+    <div
+      className={`bg-white rounded-lg shadow-sm border border-slate-100 flex flex-col h-full overflow-hidden animate-pulse ${className}`}
+    >
+      {/* Square Image Placeholder */}
+      <div className="relative w-full aspect-square bg-slate-200 rounded-t-lg">
+        {/* Discount Badge Skeleton */}
+        <div className="absolute top-2 left-2 w-10 h-4 bg-slate-300 rounded" />
+        {/* Heart Icon Skeleton */}
+        <div className="absolute top-2 right-2 w-7 h-7 bg-slate-300 rounded-full" />
+      </div>
+
+      {/* Content Skeleton */}
+      <div className="p-3 flex flex-col flex-1 justify-between gap-2">
+        <div className="space-y-2">
+          {/* Title Lines */}
+          <div className="h-3.5 bg-slate-200 rounded w-full" />
+          <div className="h-3.5 bg-slate-200 rounded w-3/4" />
+
+          {/* Price Skeleton */}
+          <div className="flex items-center gap-2 pt-2">
+            <div className="h-5 bg-slate-300 rounded w-20" />
+            <div className="h-3 bg-slate-200 rounded w-12" />
+          </div>
+
+          {/* Rating Skeleton */}
+          <div className="flex items-center gap-1 pt-1">
+            <div className="h-3 bg-slate-200 rounded w-16" />
+            <div className="h-3 bg-slate-200 rounded w-8" />
+          </div>
+        </div>
+
+        {/* Location Skeleton */}
+        <div className="h-3 bg-slate-200 rounded w-16 mt-2" />
+      </div>
+    </div>
+  );
+};
+
+export default ProductCard;
