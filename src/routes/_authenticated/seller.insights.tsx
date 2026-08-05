@@ -16,7 +16,7 @@ import { firebaseConfigured } from "@/services/firebase/config";
 import { formatPrice } from "@/utils/format";
 import type { Product } from "@/types/commerce";
 
-export const Route = createFileRoute("/_authenticated/seller.insights")({
+export const Route = createFileRoute("/_authenticated/seller/insights")({
   ssr: false,
   component: SellerInsightsPage,
   head: () => ({ meta: [{ title: "Seller Insights — ShopNexa" }] }),

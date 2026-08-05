@@ -16,7 +16,7 @@ import { listOrders } from "@/services/firebase/orders";
 import { firebaseConfigured } from "@/services/firebase/config";
 import { formatPrice } from "@/utils/format";
 
-export const Route = createFileRoute("/_authenticated/admin.analytics")({
+export const Route = createFileRoute("/_authenticated/admin/analytics")({
   ssr: false,
   component: AdminAnalyticsPage,
   head: () => ({ meta: [{ title: "Performance Analytics — ShopNexa Admin" }] }),
