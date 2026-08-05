@@ -5,6 +5,7 @@ import { ProductCard, ProductCardSkeleton } from "@/components/product/ProductCa
 import type { Product } from "@/types/commerce";
 
 function useCountdown(hours = 8) {
+  const [mounted, setMounted] = useState(false);
   const [end] = useState(() => {
     // Deterministic per-day countdown so it doesn't reset on remount within the window.
     const now = new Date();
@@ -14,6 +15,8 @@ function useCountdown(hours = 8) {
   });
   const [remaining, setRemaining] = useState(() => Math.max(0, end - Date.now()));
   useEffect(() => {
+    setMounted(true);
+    setRemaining(Math.max(0, end - Date.now()));
     const t = setInterval(() => setRemaining(Math.max(0, end - Date.now())), 1000);
     return () => clearInterval(t);
   }, [end]);
@@ -21,6 +24,9 @@ function useCountdown(hours = 8) {
   const m = Math.floor((remaining % 3_600_000) / 60_000);
   const s = Math.floor((remaining % 60_000) / 1000);
   const pad = (n: number) => n.toString().padStart(2, "0");
+  // Render static zeros during SSR to avoid hydration mismatch; real values
+  // appear after mount.
+  if (!mounted) return { h: "00", m: "00", s: "00" };
   return { h: pad(h), m: pad(m), s: pad(s) };
 }
 

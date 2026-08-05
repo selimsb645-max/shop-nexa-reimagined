@@ -134,14 +134,18 @@ function FlashSaleBanner({ sale }: { sale: FlashSale }) {
 }
 
 function FlashSaleCountdown({ endsAt }: { endsAt: number }) {
+  const [mounted, setMounted] = useState(false);
   const [remaining, setRemaining] = useState(getRemaining(endsAt));
 
   useEffect(() => {
+    setMounted(true);
+    setRemaining(getRemaining(endsAt));
     const timer = setInterval(() => setRemaining(getRemaining(endsAt)), 1000);
     return () => clearInterval(timer);
   }, [endsAt]);
 
-  if (remaining.total <= 0) return null;
+  // Render zeros until mounted to avoid SSR/client hydration mismatch.
+  if (!mounted || remaining.total <= 0) return null;
 
   return (
     <div className="mt-4 flex items-center gap-3 rounded-xl border bg-muted/30 p-4">
