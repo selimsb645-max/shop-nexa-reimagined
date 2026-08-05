@@ -1,331 +1,892 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Sparkles, ArrowRight,
-  Shirt, Smartphone, Apple, Sofa, Headphones, Gamepad2, Baby,
-  Tag, Truck, ShieldCheck, Package, Headset, Award,
-  TrendingUp, Star, Trophy, Wand2, History,
+  Sparkles,
+  ArrowRight,
+  Shirt,
+  Smartphone,
+  Apple,
+  Sofa,
+  Headphones,
+  Gamepad2,
+  Baby,
+  Tag,
+  Truck,
+  ShieldCheck,
+  Package,
+  Headset,
+  Award,
+  Zap,
+  Flame,
+  Star,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
-import { useMemo } from "react";
-import dealGrocery from "@/assets/deal-grocery.jpg";
-import dealElectronics from "@/assets/deal-electronics.jpg";
-import dealFashion from "@/assets/deal-fashion.jpg";
-import blog1 from "@/assets/blog-1.jpg";
-import blog2 from "@/assets/blog-2.jpg";
-import blog3 from "@/assets/blog-3.jpg";
-import blog4 from "@/assets/blog-4.jpg";
 import { SiteHeader, TopBar } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { WhatsAppFab } from "@/components/layout/SiteChrome";
-import { PromoCarousel } from "@/components/home/PromoCarousel";
-import { FlashSale } from "@/components/home/FlashSale";
-import { ProductRow } from "@/components/home/ProductRow";
+import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
+import { ProductCard } from "@/components/product/ProductCard";
 import { listCategories } from "@/services/firebase/categories";
 import { listProducts } from "@/services/firebase/products";
 import { firebaseConfigured } from "@/services/firebase/config";
-import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
+import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import type { Product } from "@/types/commerce";
 
 export const Route = createFileRoute("/")({
-  component: Index,
+  component: HomePage,
   head: () => ({
     meta: [
-      { title: "ShopNexa — Shop Smarter. Live Better." },
+      { title: "Shop Nexa — Online Shopping Marketplace" },
       {
         name: "description",
         content:
-          "Shop electronics, fashion, grocery and beauty on ShopNexa. Flash sales, verified sellers and free delivery over $50.",
-      },
-      { property: "og:title", content: "ShopNexa — Shop Smarter. Live Better." },
-      {
-        property: "og:description",
-        content: "Everything you need in one place. Top quality products at unbeatable prices.",
-      },
-      { property: "og:type", content: "website" },
-      { property: "og:url", content: "https://shop-nexa.lovable.app/" },
-    ],
-    links: [{ rel: "canonical", href: "https://shop-nexa.lovable.app/" }],
-    scripts: [
-      {
-        type: "application/ld+json",
-        children: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "Organization",
-          name: "ShopNexa",
-          url: "https://shop-nexa.lovable.app/",
-          sameAs: ["https://www.facebook.com/profile.php?id=61592089432837"],
-          contactPoint: {
-            "@type": "ContactPoint",
-            telephone: "+8801324997271",
-            contactType: "customer support",
-          },
-        }),
-      },
-      {
-        type: "application/ld+json",
-        children: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "WebSite",
-          name: "ShopNexa",
-          url: "https://shop-nexa.lovable.app/",
-          potentialAction: {
-            "@type": "SearchAction",
-            target: "https://shop-nexa.lovable.app/shop?q={search_term_string}",
-            "query-input": "required name=search_term_string",
-          },
-        }),
+          "Discover amazing deals, electronics, fashion, and home essentials on Shop Nexa. Fast delivery and secure payments.",
       },
     ],
   }),
 });
 
+// Category definition interface for display
+interface CategoryItem {
+  id: string;
+  name: string;
+  slug: string;
+  icon: React.ComponentType<{ className?: string }>;
+  bgColor: string;
+  textColor: string;
+}
 
-const features = [
-  { icon: Truck, title: "Free Delivery", desc: "On orders over $50" },
-  { icon: ShieldCheck, title: "Secure Payment", desc: "100% secure payment" },
-  { icon: Package, title: "Easy Returns", desc: "30 days return policy" },
-  { icon: Headset, title: "24/7 Support", desc: "Dedicated support" },
-  { icon: Award, title: "Best Quality", desc: "Top quality products" },
+// Default static categories for fallback/enrichment
+const DEFAULT_CATEGORIES: CategoryItem[] = [
+  {
+    id: "electronics",
+    name: "Electronics",
+    slug: "electronics",
+    icon: Smartphone,
+    bgColor: "bg-blue-500/10",
+    textColor: "text-blue-600",
+  },
+  {
+    id: "fashion",
+    name: "Fashion",
+    slug: "fashion",
+    icon: Shirt,
+    bgColor: "bg-orange-500/10",
+    textColor: "text-orange-600",
+  },
+  {
+    id: "home-living",
+    name: "Home & Living",
+    slug: "home-living",
+    icon: Sofa,
+    bgColor: "bg-emerald-500/10",
+    textColor: "text-emerald-600",
+  },
+  {
+    id: "audio-acc",
+    name: "Audio & Accessories",
+    slug: "audio-accessories",
+    icon: Headphones,
+    bgColor: "bg-purple-500/10",
+    textColor: "text-purple-600",
+  },
+  {
+    id: "gaming",
+    name: "Gaming & Tech",
+    slug: "gaming",
+    icon: Gamepad2,
+    bgColor: "bg-indigo-500/10",
+    textColor: "text-indigo-600",
+  },
+  {
+    id: "groceries",
+    name: "Fresh & Grocery",
+    slug: "groceries",
+    icon: Apple,
+    bgColor: "bg-green-500/10",
+    textColor: "text-green-600",
+  },
+  {
+    id: "mother-baby",
+    name: "Mother & Baby",
+    slug: "mother-baby",
+    icon: Baby,
+    bgColor: "bg-pink-500/10",
+    textColor: "text-pink-600",
+  },
+  {
+    id: "offers-deals",
+    name: "Special Offers",
+    slug: "offers",
+    icon: Tag,
+    bgColor: "bg-rose-500/10",
+    textColor: "text-rose-600",
+  },
 ];
 
-const blogs = [
-  { title: "10 Smart Shopping Tips to Save More Money", date: "May 15, 2024", img: blog1 },
-  { title: "New Arrivals You Don't Want to Miss", date: "May 12, 2024", img: blog2 },
-  { title: "Top 5 Must-Have Gadgets in 2024", date: "May 10, 2024", img: blog3 },
-  { title: "How We Ensure Fast and Safe Delivery", date: "May 8, 2024", img: blog4 },
+// Hero banner slide configuration
+const HERO_SLIDES = [
+  {
+    id: "mega-sale",
+    tag: "MEGA SALE • UP TO 70% OFF",
+    title: "Shop Nexa Grand Shopping Festival",
+    description: "Unbeatable discounts across thousands of top-tier electronics, fashion, and home lifestyle products.",
+    ctaText: "Shop Mega Sale",
+    ctaLink: "/flash-sales",
+    gradient: "from-slate-900 via-slate-800 to-orange-600",
+    badgeText: "HOT DEAL",
+    badgeColor: "bg-orange-500 text-white",
+  },
+  {
+    id: "electronics",
+    tag: "TECH INNOVATION 2026",
+    title: "Next-Gen Smartphones & Audio Gear",
+    description: "Upgrade your lifestyle with noise-canceling headphones, smartwatches, and latest flagship gadgets.",
+    ctaText: "Explore Electronics",
+    ctaLink: "/shop",
+    gradient: "from-slate-950 via-blue-950 to-slate-900",
+    badgeText: "NEW ARRIVALS",
+    badgeColor: "bg-blue-600 text-white",
+  },
+  {
+    id: "fashion",
+    tag: "SUMMER FASHION TRENDS",
+    title: "Contemporary Styles & Streetwear",
+    description: "Refresh your wardrobe with premium apparel, designer sneakers, and signature accessories.",
+    ctaText: "Upgrade Wardrobe",
+    ctaLink: "/shop",
+    gradient: "from-slate-900 via-orange-950 to-slate-950",
+    badgeText: "TRENDING",
+    badgeColor: "bg-amber-500 text-slate-950 font-bold",
+  },
 ];
 
-const CATEGORY_ICONS: Record<string, { icon: typeof Shirt; color: string }> = {
-  fashion: { icon: Shirt, color: "bg-blue-100 text-blue-600" },
-  electronics: { icon: Smartphone, color: "bg-indigo-100 text-indigo-600" },
-  grocery: { icon: Apple, color: "bg-green-100 text-green-600" },
-  beauty: { icon: Sparkles, color: "bg-pink-100 text-pink-600" },
-  "home-kitchen": { icon: Sofa, color: "bg-orange-100 text-orange-600" },
-  accessories: { icon: Headphones, color: "bg-purple-100 text-purple-600" },
-  gaming: { icon: Gamepad2, color: "bg-red-100 text-red-600" },
-  "baby-kids": { icon: Baby, color: "bg-yellow-100 text-yellow-600" },
-};
-
-function Index() {
-  const categoriesQuery = useQuery({
+function HomePage() {
+  // Query 1: Categories
+  const { data: rawCategories, isLoading: categoriesLoading } = useQuery({
     queryKey: ["categories"],
-    queryFn: listCategories,
+    queryFn: async () => {
+      try {
+        return await listCategories();
+      } catch (err) {
+        console.warn("Error fetching categories:", err);
+        return [];
+      }
+    },
     enabled: firebaseConfigured,
   });
-  const featuredQuery = useQuery({
+
+  // Query 2: Featured Products
+  const { data: featuredProducts = [], isLoading: featuredLoading } = useQuery({
     queryKey: ["products", "featured"],
-    queryFn: () => listProducts({ featured: true, limit: 12 }),
+    queryFn: async () => {
+      try {
+        return await listProducts({ featured: true });
+      } catch (err) {
+        console.warn("Error fetching featured products:", err);
+        return [];
+      }
+    },
     enabled: firebaseConfigured,
   });
-  const newestQuery = useQuery({
+
+  // Query 3: Newest Products
+  const { data: newestProducts = [], isLoading: newestLoading } = useQuery({
     queryKey: ["products", "newest"],
-    queryFn: () => listProducts({ sort: "newest", limit: 12 }),
-    enabled: firebaseConfigured,
-  });
-  const topRatedQuery = useQuery({
-    queryKey: ["products", "rating"],
-    queryFn: () => listProducts({ sort: "rating", limit: 12 }),
+    queryFn: async () => {
+      try {
+        return await listProducts({ sort: "newest" });
+      } catch (err) {
+        console.warn("Error fetching newest products:", err);
+        return [];
+      }
+    },
     enabled: firebaseConfigured,
   });
 
-  const { ids: recentIds } = useRecentlyViewed();
-  const pool: Product[] = useMemo(() => {
+  // Query 4: Top Rated Products
+  const { data: topRatedProducts = [], isLoading: topRatedLoading } = useQuery({
+    queryKey: ["products", "top-rated"],
+    queryFn: async () => {
+      try {
+        return await listProducts({ sort: "rating" });
+      } catch (err) {
+        console.warn("Error fetching top-rated products:", err);
+        return [];
+      }
+    },
+    enabled: firebaseConfigured,
+  });
+
+  // Query 5: All Products fallback pool
+  const { data: allProducts = [], isLoading: allProductsLoading } = useQuery({
+    queryKey: ["products", "all"],
+    queryFn: async () => {
+      try {
+        return await listProducts();
+      } catch (err) {
+        console.warn("Error fetching all products:", err);
+        return [];
+      }
+    },
+    enabled: firebaseConfigured,
+  });
+
+  const isProductsLoading =
+    featuredLoading || newestLoading || topRatedLoading || allProductsLoading;
+
+  // Combine into deduplicated 'Just For You' product pool
+  const justForYouPool = useMemo(() => {
     const map = new Map<string, Product>();
-    [...(featuredQuery.data ?? []), ...(newestQuery.data ?? []), ...(topRatedQuery.data ?? [])]
-      .forEach((p) => map.set(p.id, p));
+    const sources = [
+      ...(Array.isArray(featuredProducts) ? featuredProducts : []),
+      ...(Array.isArray(newestProducts) ? newestProducts : []),
+      ...(Array.isArray(topRatedProducts) ? topRatedProducts : []),
+      ...(Array.isArray(allProducts) ? allProducts : []),
+    ];
+
+    sources.forEach((item) => {
+      if (item && item.id && !map.has(item.id)) {
+        map.set(item.id, item);
+      }
+    });
+
     return Array.from(map.values());
-  }, [featuredQuery.data, newestQuery.data, topRatedQuery.data]);
+  }, [featuredProducts, newestProducts, topRatedProducts, allProducts]);
 
-  const recent = useMemo(() => {
-    const byId = new Map(pool.map((p) => [p.id, p]));
-    return recentIds.map((id) => byId.get(id)).filter((p): p is Product => Boolean(p));
-  }, [recentIds, pool]);
+  // Flash Sale items (pick top 8 from pool)
+  const flashSaleProducts = useMemo(() => {
+    if (justForYouPool.length === 0) return [];
+    // Prioritize products with compareAtPrice or pick first 8
+    const discounted = justForYouPool.filter(
+      (p) => p.compareAtPrice && p.compareAtPrice > p.price
+    );
+    return discounted.length >= 4
+      ? discounted.slice(0, 8)
+      : justForYouPool.slice(0, 8);
+  }, [justForYouPool]);
 
-  // Recommended: highest rated among featured that haven't been recently viewed.
-  const recommended = useMemo(() => {
-    const recentSet = new Set(recentIds);
-    return [...pool]
-      .filter((p) => !recentSet.has(p.id))
-      .sort((a, b) => b.rating * b.reviewCount - a.rating * a.reviewCount)
-      .slice(0, 12);
-  }, [pool, recentIds]);
+  // Category mapping
+  const categoryList: CategoryItem[] = useMemo(() => {
+    if (
+      Array.isArray(rawCategories) &&
+      rawCategories.length > 0
+    ) {
+      return rawCategories.map((cat, idx) => {
+        const fallback = DEFAULT_CATEGORIES[idx % DEFAULT_CATEGORIES.length];
+        return {
+          id: cat.id || cat.slug || `cat-${idx}`,
+          name: cat.name || "Category",
+          slug: cat.slug || cat.name?.toLowerCase().replace(/\s+/g, "-") || "",
+          icon: fallback.icon,
+          bgColor: fallback.bgColor,
+          textColor: fallback.textColor,
+        };
+      });
+    }
+    return DEFAULT_CATEGORIES;
+  }, [rawCategories]);
+
+  // Just For You pagination state
+  const [visibleCount, setVisibleCount] = useState(12);
+
+  const handleLoadMore = () => {
+    setVisibleCount((prev) => prev + 12);
+  };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 antialiased">
+      {/* Top Header bar */}
       <TopBar />
       <SiteHeader />
 
-      <PromoCarousel />
+      <main className="mx-auto max-w-7xl px-3 pb-16 sm:px-6 lg:px-8">
+        {/* 1. Hero Carousel */}
+        <section className="mt-4">
+          <HeroCarousel />
+        </section>
 
-      {/* Categories */}
-      <section id="categories" className="mx-auto max-w-7xl px-3 py-5 md:px-4 md:py-6">
-        <div className="mb-3 flex items-center justify-between md:mb-4">
-          <h2 className="text-lg font-bold md:text-2xl">Shop by Category</h2>
-          <Link to="/shop" className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
-            View All <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-        {categoriesQuery.isLoading ? (
-          <div className="grid grid-cols-4 gap-2.5 sm:grid-cols-4 md:gap-3 lg:grid-cols-8">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="skeleton h-[104px] rounded-2xl md:h-28" />
-            ))}
+        {/* 2. Flash Sale Section */}
+        <section className="mt-8">
+          <FlashSaleSection
+            products={flashSaleProducts}
+            isLoading={isProductsLoading}
+          />
+        </section>
+
+        {/* 3. Categories Grid */}
+        <section className="mt-10">
+          <CategoriesGrid
+            categories={categoryList}
+            isLoading={categoriesLoading}
+          />
+        </section>
+
+        {/* 4. Promotional Banner */}
+        <section className="mt-10">
+          <PromotionalBanner />
+        </section>
+
+        {/* 5. 'Just For You' Product Grid */}
+        <section className="mt-10">
+          <JustForYouSection
+            products={justForYouPool}
+            visibleCount={visibleCount}
+            isLoading={isProductsLoading}
+            onLoadMore={handleLoadMore}
+          />
+        </section>
+
+        {/* 6. Features strip */}
+        <section className="mt-12">
+          <FeaturesStrip />
+        </section>
+      </main>
+
+      {/* Footer & Floating Chrome */}
+      <SiteFooter />
+      <WhatsAppFab />
+      <MobileBottomNav />
+    </div>
+  );
+}
+
+/* ==========================================================================
+   1. Hero Carousel Component
+   ========================================================================== */
+function HeroCarousel() {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+
+  const nextSlide = useCallback(() => {
+    setCurrentIndex((prev) => (prev + 1) % HERO_SLIDES.length);
+  }, []);
+
+  const prevSlide = useCallback(() => {
+    setCurrentIndex((prev) => (prev - 1 + HERO_SLIDES.length) % HERO_SLIDES.length);
+  }, []);
+
+  // Auto-rotate 5s
+  useEffect(() => {
+    if (isPaused) return;
+    const interval = setInterval(nextSlide, 5000);
+    return () => clearInterval(interval);
+  }, [isPaused, nextSlide]);
+
+  // Touch Swipe Handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setIsPaused(true);
+    touchStartX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStartX.current || !touchEndX.current) return;
+    const distance = touchStartX.current - touchEndX.current;
+    const minSwipeDistance = 40;
+
+    if (distance > minSwipeDistance) {
+      nextSlide();
+    } else if (distance < -minSwipeDistance) {
+      prevSlide();
+    }
+
+    touchStartX.current = null;
+    touchEndX.current = null;
+    setIsPaused(false);
+  };
+
+  return (
+    <div
+      className="relative overflow-hidden rounded-2xl shadow-xl transition-all duration-300"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      <div
+        className="flex transition-transform duration-700 ease-out"
+        style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+      >
+        {HERO_SLIDES.map((slide) => (
+          <div
+            key={slide.id}
+            className={`min-w-full relative bg-gradient-to-r ${slide.gradient} px-6 py-12 sm:px-12 sm:py-16 md:py-20 text-white flex flex-col justify-between overflow-hidden`}
+          >
+            {/* Background Decorative Pattern */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.1),transparent)] pointer-events-none" />
+            <div className="absolute -right-20 -top-20 h-80 w-80 rounded-full bg-orange-500/20 blur-3xl pointer-events-none" />
+            <div className="absolute -left-20 -bottom-20 h-80 w-80 rounded-full bg-blue-500/20 blur-3xl pointer-events-none" />
+
+            <div className="relative z-10 max-w-2xl">
+              <div className="flex items-center gap-2 mb-3">
+                <span
+                  className={`inline-block rounded-full px-3 py-1 text-xs font-extrabold uppercase tracking-wider ${slide.badgeColor}`}
+                >
+                  {slide.badgeText}
+                </span>
+                <span className="text-xs font-semibold tracking-wider text-orange-300 uppercase">
+                  {slide.tag}
+                </span>
+              </div>
+
+              <h2 className="text-2xl font-black tracking-tight sm:text-4xl md:text-5xl leading-tight">
+                {slide.title}
+              </h2>
+
+              <p className="mt-3 text-sm sm:text-base text-slate-200 line-clamp-2 max-w-lg">
+                {slide.description}
+              </p>
+
+              <div className="mt-6 flex items-center gap-4">
+                <Link
+                  to={slide.ctaLink}
+                  className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-orange-600 active:scale-95"
+                >
+                  {slide.ctaText}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link
+                  to="/shop"
+                  className="hidden sm:inline-flex items-center gap-2 rounded-xl bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20"
+                >
+                  Browse Catalog
+                </Link>
+              </div>
+            </div>
           </div>
-        ) : categoriesQuery.data && categoriesQuery.data.length > 0 ? (
-          <div className="grid grid-cols-4 gap-2.5 sm:grid-cols-4 md:gap-3 lg:grid-cols-8">
-            {categoriesQuery.data.map((c, idx) => {
-              const cfg = CATEGORY_ICONS[c.slug] ?? { icon: Tag, color: "bg-primary/10 text-primary" };
-              const Icon = cfg.icon;
+        ))}
+      </div>
+
+      {/* Slide Navigation Controls */}
+      <button
+        type="button"
+        onClick={prevSlide}
+        aria-label="Previous Slide"
+        className="absolute left-3 top-1/2 -translate-y-1/2 grid h-10 w-10 place-items-center rounded-full bg-slate-900/40 text-white backdrop-blur transition hover:bg-slate-900/70 focus:outline-none"
+      >
+        <ChevronLeft className="h-6 w-6" />
+      </button>
+
+      <button
+        type="button"
+        onClick={nextSlide}
+        aria-label="Next Slide"
+        className="absolute right-3 top-1/2 -translate-y-1/2 grid h-10 w-10 place-items-center rounded-full bg-slate-900/40 text-white backdrop-blur transition hover:bg-slate-900/70 focus:outline-none"
+      >
+        <ChevronRight className="h-6 w-6" />
+      </button>
+
+      {/* Slide Indicators */}
+      <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2 z-10">
+        {HERO_SLIDES.map((_, index) => (
+          <button
+            key={index}
+            type="button"
+            onClick={() => setCurrentIndex(index)}
+            aria-label={`Go to slide ${index + 1}`}
+            className={`h-2.5 rounded-full transition-all duration-300 ${
+              currentIndex === index
+                ? "w-8 bg-orange-500"
+                : "w-2.5 bg-white/50 hover:bg-white/80"
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ==========================================================================
+   2. Flash Sale Section Component
+   ========================================================================== */
+function FlashSaleSection({
+  products,
+  isLoading,
+}: {
+  products: Product[];
+  isLoading: boolean;
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Countdown timer state
+  const [timeLeft, setTimeLeft] = useState({
+    hours: 5,
+    minutes: 42,
+    seconds: 19,
+  });
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev.seconds > 0) return { ...prev, seconds: prev.seconds - 1 };
+        if (prev.minutes > 0) return { ...prev, minutes: 59, seconds: 59 };
+        if (prev.hours > 0)
+          return { hours: prev.hours - 1, minutes: 59, seconds: 59 };
+        return { hours: 12, minutes: 0, seconds: 0 };
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const scroll = (direction: "left" | "right") => {
+    if (scrollRef.current) {
+      const scrollAmount = direction === "left" ? -320 : 320;
+      scrollRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    }
+  };
+
+  return (
+    <div className="rounded-2xl border border-orange-500/20 bg-white p-4 sm:p-6 shadow-sm">
+      {/* Flash Sale Header */}
+      <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-100">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-orange-500 text-white shadow-md shadow-orange-500/30">
+            <Zap className="h-6 w-6 fill-current animate-pulse" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                Flash Sale
+              </h2>
+              <span className="flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-bold text-red-600">
+                <Flame className="h-3.5 w-3.5 fill-red-600" /> On Sale Now
+              </span>
+            </div>
+            <p className="text-xs text-slate-500">Limited quantity deals refreshed daily</p>
+          </div>
+        </div>
+
+        {/* Countdown Timer */}
+        <div className="flex items-center gap-2">
+          <span className="hidden sm:inline text-xs font-bold uppercase tracking-wider text-slate-500">
+            Ends In:
+          </span>
+          <div className="flex items-center gap-1.5 font-mono">
+            <CountdownBox value={timeLeft.hours} label="HRS" />
+            <span className="font-bold text-slate-700">:</span>
+            <CountdownBox value={timeLeft.minutes} label="MIN" />
+            <span className="font-bold text-slate-700">:</span>
+            <CountdownBox value={timeLeft.seconds} label="SEC" />
+          </div>
+        </div>
+
+        {/* Shop All Button & Controls */}
+        <div className="flex items-center gap-2">
+          <Link
+            to="/flash-sales"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-orange-500/40 bg-orange-50 px-3.5 py-2 text-xs font-bold text-orange-600 transition hover:bg-orange-500 hover:text-white"
+          >
+            Shop All
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+          <div className="hidden sm:flex items-center gap-1 ml-2">
+            <button
+              type="button"
+              onClick={() => scroll("left")}
+              aria-label="Scroll left"
+              className="grid h-8 w-8 place-items-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-slate-100"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => scroll("right")}
+              aria-label="Scroll right"
+              className="grid h-8 w-8 place-items-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-slate-100"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Horizontal Scrollable Product List */}
+      <div
+        ref={scrollRef}
+        className="mt-5 flex gap-4 overflow-x-auto pb-2 pt-1 scrollbar-none snap-x snap-mandatory"
+      >
+        {isLoading
+          ? Array.from({ length: 6 }).map((_, i) => (
+              <div
+                key={i}
+                className="min-w-[200px] sm:min-w-[220px] max-w-[220px] shrink-0 snap-start"
+              >
+                <ProductCardSkeleton />
+              </div>
+            ))
+          : products.length > 0
+          ? products.map((product) => (
+              <div
+                key={product.id}
+                className="min-w-[200px] sm:min-w-[220px] max-w-[220px] shrink-0 snap-start"
+              >
+                <ProductCard product={product} />
+              </div>
+            ))
+          : (
+            <div className="w-full py-8 text-center text-sm text-slate-500">
+              No flash sale products currently available.
+            </div>
+          )}
+      </div>
+    </div>
+  );
+}
+
+function CountdownBox({ value, label }: { value: number; label: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-lg bg-slate-900 px-2.5 py-1 text-white shadow-sm min-w-[36px]">
+      <span className="text-sm font-extrabold tabular-nums">
+        {String(value).padStart(2, "0")}
+      </span>
+      <span className="text-[9px] font-medium text-slate-400">{label}</span>
+    </div>
+  );
+}
+
+/* ==========================================================================
+   3. Categories Grid Component
+   ========================================================================== */
+function CategoriesGrid({
+  categories,
+  isLoading,
+}: {
+  categories: CategoryItem[];
+  isLoading: boolean;
+}) {
+  return (
+    <div className="rounded-2xl bg-white p-4 sm:p-6 shadow-sm border border-slate-100">
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+            <Tag className="h-5 w-5 text-orange-500" />
+            Categories
+          </h2>
+          <p className="text-xs text-slate-500">Explore items by popular categories</p>
+        </div>
+        <Link
+          to="/shop"
+          className="text-xs font-bold text-orange-600 hover:underline flex items-center gap-1"
+        >
+          All Categories <ChevronRight className="h-3.5 w-3.5" />
+        </Link>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 sm:gap-4">
+        {isLoading
+          ? Array.from({ length: 8 }).map((_, i) => (
+              <div
+                key={i}
+                className="flex flex-col items-center justify-center rounded-xl p-4 bg-slate-100 animate-pulse h-28"
+              />
+            ))
+          : categories.map((cat) => {
+              const IconComp = cat.icon || Smartphone;
               return (
                 <Link
-                  key={c.id}
+                  key={cat.id}
                   to="/shop"
-                  search={{ category: c.slug }}
-                  style={{ animationDelay: `${Math.min(idx, 8) * 40}ms` }}
-                  className="group flex animate-fade-up flex-col items-center justify-center rounded-2xl border bg-card p-2.5 transition duration-200 hover:-translate-y-0.5 hover:border-primary hover:shadow-md active:scale-95 md:p-3"
+                  search={{ category: cat.slug }}
+                  className="group flex flex-col items-center rounded-xl border border-slate-100 p-3.5 text-center transition-all duration-200 hover:-translate-y-1 hover:border-orange-200 hover:shadow-md bg-white"
                 >
-                  <div className={`mb-2 flex h-12 w-12 items-center justify-center rounded-full ${cfg.color} transition group-hover:scale-110 md:h-14 md:w-14`}>
-                    <Icon className="h-6 w-6 md:h-7 md:w-7" />
+                  <div
+                    className={`grid h-14 w-14 place-items-center rounded-full ${cat.bgColor} ${cat.textColor} transition-transform duration-200 group-hover:scale-110`}
+                  >
+                    <IconComp className="h-7 w-7" />
                   </div>
-                  <span className="line-clamp-2 text-center text-[11px] font-medium leading-tight md:text-sm">{c.name}</span>
+                  <span className="mt-2.5 text-xs font-bold text-slate-800 line-clamp-1 group-hover:text-orange-600">
+                    {cat.name}
+                  </span>
                 </Link>
               );
             })}
+      </div>
+    </div>
+  );
+}
+
+/* ==========================================================================
+   4. Promotional Banner Component
+   ========================================================================== */
+function PromotionalBanner() {
+  return (
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900 to-orange-600 p-6 sm:p-8 text-white shadow-xl">
+      {/* Decorative Glows */}
+      <div className="absolute -right-10 -bottom-10 h-64 w-64 rounded-full bg-orange-500/30 blur-3xl pointer-events-none" />
+      <div className="absolute right-1/3 -top-10 h-40 w-40 rounded-full bg-blue-500/20 blur-2xl pointer-events-none" />
+
+      <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="max-w-xl">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-orange-500/20 border border-orange-400/30 px-3 py-1 text-xs font-bold text-orange-300">
+            <Sparkles className="h-3.5 w-3.5 text-orange-400" />
+            Shop Nexa App Exclusive
           </div>
-        ) : (
-          <div className="rounded-2xl border bg-card p-8 text-center text-sm text-muted-foreground">
-            Categories will appear here once added by the admin.
-          </div>
-        )}
-      </section>
+          <h2 className="mt-3 text-2xl sm:text-3xl font-black tracking-tight leading-snug">
+            Get Extra 15% OFF + Free Shipping
+          </h2>
+          <p className="mt-2 text-xs sm:text-sm text-slate-300">
+            Use promo code <span className="font-mono font-bold text-orange-400">NEXA15</span> at checkout on your first order.
+          </p>
+        </div>
 
+        <div className="flex items-center gap-3 shrink-0">
+          <Link
+            to="/shop"
+            className="inline-flex items-center justify-center rounded-xl bg-orange-500 px-6 py-3.5 text-sm font-bold text-white shadow-lg transition hover:bg-orange-600 active:scale-95"
+          >
+            Claim Discount Now
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-      <FlashSale products={featuredQuery.data} loading={featuredQuery.isLoading} />
+/* ==========================================================================
+   5. 'Just For You' Product Grid Component
+   ========================================================================== */
+function JustForYouSection({
+  products,
+  visibleCount,
+  isLoading,
+  onLoadMore,
+}: {
+  products: Product[];
+  visibleCount: number;
+  isLoading: boolean;
+  onLoadMore: () => void;
+}) {
+  const displayedProducts = products.slice(0, visibleCount);
+  const hasMore = visibleCount < products.length;
 
-      <ProductRow
-        title="Trending Products"
-        icon={TrendingUp}
-        accent="bg-destructive/10 text-destructive"
-        products={topRatedQuery.data}
-        loading={topRatedQuery.isLoading}
-        emptyHint="Trending products will appear here once the store is stocked."
-      />
+  return (
+    <div>
+      {/* Heading */}
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+            <Sparkles className="h-6 w-6 text-orange-500 fill-orange-500/20" />
+            Just For You
+          </h2>
+          <p className="text-xs text-slate-500">
+            Personalized recommendations based on trending items
+          </p>
+        </div>
+        <span className="text-xs text-slate-400 font-medium">
+          Showing {displayedProducts.length} of {products.length}
+        </span>
+      </div>
 
-      <ProductRow
-        title="New Arrivals"
-        icon={Sparkles}
-        accent="bg-accent/15 text-accent"
-        products={newestQuery.data}
-        loading={newestQuery.isLoading}
-      />
+      {/* Grid: 2 cols mobile, 4 cols tablet, 6 cols desktop */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+        {isLoading
+          ? Array.from({ length: 12 }).map((_, i) => (
+              <ProductCardSkeleton key={i} />
+            ))
+          : displayedProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+      </div>
 
-      <ProductRow
-        title="Best Sellers"
-        icon={Trophy}
-        accent="bg-primary/10 text-primary"
-        products={featuredQuery.data}
-        loading={featuredQuery.isLoading}
-      />
-
-      <ProductRow
-        title="Recommended For You"
-        icon={Wand2}
-        accent="bg-green-100 text-green-600"
-        products={recommended}
-        loading={featuredQuery.isLoading || topRatedQuery.isLoading}
-      />
-
-      {recent.length > 0 && (
-        <ProductRow
-          title="Recently Viewed"
-          icon={History}
-          accent="bg-muted text-foreground"
-          products={recent}
-          loading={false}
-        />
+      {/* Load More Button */}
+      {!isLoading && hasMore && (
+        <div className="mt-8 text-center">
+          <button
+            type="button"
+            onClick={onLoadMore}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-orange-500 bg-white px-8 py-3 text-sm font-bold text-orange-600 shadow-sm transition hover:bg-orange-500 hover:text-white active:scale-95"
+          >
+            Load More Products
+          </button>
+        </div>
       )}
 
-      {/* Deal banners */}
-      <section className="mx-auto max-w-7xl px-3 py-5 md:px-4 md:py-6">
-        <div className="grid gap-3 md:grid-cols-3 md:gap-4">
-          <div className="relative min-h-[136px] overflow-hidden rounded-2xl bg-green-50 p-5 md:p-6">
-            <div className="relative z-10 max-w-[55%]">
-              <div className="text-xs font-medium text-green-700 md:text-sm">Super Value Deals</div>
-              <div className="mt-1 text-xl font-bold text-green-800 md:text-2xl">Up to 50% Off</div>
-              <div className="mt-1 text-xs text-green-700 md:text-sm">On Grocery Items</div>
-              <Link to="/shop" search={{ category: "grocery" }} className="ripple mt-3 inline-flex min-h-10 items-center rounded-xl bg-green-600 px-4 text-xs font-semibold text-white hover:bg-green-700 md:mt-4">Shop Now</Link>
+      {!isLoading && !hasMore && products.length > 0 && (
+        <p className="mt-8 text-center text-xs font-semibold text-slate-400">
+          You've explored all current recommendations!
+        </p>
+      )}
+    </div>
+  );
+}
+
+/* Skeleton loader for product card */
+function ProductCardSkeleton() {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm animate-pulse flex flex-col justify-between h-72">
+      <div className="h-36 w-full rounded-lg bg-slate-200" />
+      <div className="mt-3 space-y-2">
+        <div className="h-3 w-3/4 rounded bg-slate-200" />
+        <div className="h-3 w-1/2 rounded bg-slate-200" />
+      </div>
+      <div className="mt-4 flex items-center justify-between">
+        <div className="h-4 w-1/3 rounded bg-slate-200" />
+        <div className="h-7 w-16 rounded-lg bg-slate-200" />
+      </div>
+    </div>
+  );
+}
+
+/* ==========================================================================
+   6. Features Strip Component
+   ========================================================================== */
+function FeaturesStrip() {
+  const features = [
+    {
+      icon: Truck,
+      title: "Free Delivery",
+      description: "On orders over $50 across nationwide delivery routes",
+      bgColor: "bg-blue-50 text-blue-600",
+    },
+    {
+      icon: ShieldCheck,
+      title: "100% Secure Payment",
+      description: "Encrypted checkout & protected payment options",
+      bgColor: "bg-emerald-50 text-emerald-600",
+    },
+    {
+      icon: Package,
+      title: "Easy 7-Day Returns",
+      description: "Hassle-free return policy & quick refunds",
+      bgColor: "bg-orange-50 text-orange-600",
+    },
+    {
+      icon: Headset,
+      title: "24/7 Customer Support",
+      description: "Dedicated live assistance whenever you need help",
+      bgColor: "bg-purple-50 text-purple-600",
+    },
+  ];
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {features.map((item, idx) => {
+        const Icon = item.icon;
+        return (
+          <div
+            key={idx}
+            className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition hover:shadow-md"
+          >
+            <div
+              className={`grid h-12 w-12 shrink-0 place-items-center rounded-xl ${item.bgColor}`}
+            >
+              <Icon className="h-6 w-6" />
             </div>
-            <img src={dealGrocery} alt="Grocery deals" loading="lazy" decoding="async" className="absolute right-0 top-0 h-full w-1/2 object-cover" />
-          </div>
-          <div className="relative min-h-[136px] overflow-hidden rounded-2xl bg-blue-50 p-5 md:p-6">
-            <div className="relative z-10 max-w-[55%]">
-              <div className="text-xs font-medium text-primary md:text-sm">Electronics Sale</div>
-              <div className="mt-1 text-xl font-bold md:text-2xl">Up to 60% Off</div>
-              <div className="mt-1 text-xs text-muted-foreground md:text-sm">On Selected Items</div>
-              <Link to="/shop" search={{ category: "electronics" }} className="ripple mt-3 inline-flex min-h-10 items-center rounded-xl bg-primary px-4 text-xs font-semibold text-primary-foreground hover:opacity-90 md:mt-4">Shop Now</Link>
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">{item.title}</h3>
+              <p className="mt-0.5 text-xs text-slate-500">{item.description}</p>
             </div>
-            <img src={dealElectronics} alt="Electronics deals" loading="lazy" decoding="async" className="absolute right-0 top-0 h-full w-1/2 object-cover" />
           </div>
-          <div className="relative min-h-[136px] overflow-hidden rounded-2xl bg-orange-50 p-5 md:p-6">
-            <div className="relative z-10 max-w-[55%]">
-              <div className="text-xs font-medium text-orange-700 md:text-sm">Fashion Sale</div>
-              <div className="mt-1 text-xl font-bold text-orange-900 md:text-2xl">Up to 70% Off</div>
-              <div className="mt-1 text-xs text-orange-800 md:text-sm">On Top Brands</div>
-              <Link to="/shop" search={{ category: "fashion" }} className="ripple mt-3 inline-flex min-h-10 items-center rounded-xl bg-accent px-4 text-xs font-semibold text-accent-foreground hover:opacity-90 md:mt-4">Shop Now</Link>
-            </div>
-            <img src={dealFashion} alt="Fashion deals" loading="lazy" decoding="async" className="absolute right-0 top-0 h-full w-1/2 object-cover" />
-          </div>
-        </div>
-      </section>
-
-
-      {/* Why choose */}
-      <section className="mx-auto max-w-7xl px-3 py-6 md:px-4 md:py-8">
-        <h2 className="mb-4 text-center text-lg font-bold md:mb-6 md:text-2xl">Why Choose ShopNexa?</h2>
-        <div className="grid grid-cols-2 gap-2.5 md:grid-cols-5 md:gap-4">
-          {features.map((f) => (
-            <div key={f.title} className="flex items-center gap-2.5 rounded-2xl border bg-card p-3">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <f.icon className="h-5 w-5" />
-              </div>
-              <div className="min-w-0">
-                <div className="truncate text-[13px] font-semibold md:text-sm">{f.title}</div>
-                <div className="truncate text-[11px] text-muted-foreground md:text-xs">{f.desc}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Blog */}
-      <section className="mx-auto max-w-7xl px-3 py-5 md:px-4 md:py-6">
-        <div className="mb-3 flex items-center justify-between md:mb-4">
-          <div className="flex items-center gap-2">
-            <Star className="h-5 w-5 text-accent" />
-            <h2 className="text-lg font-bold md:text-2xl">Latest From Blog</h2>
-          </div>
-          <a href="#" className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
-            View All <ArrowRight className="h-4 w-4" />
-          </a>
-        </div>
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-2 md:gap-4 lg:grid-cols-4">
-          {blogs.map((b) => (
-            <a key={b.title} href="#" className="group overflow-hidden rounded-2xl border bg-card shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99]">
-              <div className="aspect-[4/3] overflow-hidden bg-muted">
-                <img src={b.img} alt={b.title} loading="lazy" decoding="async" className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
-              </div>
-              <div className="p-3 md:p-4">
-                <div className="text-[11px] text-muted-foreground">{b.date}</div>
-                <h3 className="mt-1 line-clamp-2 text-[13px] font-semibold leading-tight group-hover:text-primary md:text-sm">{b.title}</h3>
-              </div>
-            </a>
-          ))}
-        </div>
-      </section>
-
-
-      <SiteFooter />
-      <WhatsAppFab />
+        );
+      })}
     </div>
   );
 }
