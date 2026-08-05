@@ -71,28 +71,4 @@ export async function redeemPoints(_uid: string, points: number): Promise<number
 }
 
 
-/** Credit cashback + loyalty points after a successful order. */
-export async function creditOrderRewards(
-  uid: string,
-  orderId: string,
-  orderTotal: number,
-): Promise<void> {
-  const cashback = Math.round(orderTotal * CASHBACK_RATE * 100) / 100;
-  if (cashback > 0) {
-    await addWalletTx(uid, {
-      type: "cashback",
-      amount: cashback,
-      note: `Cashback for order #${orderId.slice(0, 8).toUpperCase()}`,
-      orderId,
-    });
-  }
-  const points = Math.floor(orderTotal * POINTS_PER_CURRENCY);
-  if (points > 0) {
-    await addRewardTx(uid, {
-      type: "earn",
-      points,
-      note: `Earned on order #${orderId.slice(0, 8).toUpperCase()}`,
-      orderId,
-    });
-  }
-}
+
