@@ -11,7 +11,19 @@ import { MailCheck } from "lucide-react";
 export const Route = createFileRoute("/verify-email")({
   ssr: false,
   component: VerifyPage,
+  head: () => ({
+    meta: [
+      { title: "Verify Your Email — ShopNexa" },
+      { name: "description", content: "Confirm your email address to activate your ShopNexa account." },
+      { property: "og:title", content: "Verify Your Email — ShopNexa" },
+      { property: "og:description", content: "Confirm your email address to activate your ShopNexa account." },
+      { property: "og:url", content: "https://shop-nexa.lovable.app/verify-email" },
+      { name: "robots", content: "noindex" },
+    ],
+    links: [{ rel: "canonical", href: "https://shop-nexa.lovable.app/verify-email" }],
+  }),
 });
+
 
 function VerifyPage() {
   const { user } = useAuth();
