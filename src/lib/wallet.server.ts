@@ -138,7 +138,7 @@ export async function applyReferralServer(input: {
           referredUserId: input.uid,
           referredName: input.displayName ?? "New customer",
           status: "joined",
-          bonusPoints: input.referralBonusPoints,
+          bonusPoints: REFERRAL_BONUS_POINTS,
           createdAt: now,
         }),
       },
@@ -152,11 +152,11 @@ export async function applyReferralServer(input: {
     },
     ledgerWrite(projectId, input.uid, "rewardTx", {
       type: "referral",
-      points: input.welcomePoints,
+      points: REFERRAL_WELCOME_POINTS,
       note: `Welcome bonus for joining with ${code}`,
       orderId: null,
     }),
   ]);
 
-  return { points: input.welcomePoints };
+  return { points: REFERRAL_WELCOME_POINTS };
 }
