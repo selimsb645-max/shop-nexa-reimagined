@@ -10,9 +10,9 @@ import {
   setDoc,
   where,
 } from "firebase/firestore";
-import { getDb } from "./config";
+import { getDb, getFirebaseAuth } from "./config";
 import { toMs } from "./timestamps";
-import { addRewardTx } from "./wallet";
+import { claimReferralBonus } from "@/lib/wallet.functions";
 import type { ReferralRecord } from "@/types/customer";
 
 export const REFERRAL_BONUS_POINTS = 500;
@@ -90,28 +90,21 @@ export async function applyReferralCode(input: {
   if (!referrerId) throw new Error("Referral code not found");
   if (referrerId === input.uid) throw new Error("You cannot use your own code");
 
-  await setDoc(
-    doc(getDb(), "users", referrerId, "referrals", input.uid),
-    {
-      referredUserId: input.uid,
-      referredName: input.displayName ?? "New customer",
-      status: "joined",
-      bonusPoints: REFERRAL_BONUS_POINTS,
-      createdAt: serverTimestamp(),
+  const currentUser = getFirebaseAuth().currentUser;
+  if (!currentUser) throw new Error("Please sign in again to use a referral code.");
+  const idToken = await currentUser.getIdToken();
+
+  // The referral record and the welcome points are balance-affecting, so they
+  // are written by the trusted server endpoint, not from the browser.
+  await claimReferralBonus({
+    data: {
+      idToken,
+      code: input.code,
+      displayName: input.displayName,
+      referrerId,
+      referralBonusPoints: REFERRAL_BONUS_POINTS,
+      welcomePoints: REFERRAL_WELCOME_POINTS,
     },
-    { merge: true },
-  );
-
-  await setDoc(
-    me,
-    { referredBy: input.code.trim().toUpperCase(), updatedAt: serverTimestamp() },
-    { merge: true },
-  );
-
-  await addRewardTx(input.uid, {
-    type: "referral",
-    points: REFERRAL_WELCOME_POINTS,
-    note: `Welcome bonus for joining with ${input.code.trim().toUpperCase()}`,
   });
 }
 

@@ -1,4 +1,4 @@
-import { doc, getDoc, increment, updateDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { getDb } from "./config";
 import type { Coupon } from "@/types/commerce";
 
@@ -44,6 +44,7 @@ export async function validateCoupon(code: string, subtotal: number): Promise<Co
   return { coupon: c, discount: Math.round(discount * 100) / 100 };
 }
 
-export async function bumpCouponUses(code: string): Promise<void> {
-  await updateDoc(doc(getDb(), "coupons", code.toUpperCase()), { uses: increment(1) });
-}
+// Coupon `uses` is incremented only by the trusted server-side checkout, so
+// there is intentionally no client-side increment helper here. `validateCoupon`
+// above is a read-only preview; the server revalidates the coupon at checkout.
+

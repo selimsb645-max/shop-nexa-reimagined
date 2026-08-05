@@ -16,7 +16,7 @@ import { firebaseConfigured } from "@/services/firebase/config";
 import { formatPrice } from "@/utils/format";
 import type { Product } from "@/types/commerce";
 
-export const Route = createFileRoute("/_authenticated/admin.inventory")({
+export const Route = createFileRoute("/_authenticated/admin/inventory")({
   ssr: false,
   component: AdminInventoryPage,
   head: () => ({ meta: [{ title: "Inventory Management — ShopNexa Admin" }] }),

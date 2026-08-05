@@ -13,7 +13,7 @@ import { listAllProducts } from "@/services/firebase/products";
 import { firebaseConfigured } from "@/services/firebase/config";
 import { formatPrice } from "@/utils/format";
 
-export const Route = createFileRoute("/_authenticated/admin.seo")({
+export const Route = createFileRoute("/_authenticated/admin/seo")({
   ssr: false,
   component: AdminSEOPage,
   head: () => ({ meta: [{ title: "SEO Management — ShopNexa Admin" }] }),
@@ -34,12 +34,13 @@ function AdminSEOPage() {
 
   const seoScore = allProducts.length > 0
     ? Math.round(
-        ((productsWithImages.length / allProducts.length) * 30 +
-        (productsWithDescriptions.length / allProducts.length) * 30 +
-        (productsWithTags.length / allProducts.length) * 20 +
-        (productsWithComparePrice.length / allProducts.length) * 20))
+        (productsWithImages.length / allProducts.length) * 30 +
+          (productsWithDescriptions.length / allProducts.length) * 30 +
+          (productsWithTags.length / allProducts.length) * 20 +
+          (productsWithComparePrice.length / allProducts.length) * 20,
       )
     : 0;
+
 
   return (
     <div className="min-h-screen bg-muted/30">

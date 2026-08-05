@@ -15,7 +15,7 @@ import { firebaseConfigured } from "@/services/firebase/config";
 import { formatPrice } from "@/utils/format";
 import type { Order } from "@/types/commerce";
 
-export const Route = createFileRoute("/_authenticated/admin.delivery")({
+export const Route = createFileRoute("/_authenticated/admin/delivery")({
   ssr: false,
   component: AdminDeliveryDashboardPage,
   head: () => ({ meta: [{ title: "Delivery Dashboard — ShopNexa Admin" }] }),
@@ -27,10 +27,8 @@ function AdminDeliveryDashboardPage() {
     queryFn: async () => {
       const db = (await import("@/services/firebase/config")).getDb();
       const { collection, getDocs, orderBy } = await import("firebase/firestore");
-      const snap = await getDocs(
-        // @ts-expect-error - admin query
-        collection(db, "orders"),
-      );
+      const snap = await getDocs(collection(db, "orders"));
+
       return snap.docs.map((d) => {
         const data = d.data() as Record<string, unknown>;
         return {
