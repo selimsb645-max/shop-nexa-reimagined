@@ -9,6 +9,10 @@ const redeemSchema = z.object({
 const referralSchema = z.object({
   idToken: z.string().min(10),
   code: z.string().trim().min(3).max(64),
+  displayName: z.string().max(120).nullable(),
+  referrerId: z.string().min(1).max(200),
+  referralBonusPoints: z.number().int().min(0).max(100_000),
+  welcomePoints: z.number().int().min(0).max(100_000),
 });
 
 /** Redeems reward points into wallet credit, verified and written server side. */
@@ -21,12 +25,20 @@ export const redeemRewardPoints = createServerFn({ method: "POST" })
     return redeemPointsServer(uid, data.points);
   });
 
-/** Credits the one-time referral welcome bonus, verified server side. */
+/** Applies a referral code and credits the welcome bonus, verified server side. */
 export const claimReferralBonus = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => referralSchema.parse(data))
   .handler(async ({ data }) => {
     const { verifyIdToken } = await import("./firebase-admin.server");
-    const { creditReferralWelcomeServer } = await import("./wallet.server");
+    const { applyReferralServer } = await import("./wallet.server");
     const { uid } = await verifyIdToken(data.idToken);
-    return creditReferralWelcomeServer(uid, data.code);
+    if (data.referrerId === uid) throw new Error("You cannot use your own code");
+    return applyReferralServer({
+      uid,
+      displayName: data.displayName,
+      code: data.code,
+      referrerId: data.referrerId,
+      referralBonusPoints: data.referralBonusPoints,
+      welcomePoints: data.welcomePoints,
+    });
   });
