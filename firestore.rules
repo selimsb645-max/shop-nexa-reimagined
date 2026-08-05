@@ -102,31 +102,20 @@ service cloud.firestore {
         allow read, write: if isSelf(uid) || isAdmin();
       }
 
-      // Orders - buyer can read; buyer may create (once, via checkout) with a
-      // structurally + arithmetically consistent payload; buyers can NEVER
-      // update or delete an order after creation. Only the assigned seller
-      // (status/tracking only) or an admin (any field) may update it.
+      // Orders - buyer can read only. Orders are written exclusively by the
+      // trusted server-side checkout (service account, which bypasses these
+      // rules) after it recomputes every price, discount, shipping and total
+      // from the real product documents. No client may create, update or
+      // delete an order. Only the assigned seller (status/tracking) or an
+      // admin may progress an existing order.
       match /orders/{orderId} {
         allow read: if isSelf(uid) || isAdmin();
-        allow create: if isSelf(uid)
-          && request.resource.data.userId == request.auth.uid
-          && request.resource.data.status == 'pending'
-          && request.resource.data.payment.status in ['pending', 'unpaid']
-          && request.resource.data.items is list
-          && request.resource.data.items.size() > 0
-          && request.resource.data.subtotal is number && request.resource.data.subtotal >= 0
-          && request.resource.data.discount is number
-          && request.resource.data.discount >= 0
-          && request.resource.data.discount <= request.resource.data.subtotal
-          && request.resource.data.shipping is number && request.resource.data.shipping >= 0
-          // total must equal subtotal - discount + shipping (small float tolerance)
-          && request.resource.data.total is number
-          && request.resource.data.total - (request.resource.data.subtotal - request.resource.data.discount + request.resource.data.shipping) <= 0.01
-          && (request.resource.data.subtotal - request.resource.data.discount + request.resource.data.shipping) - request.resource.data.total <= 0.01;
+        allow create: if false;
         allow update: if isAdmin()
           || (isOrderSeller() && onlyChanges(['status', 'tracking', 'updatedAt']));
         allow delete: if isAdmin();
       }
+
 
       // Wallet ledger - server-controlled only. Clients (including the owner)
       // may never write cashback/refund/topup/spend entries directly; only a
