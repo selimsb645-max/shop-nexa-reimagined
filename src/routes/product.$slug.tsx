@@ -23,7 +23,84 @@ import { formatDate, formatPrice } from "@/utils/format";
 export const Route = createFileRoute("/product/$slug")({
   ssr: false,
   component: ProductPage,
+  loader: async ({ params }) => {
+    try {
+      const product = await getProductBySlug(params.slug);
+      if (!product) return { product: null };
+      return {
+        product: {
+          title: product.title,
+          description: (product.description ?? "").slice(0, 160),
+          image: product.images?.[0] ?? "",
+          price: product.price,
+          stock: product.stock,
+          rating: product.rating,
+          reviewCount: product.reviewCount,
+        },
+      };
+    } catch {
+      return { product: null };
+    }
+  },
+  head: ({ params, loaderData }) => {
+    const url = `https://shop-nexa.lovable.app/product/${params.slug}`;
+    const p = loaderData?.product;
+    const title = p ? `${p.title} — ShopNexa` : "Product — ShopNexa";
+    const description =
+      p?.description || "View product details, pricing, specifications and customer reviews on ShopNexa.";
+
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:type", content: "product" },
+        { property: "og:url", content: url },
+        ...(p?.image
+          ? [
+              { property: "og:image", content: p.image },
+              { name: "twitter:image", content: p.image },
+            ]
+          : []),
+      ],
+      links: [{ rel: "canonical", href: url }],
+      scripts: p
+        ? [
+            {
+              type: "application/ld+json",
+              children: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "Product",
+                name: p.title,
+                description,
+                ...(p.image ? { image: p.image } : {}),
+                url,
+                offers: {
+                  "@type": "Offer",
+                  price: p.price,
+                  priceCurrency: "USD",
+                  url,
+                  availability:
+                    p.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+                },
+                ...(p.rating && p.reviewCount
+                  ? {
+                      aggregateRating: {
+                        "@type": "AggregateRating",
+                        ratingValue: p.rating,
+                        reviewCount: p.reviewCount,
+                      },
+                    }
+                  : {}),
+              }),
+            },
+          ]
+        : [],
+    };
+  },
 });
+
 
 const reviewSchema = z.object({
   rating: z.number().min(1, "Choose a rating").max(5),
