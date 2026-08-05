@@ -5,10 +5,22 @@ import { LoginForm } from "@/components/auth/LoginForm";
 export const Route = createFileRoute("/login")({
   ssr: false,
   component: LoginPage,
+  head: () => ({
+    meta: [
+      { title: "Sign In — ShopNexa" },
+      { name: "description", content: "Sign in to your ShopNexa account to track orders, save wishlists and checkout faster." },
+      { property: "og:title", content: "Sign In — ShopNexa" },
+      { property: "og:description", content: "Sign in to your ShopNexa account." },
+      { property: "og:url", content: "https://shop-nexa.lovable.app/login" },
+      { name: "robots", content: "noindex" },
+    ],
+    links: [{ rel: "canonical", href: "https://shop-nexa.lovable.app/login" }],
+  }),
   validateSearch: (s: Record<string, unknown>): { redirect?: string } => ({
     redirect: typeof s.redirect === "string" ? s.redirect : undefined,
   }),
 });
+
 
 function LoginPage() {
   return (
