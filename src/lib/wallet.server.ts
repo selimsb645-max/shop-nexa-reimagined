@@ -92,13 +92,14 @@ export async function redeemPointsServer(
  * user's `referredBy` and credits their one-time welcome points. All of it runs
  * server side so the balance-affecting fields can never be forged by a client.
  */
+export const REFERRAL_BONUS_POINTS = 500;
+export const REFERRAL_WELCOME_POINTS = 250;
+
 export async function applyReferralServer(input: {
   uid: string;
   displayName: string | null;
   code: string;
   referrerId: string;
-  referralBonusPoints: number;
-  welcomePoints: number;
 }): Promise<{ points: number }> {
   const projectId = getProjectId();
   const code = input.code.trim().toUpperCase();
