@@ -18,8 +18,13 @@ export const Route = createFileRoute("/compare")({
     meta: [
       { title: "Compare Products — ShopNexa" },
       { name: "description", content: "Compare products side by side on ShopNexa." },
+      { property: "og:title", content: "Compare Products — ShopNexa" },
+      { property: "og:description", content: "Compare products side by side on ShopNexa." },
+      { property: "og:url", content: "https://shop-nexa.lovable.app/compare" },
     ],
+    links: [{ rel: "canonical", href: "https://shop-nexa.lovable.app/compare" }],
   }),
+
 });
 
 function ComparePage() {
