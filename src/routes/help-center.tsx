@@ -18,7 +18,17 @@ import { WhatsAppFab } from "@/components/layout/SiteChrome";
 export const Route = createFileRoute("/help-center")({
   ssr: false,
   component: HelpCenterPage,
-  head: () => ({ meta: [{ title: "Help Center — ShopNexa" }] }),
+  head: () => ({
+    meta: [
+      { title: "Help Center — ShopNexa" },
+      { name: "description", content: "Answers about ShopNexa shipping, returns, payments, orders and account support." },
+      { property: "og:title", content: "Help Center — ShopNexa" },
+      { property: "og:description", content: "Shipping, returns, payments and account support answers." },
+      { property: "og:url", content: "https://shop-nexa.lovable.app/help-center" },
+    ],
+    links: [{ rel: "canonical", href: "https://shop-nexa.lovable.app/help-center" }],
+  }),
+
 });
 
 const HELP_CATEGORIES = [
