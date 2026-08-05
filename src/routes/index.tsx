@@ -28,7 +28,57 @@ import type { Product } from "@/types/commerce";
 
 export const Route = createFileRoute("/")({
   component: Index,
+  head: () => ({
+    meta: [
+      { title: "ShopNexa — Shop Smarter. Live Better." },
+      {
+        name: "description",
+        content:
+          "Shop electronics, fashion, grocery and beauty on ShopNexa. Flash sales, verified sellers and free delivery over $50.",
+      },
+      { property: "og:title", content: "ShopNexa — Shop Smarter. Live Better." },
+      {
+        property: "og:description",
+        content: "Everything you need in one place. Top quality products at unbeatable prices.",
+      },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://shop-nexa.lovable.app/" },
+    ],
+    links: [{ rel: "canonical", href: "https://shop-nexa.lovable.app/" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: "ShopNexa",
+          url: "https://shop-nexa.lovable.app/",
+          sameAs: ["https://www.facebook.com/profile.php?id=61592089432837"],
+          contactPoint: {
+            "@type": "ContactPoint",
+            telephone: "+8801324997271",
+            contactType: "customer support",
+          },
+        }),
+      },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "ShopNexa",
+          url: "https://shop-nexa.lovable.app/",
+          potentialAction: {
+            "@type": "SearchAction",
+            target: "https://shop-nexa.lovable.app/shop?q={search_term_string}",
+            "query-input": "required name=search_term_string",
+          },
+        }),
+      },
+    ],
+  }),
 });
+
 
 const features = [
   { icon: Truck, title: "Free Delivery", desc: "On orders over $50" },
