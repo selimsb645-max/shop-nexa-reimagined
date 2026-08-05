@@ -33,8 +33,23 @@ export const Route = createFileRoute("/shop")({
       { name: "description", content: "Browse thousands of products across every category on ShopNexa." },
       { property: "og:title", content: "Shop All Products — ShopNexa" },
       { property: "og:description", content: "Browse thousands of products across every category on ShopNexa." },
+      { property: "og:url", content: "https://shop-nexa.lovable.app/shop" },
+    ],
+    links: [{ rel: "canonical", href: "https://shop-nexa.lovable.app/shop" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          name: "Shop All Products",
+          url: "https://shop-nexa.lovable.app/shop",
+          isPartOf: { "@type": "WebSite", name: "ShopNexa", url: "https://shop-nexa.lovable.app/" },
+        }),
+      },
     ],
   }),
+
 });
 
 function ShopPage() {

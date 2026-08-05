@@ -5,7 +5,19 @@ import { ForgotPasswordForm } from "@/components/auth/ForgotPasswordForm";
 export const Route = createFileRoute("/forgot-password")({
   ssr: false,
   component: ForgotPage,
+  head: () => ({
+    meta: [
+      { title: "Reset Password — ShopNexa" },
+      { name: "description", content: "Reset your ShopNexa account password with a secure email link." },
+      { property: "og:title", content: "Reset Password — ShopNexa" },
+      { property: "og:description", content: "Reset your ShopNexa account password." },
+      { property: "og:url", content: "https://shop-nexa.lovable.app/forgot-password" },
+      { name: "robots", content: "noindex" },
+    ],
+    links: [{ rel: "canonical", href: "https://shop-nexa.lovable.app/forgot-password" }],
+  }),
 });
+
 
 function ForgotPage() {
   return (

@@ -14,7 +14,18 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/wishlist")({
   ssr: false,
   component: WishlistPage,
+  head: () => ({
+    meta: [
+      { title: "Your Wishlist — ShopNexa" },
+      { name: "description", content: "Save products you love on ShopNexa and move them to your cart anytime." },
+      { property: "og:title", content: "Your Wishlist — ShopNexa" },
+      { property: "og:description", content: "Save products you love on ShopNexa." },
+      { property: "og:url", content: "https://shop-nexa.lovable.app/wishlist" },
+    ],
+    links: [{ rel: "canonical", href: "https://shop-nexa.lovable.app/wishlist" }],
+  }),
 });
+
 
 function WishlistPage() {
   const { user, loading: authLoading } = useAuth();

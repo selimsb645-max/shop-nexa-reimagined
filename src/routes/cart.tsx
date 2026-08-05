@@ -15,7 +15,19 @@ import type { Coupon } from "@/types/commerce";
 export const Route = createFileRoute("/cart")({
   ssr: false,
   component: CartPage,
+  head: () => ({
+    meta: [
+      { title: "Your Cart — ShopNexa" },
+      { name: "description", content: "Review the items in your ShopNexa cart, apply coupons and checkout securely." },
+      { property: "og:title", content: "Your Cart — ShopNexa" },
+      { property: "og:description", content: "Review your ShopNexa cart and checkout securely." },
+      { property: "og:url", content: "https://shop-nexa.lovable.app/cart" },
+      { name: "robots", content: "noindex" },
+    ],
+    links: [{ rel: "canonical", href: "https://shop-nexa.lovable.app/cart" }],
+  }),
 });
+
 
 function CartPage() {
   const { items, subtotal, updateQty, remove } = useCart();

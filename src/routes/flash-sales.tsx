@@ -18,8 +18,13 @@ export const Route = createFileRoute("/flash-sales")({
     meta: [
       { title: "Flash Sales — ShopNexa" },
       { name: "description", content: "Limited time flash sales and mega deals on ShopNexa." },
+      { property: "og:title", content: "Flash Sales — ShopNexa" },
+      { property: "og:description", content: "Limited time flash sales and mega deals on ShopNexa." },
+      { property: "og:url", content: "https://shop-nexa.lovable.app/flash-sales" },
     ],
+    links: [{ rel: "canonical", href: "https://shop-nexa.lovable.app/flash-sales" }],
   }),
+
 });
 
 function FlashSalesPage() {
