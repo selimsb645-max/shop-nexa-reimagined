@@ -1,0 +1,17 @@
+# ShopNexa
+
+> ShopNexa is an online marketplace for electronics, fashion, grocery, beauty and home products, with flash sales, verified sellers and free delivery over $50.
+
+ShopNexa lets shoppers browse thousands of products across categories, compare items, follow flash sales and buy from approved sellers.
+
+## Pages
+
+- [Home](/): Featured categories, flash sales, trending and recommended products.
+- [Shop](/shop): Full catalog with category, price and rating filters.
+- [Flash Sales](/flash-sales): Limited-time deals and mega discounts.
+- [Compare](/compare): Side-by-side product comparison.
+- [Help Center](/help-center): Shipping, returns, payments and support answers.
+
+## Optional
+
+- [Product pages](/product): Individual product detail pages with specs, pricing and customer reviews.
