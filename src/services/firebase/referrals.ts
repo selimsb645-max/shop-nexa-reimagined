@@ -102,8 +102,6 @@ export async function applyReferralCode(input: {
       code: input.code,
       displayName: input.displayName,
       referrerId,
-      referralBonusPoints: REFERRAL_BONUS_POINTS,
-      welcomePoints: REFERRAL_WELCOME_POINTS,
     },
   });
 }

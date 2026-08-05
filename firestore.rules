@@ -36,15 +36,24 @@ service cloud.firestore {
 
     match /products/{id} {
       allow read: if true;
+      // Moderation/curation fields are admin-only. Sellers must submit products
+      // unapproved and unfeatured, and may never flip those fields later.
       allow create: if isAdmin() ||
-        (isApprovedSeller() && request.resource.data.sellerId == request.auth.uid);
+        (isApprovedSeller()
+          && request.resource.data.sellerId == request.auth.uid
+          && request.resource.data.approved == false
+          && (!('featured' in request.resource.data) || request.resource.data.featured == false));
       allow delete: if isAdmin() ||
         (isApprovedSeller() && resource.data.sellerId == request.auth.uid);
       // Only the owning seller or an admin may modify a product. Stock changes
       // caused by a purchase are applied by the trusted server-side checkout
-      // (service account), never by a buyer's browser.
+      // (service account), never by a buyer's browser. Sellers may not touch
+      // moderation, curation or aggregate rating fields.
       allow update: if isAdmin()
-        || (isApprovedSeller() && resource.data.sellerId == request.auth.uid);
+        || (isApprovedSeller()
+          && resource.data.sellerId == request.auth.uid
+          && !request.resource.data.diff(resource.data).affectedKeys()
+               .hasAny(['approved', 'featured', 'rating', 'reviewCount', 'sellerId']));
 
       match /reviews/{rid} {
         allow read: if true;

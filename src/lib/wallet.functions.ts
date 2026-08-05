@@ -11,8 +11,6 @@ const referralSchema = z.object({
   code: z.string().trim().min(3).max(64),
   displayName: z.string().max(120).nullable(),
   referrerId: z.string().min(1).max(200),
-  referralBonusPoints: z.number().int().min(0).max(100_000),
-  welcomePoints: z.number().int().min(0).max(100_000),
 });
 
 /** Redeems reward points into wallet credit, verified and written server side. */
@@ -38,7 +36,5 @@ export const claimReferralBonus = createServerFn({ method: "POST" })
       displayName: data.displayName,
       code: data.code,
       referrerId: data.referrerId,
-      referralBonusPoints: data.referralBonusPoints,
-      welcomePoints: data.welcomePoints,
     });
   });
