@@ -1,4 +1,4 @@
-import { doc, getDoc, increment, updateDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { getDb } from "./config";
 import type { Coupon } from "@/types/commerce";
 
