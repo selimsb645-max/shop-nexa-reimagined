@@ -55,19 +55,6 @@ export async function getWalletBalance(uid: string): Promise<number> {
   return Math.round(tx.reduce((s, t) => s + t.amount, 0) * 100) / 100;
 }
 
-export async function addWalletTx(
-  uid: string,
-  input: { type: WalletTxType; amount: number; note: string; orderId?: string | null },
-): Promise<void> {
-  await setDoc(doc(walletCol(uid)), {
-    type: input.type,
-    amount: Math.round(input.amount * 100) / 100,
-    note: input.note,
-    orderId: input.orderId ?? null,
-    createdAt: serverTimestamp(),
-  });
-}
-
 export async function listRewardTx(uid: string): Promise<RewardTx[]> {
   const snap = await getDocs(query(rewardCol(uid), orderBy("createdAt", "desc"), limit(100)));
   return snap.docs.map((d) => mapReward(d.id, d.data() as Record<string, unknown>));
@@ -78,39 +65,18 @@ export async function getRewardPoints(uid: string): Promise<number> {
   return tx.reduce((s, t) => s + t.points, 0);
 }
 
-export async function addRewardTx(
-  uid: string,
-  input: { type: RewardTxType; points: number; note: string; orderId?: string | null },
-): Promise<void> {
-  await setDoc(doc(rewardCol(uid)), {
-    type: input.type,
-    points: Math.round(input.points),
-    note: input.note,
-    orderId: input.orderId ?? null,
-    createdAt: serverTimestamp(),
-  });
+/**
+ * Redeem reward points into wallet credit. The ledger is written by the trusted
+ * server endpoint — clients cannot write wallet or reward entries directly.
+ */
+export async function redeemPoints(_uid: string, points: number): Promise<number> {
+  const currentUser = getFirebaseAuth().currentUser;
+  if (!currentUser) throw new Error("Please sign in again to redeem your points.");
+  const idToken = await currentUser.getIdToken();
+  const result = await redeemRewardPoints({ data: { idToken, points } });
+  return result.credit;
 }
 
-/** Redeem reward points into wallet credit. */
-export async function redeemPoints(uid: string, points: number): Promise<number> {
-  const available = await getRewardPoints(uid);
-  if (points <= 0) throw new Error("Enter the points you want to redeem");
-  if (points % POINTS_PER_CURRENCY_REDEEM !== 0)
-    throw new Error(`Redeem in multiples of ${POINTS_PER_CURRENCY_REDEEM} points`);
-  if (points > available) throw new Error("You do not have enough points");
-  const credit = points / POINTS_PER_CURRENCY_REDEEM;
-  await addRewardTx(uid, {
-    type: "redeem",
-    points: -points,
-    note: `Redeemed ${points} points for wallet credit`,
-  });
-  await addWalletTx(uid, {
-    type: "topup",
-    amount: credit,
-    note: `Reward redemption (${points} points)`,
-  });
-  return credit;
-}
 
 /** Credit cashback + loyalty points after a successful order. */
 export async function creditOrderRewards(
