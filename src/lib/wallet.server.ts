@@ -10,7 +10,6 @@ import {
 } from "./firebase-admin.server";
 
 export const POINTS_PER_CURRENCY_REDEEM = 100;
-export const REFERRAL_WELCOME_POINTS = 200;
 
 /** Sum a user's reward-points ledger server side. */
 async function readPointsBalance(projectId: string, uid: string): Promise<number> {
@@ -89,17 +88,24 @@ export async function redeemPointsServer(
 }
 
 /**
- * Credits the one-time referral welcome bonus. Refuses if the user already has
- * a referral entry in their ledger.
+ * Applies a referral: writes the referrer's referral record, stamps the new
+ * user's `referredBy` and credits their one-time welcome points. All of it runs
+ * server side so the balance-affecting fields can never be forged by a client.
  */
-export async function creditReferralWelcomeServer(
-  uid: string,
-  code: string,
-): Promise<{ points: number }> {
+export async function applyReferralServer(input: {
+  uid: string;
+  displayName: string | null;
+  code: string;
+  referrerId: string;
+  referralBonusPoints: number;
+  welcomePoints: number;
+}): Promise<{ points: number }> {
   const projectId = getProjectId();
+  const code = input.code.trim().toUpperCase();
   const token = await getAccessToken();
+
   const res = await fetch(
-    `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${encodeURIComponent(uid)}:runQuery`,
+    `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${encodeURIComponent(input.uid)}:runQuery`,
     {
       method: "POST",
       headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
@@ -120,16 +126,36 @@ export async function creditReferralWelcomeServer(
   );
   if (!res.ok) throw new Error("Could not apply the referral code. Please try again.");
   const json = (await res.json()) as Array<{ document?: unknown }>;
-  if (json.some((r) => r.document)) throw new Error("Referral bonus already claimed");
+  if (json.some((r) => r.document)) throw new Error("You have already used a referral code");
 
+  const now = new Date().toISOString();
   await commitWrites(projectId, [
-    ledgerWrite(projectId, uid, "rewardTx", {
+    {
+      update: {
+        name: docPath(projectId, ["users", input.referrerId, "referrals", input.uid]),
+        fields: toFsFields({
+          referredUserId: input.uid,
+          referredName: input.displayName ?? "New customer",
+          status: "joined",
+          bonusPoints: input.referralBonusPoints,
+          createdAt: now,
+        }),
+      },
+    },
+    {
+      update: {
+        name: docPath(projectId, ["users", input.uid]),
+        fields: toFsFields({ referredBy: code, updatedAt: now }),
+      },
+      updateMask: { fieldPaths: ["referredBy", "updatedAt"] },
+    },
+    ledgerWrite(projectId, input.uid, "rewardTx", {
       type: "referral",
-      points: REFERRAL_WELCOME_POINTS,
-      note: `Welcome bonus for joining with ${code.trim().toUpperCase()}`,
+      points: input.welcomePoints,
+      note: `Welcome bonus for joining with ${code}`,
       orderId: null,
     }),
   ]);
 
-  return { points: REFERRAL_WELCOME_POINTS };
+  return { points: input.welcomePoints };
 }
