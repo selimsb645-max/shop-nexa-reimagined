@@ -53,6 +53,7 @@ import { Route as AuthenticatedSellerOrdersRouteImport } from './routes/_authent
 import { Route as AuthenticatedSellerNotificationsRouteImport } from './routes/_authenticated/seller.notifications'
 import { Route as AuthenticatedSellerInsightsRouteImport } from './routes/_authenticated/seller.insights'
 import { Route as AuthenticatedSellerAnalyticsRouteImport } from './routes/_authenticated/seller.analytics'
+import { Route as AuthenticatedOrdersStatusRouteImport } from './routes/_authenticated/orders_.$status'
 import { Route as AuthenticatedOrderOrderIdRouteImport } from './routes/_authenticated/order.$orderId'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin.settings'
@@ -308,6 +309,12 @@ const AuthenticatedSellerAnalyticsRoute =
     path: '/analytics',
     getParentRoute: () => AuthenticatedSellerRoute,
   } as any)
+const AuthenticatedOrdersStatusRoute =
+  AuthenticatedOrdersStatusRouteImport.update({
+    id: '/orders_/$status',
+    path: '/orders/$status',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedOrderOrderIdRoute =
   AuthenticatedOrderOrderIdRouteImport.update({
     id: '/order/$orderId',
@@ -494,6 +501,7 @@ export interface FileRoutesByFullPath {
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/order/$orderId': typeof AuthenticatedOrderOrderIdRoute
+  '/orders/$status': typeof AuthenticatedOrdersStatusRoute
   '/seller/analytics': typeof AuthenticatedSellerAnalyticsRoute
   '/seller/insights': typeof AuthenticatedSellerInsightsRoute
   '/seller/notifications': typeof AuthenticatedSellerNotificationsRoute
@@ -560,6 +568,7 @@ export interface FileRoutesByTo {
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/order/$orderId': typeof AuthenticatedOrderOrderIdRoute
+  '/orders/$status': typeof AuthenticatedOrdersStatusRoute
   '/seller/analytics': typeof AuthenticatedSellerAnalyticsRoute
   '/seller/insights': typeof AuthenticatedSellerInsightsRoute
   '/seller/notifications': typeof AuthenticatedSellerNotificationsRoute
@@ -628,6 +637,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/order/$orderId': typeof AuthenticatedOrderOrderIdRoute
+  '/_authenticated/orders_/$status': typeof AuthenticatedOrdersStatusRoute
   '/_authenticated/seller/analytics': typeof AuthenticatedSellerAnalyticsRoute
   '/_authenticated/seller/insights': typeof AuthenticatedSellerInsightsRoute
   '/_authenticated/seller/notifications': typeof AuthenticatedSellerNotificationsRoute
@@ -698,6 +708,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/users'
     | '/order/$orderId'
+    | '/orders/$status'
     | '/seller/analytics'
     | '/seller/insights'
     | '/seller/notifications'
@@ -764,6 +775,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/users'
     | '/order/$orderId'
+    | '/orders/$status'
     | '/seller/analytics'
     | '/seller/insights'
     | '/seller/notifications'
@@ -831,6 +843,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/settings'
     | '/_authenticated/admin/users'
     | '/_authenticated/order/$orderId'
+    | '/_authenticated/orders_/$status'
     | '/_authenticated/seller/analytics'
     | '/_authenticated/seller/insights'
     | '/_authenticated/seller/notifications'
@@ -1177,6 +1190,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSellerAnalyticsRouteImport
       parentRoute: typeof AuthenticatedSellerRoute
     }
+    '/_authenticated/orders_/$status': {
+      id: '/_authenticated/orders_/$status'
+      path: '/orders/$status'
+      fullPath: '/orders/$status'
+      preLoaderRoute: typeof AuthenticatedOrdersStatusRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/order/$orderId': {
       id: '/_authenticated/order/$orderId'
       path: '/order/$orderId'
@@ -1498,6 +1518,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTrackOrdersRoute: typeof AuthenticatedTrackOrdersRoute
   AuthenticatedWalletRoute: typeof AuthenticatedWalletRoute
   AuthenticatedOrderOrderIdRoute: typeof AuthenticatedOrderOrderIdRoute
+  AuthenticatedOrdersStatusRoute: typeof AuthenticatedOrdersStatusRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -1523,6 +1544,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTrackOrdersRoute: AuthenticatedTrackOrdersRoute,
   AuthenticatedWalletRoute: AuthenticatedWalletRoute,
   AuthenticatedOrderOrderIdRoute: AuthenticatedOrderOrderIdRoute,
+  AuthenticatedOrdersStatusRoute: AuthenticatedOrdersStatusRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

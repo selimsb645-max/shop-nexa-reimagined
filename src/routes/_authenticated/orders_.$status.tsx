@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -35,13 +35,6 @@ import type { Order } from "@/types/commerce";
 
 export const Route = createFileRoute("/_authenticated/orders_/$status")({
   ssr: false,
-  params: {
-    parse: (raw) => {
-      if (!isOrderView(raw.status)) throw notFound();
-      return { status: raw.status as OrderView };
-    },
-    stringify: (p) => ({ status: p.status }),
-  },
   component: OrderStatusPage,
   errorComponent: ({ error }) => (
     <div role="alert" className="p-10 text-center text-sm text-gray-600">{error.message}</div>
@@ -79,7 +72,8 @@ const TAB_LABEL: Record<OrderView, string> = {
 };
 
 function OrderStatusPage() {
-  const { status } = Route.useParams();
+  const raw = Route.useParams().status as string;
+  const status: OrderView = isOrderView(raw) ? raw : "pending";
   const { user } = useAuth();
   const uid = user?.uid;
 
