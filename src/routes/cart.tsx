@@ -1056,10 +1056,9 @@ export default function CartPage() {
                   <div className="flex items-center justify-between text-slate-600">
                     <span className="flex items-center gap-1">
                       <span>Shipping Fee</span>
-                      <HelpCircle
-                        className="w-3.5 h-3.5 text-slate-400 cursor-pointer"
-                        title="Standard delivery fee across Bangladesh"
-                      />
+                      <span title="Standard delivery fee across Bangladesh" className="inline-flex">
+                        <HelpCircle className="w-3.5 h-3.5 text-slate-400 cursor-pointer" />
+                      </span>
                     </span>
                     <span className="font-semibold">
                       {shippingFee === 0 ? (

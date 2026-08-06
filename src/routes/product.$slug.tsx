@@ -59,6 +59,21 @@ type ProductWithExtras = Product & {
   seller?: { name: string; rating: number; responseTime: string; storeSlug?: string };
   discount?: number;
   inStock?: boolean;
+  originalPrice?: number;
+  category?: string;
+  specifications?: { name: string; value: string }[];
+};
+
+// Extended review type for optional display-only fields
+type ReviewWithExtras = Omit<Review, "productId" | "userId" | "userPhoto" | "createdAt"> & {
+  productId?: string;
+  userId?: string;
+  userPhoto?: string | null;
+  createdAt?: number;
+  date?: string;
+  verified?: boolean;
+  helpfulCount?: number;
+  avatar?: string;
 };
 
 export const Route = createFileRoute("/product/$slug")({
@@ -69,7 +84,7 @@ export const Route = createFileRoute("/product/$slug")({
 // Fallback / Mock Data Generator
 // ----------------------------------------------------------------------
 
-const MOCK_PRODUCTS: Record<string, Partial<Product>> = {
+const MOCK_PRODUCTS: Record<string, Partial<ProductWithExtras>> = {
   "apex-pro-keyboard": {
     id: "prod-apex-pro",
     title: "Apex Pro TKL Wireless Mechanical Gaming Keyboard",
@@ -123,7 +138,7 @@ const MOCK_PRODUCTS: Record<string, Partial<Product>> = {
   },
 };
 
-const DEFAULT_FALLBACK_PRODUCT: Partial<Product> = {
+const DEFAULT_FALLBACK_PRODUCT: Partial<ProductWithExtras> = {
   id: "prod-default-nexa",
   title: "Premium Nexa SoundPro ANC Wireless Headphones",
   slug: "nexa-soundpro-anc",
@@ -173,7 +188,7 @@ const DEFAULT_FALLBACK_PRODUCT: Partial<Product> = {
   },
 };
 
-const MOCK_REVIEWS: Review[] = [
+const MOCK_REVIEWS: ReviewWithExtras[] = [
   {
     id: "rev-1",
     userName: "Tanvir Rahman",
@@ -212,7 +227,7 @@ const MOCK_REVIEWS: Review[] = [
   },
 ];
 
-const MOCK_RECOMMENDED_PRODUCTS: Partial<Product>[] = [
+const MOCK_RECOMMENDED_PRODUCTS: Partial<ProductWithExtras>[] = [
   {
     id: "rec-1",
     title: "Nexa Ergonomic Wireless Vertical Mouse",
@@ -308,14 +323,14 @@ export function ProductDetailPage() {
       // Try fetching list from firebase or use default fallback
       try {
         const all = await listProducts();
-        const matched = all.find((p: any) => p.slug === slug || p.id === slug);
+        const matched = all.find((p: Product) => p.slug === slug || p.id === slug);
         if (matched) return matched;
       } catch (_) {}
 
       // Return synthetic product filled with slug name
       const formattedTitle = slug
         .replace(/-/g, " ")
-        .replace(/\b\w/g, (c) => c.toUpperCase());
+        .replace(/\b\w/g, (c: string) => c.toUpperCase());
       return {
         ...DEFAULT_FALLBACK_PRODUCT,
         id: `prod-${slug}`,
@@ -326,7 +341,7 @@ export function ProductDetailPage() {
     staleTime: 1000 * 60 * 5,
   });
 
-  const product = rawProduct as Partial<Product> | null;
+  const product = rawProduct as Partial<ProductWithExtras> | null;
 
   // Fetch Related Products
   const { data: relatedProducts = [] } = useQuery({
@@ -334,7 +349,7 @@ export function ProductDetailPage() {
     queryFn: async () => {
       if (firebaseConfigured) {
         try {
-          const list = await listProducts({ category: product?.category });
+          const list = await listProducts({ categorySlug: product?.category });
           if (list && list.length > 0) return list;
         } catch (_) {}
       }
@@ -500,7 +515,7 @@ export function ProductDetailPage() {
     }
     setIsSubmittingReview(true);
     setTimeout(() => {
-      const newRev: Review = {
+      const newRev: ReviewWithExtras = {
         id: `rev-${Date.now()}`,
         userName: user?.displayName || user?.email?.split("@")[0] || "Verified Nexa Buyer",
         rating: newRating,
@@ -854,7 +869,7 @@ export function ProductDetailPage() {
                       Key Highlights
                     </h4>
                     <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs md:text-sm text-slate-700">
-                      {(product as any).features.map((feat, idx) => (
+                      {(product as any).features.map((feat: string, idx: number) => (
                         <li key={idx} className="flex items-start gap-2">
                           <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
                           <span>{feat}</span>
@@ -1085,7 +1100,7 @@ export function ProductDetailPage() {
                     Product Highlights & Benefits
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {(product as any).features.map((feat, i) => (
+                    {(product as any).features.map((feat: string, i: number) => (
                       <div key={i} className="flex items-start gap-2.5">
                         <span className="w-5 h-5 rounded-full bg-orange-100 text-[#f97316] flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
                           ✓
@@ -1110,7 +1125,7 @@ export function ProductDetailPage() {
                     { name: "Category", value: product.category || "General" },
                     { name: "In Stock", value: (product as any).inStock ? "Yes" : "No" },
                     { name: "Warranty", value: "1 Year Official Warranty" },
-                  ]).map((spec, idx) => (
+                  ]).map((spec: { name: string; value: string }, idx: number) => (
                     <tr
                       key={idx}
                       className={idx % 2 === 0 ? "bg-slate-50" : "bg-white"}

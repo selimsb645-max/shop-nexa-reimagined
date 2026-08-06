@@ -66,7 +66,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   showLocation = true,
 }) => {
   const [imageError, setImageError] = useState(false);
-  const { isInWishlist, toggleWishlist } = useWishlist();
+  const { has: isInWishlist, toggle: toggleWishlist } = useWishlist();
 
   const isWishlisted = isInWishlist ? isInWishlist(String(product.id)) : false;
 
@@ -211,7 +211,7 @@ export const ProductCardCompact: React.FC<ProductCardCompactProps> = ({
   totalStock,
 }) => {
   const [imageError, setImageError] = useState(false);
-  const { isInWishlist, toggleWishlist } = useWishlist();
+  const { has: isInWishlist, toggle: toggleWishlist } = useWishlist();
 
   const isWishlisted = isInWishlist ? isInWishlist(String(product.id)) : false;
 
