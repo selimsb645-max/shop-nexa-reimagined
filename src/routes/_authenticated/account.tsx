@@ -59,6 +59,7 @@ import { countUnreadMessages } from "@/services/firebase/messages";
 import { listAddresses } from "@/services/firebase/addresses";
 import { formatPrice } from "@/utils/format";
 import type { Order } from "@/types/commerce";
+import { type OrderView } from "@/utils/orderStatus";
 
 export const Route = createFileRoute("/_authenticated/account")({
   component: AccountPage,
@@ -323,16 +324,16 @@ function AccountPage() {
             }
           />
           <div className="grid grid-cols-5 gap-1 px-2 py-3">
-            <DarazOrderIcon to="/orders" icon={<Clock3 className="h-6 w-6" />} label="Pending" count={counts.pending} />
-            <DarazOrderIcon to="/orders" icon={<Loader className="h-6 w-6" />} label="Processing" count={counts.processing} />
-            <DarazOrderIcon to="/orders" icon={<Truck className="h-6 w-6" />} label="Shipped" count={counts.shipped} />
-            <DarazOrderIcon to="/orders" icon={<Bike className="h-6 w-6" />} label="Delivery" count={counts.outForDelivery} />
-            <DarazOrderIcon to="/orders" icon={<PackageCheck className="h-6 w-6" />} label="Delivered" count={counts.delivered} />
+            <DarazOrderIcon status="pending" icon={<Clock3 className="h-6 w-6" />} label="Pending" count={counts.pending} />
+            <DarazOrderIcon status="processing" icon={<Loader className="h-6 w-6" />} label="Processing" count={counts.processing} />
+            <DarazOrderIcon status="shipped" icon={<Truck className="h-6 w-6" />} label="Shipped" count={counts.shipped} />
+            <DarazOrderIcon status="delivery" icon={<Bike className="h-6 w-6" />} label="Delivery" count={counts.outForDelivery} />
+            <DarazOrderIcon status="delivered" icon={<PackageCheck className="h-6 w-6" />} label="Delivered" count={counts.delivered} />
           </div>
           <div className="grid grid-cols-5 gap-1 px-2 pb-3">
-            <DarazOrderIcon to="/orders" icon={<Undo2 className="h-6 w-6" />} label="Returns" count={counts.returns} />
-            <DarazOrderIcon to="/orders" icon={<BadgeDollarSign className="h-6 w-6" />} label="Refunds" count={counts.refunds} />
-            <DarazOrderIcon to="/orders" icon={<Box className="h-6 w-6" />} label="Packed" count={counts.packed} />
+            <DarazOrderIcon status="returns" icon={<Undo2 className="h-6 w-6" />} label="Returns" count={counts.returns} />
+            <DarazOrderIcon status="refunds" icon={<BadgeDollarSign className="h-6 w-6" />} label="Refunds" count={counts.refunds} />
+            <DarazOrderIcon status="packed" icon={<Box className="h-6 w-6" />} label="Packed" count={counts.packed} />
           </div>
         </DarazCard>
 
@@ -348,7 +349,7 @@ function AccountPage() {
             <DarazServiceIcon to="/messages" icon={<MessageCircle className="h-6 w-6" />} label="Messages" badge={unreadMsgs || 0} />
             <DarazServiceIcon to="/addresses" icon={<MapPin className="h-6 w-6" />} label="Addresses" badge={addresses?.length ?? 0} />
             <DarazServiceIcon to="/notifications" icon={<Bell className="h-6 w-6" />} label="Notifs" badge={unreadNotifs || 0} />
-            <DarazServiceIcon to="/" icon={<History className="h-6 w-6" />} label="Recently Viewed" badge={recentIds.length} />
+            <DarazServiceIcon to="/recently-viewed" icon={<History className="h-6 w-6" />} label="Recently Viewed" badge={recentIds.length} />
             <DarazServiceIcon to="/seller/register" icon={<Store className="h-6 w-6" />} label="Be a Seller" highlight />
           </div>
         </DarazCard>
@@ -388,7 +389,7 @@ function AccountPage() {
           <DarazCardHeader title="My Shopping" />
           <div className="divide-y divide-gray-100">
             <DarazListRow to="/wishlist" icon={<Heart className="h-5 w-5" />} label="My Wishlist" hint={`${wishlistCount} saved item${wishlistCount === 1 ? "" : "s"}`} badge={wishlistCount} />
-            <DarazListRow to="/" icon={<Eye className="h-5 w-5" />} label="Recently Viewed" hint={`${recentIds.length} product${recentIds.length === 1 ? "" : "s"}`} />
+            <DarazListRow to="/recently-viewed" icon={<Eye className="h-5 w-5" />} label="Recently Viewed" hint={`${recentIds.length} product${recentIds.length === 1 ? "" : "s"}`} />
             <DarazListRow to="/orders" icon={<Package className="h-5 w-5" />} label="Order History" hint={`${totalOrders} total order${totalOrders === 1 ? "" : "s"}`} />
           </div>
         </DarazCard>
@@ -407,7 +408,7 @@ function AccountPage() {
           <DarazCardHeader title="Help & Support" />
           <div className="divide-y divide-gray-100">
             <DarazListRow to="/support" icon={<Headphones className="h-5 w-5" />} label="Customer Service" hint="Chat with our support team" />
-            <DarazListRow to="/support" icon={<BookOpen className="h-5 w-5" />} label="Help Center" hint="FAQs & guides" />
+            <DarazListRow to="/help-center" icon={<BookOpen className="h-5 w-5" />} label="Help Center" hint="FAQs & guides" />
             <DarazExternalRow href="https://wa.me/8801324997271" icon={<Phone className="h-5 w-5" />} label="Contact Us" hint="WhatsApp: 01324997271" />
           </div>
         </DarazCard>
@@ -537,19 +538,20 @@ function DarazCardHeader({ title, action }: { title: string; action?: React.Reac
 }
 
 function DarazOrderIcon({
-  to,
+  status,
   icon,
   label,
   count,
 }: {
-  to: string;
+  status: OrderView;
   icon: React.ReactNode;
   label: string;
   count: number;
 }) {
   return (
     <Link
-      to={to}
+      to="/orders/$status"
+      params={{ status }}
       className="group flex flex-col items-center gap-1.5 rounded-xl px-1 py-2 transition hover:bg-orange-50 active:scale-95"
     >
       <span className="relative text-gray-500 transition group-hover:text-orange-500">

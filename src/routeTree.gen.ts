@@ -31,6 +31,7 @@ import { Route as AuthenticatedSellerRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedRewardsRouteImport } from './routes/_authenticated/rewards'
 import { Route as AuthenticatedReturnsRouteImport } from './routes/_authenticated/returns'
 import { Route as AuthenticatedReferralRouteImport } from './routes/_authenticated/referral'
+import { Route as AuthenticatedRecentlyViewedRouteImport } from './routes/_authenticated/recently-viewed'
 import { Route as AuthenticatedPaymentFailedRouteImport } from './routes/_authenticated/payment-failed'
 import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated/orders'
 import { Route as AuthenticatedOrderSuccessRouteImport } from './routes/_authenticated/order-success'
@@ -188,6 +189,12 @@ const AuthenticatedReferralRoute = AuthenticatedReferralRouteImport.update({
   path: '/referral',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedRecentlyViewedRoute =
+  AuthenticatedRecentlyViewedRouteImport.update({
+    id: '/recently-viewed',
+    path: '/recently-viewed',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPaymentFailedRoute =
   AuthenticatedPaymentFailedRouteImport.update({
     id: '/payment-failed',
@@ -477,6 +484,7 @@ export interface FileRoutesByFullPath {
   '/order-success': typeof AuthenticatedOrderSuccessRoute
   '/orders': typeof AuthenticatedOrdersRoute
   '/payment-failed': typeof AuthenticatedPaymentFailedRoute
+  '/recently-viewed': typeof AuthenticatedRecentlyViewedRoute
   '/referral': typeof AuthenticatedReferralRoute
   '/returns': typeof AuthenticatedReturnsRoute
   '/rewards': typeof AuthenticatedRewardsRoute
@@ -545,6 +553,7 @@ export interface FileRoutesByTo {
   '/order-success': typeof AuthenticatedOrderSuccessRoute
   '/orders': typeof AuthenticatedOrdersRoute
   '/payment-failed': typeof AuthenticatedPaymentFailedRoute
+  '/recently-viewed': typeof AuthenticatedRecentlyViewedRoute
   '/referral': typeof AuthenticatedReferralRoute
   '/returns': typeof AuthenticatedReturnsRoute
   '/rewards': typeof AuthenticatedRewardsRoute
@@ -613,6 +622,7 @@ export interface FileRoutesById {
   '/_authenticated/order-success': typeof AuthenticatedOrderSuccessRoute
   '/_authenticated/orders': typeof AuthenticatedOrdersRoute
   '/_authenticated/payment-failed': typeof AuthenticatedPaymentFailedRoute
+  '/_authenticated/recently-viewed': typeof AuthenticatedRecentlyViewedRoute
   '/_authenticated/referral': typeof AuthenticatedReferralRoute
   '/_authenticated/returns': typeof AuthenticatedReturnsRoute
   '/_authenticated/rewards': typeof AuthenticatedRewardsRoute
@@ -684,6 +694,7 @@ export interface FileRouteTypes {
     | '/order-success'
     | '/orders'
     | '/payment-failed'
+    | '/recently-viewed'
     | '/referral'
     | '/returns'
     | '/rewards'
@@ -752,6 +763,7 @@ export interface FileRouteTypes {
     | '/order-success'
     | '/orders'
     | '/payment-failed'
+    | '/recently-viewed'
     | '/referral'
     | '/returns'
     | '/rewards'
@@ -819,6 +831,7 @@ export interface FileRouteTypes {
     | '/_authenticated/order-success'
     | '/_authenticated/orders'
     | '/_authenticated/payment-failed'
+    | '/_authenticated/recently-viewed'
     | '/_authenticated/referral'
     | '/_authenticated/returns'
     | '/_authenticated/rewards'
@@ -1034,6 +1047,13 @@ declare module '@tanstack/react-router' {
       path: '/referral'
       fullPath: '/referral'
       preLoaderRoute: typeof AuthenticatedReferralRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/recently-viewed': {
+      id: '/_authenticated/recently-viewed'
+      path: '/recently-viewed'
+      fullPath: '/recently-viewed'
+      preLoaderRoute: typeof AuthenticatedRecentlyViewedRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/payment-failed': {
@@ -1509,6 +1529,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOrderSuccessRoute: typeof AuthenticatedOrderSuccessRoute
   AuthenticatedOrdersRoute: typeof AuthenticatedOrdersRoute
   AuthenticatedPaymentFailedRoute: typeof AuthenticatedPaymentFailedRoute
+  AuthenticatedRecentlyViewedRoute: typeof AuthenticatedRecentlyViewedRoute
   AuthenticatedReferralRoute: typeof AuthenticatedReferralRoute
   AuthenticatedReturnsRoute: typeof AuthenticatedReturnsRoute
   AuthenticatedRewardsRoute: typeof AuthenticatedRewardsRoute
@@ -1535,6 +1556,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOrderSuccessRoute: AuthenticatedOrderSuccessRoute,
   AuthenticatedOrdersRoute: AuthenticatedOrdersRoute,
   AuthenticatedPaymentFailedRoute: AuthenticatedPaymentFailedRoute,
+  AuthenticatedRecentlyViewedRoute: AuthenticatedRecentlyViewedRoute,
   AuthenticatedReferralRoute: AuthenticatedReferralRoute,
   AuthenticatedReturnsRoute: AuthenticatedReturnsRoute,
   AuthenticatedRewardsRoute: AuthenticatedRewardsRoute,
