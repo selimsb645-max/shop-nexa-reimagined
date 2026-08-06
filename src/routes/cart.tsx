@@ -55,6 +55,7 @@ export const Route = createFileRoute("/cart")({
 export interface CartItemType {
   id: string;
   productId?: string;
+  slug?: string;
   title: string;
   price: number;
   originalPrice?: number;
@@ -741,9 +742,9 @@ export default function CartPage() {
 
                               {/* Product Thumbnail */}
                               <Link
-                                to="/product/$productId"
+                                to="/product/$slug"
                                 params={{
-                                  productId: item.productId || item.id,
+                                  slug: item.slug || item.productId || item.id,
                                 }}
                                 className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden bg-slate-100 border border-slate-200 flex-shrink-0 group"
                               >
@@ -768,9 +769,9 @@ export default function CartPage() {
                               {/* Product Info */}
                               <div className="flex-1 min-w-0">
                                 <Link
-                                  to="/product/$productId"
+                                  to="/product/$slug"
                                   params={{
-                                    productId: item.productId || item.id,
+                                    slug: item.slug || item.productId || item.id,
                                   }}
                                   className="text-xs sm:text-sm font-semibold text-slate-800 hover:text-[#f57224] line-clamp-2 leading-snug transition-colors"
                                 >
@@ -1056,10 +1057,9 @@ export default function CartPage() {
                   <div className="flex items-center justify-between text-slate-600">
                     <span className="flex items-center gap-1">
                       <span>Shipping Fee</span>
-                      <HelpCircle
-                        className="w-3.5 h-3.5 text-slate-400 cursor-pointer"
-                        title="Standard delivery fee across Bangladesh"
-                      />
+                      <span title="Standard delivery fee across Bangladesh" className="inline-flex">
+                        <HelpCircle className="w-3.5 h-3.5 text-slate-400 cursor-pointer" />
+                      </span>
                     </span>
                     <span className="font-semibold">
                       {shippingFee === 0 ? (

@@ -31,6 +31,7 @@ import { Route as AuthenticatedSellerRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedRewardsRouteImport } from './routes/_authenticated/rewards'
 import { Route as AuthenticatedReturnsRouteImport } from './routes/_authenticated/returns'
 import { Route as AuthenticatedReferralRouteImport } from './routes/_authenticated/referral'
+import { Route as AuthenticatedRecentlyViewedRouteImport } from './routes/_authenticated/recently-viewed'
 import { Route as AuthenticatedPaymentFailedRouteImport } from './routes/_authenticated/payment-failed'
 import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated/orders'
 import { Route as AuthenticatedOrderSuccessRouteImport } from './routes/_authenticated/order-success'
@@ -53,6 +54,7 @@ import { Route as AuthenticatedSellerOrdersRouteImport } from './routes/_authent
 import { Route as AuthenticatedSellerNotificationsRouteImport } from './routes/_authenticated/seller.notifications'
 import { Route as AuthenticatedSellerInsightsRouteImport } from './routes/_authenticated/seller.insights'
 import { Route as AuthenticatedSellerAnalyticsRouteImport } from './routes/_authenticated/seller.analytics'
+import { Route as AuthenticatedOrdersStatusRouteImport } from './routes/_authenticated/orders_.$status'
 import { Route as AuthenticatedOrderOrderIdRouteImport } from './routes/_authenticated/order.$orderId'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin.settings'
@@ -187,6 +189,12 @@ const AuthenticatedReferralRoute = AuthenticatedReferralRouteImport.update({
   path: '/referral',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedRecentlyViewedRoute =
+  AuthenticatedRecentlyViewedRouteImport.update({
+    id: '/recently-viewed',
+    path: '/recently-viewed',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPaymentFailedRoute =
   AuthenticatedPaymentFailedRouteImport.update({
     id: '/payment-failed',
@@ -307,6 +315,12 @@ const AuthenticatedSellerAnalyticsRoute =
     id: '/analytics',
     path: '/analytics',
     getParentRoute: () => AuthenticatedSellerRoute,
+  } as any)
+const AuthenticatedOrdersStatusRoute =
+  AuthenticatedOrdersStatusRouteImport.update({
+    id: '/orders_/$status',
+    path: '/orders/$status',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedOrderOrderIdRoute =
   AuthenticatedOrderOrderIdRouteImport.update({
@@ -470,6 +484,7 @@ export interface FileRoutesByFullPath {
   '/order-success': typeof AuthenticatedOrderSuccessRoute
   '/orders': typeof AuthenticatedOrdersRoute
   '/payment-failed': typeof AuthenticatedPaymentFailedRoute
+  '/recently-viewed': typeof AuthenticatedRecentlyViewedRoute
   '/referral': typeof AuthenticatedReferralRoute
   '/returns': typeof AuthenticatedReturnsRoute
   '/rewards': typeof AuthenticatedRewardsRoute
@@ -494,6 +509,7 @@ export interface FileRoutesByFullPath {
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/order/$orderId': typeof AuthenticatedOrderOrderIdRoute
+  '/orders/$status': typeof AuthenticatedOrdersStatusRoute
   '/seller/analytics': typeof AuthenticatedSellerAnalyticsRoute
   '/seller/insights': typeof AuthenticatedSellerInsightsRoute
   '/seller/notifications': typeof AuthenticatedSellerNotificationsRoute
@@ -537,6 +553,7 @@ export interface FileRoutesByTo {
   '/order-success': typeof AuthenticatedOrderSuccessRoute
   '/orders': typeof AuthenticatedOrdersRoute
   '/payment-failed': typeof AuthenticatedPaymentFailedRoute
+  '/recently-viewed': typeof AuthenticatedRecentlyViewedRoute
   '/referral': typeof AuthenticatedReferralRoute
   '/returns': typeof AuthenticatedReturnsRoute
   '/rewards': typeof AuthenticatedRewardsRoute
@@ -560,6 +577,7 @@ export interface FileRoutesByTo {
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/order/$orderId': typeof AuthenticatedOrderOrderIdRoute
+  '/orders/$status': typeof AuthenticatedOrdersStatusRoute
   '/seller/analytics': typeof AuthenticatedSellerAnalyticsRoute
   '/seller/insights': typeof AuthenticatedSellerInsightsRoute
   '/seller/notifications': typeof AuthenticatedSellerNotificationsRoute
@@ -604,6 +622,7 @@ export interface FileRoutesById {
   '/_authenticated/order-success': typeof AuthenticatedOrderSuccessRoute
   '/_authenticated/orders': typeof AuthenticatedOrdersRoute
   '/_authenticated/payment-failed': typeof AuthenticatedPaymentFailedRoute
+  '/_authenticated/recently-viewed': typeof AuthenticatedRecentlyViewedRoute
   '/_authenticated/referral': typeof AuthenticatedReferralRoute
   '/_authenticated/returns': typeof AuthenticatedReturnsRoute
   '/_authenticated/rewards': typeof AuthenticatedRewardsRoute
@@ -628,6 +647,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/order/$orderId': typeof AuthenticatedOrderOrderIdRoute
+  '/_authenticated/orders_/$status': typeof AuthenticatedOrdersStatusRoute
   '/_authenticated/seller/analytics': typeof AuthenticatedSellerAnalyticsRoute
   '/_authenticated/seller/insights': typeof AuthenticatedSellerInsightsRoute
   '/_authenticated/seller/notifications': typeof AuthenticatedSellerNotificationsRoute
@@ -674,6 +694,7 @@ export interface FileRouteTypes {
     | '/order-success'
     | '/orders'
     | '/payment-failed'
+    | '/recently-viewed'
     | '/referral'
     | '/returns'
     | '/rewards'
@@ -698,6 +719,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/users'
     | '/order/$orderId'
+    | '/orders/$status'
     | '/seller/analytics'
     | '/seller/insights'
     | '/seller/notifications'
@@ -741,6 +763,7 @@ export interface FileRouteTypes {
     | '/order-success'
     | '/orders'
     | '/payment-failed'
+    | '/recently-viewed'
     | '/referral'
     | '/returns'
     | '/rewards'
@@ -764,6 +787,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/users'
     | '/order/$orderId'
+    | '/orders/$status'
     | '/seller/analytics'
     | '/seller/insights'
     | '/seller/notifications'
@@ -807,6 +831,7 @@ export interface FileRouteTypes {
     | '/_authenticated/order-success'
     | '/_authenticated/orders'
     | '/_authenticated/payment-failed'
+    | '/_authenticated/recently-viewed'
     | '/_authenticated/referral'
     | '/_authenticated/returns'
     | '/_authenticated/rewards'
@@ -831,6 +856,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/settings'
     | '/_authenticated/admin/users'
     | '/_authenticated/order/$orderId'
+    | '/_authenticated/orders_/$status'
     | '/_authenticated/seller/analytics'
     | '/_authenticated/seller/insights'
     | '/_authenticated/seller/notifications'
@@ -1023,6 +1049,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReferralRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/recently-viewed': {
+      id: '/_authenticated/recently-viewed'
+      path: '/recently-viewed'
+      fullPath: '/recently-viewed'
+      preLoaderRoute: typeof AuthenticatedRecentlyViewedRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/payment-failed': {
       id: '/_authenticated/payment-failed'
       path: '/payment-failed'
@@ -1176,6 +1209,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/seller/analytics'
       preLoaderRoute: typeof AuthenticatedSellerAnalyticsRouteImport
       parentRoute: typeof AuthenticatedSellerRoute
+    }
+    '/_authenticated/orders_/$status': {
+      id: '/_authenticated/orders_/$status'
+      path: '/orders/$status'
+      fullPath: '/orders/$status'
+      preLoaderRoute: typeof AuthenticatedOrdersStatusRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/order/$orderId': {
       id: '/_authenticated/order/$orderId'
@@ -1489,6 +1529,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOrderSuccessRoute: typeof AuthenticatedOrderSuccessRoute
   AuthenticatedOrdersRoute: typeof AuthenticatedOrdersRoute
   AuthenticatedPaymentFailedRoute: typeof AuthenticatedPaymentFailedRoute
+  AuthenticatedRecentlyViewedRoute: typeof AuthenticatedRecentlyViewedRoute
   AuthenticatedReferralRoute: typeof AuthenticatedReferralRoute
   AuthenticatedReturnsRoute: typeof AuthenticatedReturnsRoute
   AuthenticatedRewardsRoute: typeof AuthenticatedRewardsRoute
@@ -1498,6 +1539,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTrackOrdersRoute: typeof AuthenticatedTrackOrdersRoute
   AuthenticatedWalletRoute: typeof AuthenticatedWalletRoute
   AuthenticatedOrderOrderIdRoute: typeof AuthenticatedOrderOrderIdRoute
+  AuthenticatedOrdersStatusRoute: typeof AuthenticatedOrdersStatusRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -1514,6 +1556,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOrderSuccessRoute: AuthenticatedOrderSuccessRoute,
   AuthenticatedOrdersRoute: AuthenticatedOrdersRoute,
   AuthenticatedPaymentFailedRoute: AuthenticatedPaymentFailedRoute,
+  AuthenticatedRecentlyViewedRoute: AuthenticatedRecentlyViewedRoute,
   AuthenticatedReferralRoute: AuthenticatedReferralRoute,
   AuthenticatedReturnsRoute: AuthenticatedReturnsRoute,
   AuthenticatedRewardsRoute: AuthenticatedRewardsRoute,
@@ -1523,6 +1566,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTrackOrdersRoute: AuthenticatedTrackOrdersRoute,
   AuthenticatedWalletRoute: AuthenticatedWalletRoute,
   AuthenticatedOrderOrderIdRoute: AuthenticatedOrderOrderIdRoute,
+  AuthenticatedOrdersStatusRoute: AuthenticatedOrdersStatusRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

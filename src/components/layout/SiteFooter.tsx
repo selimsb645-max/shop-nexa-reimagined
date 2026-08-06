@@ -36,7 +36,7 @@ export function SiteFooter() {
               </li>
               <li>
                 <Link
-                  to="/how-to-buy"
+                  to="/help-center"
                   className="text-slate-600 hover:text-[#f97316] transition-colors duration-200"
                 >
                   How to Buy
@@ -52,7 +52,7 @@ export function SiteFooter() {
               </li>
               <li>
                 <Link
-                  to="/contact"
+                  to="/help-center"
                   className="text-slate-600 hover:text-[#f97316] transition-colors duration-200"
                 >
                   Contact Us
@@ -60,7 +60,7 @@ export function SiteFooter() {
               </li>
               <li>
                 <Link
-                  to="/terms"
+                  to="/help-center"
                   className="text-slate-600 hover:text-[#f97316] transition-colors duration-200"
                 >
                   Terms &amp; Conditions
@@ -85,7 +85,7 @@ export function SiteFooter() {
             <ul className="space-y-2.5 text-sm">
               <li>
                 <Link
-                  to="/about"
+                  to="/help-center"
                   className="text-slate-600 hover:text-[#f97316] transition-colors duration-200"
                 >
                   About Us
@@ -93,7 +93,7 @@ export function SiteFooter() {
               </li>
               <li>
                 <Link
-                  to="/digital-payments"
+                  to="/help-center"
                   className="text-slate-600 hover:text-[#f97316] transition-colors duration-200"
                 >
                   Digital Payments
@@ -101,7 +101,7 @@ export function SiteFooter() {
               </li>
               <li>
                 <Link
-                  to="/blog"
+                  to="/help-center"
                   className="text-slate-600 hover:text-[#f97316] transition-colors duration-200"
                 >
                   Shop Nexa Blog
@@ -109,7 +109,7 @@ export function SiteFooter() {
               </li>
               <li>
                 <Link
-                  to="/privacy"
+                  to="/help-center"
                   className="text-slate-600 hover:text-[#f97316] transition-colors duration-200"
                 >
                   Privacy Policy
@@ -125,7 +125,7 @@ export function SiteFooter() {
               </li>
               <li>
                 <Link
-                  to="/affiliate"
+                  to="/help-center"
                   className="text-slate-600 hover:text-[#f97316] transition-colors duration-200"
                 >
                   Affiliate Program
@@ -133,7 +133,7 @@ export function SiteFooter() {
               </li>
               <li>
                 <Link
-                  to="/mart"
+                  to="/shop"
                   className="text-slate-600 hover:text-[#f97316] transition-colors duration-200"
                 >
                   Shop Nexa Mart

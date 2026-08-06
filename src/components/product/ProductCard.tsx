@@ -66,7 +66,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   showLocation = true,
 }) => {
   const [imageError, setImageError] = useState(false);
-  const { isInWishlist, toggleWishlist } = useWishlist();
+  const { has: isInWishlist, toggle: toggleWishlist } = useWishlist();
 
   const isWishlisted = isInWishlist ? isInWishlist(String(product.id)) : false;
 
@@ -106,8 +106,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       className={`group relative bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-slate-100 flex flex-col h-full overflow-hidden select-none ${className}`}
     >
       <Link
-        to="/product/$productId"
-        params={{ productId: productIdStr }}
+        to="/product/$slug"
+        params={{ slug: (product as any).slug || productIdStr }}
         className="flex flex-col h-full text-inherit no-underline focus:outline-none focus:ring-2 focus:ring-orange-500 rounded-lg"
       >
         {/* Image Container */}
@@ -211,7 +211,7 @@ export const ProductCardCompact: React.FC<ProductCardCompactProps> = ({
   totalStock,
 }) => {
   const [imageError, setImageError] = useState(false);
-  const { isInWishlist, toggleWishlist } = useWishlist();
+  const { has: isInWishlist, toggle: toggleWishlist } = useWishlist();
 
   const isWishlisted = isInWishlist ? isInWishlist(String(product.id)) : false;
 
@@ -252,8 +252,8 @@ export const ProductCardCompact: React.FC<ProductCardCompactProps> = ({
       className={`group relative w-36 sm:w-40 flex-shrink-0 bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-slate-100 flex flex-col overflow-hidden select-none ${className}`}
     >
       <Link
-        to="/product/$productId"
-        params={{ productId: productIdStr }}
+        to="/product/$slug"
+        params={{ slug: (product as any).slug || productIdStr }}
         className="flex flex-col h-full text-inherit no-underline focus:outline-none"
       >
         {/* Compact Square Image */}
