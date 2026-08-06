@@ -572,7 +572,7 @@ export function SiteHeader() {
                   return (
                     <Link
                       key={cat.id || idx}
-                      to="/products"
+                      to="/shop"
                       search={{ category: catSlug } as any}
                       onClick={() => setIsCategoryOpen(false)}
                       className="flex items-center justify-between px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 hover:text-[#f57224] transition-colors"
@@ -597,7 +597,7 @@ export function SiteHeader() {
             </Link>
 
             <Link
-              to="/products"
+              to="/shop"
               search={{ sort: "bestsellers" } as any}
               className="flex items-center gap-1.5 hover:text-[#f57224] transition-colors"
             >
@@ -606,7 +606,7 @@ export function SiteHeader() {
             </Link>
 
             <Link
-              to="/products"
+              to="/shop"
               search={{ sort: "newest" } as any}
               className="flex items-center gap-1.5 hover:text-[#f57224] transition-colors"
             >
@@ -615,7 +615,7 @@ export function SiteHeader() {
             </Link>
 
             <Link
-              to="/products"
+              to="/shop"
               search={{ deals: "true" } as any}
               className="flex items-center gap-1.5 hover:text-[#f57224] transition-colors"
             >
@@ -653,7 +653,7 @@ export function SiteHeader() {
               return (
                 <Link
                   key={cat.id || idx}
-                  to="/products"
+                  to="/shop"
                   search={{ category: catSlug } as any}
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="py-1.5 px-2 rounded bg-slate-50 hover:bg-slate-100 text-slate-700 text-center truncate"
@@ -676,7 +676,7 @@ export function SiteHeader() {
               <Flame className="w-4 h-4 text-[#f57224]" /> Flash Sale
             </Link>
             <Link
-              to="/products"
+              to="/shop"
               search={{ sort: "bestsellers" } as any}
               onClick={() => setIsMobileMenuOpen(false)}
               className="flex items-center gap-2 text-slate-700 py-1"
@@ -684,7 +684,7 @@ export function SiteHeader() {
               <Award className="w-4 h-4 text-amber-500" /> Best Sellers
             </Link>
             <Link
-              to="/products"
+              to="/shop"
               search={{ sort: "newest" } as any}
               onClick={() => setIsMobileMenuOpen(false)}
               className="flex items-center gap-2 text-slate-700 py-1"
@@ -692,7 +692,7 @@ export function SiteHeader() {
               <Sparkles className="w-4 h-4 text-purple-500" /> New Arrivals
             </Link>
             <Link
-              to="/products"
+              to="/shop"
               search={{ deals: "true" } as any}
               onClick={() => setIsMobileMenuOpen(false)}
               className="flex items-center gap-2 text-slate-700 py-1"

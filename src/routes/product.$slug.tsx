@@ -56,7 +56,7 @@ type ProductWithExtras = Product & {
   freeShipping?: boolean;
   shortDescription?: string;
   soldCount?: number;
-  seller?: { name: string; rating: number; responseTime: string; storeSlug?: string };
+  seller?: { name: string; rating: number; responseTime: string; storeSlug?: string; shipOnTime?: number };
   discount?: number;
   inStock?: boolean;
   originalPrice?: number;
@@ -371,7 +371,7 @@ export function ProductDetailPage() {
 
   // Share & Review State
   const [copied, setCopied] = useState<boolean>(false);
-  const [userReviews, setUserReviews] = useState<Review[]>(MOCK_REVIEWS);
+  const [userReviews, setUserReviews] = useState<ReviewWithExtras[]>(MOCK_REVIEWS);
   const [newRating, setNewRating] = useState<number>(5);
   const [newComment, setNewComment] = useState<string>("");
   const [newTitle, setNewTitle] = useState<string>("");

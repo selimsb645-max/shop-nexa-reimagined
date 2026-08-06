@@ -349,14 +349,14 @@ function AccountPage() {
             <DarazServiceIcon to="/addresses" icon={<MapPin className="h-6 w-6" />} label="Addresses" badge={addresses?.length ?? 0} />
             <DarazServiceIcon to="/notifications" icon={<Bell className="h-6 w-6" />} label="Notifs" badge={unreadNotifs || 0} />
             <DarazServiceIcon to="/" icon={<History className="h-6 w-6" />} label="Recently Viewed" badge={recentIds.length} />
-            <DarazServiceIcon to="/seller.register" icon={<Store className="h-6 w-6" />} label="Be a Seller" highlight />
+            <DarazServiceIcon to="/seller/register" icon={<Store className="h-6 w-6" />} label="Be a Seller" highlight />
           </div>
         </DarazCard>
 
         {/* ===== Become a Seller banner ===== */}
         {profile?.role !== "seller" && (
           <Link
-            to="/seller.register"
+            to="/seller/register"
             className="flex items-center gap-3 rounded-2xl bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 p-4 transition hover:shadow-md active:scale-[0.99]"
           >
             <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-orange-500 text-white shadow-md">
