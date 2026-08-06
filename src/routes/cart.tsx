@@ -55,6 +55,7 @@ export const Route = createFileRoute("/cart")({
 export interface CartItemType {
   id: string;
   productId?: string;
+  slug?: string;
   title: string;
   price: number;
   originalPrice?: number;
