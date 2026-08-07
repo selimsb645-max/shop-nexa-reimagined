@@ -1,9 +1,19 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { Ban, Clock, Lock, ShieldAlert } from "lucide-react";
-import { Spinner } from "@/components/common/Spinner";
+import {
+  Ban,
+  Clock,
+  Lock,
+  ShieldAlert,
+  FileWarning,
+  Store,
+  Loader,
+  CheckCircle2,
+  XCircle,
+} from "lucide-react";
 import { SellerShell } from "./SellerShell";
 import { useSellerProfile } from "@/hooks/useSellerProfile";
+import { SELLER_STATUS_CONFIG, REGISTRATION_STEPS } from "@/types/seller";
 
 interface Props {
   children: (profile: NonNullable<ReturnType<typeof useSellerProfile>["profile"]>) => ReactNode;
@@ -15,8 +25,8 @@ export function SellerGate({ children }: Props) {
   if (loading) {
     return (
       <SellerShell>
-        <div className="flex items-center gap-2 rounded-lg border bg-background p-8 text-sm text-muted-foreground">
-          <Spinner /> Loading seller workspace...
+        <div className="flex items-center justify-center py-20">
+          <Loader className="w-8 h-8 animate-spin text-slate-300" />
         </div>
       </SellerShell>
     );
@@ -25,92 +35,163 @@ export function SellerGate({ children }: Props) {
   if (error) {
     return (
       <SellerShell>
-        <div className="rounded-lg border bg-background p-8 text-sm text-destructive">{error}</div>
+        <div className="bg-white rounded-xl border border-rose-200 p-6 text-sm text-rose-700">
+          {error}
+        </div>
       </SellerShell>
     );
   }
 
+  // No profile → registration CTA
   if (!profile) {
     return (
       <SellerShell>
-        <EmptyState
-          icon={<Lock className="h-7 w-7" />}
-          title="Become a seller on ShopNexa"
-          body="Register your shop to start listing products, managing inventory, and receiving orders."
-          action={
-            <Link
-              to="/seller/register"
-              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
-            >
-              Register as seller
-            </Link>
-          }
-        />
+        <div className="flex flex-col items-center justify-center bg-white rounded-2xl border border-slate-200 py-16 px-4 text-center shadow-sm">
+          <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+            <Lock className="w-8 h-8 text-slate-400" />
+          </div>
+          <h2 className="text-lg font-bold text-[#0f172a]">Become a Seller on Shop Nexa</h2>
+          <p className="mt-2 max-w-sm text-sm text-slate-500">
+            Register your shop to start listing products, managing orders, and growing your business.
+          </p>
+          <Link
+            to="/seller/register"
+            className="mt-6 bg-[#f57224] hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-xl text-sm transition-colors"
+          >
+            Start Registration
+          </Link>
+        </div>
       </SellerShell>
     );
   }
 
-  if (profile.status === "pending") {
+  const config = SELLER_STATUS_CONFIG[profile.status];
+
+  // Draft → continue registration
+  if (profile.status === "draft") {
+    const stepIdx = REGISTRATION_STEPS.findIndex((s) => s.key === profile.currentStep);
     return (
-      <SellerShell shopName={profile.shopName}>
-        <EmptyState
-          icon={<Clock className="h-7 w-7" />}
-          title="Your application is under review"
-          body="Our team is reviewing your seller application. You'll be notified as soon as your shop is approved."
-        />
+      <SellerShell>
+        <div className="flex flex-col items-center justify-center bg-white rounded-2xl border border-slate-200 py-12 px-4 text-center shadow-sm">
+          <div className="w-16 h-16 rounded-full bg-amber-50 flex items-center justify-center mb-4">
+            <FileWarning className="w-8 h-8 text-amber-500" />
+          </div>
+          <h2 className="text-lg font-bold text-[#0f172a]">Complete Your Registration</h2>
+          <p className="mt-2 max-w-sm text-sm text-slate-500">
+            Your application is at the "{REGISTRATION_STEPS[stepIdx]?.label || "Store Info"}" step.
+            Complete all steps to submit for review.
+          </p>
+          <Link
+            to="/seller/register"
+            className="mt-6 bg-[#f57224] hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-xl text-sm transition-colors"
+          >
+            Continue Registration
+          </Link>
+        </div>
       </SellerShell>
     );
   }
 
+  // Pending review
+  if (profile.status === "pending_review") {
+    return (
+      <SellerShell>
+        <div className="flex flex-col items-center justify-center bg-white rounded-2xl border border-slate-200 py-16 px-4 text-center shadow-sm">
+          <div className="w-16 h-16 rounded-full bg-amber-50 flex items-center justify-center mb-4">
+            <Clock className="w-8 h-8 text-amber-500" />
+          </div>
+          <h2 className="text-lg font-bold text-[#0f172a]">Application Under Review</h2>
+          <p className="mt-2 max-w-sm text-sm text-slate-500">
+            Our team is reviewing your seller application. You'll be notified as soon as your shop is approved.
+          </p>
+          <div className="mt-4 px-4 py-2 bg-amber-50 rounded-lg text-xs text-amber-700 font-medium">
+            ⏳ Review typically takes 24–48 hours
+          </div>
+        </div>
+      </SellerShell>
+    );
+  }
+
+  // Need documents
+  if (profile.status === "need_documents") {
+    return (
+      <SellerShell>
+        <div className="flex flex-col items-center justify-center bg-white rounded-2xl border border-rose-200 py-16 px-4 text-center shadow-sm">
+          <div className="w-16 h-16 rounded-full bg-rose-50 flex items-center justify-center mb-4">
+            <FileWarning className="w-8 h-8 text-rose-500" />
+          </div>
+          <h2 className="text-lg font-bold text-[#0f172a]">Additional Documents Required</h2>
+          <p className="mt-2 max-w-sm text-sm text-slate-500">
+            {profile.rejectionReason || "Please upload the requested documents to continue the review process."}
+          </p>
+          <Link
+            to="/seller/register"
+            className="mt-6 bg-[#f57224] hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-xl text-sm transition-colors"
+          >
+            Upload Documents
+          </Link>
+        </div>
+      </SellerShell>
+    );
+  }
+
+  // Rejected
   if (profile.status === "rejected") {
     return (
-      <SellerShell shopName={profile.shopName}>
-        <EmptyState
-          icon={<ShieldAlert className="h-7 w-7" />}
-          title="Application not approved"
-          body={
-            profile.rejectionReason ||
-            "Unfortunately your seller application wasn't approved. Please contact support for more information."
-          }
-        />
+      <SellerShell>
+        <div className="flex flex-col items-center justify-center bg-white rounded-2xl border border-rose-200 py-16 px-4 text-center shadow-sm">
+          <div className="w-16 h-16 rounded-full bg-rose-50 flex items-center justify-center mb-4">
+            <XCircle className="w-8 h-8 text-rose-500" />
+          </div>
+          <h2 className="text-lg font-bold text-[#0f172a]">Application Not Approved</h2>
+          <p className="mt-2 max-w-sm text-sm text-slate-500">
+            {profile.rejectionReason || "Unfortunately your seller application wasn't approved. Please contact support for more information."}
+          </p>
+          <Link
+            to="/seller/register"
+            className="mt-6 bg-[#f57224] hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-xl text-sm transition-colors"
+          >
+            Re-apply
+          </Link>
+        </div>
       </SellerShell>
     );
   }
 
+  // Suspended
   if (profile.status === "suspended") {
     return (
-      <SellerShell shopName={profile.shopName}>
-        <EmptyState
-          icon={<Ban className="h-7 w-7" />}
-          title="Your seller account is suspended"
-          body="Please contact ShopNexa support to resolve this."
-        />
+      <SellerShell>
+        <div className="flex flex-col items-center justify-center bg-white rounded-2xl border border-rose-200 py-16 px-4 text-center shadow-sm">
+          <div className="w-16 h-16 rounded-full bg-rose-50 flex items-center justify-center mb-4">
+            <Ban className="w-8 h-8 text-rose-500" />
+          </div>
+          <h2 className="text-lg font-bold text-[#0f172a]">Account Suspended</h2>
+          <p className="mt-2 max-w-sm text-sm text-slate-500">
+            Your seller account has been suspended. Please contact Shop Nexa support to resolve this.
+          </p>
+        </div>
       </SellerShell>
     );
   }
 
-  return <SellerShell shopName={profile.shopName}>{children(profile)}</SellerShell>;
-}
+  // Blocked
+  if (profile.status === "blocked") {
+    return (
+      <SellerShell>
+        <div className="flex flex-col items-center justify-center bg-white rounded-2xl border border-rose-200 py-16 px-4 text-center shadow-sm">
+          <div className="w-16 h-16 rounded-full bg-rose-50 flex items-center justify-center mb-4">
+            <Ban className="w-8 h-8 text-rose-700" />
+          </div>
+          <h2 className="text-lg font-bold text-[#0f172a]">Account Blocked</h2>
+          <p className="mt-2 max-w-sm text-sm text-slate-500">
+            This account has been permanently blocked. Contact support for more information.
+          </p>
+        </div>
+      </SellerShell>
+    );
+  }
 
-function EmptyState({
-  icon,
-  title,
-  body,
-  action,
-}: {
-  icon: ReactNode;
-  title: string;
-  body: string;
-  action?: ReactNode;
-}) {
-  return (
-    <div className="flex flex-col items-center justify-center rounded-lg border bg-background py-16 text-center">
-      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted text-muted-foreground">
-        {icon}
-      </div>
-      <h2 className="mt-4 text-lg font-semibold">{title}</h2>
-      <p className="mt-1 max-w-md text-sm text-muted-foreground">{body}</p>
-      {action && <div className="mt-6">{action}</div>}
-    </div>
-  );
+  // Approved → show dashboard
+  return <SellerShell>{children(profile)}</SellerShell>;
 }
