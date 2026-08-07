@@ -1,0 +1,16 @@
+{
+  "lint": {
+    "exclude": [
+      "src/routeTree.gen.ts",
+      "src/**/*.gen.ts",
+      "src/**/*.gen.tsx"
+    ]
+  },
+  "test": {
+    "exclude": [
+      "src/routeTree.gen.ts",
+      "src/**/*.gen.ts",
+      "src/**/*.gen.tsx"
+    ]
+  }
+}
