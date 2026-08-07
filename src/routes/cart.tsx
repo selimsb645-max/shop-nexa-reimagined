@@ -33,7 +33,7 @@ import {
   BadgePercent,
   HelpCircle,
 } from "lucide-react";
-import { SiteHeader, TopBar } from "@/components/layout/SiteHeader";
+import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { WhatsAppFab } from "@/components/layout/SiteChrome";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
@@ -549,7 +549,6 @@ export default function CartPage() {
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800 font-sans antialiased selection:bg-orange-100 selection:text-orange-900">
       {/* Top Header Navigation Bar */}
-      <TopBar />
       <SiteHeader />
 
       {/* Main Container */}
