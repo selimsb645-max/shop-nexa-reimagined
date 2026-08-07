@@ -1,7 +1,7 @@
 import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
 import type { User } from "firebase/auth";
 import { getDb } from "./config";
-import type { AppUserProfile, UserRole } from "@/types/user";
+import type { AppUserProfile, UserRole, AdminRole } from "@/types/user";
 
 const USERS = "users";
 
@@ -17,6 +17,7 @@ export async function ensureUserProfile(user: User): Promise<AppUserProfile> {
       displayName: user.displayName,
       photoURL: user.photoURL,
       role: "customer" as UserRole,
+      adminRole: null as AdminRole | null,
       emailVerified: user.emailVerified,
       createdAt: now,
       updatedAt: now,
@@ -31,6 +32,7 @@ export async function ensureUserProfile(user: User): Promise<AppUserProfile> {
     displayName: data.displayName ?? user.displayName,
     photoURL: data.photoURL ?? user.photoURL,
     role: (data.role as UserRole) ?? "customer",
+    adminRole: (data.adminRole as AdminRole | null) ?? null,
     emailVerified: user.emailVerified,
     createdAt:
       typeof data.createdAt === "number"
