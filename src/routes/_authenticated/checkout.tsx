@@ -445,6 +445,9 @@ function CheckoutPage() {
         paymentMethod,
         couponCode: appliedCoupon?.coupon.code ?? null,
         discount: couponDiscount,
+        deliveryMethod: deliveryMethodId as "standard" | "express",
+        rewardPoints: useRewardPoints ? rewardPointsToUse : 0,
+        walletUsed: walletUsed,
       });
 
       if (typeof cartContext.clear === "function") {
