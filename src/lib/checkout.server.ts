@@ -18,6 +18,8 @@ import {
 
 const SHIPPING_FLAT = 5;
 const FREE_SHIPPING_THRESHOLD = 50;
+const EXPRESS_SHIPPING_FLAT = 12;
+const POINTS_PER_CURRENCY_REDEEM = 100;
 const MAX_LINE_ITEMS = 100;
 const MAX_QTY_PER_ITEM = 100;
 
@@ -40,6 +42,9 @@ export interface PlaceOrderRequest {
   };
   paymentMethod: "cash_on_delivery" | "card" | "mobile_banking";
   couponCode: string | null;
+  deliveryMethod: "standard" | "express";
+  rewardPoints: number;
+  walletUsed: number;
 }
 
 export interface PlaceOrderResult {
@@ -47,6 +52,8 @@ export interface PlaceOrderResult {
   subtotal: number;
   discount: number;
   shipping: number;
+  rewardDiscount: number;
+  walletUsed: number;
   total: number;
   couponCode: string | null;
 }
@@ -173,8 +180,74 @@ export async function placeOrderServer(
   }
 
   const subAfterDiscount = round2(subtotal - discount);
-  const shipping = computeShippingServer(subAfterDiscount);
-  const total = round2(subAfterDiscount + shipping);
+  const shipping =
+    req.deliveryMethod === "express"
+      ? EXPRESS_SHIPPING_FLAT
+      : computeShippingServer(subAfterDiscount);
+  // Reward points deduction (server-side verified)
+  let rewardDiscount = 0;
+  if (req.rewardPoints > 0) {
+    const token = await getAccessToken();
+    // Read reward balance from Firestore
+    const rewardRes = await fetch(
+      `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${encodeURIComponent(req.uid)}:runQuery`,
+      {
+        method: "POST",
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify({
+          structuredQuery: { from: [{ collectionId: "rewardTx" }], limit: 1000 },
+        }),
+      },
+    );
+    if (rewardRes.ok) {
+      const rewardJson = (await rewardRes.json()) as Array<{ document?: { fields?: Record<string, unknown> } }>;
+      let availablePoints = 0;
+      for (const row of rewardJson) {
+        if (!row.document) continue;
+        const fields = row.document.fields ?? {};
+        const points = Number((fields.points as any)?.integerValue ?? (fields.points as any)?.doubleValue ?? 0);
+        availablePoints += points;
+      }
+      if (req.rewardPoints > availablePoints) {
+        throw new Error("You do not have enough reward points.");
+      }
+      rewardDiscount = round2(req.rewardPoints / POINTS_PER_CURRENCY_REDEEM);
+    }
+  }
+
+  // Wallet deduction (server-side verified)
+  let walletUsed = 0;
+  if (req.walletUsed > 0) {
+    const token = await getAccessToken();
+    const walletRes = await fetch(
+      `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${encodeURIComponent(req.uid)}:runQuery`,
+      {
+        method: "POST",
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify({
+          structuredQuery: { from: [{ collectionId: "walletTx" }], limit: 1000 },
+        }),
+      },
+    );
+    if (walletRes.ok) {
+      const walletJson = (await walletRes.json()) as Array<{ document?: { fields?: Record<string, unknown> } }>;
+      let walletBalance = 0;
+      for (const row of walletJson) {
+        if (!row.document) continue;
+        const fields = row.document.fields ?? {};
+        const amount = Number((fields.amount as any)?.integerValue ?? (fields.amount as any)?.doubleValue ?? 0);
+        walletBalance += amount;
+      }
+      walletUsed = Math.min(req.walletUsed, walletBalance);
+      if (walletUsed <= 0) {
+        throw new Error("You do not have enough wallet balance.");
+      }
+    }
+  }
+
+  const totalBeforeRewardWallet = round2(subAfterDiscount + shipping);
+  const rewardWalletDeduction = round2(Math.min(rewardDiscount + walletUsed, totalBeforeRewardWallet));
+  const total = round2(totalBeforeRewardWallet - rewardWalletDeduction);
 
   const orderItems = lines.map((l) => ({
     productId: l.productId,
@@ -211,6 +284,8 @@ export async function placeOrderServer(
         subtotal,
         discount,
         shipping,
+        rewardDiscount,
+        walletUsed,
         total,
         couponCode: appliedCoupon,
         status: "pending",
@@ -265,6 +340,40 @@ export async function placeOrderServer(
     });
   }
 
+  // Reward points deduction ledger entry.
+  if (rewardDiscount > 0) {
+    writes.push({
+      update: {
+        name: docPath(projectId, ["users", req.uid, "rewardTx", newDocId()]),
+        fields: toFsFields({
+          type: "redeem",
+          points: -req.rewardPoints,
+          note: `Redeemed at checkout for order #${orderId.slice(0, 8)}`,
+          orderId,
+          createdAt: nowMs,
+        }),
+      },
+      currentDocument: { exists: false },
+    });
+  }
+
+  // Wallet deduction ledger entry.
+  if (walletUsed > 0) {
+    writes.push({
+      update: {
+        name: docPath(projectId, ["users", req.uid, "walletTx", newDocId()]),
+        fields: toFsFields({
+          type: "spend",
+          amount: -walletUsed,
+          note: `Used at checkout for order #${orderId.slice(0, 8)}`,
+          orderId,
+          createdAt: nowMs,
+        }),
+      },
+      currentDocument: { exists: false },
+    });
+  }
+
   // Clear the purchased cart items.
   for (const l of lines) {
     writes.push({ delete: docPath(projectId, ["users", req.uid, "cart", l.productId]) });
@@ -314,5 +423,5 @@ export async function placeOrderServer(
   void nowIso;
   await commitWrites(projectId, writes);
 
-  return { orderId, subtotal, discount, shipping, total, couponCode: appliedCoupon };
+  return { orderId, subtotal, discount, shipping, rewardDiscount, walletUsed, total, couponCode: appliedCoupon };
 }
