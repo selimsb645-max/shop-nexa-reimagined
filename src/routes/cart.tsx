@@ -39,6 +39,10 @@ import { WhatsAppFab } from "@/components/layout/SiteChrome";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { formatPrice } from "@/utils/format";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+import { getProductById } from "@/services/firebase/products";
+import { getSellerProfile } from "@/services/firebase/sellers";
+import { firebaseConfigured } from "@/services/firebase/config";
 
 // ----------------------------------------------------------------------
 // Route Definition
@@ -77,54 +81,8 @@ export interface CouponType {
 }
 
 // ----------------------------------------------------------------------
-// Sample Fallback Data (For Demonstration & Initial State)
+// No sample/mock data — cart starts empty and is populated from Firebase only
 // ----------------------------------------------------------------------
-
-const SAMPLE_CART_ITEMS: CartItemType[] = [
-  {
-    id: "cart-item-1",
-    productId: "prod-101",
-    title: "Shop Nexa Pro Wireless Noise Cancelling Headphones - Midnight Black",
-    price: 89.99,
-    originalPrice: 129.99,
-    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80",
-    seller: "Shop Nexa Official Store",
-    sellerRating: 4.9,
-    variant: "Midnight Black",
-    color: "Black",
-    quantity: 1,
-    stock: 15,
-  },
-  {
-    id: "cart-item-2",
-    productId: "prod-102",
-    title: "Ultra-Fast 65W GaN Dual USB-C Fast Charger with Braided Cable",
-    price: 24.50,
-    originalPrice: 35.00,
-    image: "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?auto=format&fit=crop&w=600&q=80",
-    seller: "Shop Nexa Official Store",
-    sellerRating: 4.9,
-    variant: "White / 2m Cable",
-    color: "White",
-    quantity: 2,
-    stock: 28,
-  },
-  {
-    id: "cart-item-3",
-    productId: "prod-103",
-    title: "Ergonomic Smart Fitness Watch with AMOLED HD Display & Heart Monitor",
-    price: 49.00,
-    originalPrice: 79.99,
-    image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=600&q=80",
-    seller: "Nexa Tech Hub",
-    sellerRating: 4.8,
-    variant: "Space Gray / Silicon Strap",
-    color: "Space Gray",
-    size: "44mm",
-    quantity: 1,
-    stock: 8,
-  },
-];
 
 const AVAILABLE_COUPONS: CouponType[] = [
   {
@@ -150,40 +108,7 @@ const AVAILABLE_COUPONS: CouponType[] = [
   },
 ];
 
-const RECOMMENDED_PRODUCTS = [
-  {
-    id: "rec-1",
-    title: "Nexa SoundBar 300W Bluetooth Speaker with Bass Boost",
-    price: 64.99,
-    originalPrice: 89.99,
-    image: "https://images.unsplash.com/photo-1545454675-3531b543be5d?auto=format&fit=crop&w=400&q=80",
-    rating: 4.7,
-  },
-  {
-    id: "rec-2",
-    title: "Portable Magnetic Wireless Power Bank 10000mAh",
-    price: 29.99,
-    originalPrice: 39.99,
-    image: "https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?auto=format&fit=crop&w=400&q=80",
-    rating: 4.8,
-  },
-  {
-    id: "rec-3",
-    title: "Nexa Mechanical Gaming Keyboard RGB Backlit",
-    price: 54.00,
-    originalPrice: 75.00,
-    image: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=400&q=80",
-    rating: 4.9,
-  },
-  {
-    id: "rec-4",
-    title: "High-Speed USB 3.2 Flash Drive 256GB Aluminum Body",
-    price: 18.99,
-    originalPrice: 28.00,
-    image: "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?auto=format&fit=crop&w=400&q=80",
-    rating: 4.6,
-  },
-];
+
 
 // ----------------------------------------------------------------------
 // Main Cart Page Component
@@ -219,7 +144,7 @@ export default function CartPage() {
           item.imageUrl ||
           item.thumbnail ||
           "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMzAwIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YzZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzljYTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPlNob3AgTmV4YTwvdGV4dD48L3N2Zz4=",
-        seller: item.seller || item.storeName || "Shop Nexa Official Store",
+        seller: item.seller || item.storeName || "",
         sellerRating: item.sellerRating || 4.8,
         variant: item.variant || item.selectedVariant || "Standard",
         color: item.color,
@@ -228,8 +153,98 @@ export default function CartPage() {
         stock: item.stock || 20,
       }));
     }
-    return SAMPLE_CART_ITEMS;
+    return [];
   });
+
+  // Fetch product details for each cart item to get sellerId, compareAtPrice, etc.
+  const productIds = items.map((i) => i.productId || i.id).filter(Boolean);
+  const { data: productDetails = {} } = useQuery({
+    queryKey: ["cart-products", productIds],
+    queryFn: async () => {
+      if (!firebaseConfigured || productIds.length === 0) return {};
+      const results: Record<string, any> = {};
+      await Promise.all(
+        productIds.map(async (pid) => {
+          try {
+            const product = await getProductById(pid);
+            if (product) results[pid] = product;
+          } catch (e) {
+            console.warn("Failed to fetch product:", pid, e);
+          }
+        })
+      );
+      return results;
+    },
+    enabled: productIds.length > 0,
+    staleTime: 60_000,
+  });
+
+  // Fetch seller profiles for each unique sellerId
+  const sellerIds = Object.values(productDetails)
+    .map((p: any) => p.sellerId)
+    .filter(Boolean) as string[];
+  const uniqueSellerIds = [...new Set(sellerIds)];
+  const { data: sellerProfiles = {} } = useQuery({
+    queryKey: ["cart-sellers", uniqueSellerIds],
+    queryFn: async () => {
+      if (!firebaseConfigured || uniqueSellerIds.length === 0) return {};
+      const results: Record<string, { shopName: string; verified: boolean }> = {};
+      await Promise.all(
+        uniqueSellerIds.map(async (sid) => {
+          try {
+            const profile = await getSellerProfile(sid);
+            if (profile) {
+              results[sid] = {
+                shopName: profile.shopName || "Shop Nexa",
+                verified: profile.status === "approved",
+              };
+            }
+          } catch (e) {
+            console.warn("Failed to fetch seller:", sid, e);
+          }
+        })
+      );
+      return results;
+    },
+    enabled: uniqueSellerIds.length > 0,
+    staleTime: 120_000,
+  });
+
+  // Enrich items with real seller names and product data from Firebase
+  const enrichedItems = useMemo(() => {
+    return items.map((item) => {
+      const pid = item.productId || item.id;
+      const product = productDetails[pid];
+      const sellerId = product?.sellerId;
+      const sellerInfo = sellerId ? sellerProfiles[sellerId] : null;
+      return {
+        ...item,
+        seller: sellerInfo?.shopName || (sellerId ? "Shop Nexa" : "Shop Nexa"),
+        sellerRating: product?.rating,
+        originalPrice: item.originalPrice || (product?.compareAtPrice ? Number(product.compareAtPrice) : undefined),
+        stock: item.stock || product?.stock || 0,
+        image: item.image || (product?.images?.[0] ?? ""),
+        title: item.title || product?.title || "Product",
+      };
+    });
+  }, [items, productDetails, sellerProfiles]);
+
+  // Rebuild sellerGroups from enriched items
+  const enrichedSellerGroups = useMemo(() => {
+    const groups: { [key: string]: CartItemType[] } = {};
+    enrichedItems.forEach((item) => {
+      const sellerName = item.seller || "Shop Nexa";
+      if (!groups[sellerName]) groups[sellerName] = [];
+      groups[sellerName].push(item);
+    });
+    return groups;
+  }, [enrichedItems]);
+
+  // Check if seller is verified from Firebase
+  const isSellerVerified = (sellerName: string): boolean => {
+    const found = Object.values(sellerProfiles).find((s: any) => s.shopName === sellerName);
+    return found?.verified ?? false;
+  };
 
   // Selected Item IDs for Checkout Calculation
   const [selectedIds, setSelectedIds] = useState<string[]>(() =>
@@ -262,7 +277,7 @@ export default function CartPage() {
   const sellerGroups = useMemo(() => {
     const groups: { [key: string]: CartItemType[] } = {};
     items.forEach((item) => {
-      const sellerName = item.seller || "Shop Nexa Official Store";
+      const sellerName = item.seller || "Shop Nexa";
       if (!groups[sellerName]) {
         groups[sellerName] = [];
       }
@@ -673,7 +688,7 @@ export default function CartPage() {
               </div>
 
               {/* Items Grouped By Store / Seller */}
-              {Object.entries(sellerGroups).map(([sellerName, sellerItems]) => {
+              {Object.entries(enrichedSellerGroups).map(([sellerName, sellerItems]) => {
                 const sellerItemIds = sellerItems.map((i) => i.id);
                 const isSellerAllSelected = sellerItemIds.every((id) =>
                   selectedIds.includes(id)
@@ -699,9 +714,9 @@ export default function CartPage() {
                         <span className="text-sm font-bold text-[#0f172a] hover:text-[#f57224] transition-colors cursor-pointer">
                           {sellerName}
                         </span>
-                        <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-1.5 py-0.2 rounded border border-amber-200">
-                          Verified Seller
-                        </span>
+                        {isSellerVerified(sellerName) && (
+                          <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-1.5 py-0.2 rounded border border-amber-200">Verified Seller</span>
+                        )}
                       </div>
 
                       <div className="flex items-center gap-1 text-xs text-emerald-700 font-medium">
@@ -1196,7 +1211,7 @@ export default function CartPage() {
           /* EMPTY CART STATE */
           <div className="flex flex-col items-center justify-center py-12 px-4">
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-8 max-w-lg w-full text-center">
-              {/* Modern Daraz-Style Cart Empty Illustration Icon */}
+              {/* Cart Empty Illustration */}
               <div className="relative mx-auto w-24 h-24 rounded-full bg-orange-50 border-2 border-orange-100 flex items-center justify-center mb-6 text-[#f57224]">
                 <ShoppingCart className="w-12 h-12 stroke-[1.5]" />
                 <div className="absolute -top-1 -right-1 w-7 h-7 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-bold">
@@ -1219,75 +1234,16 @@ export default function CartPage() {
                 <span>Continue Shopping</span>
               </Link>
             </div>
-
-            {/* Recommended Products Grid below Empty State */}
-            <div className="mt-12 max-w-5xl w-full">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-base sm:text-lg font-bold text-[#0f172a] flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-[#f57224]" />
-                  <span>Recommended for You</span>
-                </h3>
-                <Link
-                  to="/shop"
-                  className="text-xs font-bold text-[#f57224] hover:underline flex items-center gap-1"
-                >
-                  <span>View All</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {RECOMMENDED_PRODUCTS.map((prod) => (
-                  <div
-                    key={prod.id}
-                    className="bg-white rounded-xl border border-slate-200/80 p-3 shadow-sm hover:shadow-md transition-shadow group flex flex-col justify-between"
-                  >
-                    <div>
-                      <div className="aspect-square rounded-lg overflow-hidden bg-slate-100 mb-2">
-                        <img
-                          src={prod.image}
-                          alt={prod.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                        />
-                      </div>
-                      <h4 className="text-xs font-semibold text-slate-800 line-clamp-2 mb-1 group-hover:text-[#f57224] transition-colors">
-                        {prod.title}
-                      </h4>
-                      <div className="flex items-baseline gap-1.5">
-                        <span className="text-sm font-bold text-[#0f172a]">
-                          {formatPrice(prod.price)}
-                        </span>
-                        <span className="text-[10px] text-slate-400 line-through">
-                          {formatPrice(prod.originalPrice)}
-                        </span>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const newItem: CartItemType = {
-                          id: `cart-${Date.now()}-${prod.id}`,
-                          productId: prod.id,
-                          title: prod.title,
-                          price: prod.price,
-                          originalPrice: prod.originalPrice,
-                          image: prod.image,
-                          seller: "Shop Nexa Official Store",
-                          quantity: 1,
-                        };
-                        setItems((prev) => [...prev, newItem]);
-                        setSelectedIds((prev) => [...prev, newItem.id]);
-                        toast.success("Added to shopping cart!");
-                      }}
-                      className="mt-3 w-full bg-slate-100 hover:bg-[#0f172a] hover:text-white text-slate-700 text-xs font-bold py-2 px-2 rounded-lg transition-colors flex items-center justify-center gap-1"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>Add to Cart</span>
-                    </button>
-                  </div>
-                ))}
-              </div>
+            {/* Browse Products CTA */}
+            <div className="mt-8 flex flex-col items-center gap-3">
+              <p className="text-xs text-slate-400">Discover great deals and trending products</p>
+              <Link
+                to="/shop"
+                className="inline-flex items-center justify-center gap-2 text-sm font-bold text-[#f57224] hover:text-[#e0621f] transition-colors"
+              >
+                <span>Browse All Products</span>
+                <ChevronRight className="w-4 h-4" />
+              </Link>
             </div>
           </div>
         )}
@@ -1295,7 +1251,7 @@ export default function CartPage() {
 
       {/* Mobile Fixed Bottom Checkout Bar */}
       {items.length > 0 && selectedItems.length > 0 && (
-        <div className="lg:hidden fixed bottom-[56px] left-0 right-0 bg-white border-t border-slate-200 p-3 px-4 shadow-lg z-40 flex items-center justify-between gap-3">
+        <div className="lg:hidden fixed bottom-[64px] left-0 right-0 bg-white border-t border-slate-200 p-3 px-4 shadow-lg z-40 flex items-center justify-between gap-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]" style={{ bottom: "calc(64px + env(safe-area-inset-bottom, 0px))" }}>
           <div>
             <span className="text-[10px] text-slate-500 block uppercase font-medium">
               Total ({selectedTotalCount} items)
