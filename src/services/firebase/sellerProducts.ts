@@ -23,9 +23,13 @@ function nowMs() {
 export interface SellerProductInput {
   title: string;
   slug: string;
+  shortDescription: string;
   description: string;
+  brand: string | null;
   price: number;
   compareAtPrice: number | null;
+  costPrice: number | null;
+  tax: number;
   images: string[];
   categoryId: string;
   categorySlug: string;
@@ -46,9 +50,13 @@ function toProduct(id: string, data: Record<string, unknown>): Product {
     id,
     title: String(d.title ?? ""),
     slug: String(d.slug ?? id),
+    shortDescription: String(d.shortDescription ?? ""),
     description: String(d.description ?? ""),
+    brand: d.brand ? String(d.brand) : null,
     price: Number(d.price ?? 0),
     compareAtPrice: d.compareAtPrice != null ? Number(d.compareAtPrice) : null,
+    costPrice: d.costPrice != null ? Number(d.costPrice) : null,
+    tax: Number(d.tax ?? 0),
     images: Array.isArray(d.images) ? (d.images as string[]) : [],
     categoryId: String(d.categoryId ?? ""),
     categorySlug: String(d.categorySlug ?? ""),
