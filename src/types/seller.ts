@@ -1,4 +1,42 @@
-export type SellerStatus = "pending" | "approved" | "rejected" | "suspended";
+// ====================================================================
+// Shop Nexa Seller Types — Phase 2B Extended
+// ====================================================================
+
+/**
+ * Seller lifecycle statuses.
+ * Registration starts at "draft", moves through review stages.
+ */
+export type SellerStatus =
+  | "draft" // Registration in progress
+  | "pending_review" // Submitted, awaiting admin
+  | "need_documents" // Admin requested more docs
+  | "approved" // Active seller
+  | "suspended" // Temporarily disabled
+  | "rejected" // Application denied
+  | "blocked"; // Permanently banned
+
+/**
+ * Registration step tracking for the multi-step wizard.
+ */
+export type RegistrationStep =
+  | "account" // Step 1: Account (auto from Firebase auth)
+  | "store_info" // Step 2: Store Information
+  | "business_info" // Step 3: Business Information
+  | "identity_verification" // Step 4: Identity Verification
+  | "banking" // Step 5: Bank / Mobile Banking
+  | "terms" // Step 6: Terms Accept
+  | "submitted" // Step 7: Pending Review
+  | "complete"; // Approved
+
+export const REGISTRATION_STEPS: { key: RegistrationStep; label: string }[] = [
+  { key: "account", label: "Account" },
+  { key: "store_info", label: "Store Info" },
+  { key: "business_info", label: "Business" },
+  { key: "identity_verification", label: "Verify Identity" },
+  { key: "banking", label: "Banking" },
+  { key: "terms", label: "Terms" },
+  { key: "submitted", label: "Review" },
+];
 
 // ----------------------------------------------------------------------
 // Seller Bank / Payout Info
@@ -14,6 +52,30 @@ export interface SellerBankInfo {
 }
 
 // ----------------------------------------------------------------------
+// Seller Identity Verification
+// ----------------------------------------------------------------------
+export interface SellerIdentityInfo {
+  fullName: string | null;
+  nidNumber: string | null;
+  nidFrontUrl: string | null;
+  nidBackUrl: string | null;
+  tradeLicenseUrl: string | null;
+  tradeLicenseNumber: string | null;
+  verified: boolean;
+}
+
+// ----------------------------------------------------------------------
+// Seller Business Info
+// ----------------------------------------------------------------------
+export interface SellerBusinessInfo {
+  businessType: "individual" | "company" | "partnership" | null;
+  businessName: string | null;
+  taxId: string | null;
+  website: string | null;
+  socialMediaLinks: string[];
+}
+
+// ----------------------------------------------------------------------
 // Seller Store Settings
 // ----------------------------------------------------------------------
 export interface SellerStoreSettings {
@@ -21,6 +83,30 @@ export interface SellerStoreSettings {
   announcement: string | null;
   responseTimeHours: number;
   returnPolicyDays: number;
+  operatingHours: string | null;
+}
+
+// ----------------------------------------------------------------------
+// Future-Ready: Logistics
+// ----------------------------------------------------------------------
+export interface WarehouseInfo {
+  id: string;
+  name: string;
+  address: string;
+  city: string;
+  area: string;
+  isPrimary: boolean;
+  pickupEnabled: boolean;
+}
+
+export interface PickupPoint {
+  id: string;
+  name: string;
+  address: string;
+  city: string;
+  area: string;
+  phone: string;
+  active: boolean;
 }
 
 // ----------------------------------------------------------------------
@@ -32,18 +118,26 @@ export interface SellerProfile {
   shopSlug: string;
   description: string;
   logoUrl: string | null;
+  bannerUrl: string | null;
   phone: string;
   email: string;
   addressLine: string;
   city: string;
+  area: string | null;
   country: string;
+  postalCode: string | null;
   status: SellerStatus;
   rejectionReason?: string | null;
+  currentStep: RegistrationStep;
+  termsAccepted: boolean;
+  termsAcceptedAt: number | null;
+  submittedAt: number | null;
+  approvedAt: number | null;
 
-  // Commission
-  commissionRate: number; // e.g. 0.08 = 8%
+  // Commission (server-controlled, seller cannot edit)
+  commissionRate: number;
 
-  // Balances (denormalized from walletTx ledger)
+  // Balances (denormalized from walletTx ledger, server-controlled)
   totalEarnings: number;
   availableBalance: number;
   pendingBalance: number;
@@ -51,6 +145,12 @@ export interface SellerProfile {
 
   // Payout
   bankInfo: SellerBankInfo;
+
+  // Identity
+  identity: SellerIdentityInfo;
+
+  // Business
+  business: SellerBusinessInfo;
 
   // Store
   storeSettings: SellerStoreSettings;
@@ -61,6 +161,16 @@ export interface SellerProfile {
   totalOrders: number;
   rating: number;
   ratingCount: number;
+  followers: number;
+
+  // Future-Ready: Logistics
+  warehouses: WarehouseInfo[];
+  pickupPoints: PickupPoint[];
+
+  // Future-Ready: Currency & Shipping
+  supportedCurrencies: string[];
+  internationalShipping: boolean;
+  crossBorderSeller: boolean;
 
   createdAt: number;
   updatedAt: number;
@@ -81,7 +191,7 @@ export type SellerWalletTxStatus = "completed" | "pending" | "failed";
 export interface SellerWalletTx {
   id: string;
   type: SellerWalletTxType;
-  amount: number; // positive = credit, negative = debit
+  amount: number;
   orderId: string | null;
   note: string;
   status: SellerWalletTxStatus;
@@ -103,22 +213,17 @@ export interface WithdrawalRequest {
   sellerId: string;
   amount: number;
   method: WithdrawalMethod;
-  destination: string; // account number or mobile
+  destination: string;
   status: WithdrawalStatus;
   requestedAt: number;
   processedAt: number | null;
-  note: string | null; // admin note
-  txId: string | null; // reference to walletTx when completed
+  note: string | null;
+  txId: string | null;
 }
 
 // ----------------------------------------------------------------------
 // Shipping / Courier (Future Multi-Courier Ready)
 // ----------------------------------------------------------------------
-/**
- * Courier provider identifier. New couriers can be added to this union
- * without any database schema change — the shipping document just stores
- * the string. The UI maps these to display names and logos.
- */
 export type CourierProvider =
   | "pathao"
   | "steadfast"
@@ -136,13 +241,8 @@ export type ShippingStatus =
   | "out_for_delivery"
   | "delivered"
   | "failed_delivery"
-  | "returned"
-  ;
+  | "returned";
 
-/**
- * Shipping info attached to seller orders. Fully extensible —
- * adding a new courier requires only adding to CourierProvider type.
- */
 export interface ShippingInfo {
   courier: CourierProvider | null;
   trackingNumber: string | null;
@@ -151,14 +251,31 @@ export interface ShippingInfo {
   shippedAt: number | null;
   deliveredAt: number | null;
   estimatedDays: number | null;
+  warehouseId: string | null; // Future: which warehouse shipped
 }
 
 // ----------------------------------------------------------------------
-// Extended Seller Notification
+// Seller Notification (Extended)
 // ----------------------------------------------------------------------
+export type SellerNotificationType =
+  | "new_order"
+  | "order_cancelled"
+  | "order_returned"
+  | "payment_released"
+  | "withdrawal_approved"
+  | "withdrawal_rejected"
+  | "stock_low"
+  | "admin_message"
+  | "coupon_expired"
+  | "review_received"
+  | "product_approved"
+  | "product_rejected"
+  | "system"
+  | "approval";
+
 export interface SellerNotification {
   id: string;
-  type: "order" | "product" | "system" | "approval" | "withdrawal" | "shipping";
+  type: SellerNotificationType;
   title: string;
   message: string;
   link?: string | null;
@@ -187,7 +304,8 @@ export type SellerOrderStatus =
   | "processing"
   | "shipped"
   | "delivered"
-  | "cancelled";
+  | "cancelled"
+  | "returned";
 
 export interface SellerOrderTracking {
   status: SellerOrderStatus;
@@ -196,7 +314,7 @@ export interface SellerOrderTracking {
 }
 
 export interface SellerOrder {
-  id: string; // same as buyer order id
+  id: string;
   sellerId: string;
   buyerId: string;
   buyerName: string;
@@ -204,14 +322,9 @@ export interface SellerOrder {
   items: SellerOrderItem[];
   subtotal: number;
   status: SellerOrderStatus;
-
-  // Commission & Earnings (calculated at order creation time)
-  commission: number; // platform commission
-  earnings: number; // subtotal - commission
-
-  // Shipping (multi-courier ready)
+  commission: number;
+  earnings: number;
   shipping: ShippingInfo;
-
   shippingAddress: {
     fullName: string;
     phone: string;
@@ -242,4 +355,43 @@ export const COURIER_CONFIG: Record<
   sundarban: { label: "Sundarban", color: "#f4a261", website: "https://sundarbanltd.com" },
   shopnexa_logistics: { label: "Shop Nexa Logistics", color: "#f57224", website: "" },
   other: { label: "Other", color: "#6b7280", website: "" },
+};
+
+// ----------------------------------------------------------------------
+// Store Status Display Config
+// ----------------------------------------------------------------------
+export const SELLER_STATUS_CONFIG: Record<
+  SellerStatus,
+  { label: string; color: string; bgColor: string; icon: string }
+> = {
+  draft: { label: "Draft", color: "#64748b", bgColor: "#f1f5f9", icon: "✏️" },
+  pending_review: { label: "Pending Review", color: "#d97706", bgColor: "#fffbeb", icon: "⏳" },
+  need_documents: { label: "Need Documents", color: "#dc2626", bgColor: "#fef2f2", icon: "📄" },
+  approved: { label: "Approved", color: "#059669", bgColor: "#ecfdf5", icon: "✅" },
+  suspended: { label: "Suspended", color: "#dc2626", bgColor: "#fef2f2", icon: "⏸️" },
+  rejected: { label: "Rejected", color: "#dc2626", bgColor: "#fef2f2", icon: "❌" },
+  blocked: { label: "Blocked", color: "#991b1b", bgColor: "#fee2e2", icon: "🚫" },
+};
+
+// ----------------------------------------------------------------------
+// Notification Type Display Config
+// ----------------------------------------------------------------------
+export const NOTIFICATION_TYPE_CONFIG: Record<
+  SellerNotificationType,
+  { label: string; icon: string; color: string }
+> = {
+  new_order: { label: "New Order", icon: "📦", color: "#059669" },
+  order_cancelled: { label: "Cancelled", icon: "❌", color: "#dc2626" },
+  order_returned: { label: "Return", icon: "↩️", color: "#d97706" },
+  payment_released: { label: "Payment", icon: "💰", color: "#059669" },
+  withdrawal_approved: { label: "Withdrawal", icon: "✅", color: "#059669" },
+  withdrawal_rejected: { label: "Withdrawal", icon: "❌", color: "#dc2626" },
+  stock_low: { label: "Low Stock", icon: "⚠️", color: "#d97706" },
+  admin_message: { label: "Admin", icon: "📢", color: "#0f172a" },
+  coupon_expired: { label: "Coupon", icon: "🏷️", color: "#64748b" },
+  review_received: { label: "Review", icon: "⭐", color: "#f59e0b" },
+  product_approved: { label: "Product", icon: "✅", color: "#059669" },
+  product_rejected: { label: "Product", icon: "❌", color: "#dc2626" },
+  system: { label: "System", icon: "🔔", color: "#64748b" },
+  approval: { label: "Approval", icon: "🔐", color: "#f57224" },
 };
