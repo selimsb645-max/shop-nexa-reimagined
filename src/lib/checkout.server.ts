@@ -379,9 +379,29 @@ export async function placeOrderServer(
     writes.push({ delete: docPath(projectId, ["users", req.uid, "cart", l.productId]) });
   }
 
+  // Read seller commission rates from Firestore.
+  const sellerDocPaths = sellerIds.map((sid) =>
+    docPath(projectId, ["sellers", sid]),
+  );
+  const sellerDocs =
+    sellerDocPaths.length > 0
+      ? await batchGetDocs(projectId, sellerDocPaths)
+      : new Map();
+  const sellerCommissionRates = new Map<string, number>();
+  for (const sid of sellerIds) {
+    const sDoc = sellerDocs.get(docPath(projectId, ["sellers", sid]));
+    const rate = sDoc?.exists
+      ? Number(sDoc.data["commissionRate"] ?? 0.08)
+      : 0.08;
+    sellerCommissionRates.set(sid, Number.isFinite(rate) ? rate : 0.08);
+  }
+
   // Seller mirrors + notifications.
   for (const [sid, sItems] of itemsBySeller.entries()) {
     const sellerSubtotal = round2(sItems.reduce((s, it) => s + it.subtotal, 0));
+    const commissionRate = sellerCommissionRates.get(sid) ?? 0.08;
+    const commission = round2(sellerSubtotal * commissionRate);
+    const sellerEarnings = round2(sellerSubtotal - commission);
     writes.push({
       update: {
         name: docPath(projectId, ["sellers", sid, "orders", orderId]),
@@ -392,7 +412,18 @@ export async function placeOrderServer(
           buyerEmail: req.buyerEmail,
           items: sItems,
           subtotal: sellerSubtotal,
+          commission,
+          earnings: sellerEarnings,
           status: "pending",
+          shipping: {
+            courier: null,
+            trackingNumber: null,
+            shippingCharge: 0,
+            status: "pending",
+            shippedAt: null,
+            deliveredAt: null,
+            estimatedDays: null,
+          },
           shippingAddress: req.shippingAddress,
           paymentMethod: req.paymentMethod,
           paymentStatus,
