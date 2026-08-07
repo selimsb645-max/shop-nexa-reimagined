@@ -36,7 +36,7 @@ export function SiteFooter() {
               </li>
               <li>
                 <Link
-                  to="/help-center"
+                  to="/how-to-buy"
                   className="text-slate-600 hover:text-[#f97316] transition-colors duration-200"
                 >
                   How to Buy
@@ -52,7 +52,7 @@ export function SiteFooter() {
               </li>
               <li>
                 <Link
-                  to="/help-center"
+                  to="/contact"
                   className="text-slate-600 hover:text-[#f97316] transition-colors duration-200"
                 >
                   Contact Us
@@ -60,7 +60,7 @@ export function SiteFooter() {
               </li>
               <li>
                 <Link
-                  to="/help-center"
+                  to="/terms"
                   className="text-slate-600 hover:text-[#f97316] transition-colors duration-200"
                 >
                   Terms &amp; Conditions
@@ -85,7 +85,7 @@ export function SiteFooter() {
             <ul className="space-y-2.5 text-sm">
               <li>
                 <Link
-                  to="/help-center"
+                  to="/about"
                   className="text-slate-600 hover:text-[#f97316] transition-colors duration-200"
                 >
                   About Us
@@ -93,7 +93,7 @@ export function SiteFooter() {
               </li>
               <li>
                 <Link
-                  to="/help-center"
+                  to="/digital-payments"
                   className="text-slate-600 hover:text-[#f97316] transition-colors duration-200"
                 >
                   Digital Payments
@@ -101,7 +101,7 @@ export function SiteFooter() {
               </li>
               <li>
                 <Link
-                  to="/help-center"
+                  to="/blog"
                   className="text-slate-600 hover:text-[#f97316] transition-colors duration-200"
                 >
                   Shop Nexa Blog
@@ -109,7 +109,7 @@ export function SiteFooter() {
               </li>
               <li>
                 <Link
-                  to="/help-center"
+                  to="/privacy"
                   className="text-slate-600 hover:text-[#f97316] transition-colors duration-200"
                 >
                   Privacy Policy
@@ -125,7 +125,7 @@ export function SiteFooter() {
               </li>
               <li>
                 <Link
-                  to="/help-center"
+                  to="/affiliate"
                   className="text-slate-600 hover:text-[#f97316] transition-colors duration-200"
                 >
                   Affiliate Program
@@ -133,7 +133,7 @@ export function SiteFooter() {
               </li>
               <li>
                 <Link
-                  to="/shop"
+                  to="/mart"
                   className="text-slate-600 hover:text-[#f97316] transition-colors duration-200"
                 >
                   Shop Nexa Mart
@@ -413,11 +413,8 @@ export function SiteFooter() {
           </div>
 
           {/* Copyright Row */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400 pt-2">
-            <p>© Shop Nexa 2026</p>
-            <p className="text-[11px] text-slate-500">
-              Daraz-style e-commerce site footer built for Shop Nexa.
-            </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-xs text-slate-400 pt-2">
+            <p>© 2026 Shop Nexa. All Rights Reserved.</p>
           </div>
         </div>
       </div>
