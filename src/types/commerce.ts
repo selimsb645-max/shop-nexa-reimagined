@@ -18,9 +18,13 @@ export interface Product {
   id: string;
   title: string;
   slug: string;
+  shortDescription: string;  // NEW: short description for cards/previews
   description: string;
+  brand: string | null;      // NEW: product brand
   price: number;
   compareAtPrice: number | null;
+  costPrice: number | null;  // NEW: seller/admin only
+  tax: number;               // NEW: tax percentage (0-100)
   images: string[];
   categoryId: string;
   categorySlug: string;
@@ -38,8 +42,11 @@ export interface Product {
   sizes?: string[];
   createdAt: number;
   updatedAt: number;
+  // Seller coupon fields (null = marketplace-wide admin coupon)
+  sellerId: string | null;
+  productIds: string[];
+  maxDiscount: number | null;
 }
-
 
 export interface Review {
   id: string;
@@ -57,7 +64,6 @@ export interface CartItem {
   productId: string;
   quantity: number;
   addedAt: number;
-  // snapshot for fast render
   title: string;
   image: string;
   price: number;
@@ -147,10 +153,7 @@ export interface Coupon {
   active: boolean;
   usageLimit: number | null;
   uses: number;
-  // Seller-specific coupon fields (null = marketplace-wide admin coupon)
   sellerId: string | null;
-  // Empty = all seller's products; specific = only these product IDs
   productIds: string[];
-  // Cap on percentage discounts (null = no cap)
   maxDiscount: number | null;
 }
