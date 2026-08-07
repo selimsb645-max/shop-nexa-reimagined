@@ -8,7 +8,7 @@ const STORAGE_KEY = "shopnexa:wa-fab-pos";
 
 const BTN = 56;
 const EDGE = 12;
-const BOTTOM_SAFE = 96; // keeps clear of the floating bottom nav
+const BOTTOM_SAFE = 112; // keeps clear of the bottom navigation bar
 const TOP_SAFE = 72;
 
 type Pos = { x: number; y: number };
