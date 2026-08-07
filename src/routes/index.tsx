@@ -142,7 +142,7 @@ function HomePage() {
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900 antialiased">
-      {/* Single unified header — TopBar is inside SiteHeader, no duplicate */}
+      {/* Unified header — logo, search, nav directly at top */}
       <SiteHeader />
 
       <main className="mx-auto max-w-7xl px-3 pb-16 sm:px-6 lg:px-8">
