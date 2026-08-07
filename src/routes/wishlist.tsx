@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Heart, ShoppingCart, Trash2 } from "lucide-react";
-import { TopBar, SiteHeader } from "@/components/layout/SiteHeader";
+import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { WhatsAppFab } from "@/components/layout/SiteChrome";
 import { Spinner } from "@/components/common/Spinner";
@@ -49,7 +49,6 @@ function WishlistPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <TopBar />
       <SiteHeader />
       <div className="mx-auto max-w-7xl px-4 py-8">
         <h1 className="mb-6 text-2xl font-bold">My Wishlist</h1>
