@@ -306,18 +306,18 @@ export function SiteHeader() {
       <TopBar />
 
       {/* Main Header Bar */}
-      <div className="bg-white border-b border-slate-100 py-3.5 px-4">
+      <div className="bg-white border-b border-slate-100 py-2.5 sm:py-3.5 px-3 sm:px-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 md:gap-8">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
-            <div className="bg-[#1a1f3a] p-2 rounded-xl text-white group-hover:bg-[#252b52] transition-colors shadow-sm">
-              <ShoppingCart className="w-6 h-6 text-[#f57224]" />
+            <div className="bg-[#1a1f3a] p-1.5 sm:p-2 rounded-xl text-white group-hover:bg-[#252b52] transition-colors shadow-sm">
+              <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6 text-[#f57224]" />
             </div>
             <div className="flex items-baseline">
-              <span className="text-[#1a1f3a] font-extrabold text-2xl tracking-tight">
+              <span className="text-[#1a1f3a] font-extrabold text-xl sm:text-2xl tracking-tight">
                 Shop
               </span>
-              <span className="text-[#f57224] font-extrabold text-2xl tracking-tight">
+              <span className="text-[#f57224] font-extrabold text-xl sm:text-2xl tracking-tight">
                 Nexa
               </span>
             </div>
@@ -334,11 +334,11 @@ export function SiteHeader() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search in Shop Nexa"
-                className="w-full pl-4 pr-24 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a1f3a]/20 focus:border-[#1a1f3a] focus:bg-white transition-all text-slate-800 placeholder-slate-400"
+                className="w-full pl-4 pr-24 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#f57224]/30 focus:border-[#f57224] focus:bg-white transition-all text-slate-800 placeholder-slate-400"
               />
               <button
                 type="submit"
-                className="absolute right-1 top-1 bottom-1 px-4 bg-[#1a1f3a] text-white rounded-md hover:bg-[#f57224] transition-colors flex items-center justify-center font-semibold text-xs uppercase tracking-wider gap-1.5"
+                className="absolute right-1 top-1 bottom-1 px-4 bg-[#1a1f3a] text-white rounded-lg hover:bg-[#f57224] transition-colors flex items-center justify-center font-semibold text-xs uppercase tracking-wider gap-1.5"
               >
                 <Search className="w-3.5 h-3.5" />
                 <span>Search</span>
@@ -347,7 +347,7 @@ export function SiteHeader() {
           </form>
 
           {/* Right Action Icons (Cart, Wishlist, Account) */}
-          <div className="flex items-center gap-3 sm:gap-6">
+          <div className="flex items-center gap-1.5 sm:gap-5">
             {/* Wishlist Icon */}
             <Link
               to="/wishlist"
@@ -355,7 +355,7 @@ export function SiteHeader() {
               aria-label="Wishlist"
             >
               <div className="relative">
-                <Heart className="w-6 h-6 group-hover:scale-105 transition-transform" />
+                <Heart className="w-5 h-5 sm:w-6 sm:h-6 group-hover:scale-105 transition-transform" />
                 {wishlistCount > 0 && (
                   <span className="absolute -top-1.5 -right-2 bg-[#f57224] text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center ring-2 ring-white">
                     {wishlistCount > 99 ? "99+" : wishlistCount}
@@ -374,7 +374,7 @@ export function SiteHeader() {
               aria-label="Shopping Cart"
             >
               <div className="relative">
-                <ShoppingCart className="w-6 h-6 group-hover:scale-105 transition-transform" />
+                <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6 group-hover:scale-105 transition-transform" />
                 {cartCount > 0 && (
                   <span className="absolute -top-1.5 -right-2 bg-[#f57224] text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center ring-2 ring-white">
                     {cartCount > 99 ? "99+" : cartCount}
@@ -393,7 +393,7 @@ export function SiteHeader() {
                 onClick={() => setIsAccountMenuOpen(!isAccountMenuOpen)}
                 className="p-1.5 sm:p-2 text-slate-700 hover:text-[#f57224] transition-colors flex items-center gap-1.5 rounded-lg hover:bg-slate-50 focus:outline-none"
               >
-                <div className="w-7 h-7 rounded-full bg-[#1a1f3a]/10 text-[#1a1f3a] flex items-center justify-center font-bold text-xs">
+                <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[#1a1f3a]/10 text-[#1a1f3a] flex items-center justify-center font-bold text-xs">
                   {user?.displayName ? (
                     user.displayName.charAt(0).toUpperCase()
                   ) : (
@@ -509,27 +509,27 @@ export function SiteHeader() {
               {isMobileMenuOpen ? (
                 <X className="w-6 h-6" />
               ) : (
-                <Menu className="w-6 h-6" />
+                <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
               )}
             </button>
           </div>
         </div>
 
-        {/* Mobile Search Bar */}
-        <div className="mt-3 md:hidden">
+        {/* Mobile Search Bar — improved height, padding, border radius */}
+        <div className="mt-2.5 md:hidden sticky top-0 z-30">
           <form onSubmit={handleSearchSubmit} className="flex items-center relative">
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search in Shop Nexa"
-              className="w-full pl-4 pr-12 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#1a1f3a]"
+              placeholder="Search products, brands and more..."
+              className="w-full pl-4 pr-14 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#f57224]/30 focus:border-[#f57224] focus:bg-white transition-all text-slate-800 placeholder-slate-400"
             />
             <button
               type="submit"
-              className="absolute right-1 top-1 bottom-1 px-3 bg-[#1a1f3a] text-white rounded-md"
+              className="absolute right-1.5 top-1.5 bottom-1.5 px-3.5 bg-[#f57224] text-white rounded-lg hover:bg-[#e0621f] transition-colors flex items-center justify-center"
             >
-              <Search className="w-3.5 h-3.5" />
+              <Search className="w-4 h-4" />
             </button>
           </form>
         </div>
@@ -572,7 +572,7 @@ export function SiteHeader() {
                   return (
                     <Link
                       key={cat.id || idx}
-                      to="/shop"
+                      to="/products"
                       search={{ category: catSlug } as any}
                       onClick={() => setIsCategoryOpen(false)}
                       className="flex items-center justify-between px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 hover:text-[#f57224] transition-colors"
@@ -597,7 +597,7 @@ export function SiteHeader() {
             </Link>
 
             <Link
-              to="/shop"
+              to="/products"
               search={{ sort: "bestsellers" } as any}
               className="flex items-center gap-1.5 hover:text-[#f57224] transition-colors"
             >
@@ -606,7 +606,7 @@ export function SiteHeader() {
             </Link>
 
             <Link
-              to="/shop"
+              to="/products"
               search={{ sort: "newest" } as any}
               className="flex items-center gap-1.5 hover:text-[#f57224] transition-colors"
             >
@@ -615,7 +615,7 @@ export function SiteHeader() {
             </Link>
 
             <Link
-              to="/shop"
+              to="/products"
               search={{ deals: "true" } as any}
               className="flex items-center gap-1.5 hover:text-[#f57224] transition-colors"
             >
@@ -653,7 +653,7 @@ export function SiteHeader() {
               return (
                 <Link
                   key={cat.id || idx}
-                  to="/shop"
+                  to="/products"
                   search={{ category: catSlug } as any}
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="py-1.5 px-2 rounded bg-slate-50 hover:bg-slate-100 text-slate-700 text-center truncate"
@@ -676,7 +676,7 @@ export function SiteHeader() {
               <Flame className="w-4 h-4 text-[#f57224]" /> Flash Sale
             </Link>
             <Link
-              to="/shop"
+              to="/products"
               search={{ sort: "bestsellers" } as any}
               onClick={() => setIsMobileMenuOpen(false)}
               className="flex items-center gap-2 text-slate-700 py-1"
@@ -684,7 +684,7 @@ export function SiteHeader() {
               <Award className="w-4 h-4 text-amber-500" /> Best Sellers
             </Link>
             <Link
-              to="/shop"
+              to="/products"
               search={{ sort: "newest" } as any}
               onClick={() => setIsMobileMenuOpen(false)}
               className="flex items-center gap-2 text-slate-700 py-1"
@@ -692,7 +692,7 @@ export function SiteHeader() {
               <Sparkles className="w-4 h-4 text-purple-500" /> New Arrivals
             </Link>
             <Link
-              to="/shop"
+              to="/products"
               search={{ deals: "true" } as any}
               onClick={() => setIsMobileMenuOpen(false)}
               className="flex items-center gap-2 text-slate-700 py-1"
