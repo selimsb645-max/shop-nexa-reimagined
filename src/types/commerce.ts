@@ -147,4 +147,10 @@ export interface Coupon {
   active: boolean;
   usageLimit: number | null;
   uses: number;
+  // Seller-specific coupon fields (null = marketplace-wide admin coupon)
+  sellerId: string | null;
+  // Empty = all seller's products; specific = only these product IDs
+  productIds: string[];
+  // Cap on percentage discounts (null = no cap)
+  maxDiscount: number | null;
 }
