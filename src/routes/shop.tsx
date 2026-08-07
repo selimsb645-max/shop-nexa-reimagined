@@ -24,7 +24,7 @@ import {
   Eye,
   ShoppingBag,
 } from "lucide-react";
-import { SiteHeader, TopBar } from "@/components/layout/SiteHeader";
+import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { WhatsAppFab } from "@/components/layout/SiteChrome";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
@@ -511,7 +511,6 @@ function ShopPage() {
   return (
     <div className="min-h-screen bg-[#f5f5f5] text-slate-900 font-sans antialiased flex flex-col">
       {/* Site Header */}
-      <TopBar />
       <SiteHeader />
 
       {/* Breadcrumbs Navigation Bar */}
