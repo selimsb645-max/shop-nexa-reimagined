@@ -40,7 +40,7 @@ function getProductImage(product: Partial<Product>): string {
   if (typeof (product as any).thumbnail === 'string' && (product as any).thumbnail) {
     return (product as any).thumbnail;
   }
-  return 'https://via.placeholder.com/300x300?text=No+Image';
+  return 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMzAwIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YzZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzljYTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';
 }
 
 /**
@@ -66,13 +66,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   showLocation = true,
 }) => {
   const [imageError, setImageError] = useState(false);
-  const { has: isInWishlist, toggle: toggleWishlist } = useWishlist();
+  const { isInWishlist, toggleWishlist } = useWishlist();
 
   const isWishlisted = isInWishlist ? isInWishlist(String(product.id)) : false;
 
   const originalPrice = product.compareAtPrice ?? (product as any).oldPrice;
   const discountPct = getDiscountPercentage(product.price, originalPrice, (product as any).discount);
-  const imageUrl = imageError ? 'https://via.placeholder.com/300x300?text=No+Image' : getProductImage(product);
+  const imageUrl = imageError ? 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMzAwIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YzZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzljYTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==' : getProductImage(product);
   const rating = product.rating ?? (product as any).ratings ?? 0;
   const reviewCount = (product as any).reviewCount ?? (product as any).reviewsCount ?? (product as any).ratingsCount ?? 0;
   const location = (product as any).location ?? (product as any).sellerLocation ?? (product as any).seller?.location ?? 'Dhaka';
@@ -106,8 +106,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       className={`group relative bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-slate-100 flex flex-col h-full overflow-hidden select-none ${className}`}
     >
       <Link
-        to="/product/$slug"
-        params={{ slug: (product as any).slug || productIdStr }}
+        to="/product/$productId"
+        params={{ productId: productIdStr }}
         className="flex flex-col h-full text-inherit no-underline focus:outline-none focus:ring-2 focus:ring-orange-500 rounded-lg"
       >
         {/* Image Container */}
@@ -211,13 +211,13 @@ export const ProductCardCompact: React.FC<ProductCardCompactProps> = ({
   totalStock,
 }) => {
   const [imageError, setImageError] = useState(false);
-  const { has: isInWishlist, toggle: toggleWishlist } = useWishlist();
+  const { isInWishlist, toggleWishlist } = useWishlist();
 
   const isWishlisted = isInWishlist ? isInWishlist(String(product.id)) : false;
 
   const originalPrice = product.compareAtPrice ?? (product as any).oldPrice;
   const discountPct = getDiscountPercentage(product.price, originalPrice, (product as any).discount);
-  const imageUrl = imageError ? 'https://via.placeholder.com/300x300?text=No+Image' : getProductImage(product);
+  const imageUrl = imageError ? 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMzAwIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YzZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzljYTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==' : getProductImage(product);
 
   const handleWishlistClick = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -252,8 +252,8 @@ export const ProductCardCompact: React.FC<ProductCardCompactProps> = ({
       className={`group relative w-36 sm:w-40 flex-shrink-0 bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-slate-100 flex flex-col overflow-hidden select-none ${className}`}
     >
       <Link
-        to="/product/$slug"
-        params={{ slug: (product as any).slug || productIdStr }}
+        to="/product/$productId"
+        params={{ productId: productIdStr }}
         className="flex flex-col h-full text-inherit no-underline focus:outline-none"
       >
         {/* Compact Square Image */}
