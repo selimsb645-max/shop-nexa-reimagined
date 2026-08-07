@@ -31,7 +31,7 @@ import {
   Sliders,
 } from "lucide-react";
 
-import { SiteHeader, TopBar } from "@/components/layout/SiteHeader";
+import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { WhatsAppFab } from "@/components/layout/SiteChrome";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
@@ -545,7 +545,6 @@ export function ProductDetailPage() {
   if (productLoading) {
     return (
       <div className="min-h-screen bg-[#f8f9fa] flex flex-col font-sans">
-        <TopBar />
         <SiteHeader />
         <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-6">
           {/* Skeleton Breadcrumb */}
@@ -582,7 +581,6 @@ export function ProductDetailPage() {
   if (isError || !product) {
     return (
       <div className="min-h-screen bg-[#f8f9fa] flex flex-col font-sans">
-        <TopBar />
         <SiteHeader />
         <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-16 flex flex-col items-center justify-center text-center">
           <div className="w-20 h-20 bg-orange-100 text-[#f97316] rounded-full flex items-center justify-center mb-4 shadow-sm">
@@ -624,7 +622,6 @@ export function ProductDetailPage() {
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] flex flex-col font-sans text-slate-800">
-      <TopBar />
       <SiteHeader />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-4 md:py-6 pb-24 md:pb-12">
