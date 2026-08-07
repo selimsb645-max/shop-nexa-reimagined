@@ -25,6 +25,9 @@ const placeOrderSchema = z.object({
   shippingAddress: addressSchema,
   paymentMethod: z.enum(["cash_on_delivery", "card", "mobile_banking"]),
   couponCode: z.string().max(64).nullable().optional(),
+  deliveryMethod: z.enum(["standard", "express"]).optional(),
+  rewardPoints: z.number().int().min(0).max(1_000_000).optional(),
+  walletUsed: z.number().min(0).max(1_000_000).optional(),
 });
 
 export type PlaceOrderInput = z.infer<typeof placeOrderSchema>;
@@ -32,7 +35,8 @@ export type PlaceOrderInput = z.infer<typeof placeOrderSchema>;
 /**
  * Places an order. The client sends only product ids, quantities, the address
  * and an optional coupon code; prices, discount, shipping, total, stock
- * decrements and coupon usage are all computed and written server side.
+ * decrements, coupon usage, reward points, wallet and delivery method are all
+ * computed and written server side.
  */
 export const placeOrder = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => placeOrderSchema.parse(data))
@@ -49,5 +53,8 @@ export const placeOrder = createServerFn({ method: "POST" })
       shippingAddress: data.shippingAddress,
       paymentMethod: data.paymentMethod,
       couponCode: data.couponCode ?? null,
+      deliveryMethod: data.deliveryMethod ?? "standard",
+      rewardPoints: data.rewardPoints ?? 0,
+      walletUsed: data.walletUsed ?? 0,
     });
   });
