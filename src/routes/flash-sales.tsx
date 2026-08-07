@@ -22,7 +22,7 @@ import {
   ArrowLeft,
   Flame as FlameIcon,
 } from "lucide-react";
-import { SiteHeader, TopBar } from "@/components/layout/SiteHeader";
+import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { WhatsAppFab } from "@/components/layout/SiteChrome";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
@@ -202,7 +202,6 @@ export function FlashSalesPage() {
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col font-sans selection:bg-[#f57224] selection:text-white">
       {/* Top Header Bar */}
-      <TopBar />
       <SiteHeader />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 space-y-6">
