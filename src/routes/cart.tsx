@@ -55,7 +55,6 @@ export const Route = createFileRoute("/cart")({
 export interface CartItemType {
   id: string;
   productId?: string;
-  slug?: string;
   title: string;
   price: number;
   originalPrice?: number;
@@ -219,7 +218,7 @@ export default function CartPage() {
           item.image ||
           item.imageUrl ||
           item.thumbnail ||
-          "https://via.placeholder.com/300x300?text=Shop+Nexa",
+          "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMzAwIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YzZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzljYTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPlNob3AgTmV4YTwvdGV4dD48L3N2Zz4=",
         seller: item.seller || item.storeName || "Shop Nexa Official Store",
         sellerRating: item.sellerRating || 4.8,
         variant: item.variant || item.selectedVariant || "Standard",
@@ -742,9 +741,9 @@ export default function CartPage() {
 
                               {/* Product Thumbnail */}
                               <Link
-                                to="/product/$slug"
+                                to="/product/$productId"
                                 params={{
-                                  slug: item.slug || item.productId || item.id,
+                                  productId: item.productId || item.id,
                                 }}
                                 className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden bg-slate-100 border border-slate-200 flex-shrink-0 group"
                               >
@@ -755,7 +754,7 @@ export default function CartPage() {
                                   onError={(e) => {
                                     (e.target as HTMLElement).setAttribute(
                                       "src",
-                                      "https://via.placeholder.com/150?text=Product"
+                                      "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNTAgMTUwIj48cmVjdCB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iI2YzZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzljYTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg=="
                                     );
                                   }}
                                 />
@@ -769,9 +768,9 @@ export default function CartPage() {
                               {/* Product Info */}
                               <div className="flex-1 min-w-0">
                                 <Link
-                                  to="/product/$slug"
+                                  to="/product/$productId"
                                   params={{
-                                    slug: item.slug || item.productId || item.id,
+                                    productId: item.productId || item.id,
                                   }}
                                   className="text-xs sm:text-sm font-semibold text-slate-800 hover:text-[#f57224] line-clamp-2 leading-snug transition-colors"
                                 >
@@ -1057,9 +1056,10 @@ export default function CartPage() {
                   <div className="flex items-center justify-between text-slate-600">
                     <span className="flex items-center gap-1">
                       <span>Shipping Fee</span>
-                      <span title="Standard delivery fee across Bangladesh" className="inline-flex">
-                        <HelpCircle className="w-3.5 h-3.5 text-slate-400 cursor-pointer" />
-                      </span>
+                      <HelpCircle
+                        className="w-3.5 h-3.5 text-slate-400 cursor-pointer"
+                        title="Standard delivery fee across Bangladesh"
+                      />
                     </span>
                     <span className="font-semibold">
                       {shippingFee === 0 ? (
