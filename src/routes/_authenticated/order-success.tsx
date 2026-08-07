@@ -1,74 +1,299 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { CheckCircle2, ArrowLeft, Package, Clock, MapPin } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
-import { formatPrice } from "@/utils/format";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState, useEffect } from "react";
+import {
+  CheckCircle2,
+  Package,
+  Clock,
+  MapPin,
+  ArrowRight,
+  ShoppingBag,
+  Truck,
+  Box,
+  Send,
+  Home,
+  ChevronRight,
+  Copy,
+  Sparkles,
+  Gift,
+  Wallet,
+} from "lucide-react";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
+import { WhatsAppFab } from "@/components/layout/SiteChrome";
+import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
+import { useAuth } from "@/context/AuthContext";
+import { getOrder } from "@/services/firebase/orders";
+import { formatPrice } from "@/utils/format";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/order-success")({
   ssr: false,
   component: OrderSuccessPage,
-  head: () => ({ meta: [{ title: "Order Confirmed — ShopNexa" }] }),
+  head: () => ({ meta: [{ title: "Order Confirmed — Shop Nexa" }] }),
+  validateSearch: (s: Record<string, unknown>): { orderId?: string } => ({
+    orderId: typeof s.orderId === "string" ? s.orderId : undefined,
+  }),
 });
+
+// Order timeline steps
+const TIMELINE_STEPS = [
+  { status: "pending", label: "Order Placed", icon: CheckCircle2 },
+  { status: "confirmed", label: "Confirmed", icon: Package },
+  { status: "processing", label: "Packed", icon: Box },
+  { status: "shipped", label: "Shipped", icon: Send },
+  { status: "delivered", label: "Delivered", icon: Home },
+];
 
 function OrderSuccessPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const search = Route.useSearch();
+  const orderId = search.orderId || "";
+  const [order, setOrder] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!user || !orderId) {
+      setLoading(false);
+      return;
+    }
+    getOrder(user.uid, orderId)
+      .then((data) => setOrder(data))
+      .catch(() => setOrder(null))
+      .finally(() => setLoading(false));
+  }, [user, orderId]);
+
+  const handleCopyId = () => {
+    navigator.clipboard?.writeText(orderId);
+    setCopied(true);
+    toast.success("Order ID copied!");
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  // Estimated delivery
+  const estimatedDelivery = (() => {
+    const now = new Date();
+    const min = new Date(now);
+    min.setDate(now.getDate() + 3);
+    const max = new Date(now);
+    max.setDate(now.getDate() + 5);
+    return `${min.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    })} - ${max.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    })}`;
+  })();
+
+  // Current timeline step
+  const currentStepIndex = order
+    ? TIMELINE_STEPS.findIndex((s) => s.status === order.status)
+    : 0;
+  const activeStep = currentStepIndex >= 0 ? currentStepIndex : 0;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen flex flex-col bg-slate-50 font-sans antialiased">
       <SiteHeader />
-      <main className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
-        {/* Success header */}
-        <div className="flex flex-col items-center text-center">
-          <div className="mb-4 grid h-20 w-20 place-items-center rounded-full bg-green-100">
-            <CheckCircle2 className="h-12 w-12 text-green-500" />
+
+      <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-6 sm:py-10 pb-32 lg:pb-10">
+        {/* Success Hero */}
+        <div className="flex flex-col items-center text-center mb-8">
+          <div className="relative mb-4">
+            <div className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center">
+              <CheckCircle2 className="w-12 h-12 text-emerald-500" />
+            </div>
+            <div className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-[#f57224] flex items-center justify-center animate-bounce">
+              <Sparkles className="w-4 h-4 text-white" />
+            </div>
           </div>
-          <h1 className="text-2xl font-bold">Order Confirmed!</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Thank you for your purchase. Your order is being processed.
+          <h1 className="text-2xl sm:text-3xl font-black text-[#0f172a] tracking-tight">
+            Order Placed Successfully!
+          </h1>
+          <p className="mt-2 text-sm text-slate-500 max-w-md">
+            Thank you for shopping with Shop Nexa. Your order is being processed
+            and will be delivered soon.
           </p>
         </div>
 
-        {/* Order info */}
-        <div className="mt-8 rounded-2xl border bg-background p-5 shadow-sm">
-          <div className="flex items-center gap-3 border-b pb-4">
-            <span className="grid h-12 w-12 place-items-center rounded-xl bg-primary/10 text-primary">
-              <Package className="h-6 w-6" />
-            </span>
-            <div>
-              <h2 className="text-sm font-semibold">What happens next?</h2>
-              <p className="text-xs text-muted-foreground">Your order is being prepared for shipment</p>
+        {/* Order Info Card */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden mb-5">
+          {/* Order ID */}
+          <div className="bg-gradient-to-r from-[#0f172a] to-slate-800 px-5 py-4 text-white">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[10px] uppercase text-slate-300 font-medium tracking-wide">
+                  Order ID
+                </p>
+                <p className="text-lg font-bold tracking-wide">
+                  #{orderId || "N/A"}
+                </p>
+              </div>
+              <button
+                onClick={handleCopyId}
+                className="bg-white/10 hover:bg-white/20 px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              >
+                {copied ? (
+                  <>
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Copied</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>Copy</span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
-          <div className="mt-4 space-y-3 text-sm">
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <span>Estimated delivery: 2-5 business days</span>
+
+          {/* Delivery estimate */}
+          <div className="p-5">
+            <div className="flex items-center gap-3 mb-4 pb-4 border-b border-slate-100">
+              <div className="w-12 h-12 rounded-xl bg-orange-50 text-[#f57224] flex items-center justify-center flex-shrink-0">
+                <Truck className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs text-slate-500">Estimated Delivery</p>
+                <p className="text-lg font-bold text-[#0f172a]">
+                  {estimatedDelivery}
+                </p>
+                <p className="text-xs text-slate-400">
+                  You'll get tracking updates via notification
+                </p>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-muted-foreground" />
-              <span>You'll receive tracking updates via email and SMS</span>
-            </div>
+
+            {/* Order total */}
+            {order && (
+              <div className="flex items-center justify-between mb-4 pb-4 border-b border-slate-100">
+                <span className="text-sm text-slate-500">Order Total</span>
+                <span className="text-lg font-black text-[#f57224]">
+                  {formatPrice(order.total)}
+                </span>
+              </div>
+            )}
+
+            {/* Payment method */}
+            {order && (
+              <div className="flex items-center justify-between mb-4 pb-4 border-b border-slate-100">
+                <span className="text-sm text-slate-500">Payment Method</span>
+                <span className="text-sm font-semibold text-[#0f172a] capitalize">
+                  {order.payment?.method === "cash_on_delivery"
+                    ? "Cash on Delivery"
+                    : order.payment?.method === "card"
+                    ? "Card"
+                    : order.payment?.method === "mobile_banking"
+                    ? "Mobile Banking"
+                    : order.payment?.method || "COD"}
+                </span>
+              </div>
+            )}
+
+            {/* Reward info */}
+            {order && (
+              <div className="bg-orange-50/50 rounded-lg p-3 flex items-center gap-2">
+                <Gift className="w-4 h-4 text-[#f57224] flex-shrink-0" />
+                <p className="text-xs text-slate-600">
+                  You'll earn{" "}
+                  <span className="font-bold text-[#f57224]">
+                    +{Math.floor((order.total || 0))} reward points
+                  </span>{" "}
+                  and{" "}
+                  <span className="font-bold text-[#f57224]">
+                    {formatPrice((order.total || 0) * 0.01)} cashback
+                  </span>{" "}
+                  when this order is delivered!
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-          <Link
-            to="/orders"
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition hover:opacity-90"
+        {/* Order Timeline */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 mb-5">
+          <h3 className="text-sm font-bold text-[#0f172a] mb-4 flex items-center gap-2">
+            <Package className="w-4 h-4 text-[#f57224]" />
+            Order Timeline
+          </h3>
+          <div className="relative">
+            {/* Timeline line */}
+            <div className="absolute left-5 top-5 bottom-5 w-0.5 bg-slate-200" />
+
+            {TIMELINE_STEPS.map((step, i) => {
+              const Icon = step.icon;
+              const isDone = i <= activeStep;
+              const isActive = i === activeStep;
+              return (
+                <div key={step.status} className="relative flex items-center gap-3 mb-5 last:mb-0">
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 z-10 transition-all ${
+                      isDone
+                        ? "bg-[#f57224] text-white"
+                        : "bg-slate-100 text-slate-300"
+                    } ${isActive ? "ring-4 ring-orange-100" : ""}`}
+                  >
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p
+                      className={`text-sm font-bold ${
+                        isDone ? "text-[#0f172a]" : "text-slate-400"
+                      }`}
+                    >
+                      {step.label}
+                    </p>
+                    {isActive && (
+                      <p className="text-xs text-[#f57224] font-medium">
+                        Current status
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <button
+            onClick={() =>
+              navigate({ to: "/track-orders" as any })
+            }
+            className="flex-1 flex items-center justify-center gap-2 bg-[#0f172a] hover:bg-slate-800 text-white font-bold py-3.5 px-6 rounded-xl transition-all shadow-md text-sm"
           >
-            <Package className="h-4 w-4" /> View My Orders
-          </Link>
+            <Truck className="w-4 h-4" />
+            <span>Track Order</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
           <Link
             to="/shop"
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl border px-6 py-3 text-sm font-medium transition hover:bg-muted"
+            className="flex-1 flex items-center justify-center gap-2 bg-white border-2 border-slate-200 hover:border-[#f57224] text-[#0f172a] font-bold py-3.5 px-6 rounded-xl transition-all text-sm"
           >
-            Continue Shopping
+            <ShoppingBag className="w-4 h-4" />
+            <span>Continue Shopping</span>
           </Link>
         </div>
+
+        {/* Delivery info note */}
+        <div className="mt-5 flex items-start gap-2 text-xs text-slate-400 bg-slate-50 rounded-lg p-3">
+          <MapPin className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+          <p>
+            Your order will be delivered to your registered address. For any
+            changes, contact Shop Nexa Support within 1 hour of placing the
+            order.
+          </p>
+        </div>
       </main>
+
       <SiteFooter />
+      <WhatsAppFab />
+      <MobileBottomNav />
     </div>
   );
 }
+
+export default OrderSuccessPage;
