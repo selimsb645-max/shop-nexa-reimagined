@@ -309,7 +309,7 @@ export function ProductDetailPage() {
         const all = await listProducts();
         const matched = all.find((p: Record<string, unknown>) => p.slug === slug || p.id === slug);
         if (matched) return matched;
-      } catch (_) { // ignore }
+      } catch (_) { /* ignore */ }
 
       // Return synthetic product filled with slug name
       const formattedTitle = slug
@@ -335,7 +335,7 @@ export function ProductDetailPage() {
         try {
           const list = await listProducts({ category: product?.category });
           if (list && list.length > 0) return list;
-        } catch (_) { // ignore }
+        } catch (_) { /* ignore */ }
       }
       return MOCK_RECOMMENDED_PRODUCTS as Product[];
     },
