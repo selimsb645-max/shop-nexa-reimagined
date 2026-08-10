@@ -1,6 +1,5 @@
 import { Link, useNavigate, useLocation } from "@tanstack/react-router";
-import type { ReactNode, useState } from "react";
-import { useEffect } from "react";
+import { useState, type ReactNode } from "react";
 import {
   LayoutDashboard,
   Package,
@@ -11,15 +10,12 @@ import {
   Bell,
   BarChart3,
   Tag,
-  Truck,
   DollarSign,
   Menu,
   X,
   LogOut,
   ChevronRight,
-  MessageCircle,
 } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
 import { useSellerProfile } from "@/hooks/useSellerProfile";
 import { signOut } from "@/services/firebase/auth";
 import { toast } from "sonner";
@@ -30,7 +26,6 @@ interface Props {
 }
 
 export function SellerShell({ children }: Props) {
-  const { user } = useAuth();
   const { profile } = useSellerProfile();
   const navigate = useNavigate();
   const location = useLocation();

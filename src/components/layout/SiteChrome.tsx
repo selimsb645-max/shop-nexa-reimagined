@@ -14,8 +14,8 @@ const TOP_SAFE = 72;
 type Pos = { x: number; y: number };
 
 function clampToScreen(p: Pos): Pos {
-  const w = typeof window === "undefined" ? 360 : window.innerWidth;
-  const h = typeof window === "undefined" ? 640 : window.innerHeight;
+  const w = typeof globalThis === "undefined" ? 360 : globalThis.innerWidth;
+  const h = typeof globalThis === "undefined" ? 640 : globalThis.innerHeight;
   const maxX = Math.max(EDGE, w - BTN - EDGE);
   const maxY = Math.max(TOP_SAFE, h - BTN - BOTTOM_SAFE);
   return {
@@ -25,14 +25,14 @@ function clampToScreen(p: Pos): Pos {
 }
 
 function snapToEdge(p: Pos): Pos {
-  const w = typeof window === "undefined" ? 360 : window.innerWidth;
+  const w = typeof globalThis === "undefined" ? 360 : globalThis.innerWidth;
   const snappedX = p.x + BTN / 2 < w / 2 ? EDGE : w - BTN - EDGE;
   return clampToScreen({ x: snappedX, y: p.y });
 }
 
 function defaultPos(): Pos {
-  const w = typeof window === "undefined" ? 360 : window.innerWidth;
-  const h = typeof window === "undefined" ? 640 : window.innerHeight;
+  const w = typeof globalThis === "undefined" ? 360 : globalThis.innerWidth;
+  const h = typeof globalThis === "undefined" ? 640 : globalThis.innerHeight;
   return clampToScreen({ x: w - BTN - EDGE, y: h - BTN - BOTTOM_SAFE - 8 });
 }
 
@@ -65,11 +65,11 @@ export function WhatsAppFab() {
   // Reposition on resize / rotation.
   useEffect(() => {
     const onResize = () => setPos((p) => (p ? snapToEdge(p) : p));
-    window.addEventListener("resize", onResize);
-    window.addEventListener("orientationchange", onResize);
+    addEventListener("resize", onResize);
+    addEventListener("orientationchange", onResize);
     return () => {
-      window.removeEventListener("resize", onResize);
-      window.removeEventListener("orientationchange", onResize);
+      removeEventListener("resize", onResize);
+      removeEventListener("orientationchange", onResize);
     };
   }, []);
 
@@ -129,12 +129,12 @@ export function WhatsAppFab() {
       setTimeout(() => setBounce(false), 450);
       return;
     }
-    if (!menuOpen) window.open(WHATSAPP, "_blank", "noreferrer");
+    if (!menuOpen) open(WHATSAPP, "_blank", "noreferrer");
   };
 
   if (!pos) return null;
 
-  const menuOnLeft = pos.x < (typeof window !== "undefined" ? window.innerWidth / 2 : 180);
+  const menuOnLeft = pos.x < (typeof globalThis !== "undefined" ? globalThis.innerWidth / 2 : 180);
 
   return (
     <div

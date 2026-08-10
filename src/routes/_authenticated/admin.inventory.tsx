@@ -9,7 +9,6 @@ import {
   TrendingUp,
   Boxes,
   Loader,
-  RefreshCw,
 } from "lucide-react";
 import { listAllProducts } from "@/services/firebase/products";
 import { firebaseConfigured } from "@/services/firebase/config";

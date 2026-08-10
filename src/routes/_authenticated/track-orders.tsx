@@ -6,7 +6,7 @@ import { SiteFooter } from "@/components/layout/SiteFooter";
 import { WhatsAppFab } from "@/components/layout/SiteChrome";
 import { useAuth } from "@/context/AuthContext";
 import { listOrdersForTracking } from "@/services/firebase/deliveryTracking";
-import { getDeliveryTracking, type DeliveryTracking } from "@/services/firebase/deliveryTracking";
+import { getDeliveryTracking } from "@/services/firebase/deliveryTracking";
 import { firebaseConfigured } from "@/services/firebase/config";
 import { formatPrice } from "@/utils/format";
 import type { Order } from "@/types/commerce";

@@ -24,6 +24,8 @@ import type {
   SellerIdentityInfo,
   SellerBusinessInfo,
   SellerStoreSettings,
+  WarehouseInfo,
+  PickupPoint,
 } from "@/types/seller";
 
 const SELLERS = "sellers";
@@ -92,8 +94,8 @@ function mapSeller(id: string, d: Record<string, unknown>): SellerProfile {
     rating: Number(r.rating ?? 0),
     ratingCount: Number(r.ratingCount ?? 0),
     followers: Number(r.followers ?? 0),
-    warehouses: Array.isArray(r.warehouses) ? (r.warehouses as any[]) : [],
-    pickupPoints: Array.isArray(r.pickupPoints) ? (r.pickupPoints as any[]) : [],
+    warehouses: Array.isArray(r.warehouses) ? (r.warehouses as WarehouseInfo[]) : [],
+    pickupPoints: Array.isArray(r.pickupPoints) ? (r.pickupPoints as PickupPoint[]) : [],
     supportedCurrencies: Array.isArray(r.supportedCurrencies) ? (r.supportedCurrencies as string[]) : ["BDT"],
     internationalShipping: Boolean(r.internationalShipping ?? false),
     crossBorderSeller: Boolean(r.crossBorderSeller ?? false),

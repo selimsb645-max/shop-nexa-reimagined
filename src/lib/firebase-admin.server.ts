@@ -14,7 +14,7 @@ interface ServiceAccount {
 }
 
 function readServiceAccount(): ServiceAccount {
-  const raw = process.env["FIREBASE_SERVICE_ACCOUNT"];
+  const raw = Deno.env.get("FIREBASE_SERVICE_ACCOUNT");
   if (!raw) {
     throw new Error(
       "Checkout is not configured on the server (missing FIREBASE_SERVICE_ACCOUNT).",
@@ -117,7 +117,7 @@ export async function getAccessToken(): Promise<string> {
 export async function verifyIdToken(
   idToken: string,
 ): Promise<{ uid: string; email: string | null }> {
-  const apiKey = process.env["VITE_FIREBASE_API_KEY"] ?? process.env["FIREBASE_API_KEY"];
+  const apiKey = Deno.env.get("VITE_FIREBASE_API_KEY") ?? Deno.env.get("FIREBASE_API_KEY");
   if (!apiKey) throw new Error("Server auth verification is not configured.");
   const res = await fetch(
     `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${apiKey}`,

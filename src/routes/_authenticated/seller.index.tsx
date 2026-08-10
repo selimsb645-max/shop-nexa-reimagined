@@ -1,11 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
-  DollarSign, Package, ShoppingBag, TrendingUp, Plus, Eye,
-  Wallet, Tag, Settings, BarChart3, Truck, MessageCircle,
+  DollarSign, Package, ShoppingBag, TrendingUp, Plus,
+  Wallet, Tag, Settings, BarChart3, Truck,
   ArrowUpRight, ArrowDownRight, Bell, Star, AlertTriangle,
   Clock, CheckCircle2, XCircle, PackageX, Loader, Banknote,
-  ShoppingBag as OrdersIcon, Inventory,
+  Inventory,
 } from "lucide-react";
 import { SellerGate } from "@/components/seller/SellerGate";
 import { listSellerProducts } from "@/services/firebase/sellerProducts";
@@ -88,7 +88,6 @@ function Dashboard({ sellerId, profile }: { sellerId: string; profile: SellerPro
 
   const outOfStock = products?.filter(p => p.stock === 0).length ?? 0;
   const lowStock = products?.filter(p => p.stock > 0 && p.stock <= 5).length ?? 0;
-  const couponCount = 0; // Will be fetched from sellerCoupons service
 
   // Sales trend (up/down vs yesterday)
   const salesTrend = yesterdaySales > 0

@@ -31,29 +31,29 @@ export interface TopBarProps {
   className?: string;
 }
 
-export function TopBar({ className = "" }: TopBarProps) {
+export function TopBar({ className: _className = "" }: TopBarProps) {
   // TopBar has been removed from production UI. This export remains for backward compatibility only.
   return null;
 }
 
 export function SiteHeader() {
   const navigate = useNavigate();
-  const authContext = (useAuth() as any) || {};
+  const authContext = (useAuth() as Record<string, unknown>) || {};
   const user = authContext?.user ?? null;
 
-  const cartContext = (useCart() as any) || {};
+  const cartContext = (useCart() as Record<string, unknown>) || {};
   const cartCount =
     cartContext?.cartCount ??
     cartContext?.totalItems ??
     cartContext?.count ??
     (Array.isArray(cartContext?.items)
       ? cartContext.items.reduce(
-          (acc: number, item: any) => acc + (item.quantity || 1),
+          (acc: number, item: { quantity?: number }) => acc + (item.quantity || 1),
           0
         )
       : 0);
 
-  const wishlistContext = (useWishlist() as any) || {};
+  const wishlistContext = (useWishlist() as Record<string, unknown>) || {};
   const wishlistCount =
     wishlistContext?.count ??
     wishlistContext?.totalItems ??
@@ -106,7 +106,7 @@ export function SiteHeader() {
       navigate({
         to: "/products",
         search: { search: searchQuery.trim() },
-      } as any);
+      } as Record<string, unknown>);
     }
   };
 
@@ -381,7 +381,7 @@ export function SiteHeader() {
                 className="absolute top-full left-0 w-64 bg-white border border-slate-200 shadow-xl rounded-b-lg py-2 z-50"
                 onMouseLeave={() => setIsCategoryOpen(false)}
               >
-                {categories.map((cat: any, idx: number) => {
+                {categories.map((cat: { id?: string; name?: string; slug?: string; label?: string } | string, idx: number) => {
                   const catName =
                     typeof cat === "string"
                       ? cat
@@ -394,7 +394,7 @@ export function SiteHeader() {
                     <Link
                       key={cat.id || idx}
                       to="/products"
-                      search={{ category: catSlug } as any}
+                      search={{ category: catSlug } as Record<string, string>}
                       onClick={() => setIsCategoryOpen(false)}
                       className="flex items-center justify-between px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 hover:text-[#f57224] transition-colors"
                     >
@@ -419,7 +419,7 @@ export function SiteHeader() {
 
             <Link
               to="/products"
-              search={{ sort: "bestsellers" } as any}
+              search={{ sort: "bestsellers" } as Record<string, string>}
               className="flex items-center gap-1.5 hover:text-[#f57224] transition-colors"
             >
               <Award className="w-4 h-4 text-amber-500" />
@@ -428,7 +428,7 @@ export function SiteHeader() {
 
             <Link
               to="/products"
-              search={{ sort: "newest" } as any}
+              search={{ sort: "newest" } as Record<string, string>}
               className="flex items-center gap-1.5 hover:text-[#f57224] transition-colors"
             >
               <Sparkles className="w-4 h-4 text-purple-500" />
@@ -437,7 +437,7 @@ export function SiteHeader() {
 
             <Link
               to="/products"
-              search={{ deals: "true" } as any}
+              search={{ deals: "true" } as Record<string, string>}
               className="flex items-center gap-1.5 hover:text-[#f57224] transition-colors"
             >
               <Tag className="w-4 h-4 text-emerald-500" />
@@ -462,7 +462,7 @@ export function SiteHeader() {
             Categories
           </div>
           <div className="grid grid-cols-2 gap-2 text-xs">
-            {categories.slice(0, 6).map((cat: any, idx: number) => {
+            {categories.slice(0, 6).map((cat: { id?: string; name?: string; slug?: string; label?: string } | string, idx: number) => {
               const catName =
                 typeof cat === "string"
                   ? cat
@@ -475,7 +475,7 @@ export function SiteHeader() {
                 <Link
                   key={cat.id || idx}
                   to="/products"
-                  search={{ category: catSlug } as any}
+                  search={{ category: catSlug } as Record<string, string>}
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="py-1.5 px-2 rounded bg-slate-50 hover:bg-slate-100 text-slate-700 text-center truncate"
                 >
@@ -498,7 +498,7 @@ export function SiteHeader() {
             </Link>
             <Link
               to="/products"
-              search={{ sort: "bestsellers" } as any}
+              search={{ sort: "bestsellers" } as Record<string, string>}
               onClick={() => setIsMobileMenuOpen(false)}
               className="flex items-center gap-2 text-slate-700 py-1"
             >
@@ -506,7 +506,7 @@ export function SiteHeader() {
             </Link>
             <Link
               to="/products"
-              search={{ sort: "newest" } as any}
+              search={{ sort: "newest" } as Record<string, string>}
               onClick={() => setIsMobileMenuOpen(false)}
               className="flex items-center gap-2 text-slate-700 py-1"
             >
@@ -514,7 +514,7 @@ export function SiteHeader() {
             </Link>
             <Link
               to="/products"
-              search={{ deals: "true" } as any}
+              search={{ deals: "true" } as Record<string, string>}
               onClick={() => setIsMobileMenuOpen(false)}
               className="flex items-center gap-2 text-slate-700 py-1"
             >

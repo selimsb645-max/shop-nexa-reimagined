@@ -7,18 +7,13 @@ import {
   ArrowRight,
   Loader,
   Clock,
-  Sparkles,
   ShoppingBag,
   Tag,
-  Filter,
   Check,
-  Percent,
-  TrendingDown,
   ShieldCheck,
   ChevronRight,
   RefreshCw,
   AlertCircle,
-  ShoppingCart,
   ArrowLeft,
   Flame as FlameIcon,
 } from "lucide-react";
@@ -129,7 +124,7 @@ export function FlashSalesPage() {
     if (!Array.isArray(rawProducts)) return [];
     return rawProducts.filter((product: Product) => {
       if (!product || typeof product.price !== "number" || product.price <= 0) return false;
-      const compareAt = product.compareAtPrice ?? (product as any).oldPrice;
+      const compareAt = product.compareAtPrice ?? (product as { oldPrice?: number }).oldPrice;
       return typeof compareAt === "number" && compareAt > product.price;
     });
   }, [rawProducts]);
@@ -141,7 +136,7 @@ export function FlashSalesPage() {
     // Filter by Deal Type / Price Range
     if (activeFilter === "mega") {
       list = list.filter((p) => {
-        const compareAt = p.compareAtPrice ?? (p as any).oldPrice ?? p.price;
+        const compareAt = p.compareAtPrice ?? (p as { oldPrice?: number }).oldPrice ?? p.price;
         const discount = Math.round(((compareAt - p.price) / compareAt) * 100);
         return discount >= 40;
       });
@@ -154,8 +149,8 @@ export function FlashSalesPage() {
     // Apply Sorting
     if (sortBy === "discount-desc") {
       list.sort((a, b) => {
-        const compA = a.compareAtPrice ?? (a as any).oldPrice ?? a.price;
-        const compB = b.compareAtPrice ?? (b as any).oldPrice ?? b.price;
+        const compA = a.compareAtPrice ?? (a as { oldPrice?: number }).oldPrice ?? a.price;
+        const compB = b.compareAtPrice ?? (b as { oldPrice?: number }).oldPrice ?? b.price;
         const discA = ((compA - a.price) / compA) * 100;
         const discB = ((compB - b.price) / compB) * 100;
         return discB - discA;
@@ -191,8 +186,8 @@ export function FlashSalesPage() {
     }, 350);
   }, []);
 
-  const handleAddToCart = useCallback((product: Product, e: React.MouseEvent<HTMLButtonElement>) => {
-    const name = product.title || (product as any).name || "Item";
+  const handleAddToCart = useCallback((product: Product, _e: React.MouseEvent<HTMLButtonElement>) => {
+    const name = product.title || (product as { name?: string }).name || "Item";
     setToastText(`Added "${name}" to cart!`);
     setTimeout(() => {
       setToastText(null);
@@ -365,7 +360,7 @@ export function FlashSalesPage() {
             <span className="text-xs text-slate-500 font-medium whitespace-nowrap">Sort by:</span>
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
+              onChange={(e) => setSortBy(e.target.value as "discount-desc" | "price-asc" | "price-desc" | "popular")}
               className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#f57224] transition-all"
             >
               <option value="discount-desc">Highest Discount</option>

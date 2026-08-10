@@ -8,7 +8,6 @@ import {
   Plus,
   Loader,
   Mail,
-  User,
   DollarSign,
   Sparkles,
   Clock,

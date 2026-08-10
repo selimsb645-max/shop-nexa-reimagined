@@ -1,5 +1,4 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Headphones,
@@ -9,7 +8,6 @@ import {
   Clock,
   ChevronRight,
   HelpCircle,
-  Loader,
 } from "lucide-react";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";

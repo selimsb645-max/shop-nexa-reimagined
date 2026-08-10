@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -12,7 +12,6 @@ import {
   Truck,
   DollarSign,
   Loader,
-  ImagePlus,
 } from "lucide-react";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
@@ -52,7 +51,6 @@ const STATUS_CONFIG: Record<ReturnStatus, { icon: React.ReactNode; color: string
 
 function ReturnsPage() {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState("");
@@ -81,7 +79,7 @@ function ReturnsPage() {
       const order = orders?.find((o) => o.id === selectedOrderId);
       const item = order?.items.find((i) => i.productId === selectedItemId);
       if (!order || !item) throw new Error("Select an order and product");
-      return createReturnRequest(user!.uid, {
+      return await createReturnRequest(user!.uid, {
         orderId: order.id,
         productId: item.productId,
         productTitle: item.title,

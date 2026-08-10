@@ -5,11 +5,6 @@ import {
   getDocs,
   query,
   where,
-  orderBy,
-  addDoc,
-  serverTimestamp,
-  updateDoc,
-  deleteDoc,
 } from "firebase/firestore";
 import { getDb } from "./config";
 import type { Product } from "@/types/commerce";

@@ -1,14 +1,9 @@
 import {
-  doc,
-  getDoc,
   collection,
   getDocs,
   query,
   where,
   orderBy,
-  serverTimestamp,
-  updateDoc,
-  addDoc,
 } from "firebase/firestore";
 import { getDb } from "./config";
 import type { Order } from "@/types/commerce";

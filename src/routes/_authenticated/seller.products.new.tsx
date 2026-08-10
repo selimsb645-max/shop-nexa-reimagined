@@ -1,9 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Package, ChevronLeft, Loader, Save, Eye, Bold, Italic,
   List, ListOrdered, Upload, X, CheckCircle2, AlertCircle, DollarSign,
-  Tag, FolderTree, FileText, ImagePlus,
+  Tag, ImagePlus,
 } from "lucide-react";
 import { SellerGate } from "@/components/seller/SellerGate";
 import { createSellerProduct } from "@/services/firebase/sellerProducts";

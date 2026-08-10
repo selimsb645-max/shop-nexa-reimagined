@@ -1,7 +1,6 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Search,
   SlidersHorizontal,
   X,
   ChevronDown,
@@ -9,20 +8,12 @@ import {
   Check,
   LayoutGrid,
   List,
-  Filter,
-  ArrowUpDown,
   Sparkles,
   ChevronRight,
   ChevronUp,
   Truck,
-  RefreshCw,
   RotateCcw,
   PackageX,
-  Sliders,
-  DollarSign,
-  Tag,
-  Eye,
-  ShoppingBag,
 } from "lucide-react";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
@@ -32,8 +23,22 @@ import { ProductCard } from "@/components/product/ProductCard";
 import { listCategories } from "@/services/firebase/categories";
 import { listProducts } from "@/services/firebase/products";
 import { firebaseConfigured } from "@/services/firebase/config";
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect } from "react";
 import type { Product } from "@/types/commerce";
+
+type ExtendedProduct = Partial<Product> & {
+  discountPrice?: number;
+  ratings?: number;
+  rate?: number;
+  isFreeDelivery?: boolean;
+  freeShipping?: boolean;
+  isFreeShipping?: boolean;
+  brand?: string;
+  categoryId?: string;
+  color?: string | string[];
+  colors?: string | string[];
+  createdAt?: string | number;
+};
 
 // ----------------------------------------------------------------------
 // Route & Search Params Definition
@@ -138,21 +143,24 @@ const PRICE_PRESETS = [
 // Helper to safely extract price
 function getProductPrice(p: Partial<Product>): number {
   if (typeof p.price === "number") return p.price;
-  if (typeof (p as any).discountPrice === "number") return (p as any).discountPrice;
+  const extP = p as ExtendedProduct;
+  if (typeof extP.discountPrice === "number") return extP.discountPrice;
   return 0;
 }
 
 // Helper to safely extract rating
 function getProductRating(p: Partial<Product>): number {
   if (typeof p.rating === "number") return p.rating;
-  if (typeof (p as any).ratings === "number") return (p as any).ratings;
-  if (typeof (p as any).rate === "number") return (p as any).rate;
+  const extP = p as ExtendedProduct;
+  if (typeof extP.ratings === "number") return extP.ratings;
+  if (typeof extP.rate === "number") return extP.rate;
   return 4.5;
 }
 
 // Helper to check if item is free delivery eligible
 function isProductFreeDelivery(p: Partial<Product>): boolean {
-  if ((p as any).isFreeDelivery || (p as any).freeShipping || (p as any).isFreeShipping) {
+  const extP = p as ExtendedProduct;
+  if (extP.isFreeDelivery || extP.freeShipping || extP.isFreeShipping) {
     return true;
   }
   if (Array.isArray(p.tags) && p.tags.some((t) => t.toLowerCase().includes("free"))) {
@@ -270,8 +278,9 @@ function ShopPage() {
   const dynamicBrands = useMemo(() => {
     const brandSet = new Set<string>(DEFAULT_BRANDS);
     allProducts.forEach((p) => {
-      if ((p as any).brand && typeof (p as any).brand === "string") {
-        brandSet.add((p as any).brand);
+      const extP = p as ExtendedProduct;
+      if (extP.brand && typeof extP.brand === "string") {
+        brandSet.add(extP.brand);
       }
     });
     return Array.from(brandSet);
@@ -280,7 +289,7 @@ function ShopPage() {
   // Extract total category options
   const categoryOptions = useMemo(() => {
     if (Array.isArray(rawCategories) && rawCategories.length > 0) {
-      return rawCategories.map((cat: any) => ({
+      return rawCategories.map((cat: { id?: string; slug?: string; name?: string }) => ({
         id: cat.id || cat.slug || cat.name?.toLowerCase(),
         name: cat.name || "Category",
         slug: cat.slug || cat.name?.toLowerCase().replace(/\s+/g, "-"),
@@ -310,7 +319,7 @@ function ShopPage() {
         const title = (p.title || p.title || "").toLowerCase();
         const desc = (p.description || "").toLowerCase();
         const cat = (p.categorySlug || "").toLowerCase();
-        const brand = ((p as any).brand || "").toLowerCase();
+        const brand = ((p as ExtendedProduct).brand || "").toLowerCase();
         const tags = Array.isArray(p.tags) ? p.tags.join(" ").toLowerCase() : "";
         return (
           title.includes(q) ||
@@ -325,7 +334,7 @@ function ShopPage() {
     // 2. Categories Filter
     if (selectedCategories.length > 0) {
       list = list.filter((p) => {
-        const prodCat = (p.categorySlug || (p as any).categoryId || "").toLowerCase();
+        const prodCat = (p.categorySlug || (p as ExtendedProduct).categoryId || "").toLowerCase();
         return selectedCategories.some((sc) => {
           const scLower = sc.toLowerCase();
           return prodCat.includes(scLower) || scLower.includes(prodCat);
@@ -336,7 +345,7 @@ function ShopPage() {
     // 3. Brands Filter
     if (selectedBrands.length > 0) {
       list = list.filter((p) => {
-        const b = ((p as any).brand || "").toLowerCase();
+        const b = ((p as ExtendedProduct).brand || "").toLowerCase();
         return selectedBrands.some((sb) => b.includes(sb.toLowerCase()));
       });
     }
@@ -357,7 +366,8 @@ function ShopPage() {
     // 6. Color Family Filter
     if (selectedColors.length > 0) {
       list = list.filter((p) => {
-        const colorAttr = ((p as any).color || (p as any).colors || []).toString().toLowerCase();
+        const extP = p as ExtendedProduct;
+        const colorAttr = (extP.color || extP.colors || []).toString().toLowerCase();
         const desc = (p.description || "").toLowerCase();
         const title = (p.title || p.title || "").toLowerCase();
         return selectedColors.some((c) => {
@@ -385,8 +395,10 @@ function ShopPage() {
         break;
       case "newest":
         list.sort((a, b) => {
-          const timeA = (a as any).createdAt || a.id || 0;
-          const timeB = (b as any).createdAt || b.id || 0;
+          const extA = a as ExtendedProduct;
+          const extB = b as ExtendedProduct;
+          const timeA = extA.createdAt || a.id || 0;
+          const timeB = extB.createdAt || b.id || 0;
           return String(timeB).localeCompare(String(timeA));
         });
         break;

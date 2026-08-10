@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Search,
-  Globe,
   BarChart3,
   TrendingUp,
   Eye,
@@ -11,7 +10,6 @@ import {
 } from "lucide-react";
 import { listAllProducts } from "@/services/firebase/products";
 import { firebaseConfigured } from "@/services/firebase/config";
-import { formatPrice } from "@/utils/format";
 
 export const Route = createFileRoute("/_authenticated/admin/seo")({
   ssr: false,

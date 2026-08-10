@@ -4,16 +4,13 @@ import {
   Ban,
   Clock,
   Lock,
-  ShieldAlert,
   FileWarning,
-  Store,
   Loader,
-  CheckCircle2,
   XCircle,
 } from "lucide-react";
 import { SellerShell } from "./SellerShell";
 import { useSellerProfile } from "@/hooks/useSellerProfile";
-import { SELLER_STATUS_CONFIG, REGISTRATION_STEPS } from "@/types/seller";
+import { REGISTRATION_STEPS } from "@/types/seller";
 
 interface Props {
   children: (profile: NonNullable<ReturnType<typeof useSellerProfile>["profile"]>) => ReactNode;
@@ -64,8 +61,6 @@ export function SellerGate({ children }: Props) {
       </SellerShell>
     );
   }
-
-  const config = SELLER_STATUS_CONFIG[profile.status];
 
   // Draft → continue registration
   if (profile.status === "draft") {

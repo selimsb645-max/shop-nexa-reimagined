@@ -7,7 +7,6 @@ import {
   Gift,
   Sparkles,
   Check,
-  Loader,
 } from "lucide-react";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";

@@ -10,7 +10,6 @@ import {
   MapPin,
   Phone,
 } from "lucide-react";
-import { listOrders } from "@/services/firebase/orders";
 import { firebaseConfigured } from "@/services/firebase/config";
 import { formatPrice } from "@/utils/format";
 import type { Order } from "@/types/commerce";
@@ -26,7 +25,7 @@ function AdminDeliveryDashboardPage() {
     queryKey: ["adminOrders", "all"],
     queryFn: async () => {
       const db = (await import("@/services/firebase/config")).getDb();
-      const { collection, getDocs, orderBy } = await import("firebase/firestore");
+      const { collection, getDocs } = await import("firebase/firestore");
       const snap = await getDocs(collection(db, "orders"));
 
       return snap.docs.map((d) => {

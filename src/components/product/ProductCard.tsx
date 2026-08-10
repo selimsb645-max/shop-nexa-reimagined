@@ -5,6 +5,23 @@ import type { Product } from '@/types/commerce';
 import { formatPrice } from '@/utils/format';
 import { useWishlist } from '@/context/WishlistContext';
 
+type ProductCardProduct = Partial<Product> & {
+  images?: Array<string | { url?: string; src?: string }>;
+  imageUrl?: string;
+  thumbnail?: string;
+  oldPrice?: number;
+  discount?: number;
+  ratings?: number;
+  reviewCount?: number;
+  reviewsCount?: number;
+  ratingsCount?: number;
+  location?: string;
+  sellerLocation?: string;
+  seller?: { location?: string };
+  name?: string;
+};
+
+
 export interface ProductCardProps {
   product: Product;
   onAddToCart?: (product: Product, e: React.MouseEvent<HTMLButtonElement>) => void;
@@ -28,17 +45,18 @@ export interface ProductCardSkeletonProps {
  * Helper to safely extract main image URL from product object
  */
 function getProductImage(product: Partial<Product>): string {
+  const p = product as ProductCardProduct;
   if (typeof product.images?.[0] === 'string' && product.images?.[0]) return product.images?.[0];
-  if (Array.isArray((product as any).images) && (product as any).images.length > 0) {
-    const firstImg = (product as any).images[0];
+  if (Array.isArray(p.images) && p.images.length > 0) {
+    const firstImg = p.images[0];
     if (typeof firstImg === 'string') return firstImg;
     if (firstImg && typeof firstImg.url === 'string') return firstImg.url;
   }
-  if (typeof (product as any).imageUrl === 'string' && (product as any).imageUrl) {
-    return (product as any).imageUrl;
+  if (typeof p.imageUrl === 'string' && p.imageUrl) {
+    return p.imageUrl;
   }
-  if (typeof (product as any).thumbnail === 'string' && (product as any).thumbnail) {
-    return (product as any).thumbnail;
+  if (typeof p.thumbnail === 'string' && p.thumbnail) {
+    return p.thumbnail;
   }
   return 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMzAwIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YzZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzljYTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';
 }
@@ -70,12 +88,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   const isWishlisted = isInWishlist ? isInWishlist(String(product.id)) : false;
 
-  const originalPrice = product.compareAtPrice ?? (product as any).oldPrice;
-  const discountPct = getDiscountPercentage(product.price, originalPrice, (product as any).discount);
+  const p = product as ProductCardProduct;
+  const originalPrice = product.compareAtPrice ?? p.oldPrice;
+  const discountPct = getDiscountPercentage(product.price, originalPrice, p.discount);
   const imageUrl = imageError ? 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMzAwIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YzZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzljYTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==' : getProductImage(product);
-  const rating = product.rating ?? (product as any).ratings ?? 0;
-  const reviewCount = (product as any).reviewCount ?? (product as any).reviewsCount ?? (product as any).ratingsCount ?? 0;
-  const location = (product as any).location ?? (product as any).sellerLocation ?? (product as any).seller?.location ?? 'Dhaka';
+  const rating = product.rating ?? p.ratings ?? 0;
+  const reviewCount = p.reviewCount ?? p.reviewsCount ?? p.ratingsCount ?? 0;
+  const location = p.location ?? p.sellerLocation ?? p.seller?.location ?? 'Dhaka';
 
   const handleWishlistClick = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -114,7 +133,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         <div className="relative w-full aspect-square overflow-hidden bg-slate-50 rounded-t-lg">
           <img
             src={imageUrl}
-            alt={product.title || (product as any).name || 'Product image'}
+            alt={product.title || p.name || 'Product image'}
             onError={() => setImageError(true)}
             loading="lazy"
             className="w-full h-full object-cover rounded-t-lg group-hover:scale-105 transition-transform duration-300 ease-in-out"
@@ -149,7 +168,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <div>
             {/* Title */}
             <h3 className="text-sm font-medium text-slate-800 group-hover:text-[#f57224] transition-colors line-clamp-2 leading-snug h-10 mb-1.5 overflow-hidden">
-              {product.title || (product as any).name || 'Untitled Product'}
+              {product.title || p.name || 'Untitled Product'}
             </h3>
 
             {/* Price Row */}
@@ -215,8 +234,9 @@ export const ProductCardCompact: React.FC<ProductCardCompactProps> = ({
 
   const isWishlisted = isInWishlist ? isInWishlist(String(product.id)) : false;
 
-  const originalPrice = product.compareAtPrice ?? (product as any).oldPrice;
-  const discountPct = getDiscountPercentage(product.price, originalPrice, (product as any).discount);
+  const p = product as ProductCardProduct;
+  const originalPrice = product.compareAtPrice ?? p.oldPrice;
+  const discountPct = getDiscountPercentage(product.price, originalPrice, p.discount);
   const imageUrl = imageError ? 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMzAwIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YzZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzljYTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==' : getProductImage(product);
 
   const handleWishlistClick = useCallback(
@@ -260,7 +280,7 @@ export const ProductCardCompact: React.FC<ProductCardCompactProps> = ({
         <div className="relative w-full aspect-square overflow-hidden bg-slate-50 rounded-t-lg">
           <img
             src={imageUrl}
-            alt={product.title || (product as any).name || 'Product image'}
+            alt={product.title || p.name || 'Product image'}
             onError={() => setImageError(true)}
             loading="lazy"
             className="w-full h-full object-cover rounded-t-lg group-hover:scale-105 transition-transform duration-300"
@@ -294,7 +314,7 @@ export const ProductCardCompact: React.FC<ProductCardCompactProps> = ({
         <div className="p-2 flex flex-col justify-between flex-1 bg-white">
           <div>
             <h4 className="text-xs font-medium text-slate-800 group-hover:text-[#f57224] transition-colors line-clamp-2 h-8 leading-tight mb-1">
-              {product.title || (product as any).name || 'Untitled Product'}
+              {product.title || p.name || 'Untitled Product'}
             </h4>
 
             <div className="flex flex-col">

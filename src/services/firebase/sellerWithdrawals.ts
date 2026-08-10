@@ -7,8 +7,6 @@ import {
   orderBy,
   query,
   serverTimestamp,
-  updateDoc,
-  where,
 } from "firebase/firestore";
 import { getDb, firebaseConfigured } from "./config";
 import { getSellerWalletBalance } from "./sellerWallet";
@@ -40,12 +38,12 @@ function mapWithdrawal(id: string, d: Record<string, unknown>): WithdrawalReques
     requestedAt:
       typeof r.requestedAt === "number"
         ? r.requestedAt
-        : (r.requestedAt as any)?.toMillis?.() ?? nowMs(),
+        : (r.requestedAt as { toMillis?: () => number })?.toMillis?.() ?? nowMs(),
     processedAt:
       r.processedAt != null
         ? typeof r.processedAt === "number"
           ? r.processedAt
-          : (r.processedAt as any)?.toMillis?.() ?? null
+          : (r.processedAt as { toMillis?: () => number })?.toMillis?.() ?? null
         : null,
     note: (r.note as string | null) ?? null,
     txId: (r.txId as string | null) ?? null,

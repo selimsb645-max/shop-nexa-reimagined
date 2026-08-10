@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   Store, Briefcase, IdCard, Wallet, FileText, CheckCircle2,
-  ChevronRight, ChevronLeft, Loader, Upload, AlertCircle,
+  ChevronRight, ChevronLeft, Loader, AlertCircle,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useSellerProfile } from "@/hooks/useSellerProfile";
@@ -36,7 +36,7 @@ function SellerRegisterPage() {
         try {
           await initSellerDraft({ uid: user.uid, email: user.email });
           await refresh();
-        } catch (e) {
+        } catch (_e) {
           // Profile may already exist
         }
       } else if (profile.status === "draft") {
@@ -66,7 +66,7 @@ function SellerRegisterPage() {
   }
 
   const stepIdx = REGISTRATION_STEPS.findIndex((s) => s.key === currentStep);
-  const isLastFormStep = currentStep === "terms";
+  const _isLastFormStep = currentStep === "terms";
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans">
@@ -127,7 +127,7 @@ function SellerRegisterPage() {
                 await refresh();
                 setCurrentStep("business_info");
                 toast.success("Store info saved");
-              } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
+              } catch (_e) { toast.error(e instanceof Error ? e.message : "Failed"); }
               setLoading(false);
             }}
             loading={loading}
@@ -145,7 +145,7 @@ function SellerRegisterPage() {
                 await refresh();
                 setCurrentStep("identity_verification");
                 toast.success("Business info saved");
-              } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
+              } catch (_e) { toast.error(e instanceof Error ? e.message : "Failed"); }
               setLoading(false);
             }}
             loading={loading}
@@ -163,7 +163,7 @@ function SellerRegisterPage() {
                 await refresh();
                 setCurrentStep("banking");
                 toast.success("Identity info saved");
-              } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
+              } catch (_e) { toast.error(e instanceof Error ? e.message : "Failed"); }
               setLoading(false);
             }}
             loading={loading}
@@ -181,7 +181,7 @@ function SellerRegisterPage() {
                 await refresh();
                 setCurrentStep("terms");
                 toast.success("Banking info saved");
-              } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
+              } catch (_e) { toast.error(e instanceof Error ? e.message : "Failed"); }
               setLoading(false);
             }}
             loading={loading}
@@ -199,7 +199,7 @@ function SellerRegisterPage() {
                 await refresh();
                 setCurrentStep("submitted");
                 toast.success("Application submitted for review!");
-              } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
+              } catch (_e) { toast.error(e instanceof Error ? e.message : "Failed"); }
               setLoading(false);
             }}
             loading={loading}
@@ -246,8 +246,8 @@ function ReviewPending() {
 // Step 1: Store Info Form
 // ====================================================================
 function StoreInfoForm({ initial, onSubmit, loading }: {
-  initial?: any;
-  onSubmit: (data: any) => void;
+  initial?: Record<string, unknown>;
+  onSubmit: (data: Record<string, unknown>) => void;
   loading: boolean;
 }) {
   const [shopName, setShopName] = useState(initial?.shopName ?? "");
@@ -305,7 +305,7 @@ function StoreInfoForm({ initial, onSubmit, loading }: {
 // Step 2: Business Info Form
 // ====================================================================
 function BusinessInfoForm({ initial, onBack, onSubmit, loading }: {
-  initial?: any; onBack: () => void; onSubmit: (data: any) => void; loading: boolean;
+  initial?: Record<string, unknown>; onBack: () => void; onSubmit: (data: Record<string, unknown>) => void; loading: boolean;
 }) {
   const [businessType, setBusinessType] = useState<"individual" | "company" | "partnership">(initial?.businessType ?? "individual");
   const [businessName, setBusinessName] = useState(initial?.businessName ?? "");
@@ -356,7 +356,7 @@ function BusinessInfoForm({ initial, onBack, onSubmit, loading }: {
 // Step 3: Identity Verification Form
 // ====================================================================
 function IdentityForm({ initial, onBack, onSubmit, loading }: {
-  initial?: any; onBack: () => void; onSubmit: (data: any) => void; loading: boolean;
+  initial?: Record<string, unknown>; onBack: () => void; onSubmit: (data: Record<string, unknown>) => void; loading: boolean;
 }) {
   const [fullName, setFullName] = useState(initial?.fullName ?? "");
   const [nidNumber, setNidNumber] = useState(initial?.nidNumber ?? "");
@@ -396,7 +396,7 @@ function IdentityForm({ initial, onBack, onSubmit, loading }: {
 // Step 4: Banking Form
 // ====================================================================
 function BankingForm({ initial, onBack, onSubmit, loading }: {
-  initial?: any; onBack: () => void; onSubmit: (data: any) => void; loading: boolean;
+  initial?: Record<string, unknown>; onBack: () => void; onSubmit: (data: Record<string, unknown>) => void; loading: boolean;
 }) {
   const [payoutMethod, setPayoutMethod] = useState<"bank" | "mobile">(initial?.mobileBankingType ? "mobile" : "bank");
   const [bankName, setBankName] = useState(initial?.bankName ?? "");

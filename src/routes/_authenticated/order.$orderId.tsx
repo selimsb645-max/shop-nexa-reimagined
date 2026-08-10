@@ -24,7 +24,7 @@ import { useAuth } from "@/context/AuthContext";
 import { getOrder } from "@/services/firebase/orders";
 import { formatDateTime, formatPrice } from "@/utils/format";
 import { firebaseConfigured } from "@/services/firebase/config";
-import type { OrderStatus } from "@/types/commerce";
+import type { Order, OrderStatus } from "@/types/commerce";
 
 export const Route = createFileRoute("/_authenticated/order/$orderId")({
   ssr: false,
@@ -45,10 +45,12 @@ function stepIndex(status: OrderStatus): number {
   return idx < 0 ? 0 : idx;
 }
 
+type ExtendedOrder = Order & { rewardDiscount?: number; walletUsed?: number };
+
 function OrderDetailPage() {
   const { orderId } = Route.useParams();
   const { user } = useAuth();
-  const { data: order, isLoading } = useQuery({
+  const { data: rawOrder, isLoading } = useQuery({
     queryKey: ["order", user?.uid, orderId],
     queryFn: () => getOrder(user!.uid, orderId),
     enabled: !!user && firebaseConfigured,
@@ -68,7 +70,7 @@ function OrderDetailPage() {
     );
   }
 
-  if (!order) {
+  if (!rawOrder) {
     return (
       <div className="min-h-screen flex flex-col bg-slate-50 font-sans">
         <SiteHeader />
@@ -94,6 +96,7 @@ function OrderDetailPage() {
     );
   }
 
+  const order = rawOrder as ExtendedOrder;
   const cancelled = order.status === "cancelled";
   const currentStep = stepIndex(order.status);
 
@@ -350,25 +353,25 @@ function OrderDetailPage() {
                     </span>
                   </div>
                 )}
-                {(order as any).rewardDiscount > 0 && (
+                {!!order.rewardDiscount && order.rewardDiscount > 0 && (
                   <div className="flex justify-between text-purple-600">
                     <span className="flex items-center gap-1">
                       <Gift className="w-3 h-3" />
                       Reward Points
                     </span>
                     <span className="font-semibold">
-                      -{formatPrice((order as any).rewardDiscount)}
+                      -{formatPrice(order.rewardDiscount)}
                     </span>
                   </div>
                 )}
-                {(order as any).walletUsed > 0 && (
+                {!!order.walletUsed && order.walletUsed > 0 && (
                   <div className="flex justify-between text-[#f57224]">
                     <span className="flex items-center gap-1">
                       <Wallet className="w-3 h-3" />
                       Wallet
                     </span>
                     <span className="font-semibold">
-                      -{formatPrice((order as any).walletUsed)}
+                      -{formatPrice(order.walletUsed)}
                     </span>
                   </div>
                 )}

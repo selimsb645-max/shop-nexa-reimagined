@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { getDb, firebaseConfigured } from "./config";
 import type { AdminRole, AdminPermission } from "@/types/user";
 import { ROLE_PERMISSIONS } from "@/types/user";

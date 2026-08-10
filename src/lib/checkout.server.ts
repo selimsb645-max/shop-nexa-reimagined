@@ -9,6 +9,7 @@ import {
   batchGetDocs,
   commitWrites,
   docPath,
+  getAccessToken,
   getProjectId,
   newDocId,
   toFsFields,
@@ -205,7 +206,8 @@ export async function placeOrderServer(
       for (const row of rewardJson) {
         if (!row.document) continue;
         const fields = row.document.fields ?? {};
-        const points = Number((fields.points as any)?.integerValue ?? (fields.points as any)?.doubleValue ?? 0);
+        const pointsVal = fields.points as { integerValue?: string | number; doubleValue?: number } | undefined;
+        const points = Number(pointsVal?.integerValue ?? pointsVal?.doubleValue ?? 0);
         availablePoints += points;
       }
       if (req.rewardPoints > availablePoints) {
@@ -235,7 +237,8 @@ export async function placeOrderServer(
       for (const row of walletJson) {
         if (!row.document) continue;
         const fields = row.document.fields ?? {};
-        const amount = Number((fields.amount as any)?.integerValue ?? (fields.amount as any)?.doubleValue ?? 0);
+        const amountVal = fields.amount as { integerValue?: string | number; doubleValue?: number } | undefined;
+        const amount = Number(amountVal?.integerValue ?? amountVal?.doubleValue ?? 0);
         walletBalance += amount;
       }
       walletUsed = Math.min(req.walletUsed, walletBalance);

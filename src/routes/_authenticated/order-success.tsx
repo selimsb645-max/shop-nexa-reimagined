@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import {
   CheckCircle2,
   Package,
-  Clock,
   MapPin,
   ArrowRight,
   ShoppingBag,
@@ -11,11 +10,9 @@ import {
   Box,
   Send,
   Home,
-  ChevronRight,
   Copy,
   Sparkles,
   Gift,
-  Wallet,
 } from "lucide-react";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
@@ -49,8 +46,14 @@ function OrderSuccessPage() {
   const navigate = useNavigate();
   const search = Route.useSearch();
   const orderId = search.orderId || "";
-  const [order, setOrder] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+interface OrderData {
+  status?: string;
+  total?: number;
+  payment?: { method?: string };
+}
+
+  const [order, setOrder] = useState<OrderData | null>(null);
+  const [_loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -261,7 +264,7 @@ function OrderSuccessPage() {
         <div className="flex flex-col sm:flex-row gap-3">
           <button
             onClick={() =>
-              navigate({ to: "/track-orders" as any })
+              navigate({ to: "/track-orders" })
             }
             className="flex-1 flex items-center justify-center gap-2 bg-[#0f172a] hover:bg-slate-800 text-white font-bold py-3.5 px-6 rounded-xl transition-all shadow-md text-sm"
           >

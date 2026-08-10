@@ -62,7 +62,7 @@ import {
 } from "@/services/firebase/support";
 import { listOrders } from "@/services/firebase/orders";
 import { formatPrice, formatDate } from "@/utils/format";
-import type { MessageThread, ChatMessage } from "@/types/customer";
+import type { MessageThread } from "@/types/customer";
 import type { CustomerNotification, NotificationType } from "@/types/customer";
 import type { SupportTicket } from "@/types/customer";
 import type { Order } from "@/types/commerce";
@@ -89,7 +89,7 @@ function CommunicationCenter() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>("inbox");
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeFilter, setActiveFilter] = useState<FilterType>("all");
+  const [activeFilter, _setActiveFilter] = useState<FilterType>("all");
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
   const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
   const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
@@ -1041,7 +1041,7 @@ function AIAssistant() {
     { icon: <Zap className="h-4 w-4" />, label: "Flash sales" },
   ];
 
-  const handleSend = async () => {
+  const handleSend = () => {
     if (!input.trim() || loading) return;
     const userMsg = input.trim();
     setMessages((prev) => [...prev, { role: "user", text: userMsg }]);

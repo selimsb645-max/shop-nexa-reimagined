@@ -17,18 +17,11 @@ import {
   Heart,
   Store,
   ChevronRight,
-  Gift,
-  Percent,
-  AlertCircle,
   ShoppingCart,
-  Clock,
-  Lock,
   RotateCcw,
-  Sparkles,
   ArrowLeft,
   CheckCircle2,
   CreditCard,
-  Building2,
   Wallet,
   BadgePercent,
   HelpCircle,
@@ -118,9 +111,9 @@ export default function CartPage() {
   const navigate = useNavigate();
 
   // Context Hooks with Defensive Safe Fallbacks
-  const cartContext = (useCart() as any) || {};
-  const authContext = (useAuth() as any) || {};
-  const wishlistContext = (useWishlist() as any) || {};
+  const cartContext = useCart() as Record<string, unknown> & Partial<{ items: CartItemType[]; clear: () => Promise<void> }>;
+  const _authContext = useAuth() as Record<string, unknown> | null;
+  const wishlistContext = useWishlist() as Record<string, unknown> | null;
 
   // Extract Context Items if exists, else use state initializers
   const rawContextItems =
@@ -129,7 +122,7 @@ export default function CartPage() {
   // Local State for Cart Items (so cart remains fully interactive)
   const [items, setItems] = useState<CartItemType[]>(() => {
     if (Array.isArray(rawContextItems) && rawContextItems.length > 0) {
-      return rawContextItems.map((item: any, index: number) => ({
+      return rawContextItems.map((item: Record<string, unknown>, index: number) => ({
         id: String(item.id || item.productId || `item-${index}`),
         productId: String(item.productId || item.id || `prod-${index}`),
         title: item.title || item.name || "Shop Nexa Product",
@@ -162,7 +155,7 @@ export default function CartPage() {
     queryKey: ["cart-products", productIds],
     queryFn: async () => {
       if (!firebaseConfigured || productIds.length === 0) return {};
-      const results: Record<string, any> = {};
+      const results: Record<string, Product> = {};
       await Promise.all(
         productIds.map(async (pid) => {
           try {
@@ -181,7 +174,7 @@ export default function CartPage() {
 
   // Fetch seller profiles for each unique sellerId
   const sellerIds = Object.values(productDetails)
-    .map((p: any) => p.sellerId)
+    .map((p: Product) => p.sellerId)
     .filter(Boolean) as string[];
   const uniqueSellerIds = [...new Set(sellerIds)];
   const { data: sellerProfiles = {} } = useQuery({
@@ -242,7 +235,7 @@ export default function CartPage() {
 
   // Check if seller is verified from Firebase
   const isSellerVerified = (sellerName: string): boolean => {
-    const found = Object.values(sellerProfiles).find((s: any) => s.shopName === sellerName);
+    const found = Object.values(sellerProfiles).find((s: { shopName: string; verified: boolean }) => s.shopName === sellerName);
     return found?.verified ?? false;
   };
 
@@ -274,7 +267,7 @@ export default function CartPage() {
   const STANDARD_SHIPPING_FEE = 5.0;
 
   // Group items by Seller / Store
-  const sellerGroups = useMemo(() => {
+  const _sellerGroups = useMemo(() => {
     const groups: { [key: string]: CartItemType[] } = {};
     items.forEach((item) => {
       const sellerName = item.seller || "Shop Nexa";
@@ -558,7 +551,7 @@ export default function CartPage() {
       )})`,
     });
 
-    navigate({ to: "/checkout" as any });
+    navigate({ to: "/checkout" });
   };
 
   return (

@@ -1,7 +1,5 @@
 import {
   collection,
-  doc,
-  getDoc,
   getDocs,
   limit as fbLimit,
   orderBy,
@@ -31,7 +29,7 @@ function mapTx(id: string, d: Record<string, unknown>): SellerWalletTx {
     createdAt:
       typeof r.createdAt === "number"
         ? r.createdAt
-        : (r.createdAt as any)?.toMillis?.() ?? nowMs(),
+        : (r.createdAt as { toMillis?: () => number })?.toMillis?.() ?? nowMs(),
   };
 }
 

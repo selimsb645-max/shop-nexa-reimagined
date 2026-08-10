@@ -7,12 +7,10 @@ import {
   ShoppingCart,
   Users,
   Star,
-  Loader,
   Package,
   Eye,
 } from "lucide-react";
 import { listAllProducts } from "@/services/firebase/products";
-import { listOrders } from "@/services/firebase/orders";
 import { firebaseConfigured } from "@/services/firebase/config";
 import { formatPrice } from "@/utils/format";
 

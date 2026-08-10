@@ -1,7 +1,6 @@
 import {
   collection,
   doc,
-  getDoc,
   getDocs,
   query,
   where,
@@ -43,7 +42,7 @@ export async function purchaseGiftCard(
 ): Promise<string> {
   const db = getDb();
   const code = `NXA-${Math.random().toString(36).substring(2, 8).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-  const ref = await addDoc(collection(db, "giftCards"), {
+  await addDoc(collection(db, "giftCards"), {
     ...data,
     code,
     balance: data.amount,

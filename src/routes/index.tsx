@@ -17,7 +17,6 @@ import {
   Headset,
   Zap,
   Flame,
-  Star,
   ChevronLeft,
   ChevronRight,
   type LucideIcon,

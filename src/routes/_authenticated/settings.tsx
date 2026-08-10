@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import {
   ArrowLeft,
   Bell,
-  Globe,
   Mail,
   Smartphone,
   Lock,
@@ -18,7 +17,6 @@ import {
   Package,
   LogOut,
   ChevronRight,
-  Moon,
   Languages,
   DollarSign,
   CheckCircle2,
@@ -26,9 +24,6 @@ import {
   Headphones,
   Info,
   FileText,
-  Eye,
-  Download,
-  Trash2,
 } from "lucide-react";
 import { Spinner } from "@/components/common/Spinner";
 import { useAuth } from "@/context/AuthContext";
@@ -41,7 +36,7 @@ export const Route = createFileRoute("/_authenticated/settings")({
 });
 
 function SettingsPage() {
-  const { user, profile, refreshProfile } = useAuth();
+  const { user, profile, _refreshProfile } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState<CustomerSettings>(DEFAULT_SETTINGS);
   const [saving, setSaving] = useState(false);

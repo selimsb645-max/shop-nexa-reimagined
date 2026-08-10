@@ -87,7 +87,6 @@ function SupportPage() {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.data]);
 
-  const active = tickets.data?.find((t) => t.id === activeId) ?? null;
   const field = "w-full rounded-md border px-3 py-2.5 text-sm outline-none focus:border-primary";
 
   const submitTicket = async () => {

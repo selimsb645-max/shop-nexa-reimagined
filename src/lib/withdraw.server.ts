@@ -87,7 +87,6 @@ export async function requestWithdrawalServer(
   const withdrawalId = newDocId();
   const txId = newDocId();
   const nowMs = Date.now();
-  const nowIso = new Date(nowMs).toISOString();
 
   const writes: FsWrite[] = [
     // Withdrawal request document
@@ -273,8 +272,4 @@ export async function processWithdrawalServer(input: {
   return {
     status: input.action === "approve" ? "completed" : "rejected",
   };
-}
-
-function fromData(data: any): Record<string, unknown> {
-  return data;
 }

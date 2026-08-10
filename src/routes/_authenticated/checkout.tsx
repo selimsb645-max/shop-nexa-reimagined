@@ -16,19 +16,15 @@ import {
   ShieldCheck,
   ChevronRight,
   ShoppingBag,
-  ArrowRight,
   ArrowLeft,
   CreditCard,
   Banknote,
   Lock,
   Clock,
   Package,
-  CheckCircle2,
-  Star,
   Pencil,
   Trash2,
   AlertCircle,
-  Sparkles,
 } from "lucide-react";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
@@ -50,7 +46,7 @@ import {
 import { getWalletBalance, getRewardPoints } from "@/services/firebase/wallet";
 import { validateCoupon, CouponError } from "@/services/firebase/coupons";
 import { computeShipping, createOrder } from "@/services/firebase/orders";
-import type { PaymentMethod, Coupon } from "@/types/commerce";
+import type { PaymentMethod, Coupon, CartItem } from "@/types/commerce";
 import type { Address } from "@/types/customer";
 
 export const Route = createFileRoute("/_authenticated/checkout")({
@@ -120,26 +116,26 @@ function CheckoutPage() {
   const { user } = useAuth();
 
   // ---- Cart ----
-  const cartContext = (useCart() as any) || {};
+  const cartContext = useCart() as Record<string, unknown> & Partial<{ items: CartItem[]; clear: () => Promise<void> }>;
   const rawItems =
     cartContext?.items || cartContext?.cartItems || cartContext?.cart || [];
   const cartItems = Array.isArray(rawItems) ? rawItems : [];
 
   // ---- Fetch product details for seller info ----
   const productIds = cartItems
-    .map((i: any) => i.productId || i.id)
+    .map((i: CartItem) => i.productId || i.id)
     .filter(Boolean);
   const { data: productDetails = {} } = useQuery({
     queryKey: ["checkout-products", productIds],
     queryFn: async () => {
       if (!firebaseConfigured || productIds.length === 0) return {};
-      const results: Record<string, any> = {};
+      const results: Record<string, Product> = {};
       await Promise.all(
         productIds.map(async (pid: string) => {
           try {
             const p = await getProductById(pid);
             if (p) results[pid] = p;
-          } catch (e) {
+          } catch (_e) {
             console.warn("Failed to fetch product:", pid);
           }
         })
@@ -152,7 +148,7 @@ function CheckoutPage() {
 
   // ---- Fetch seller profiles ----
   const sellerIds = Object.values(productDetails)
-    .map((p: any) => p.sellerId)
+    .map((p: Product) => p.sellerId)
     .filter(Boolean) as string[];
   const uniqueSellerIds = [...new Set(sellerIds)];
   const { data: sellerProfiles = {} } = useQuery({
@@ -170,7 +166,7 @@ function CheckoutPage() {
                 verified: profile.status === "approved",
               };
             }
-          } catch (e) {
+          } catch (_e) {
             console.warn("Failed to fetch seller:", sid);
           }
         })
@@ -183,7 +179,7 @@ function CheckoutPage() {
 
   // ---- Enrich items with seller info ----
   const enrichedItems = useMemo(() => {
-    return cartItems.map((item: any, index: number) => {
+    return cartItems.map((item: CartItem, index: number) => {
       const pid = item.productId || item.id;
       const product = productDetails[pid];
       const sellerId = product?.sellerId;
@@ -291,7 +287,7 @@ function CheckoutPage() {
   const itemsSubtotal = useMemo(
     () =>
       enrichedItems.reduce(
-        (acc: number, i: any) => acc + i.price * i.quantity,
+        (acc: number, i: CartItem) => acc + i.price * i.quantity,
         0
       ),
     [enrichedItems]
@@ -373,7 +369,7 @@ function CheckoutPage() {
       setShowAddressForm(false);
       setEditingAddress(null);
       toast.success(id ? "Address updated" : "Address saved");
-    } catch (e) {
+    } catch (_e) {
       toast.error("Failed to save address");
     }
   };
@@ -385,7 +381,7 @@ function CheckoutPage() {
       await refetchAddresses();
       setSelectedAddressId(id);
       toast.success("Default address updated");
-    } catch (e) {
+    } catch (_e) {
       toast.error("Failed to update default address");
     }
   };
@@ -397,7 +393,7 @@ function CheckoutPage() {
       await refetchAddresses();
       if (selectedAddressId === id) setSelectedAddressId("");
       toast.success("Address deleted");
-    } catch (e) {
+    } catch (_e) {
       toast.error("Failed to delete address");
     }
   };
@@ -459,8 +455,8 @@ function CheckoutPage() {
 
       toast.success("Order placed successfully!");
       navigate({
-        to: "/order-success" as any,
-        search: { orderId } as any,
+        to: "/order-success",
+        search: { orderId },
       });
     } catch (err) {
       toast.error(
@@ -756,7 +752,7 @@ function CheckoutPage() {
                       </div>
                       {/* Items */}
                       <div className="divide-y divide-slate-100">
-                        {sellerItems.map((item: any) => (
+                        {sellerItems.map((item: CartItem) => (
                           <div
                             key={item.id}
                             className="flex items-center gap-3 p-3"
@@ -1093,7 +1089,7 @@ function CheckoutPage() {
 
               {/* Items count */}
               <div className="space-y-2 mb-4">
-                {enrichedItems.slice(0, 5).map((item: any) => (
+                {enrichedItems.slice(0, 5).map((item: CartItem) => (
                   <div
                     key={item.id}
                     className="flex items-center gap-2.5 text-xs"

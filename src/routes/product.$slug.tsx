@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import {
   Star,
@@ -22,13 +22,9 @@ import {
   ThumbsUp,
   AlertCircle,
   Package,
-  Award,
   Sparkles,
-  Clock,
   CheckCircle,
   Send,
-  Eye,
-  Sliders,
 } from "lucide-react";
 
 import { SiteHeader } from "@/components/layout/SiteHeader";
@@ -56,9 +52,12 @@ type ProductWithExtras = Product & {
   freeShipping?: boolean;
   shortDescription?: string;
   soldCount?: number;
-  seller?: { name: string; rating: number; responseTime: string; storeSlug?: string };
+  seller?: { name: string; rating: number; responseTime: string; shipOnTime?: number; storeSlug?: string };
   discount?: number;
   inStock?: boolean;
+  imageUrl?: string;
+  thumbnail?: string;
+  compareAtPrice?: number;
 };
 
 export const Route = createFileRoute("/product/$slug")({
@@ -273,15 +272,15 @@ const MOCK_RECOMMENDED_PRODUCTS: Partial<Product>[] = [
 
 export function ProductDetailPage() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
+  const _queryClient = useQueryClient();
   const { slug } = Route.useParams();
 
   // Auth & Context Hooks
-  const authContext = (useAuth() as any) || {};
+  const authContext = (useAuth() as Record<string, unknown>) || {};
   const user = authContext?.user ?? null;
 
-  const cartContext = (useCart() as any) || {};
-  const wishlistContext = (useWishlist() as any) || {};
+  const cartContext = (useCart() as Record<string, unknown>) || {};
+  const wishlistContext = (useWishlist() as Record<string, unknown>) || {};
 
   // Fetch Main Product
   const {
@@ -308,9 +307,9 @@ export function ProductDetailPage() {
       // Try fetching list from firebase or use default fallback
       try {
         const all = await listProducts();
-        const matched = all.find((p: any) => p.slug === slug || p.id === slug);
+        const matched = all.find((p: Record<string, unknown>) => p.slug === slug || p.id === slug);
         if (matched) return matched;
-      } catch (_) {}
+      } catch (_) { // ignore }
 
       // Return synthetic product filled with slug name
       const formattedTitle = slug
@@ -336,7 +335,7 @@ export function ProductDetailPage() {
         try {
           const list = await listProducts({ category: product?.category });
           if (list && list.length > 0) return list;
-        } catch (_) {}
+        } catch (_) { // ignore }
       }
       return MOCK_RECOMMENDED_PRODUCTS as Product[];
     },
@@ -380,12 +379,12 @@ export function ProductDetailPage() {
   const images = useMemo(() => {
     if (!product) return [];
     if (Array.isArray(product.images) && product.images.length > 0) {
-      return product.images.map((img: any) =>
+      return product.images.map((img: unknown) =>
         typeof img === "string" ? img : img.url || img.src || ""
       );
     }
-    if ((product as any).imageUrl) return [(product as any).imageUrl];
-    if ((product as any).thumbnail) return [(product as any).thumbnail];
+    if ((product as ProductWithExtras).imageUrl) return [(product as ProductWithExtras).imageUrl!];
+    if ((product as ProductWithExtras).thumbnail) return [(product as ProductWithExtras).thumbnail!];
     return ["data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MDAgNjAwIj48cmVjdCB3aWR0aD0iNjAwIiBoZWlnaHQ9IjYwMCIgZmlsbD0iI2YzZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIyMCIgZmlsbD0iIzljYTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPlNob3AgTmV4YTwvdGV4dD48L3N2Zz4="];
   }, [product]);
 
@@ -397,7 +396,7 @@ export function ProductDetailPage() {
     }
     if (Array.isArray(wishlistContext.items)) {
       return wishlistContext.items.some(
-        (i: any) => i.id === product.id || i.productId === product.id
+        (i: Record<string, unknown>) => i.id === product.id || i.productId === product.id
       );
     }
     return false;
@@ -446,7 +445,7 @@ export function ProductDetailPage() {
           description: selectedColor || selectedSize ? `Variant: ${selectedColor} ${selectedSize}` : undefined,
           action: {
             label: "View Cart",
-            onClick: () => navigate({ to: "/cart" as any }),
+            onClick: () => navigate({ to: "/cart" }),
           },
         }
       );
@@ -458,7 +457,7 @@ export function ProductDetailPage() {
   const handleBuyNow = useCallback(() => {
     if (!product) return;
     handleAddToCart();
-    navigate({ to: "/checkout" as any });
+    navigate({ to: "/checkout" });
   }, [handleAddToCart, navigate, product]);
 
   // Hover Zoom Handlers
@@ -471,8 +470,8 @@ export function ProductDetailPage() {
 
   // Copy Link Handler
   const handleCopyLink = () => {
-    if (typeof window !== "undefined") {
-      navigator.clipboard.writeText(window.location.href);
+    if (typeof globalThis !== "undefined") {
+      navigator.clipboard.writeText(globalThis.location.href);
       setCopied(true);
       toast.success("Product link copied to clipboard!");
       setTimeout(() => setCopied(false), 3000);
@@ -481,14 +480,14 @@ export function ProductDetailPage() {
 
   // Share Handlers
   const handleShareFacebook = () => {
-    const url = encodeURIComponent(window.location.href);
-    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, "_blank");
+    const url = encodeURIComponent(globalThis.location.href);
+    globalThis.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, "_blank");
   };
 
   const handleShareWhatsApp = () => {
-    const url = encodeURIComponent(window.location.href);
+    const url = encodeURIComponent(globalThis.location.href);
     const text = encodeURIComponent(`Check out ${product?.title} on Shop Nexa! `);
-    window.open(`https://api.whatsapp.com/send?text=${text}${url}`, "_blank");
+    globalThis.open(`https://api.whatsapp.com/send?text=${text}${url}`, "_blank");
   };
 
   // Submit Review Handler
@@ -521,9 +520,9 @@ export function ProductDetailPage() {
 
   // Calculations
   const price = product?.price ?? 0;
-  const originalPrice = product?.compareAtPrice ?? (product as any)?.compareAtPrice;
+  const originalPrice = product?.compareAtPrice ?? (product as ProductWithExtras)?.compareAtPrice;
   const discountPercent = useMemo(() => {
-    if (product?.discount && (product as any).discount > 0) return Math.round((product as any).discount);
+    if (product?.discount && (product as ProductWithExtras).discount! > 0) return Math.round((product as ProductWithExtras).discount!);
     if (originalPrice && originalPrice > price) {
       return Math.round(((originalPrice - price) / originalPrice) * 100);
     }
@@ -613,8 +612,8 @@ export function ProductDetailPage() {
   }
 
   // Seller Details Safe Defaults
-  const sellerInfo = (product as any).seller || {
-    name: (product as any).brand || "Shop Nexa Verified Seller",
+  const sellerInfo = (product as ProductWithExtras).seller || {
+    name: (product as ProductWithExtras).brand || "Shop Nexa Verified Seller",
     rating: 96,
     responseTime: "< 1 Hour",
     shipOnTime: 99,
@@ -687,7 +686,7 @@ export function ProductDetailPage() {
                       -{discountPercent}% OFF
                     </span>
                   )}
-                  {(product as any).freeShipping && (
+                  {(product as ProductWithExtras).freeShipping && (
                     <span className="bg-[#1a1f3a] text-white text-[11px] font-semibold px-2.5 py-0.5 rounded-md shadow-md flex items-center gap-1">
                       <Truck className="w-3 h-3 text-[#f97316]" /> Free Delivery
                     </span>
@@ -774,9 +773,9 @@ export function ProductDetailPage() {
                 {/* Brand / Store Tag */}
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-xs font-semibold uppercase tracking-wider text-[#f97316] bg-orange-50 px-2.5 py-0.5 rounded-full border border-orange-100">
-                    {(product as any).brand || "Shop Nexa Exclusive"}
+                    {(product as ProductWithExtras).brand || "Shop Nexa Exclusive"}
                   </span>
-                  {(product as any).inStock !== false && (
+                  {(product as ProductWithExtras).inStock !== false && (
                     <span className="text-xs text-emerald-600 font-medium flex items-center gap-1">
                       <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                       In Stock
@@ -811,7 +810,7 @@ export function ProductDetailPage() {
 
                   <span className="text-slate-500 font-medium flex items-center gap-1">
                     <Sparkles className="w-3.5 h-3.5 text-[#f97316]" />
-                    {(product as any).soldCount ?? 850}+ Sold
+                    {(product as ProductWithExtras).soldCount ?? 850}+ Sold
                   </span>
                 </div>
 
@@ -839,19 +838,19 @@ export function ProductDetailPage() {
                 </div>
 
                 {/* SHORT DESCRIPTION / BULLET POINTS */}
-                {(product as any).shortDescription && (
+                {(product as ProductWithExtras).shortDescription && (
                   <p className="text-sm text-slate-600 mb-4 leading-relaxed">
-                    {(product as any).shortDescription}
+                    {(product as ProductWithExtras).shortDescription}
                   </p>
                 )}
 
-                {(product as any).features && (product as any).features.length > 0 && (
+                {(product as ProductWithExtras).features && (product as ProductWithExtras).features!.length > 0 && (
                   <div className="mb-6">
                     <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
                       Key Highlights
                     </h4>
                     <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs md:text-sm text-slate-700">
-                      {(product as any).features.map((feat, idx) => (
+                      {(product as ProductWithExtras).features!.map((feat: string, idx: number) => (
                         <li key={idx} className="flex items-start gap-2">
                           <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
                           <span>{feat}</span>
@@ -1076,13 +1075,13 @@ export function ProductDetailPage() {
             <div className="prose max-w-none text-slate-700 text-sm md:text-base leading-relaxed space-y-4">
               <p>{product.description}</p>
 
-              {(product as any).features && (product as any).features.length > 0 && (
+              {(product as ProductWithExtras).features && (product as ProductWithExtras).features!.length > 0 && (
                 <div className="mt-6 bg-slate-50 p-5 rounded-2xl border border-slate-100">
                   <h3 className="text-base font-bold text-[#1a1f3a] mb-3">
                     Product Highlights & Benefits
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {(product as any).features.map((feat, i) => (
+                    {(product as ProductWithExtras).features!.map((feat: string, i: number) => (
                       <div key={i} className="flex items-start gap-2.5">
                         <span className="w-5 h-5 rounded-full bg-orange-100 text-[#f97316] flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
                           ✓
@@ -1102,10 +1101,10 @@ export function ProductDetailPage() {
               <table className="w-full text-left text-sm border-collapse">
                 <tbody>
                   {(product.specifications || [
-                    { name: "Brand", value: (product as any).brand || "Shop Nexa" },
+                    { name: "Brand", value: (product as ProductWithExtras).brand || "Shop Nexa" },
                     { name: "SKU", value: product.id },
                     { name: "Category", value: product.category || "General" },
-                    { name: "In Stock", value: (product as any).inStock ? "Yes" : "No" },
+                    { name: "In Stock", value: (product as ProductWithExtras).inStock ? "Yes" : "No" },
                     { name: "Warranty", value: "1 Year Official Warranty" },
                   ]).map((spec, idx) => (
                     <tr
