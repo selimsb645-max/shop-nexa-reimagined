@@ -7,6 +7,8 @@ import {
   signInWithPopup,
   signOut as fbSignOut,
   updateProfile as fbUpdateProfile,
+  verifyPasswordResetCode,
+  confirmPasswordReset,
   type User,
 } from "firebase/auth";
 import { getFirebaseAuth, googleProvider } from "./config";
@@ -74,9 +76,30 @@ export async function resetPassword(email: string): Promise<void> {
   await sendPasswordResetEmail(auth, email, {
     url:
       typeof window !== "undefined"
-        ? `${window.location.origin}/login`
-        : "https://shopnexa.app/login",
+        ? `${window.location.origin}/reset-password`
+        : "https://shopnexa.app/reset-password",
   });
+}
+
+/**
+ * Verify a Firebase password-reset action code and return the email address
+ * it was issued for. Throws if the code is invalid, expired, or already used.
+ */
+export async function verifyResetCode(code: string): Promise<string> {
+  const auth = getFirebaseAuth();
+  return await verifyPasswordResetCode(auth, code);
+}
+
+/**
+ * Complete the password reset by confirming a new password with Firebase.
+ * Throws on failure (e.g. weak password or invalid code).
+ */
+export async function completePasswordReset(
+  code: string,
+  newPassword: string,
+): Promise<void> {
+  const auth = getFirebaseAuth();
+  await confirmPasswordReset(auth, code, newPassword);
 }
 
 export async function signOut(): Promise<void> {
