@@ -13,7 +13,7 @@ export const displayNameSchema = z
   .string()
   .trim()
   .min(2, "Name must be at least 2 characters")
-  .max(50, "Name must be less than 50 characters");
+  .max(50, "Name is less than 50 characters");
 
 export const loginSchema = z.object({
   email: emailSchema,
@@ -36,6 +36,17 @@ export type RegisterValues = z.infer<typeof registerSchema>;
 
 export const forgotSchema = z.object({ email: emailSchema });
 export type ForgotValues = z.infer<typeof forgotSchema>;
+
+export const resetPasswordSchema = z
+  .object({
+    password: passwordSchema,
+    confirmPassword: z.string(),
+  })
+  .refine((v) => v.password === v.confirmPassword, {
+    path: ["confirmPassword"],
+    message: "Passwords do not match",
+  });
+export type ResetPasswordValues = z.infer<typeof resetPasswordSchema>;
 
 export const profileSchema = z.object({ displayName: displayNameSchema });
 export type ProfileValues = z.infer<typeof profileSchema>;
@@ -88,4 +99,3 @@ export const productSchema = z.object({
   status: z.enum(["draft", "published", "archived"]),
 });
 export type ProductFormValues = z.infer<typeof productSchema>;
-
