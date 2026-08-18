@@ -36,6 +36,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getProductById } from "@/services/firebase/products";
 import { getSellerProfile } from "@/services/firebase/sellers";
 import { firebaseConfigured } from "@/services/firebase/config";
+import { listAvailableCoupons, validateCoupon, CouponError } from "@/services/firebase/coupons";
 
 // ----------------------------------------------------------------------
 // Route Definition
@@ -77,29 +78,7 @@ export interface CouponType {
 // No sample/mock data — cart starts empty and is populated from Firebase only
 // ----------------------------------------------------------------------
 
-const AVAILABLE_COUPONS: CouponType[] = [
-  {
-    code: "NEXA10",
-    discountType: "percent",
-    value: 10,
-    minSubtotal: 30,
-    description: "10% OFF on orders over $30",
-  },
-  {
-    code: "FREESHIP",
-    discountType: "fixed",
-    value: 5,
-    minSubtotal: 25,
-    description: "Free Shipping Voucher ($5 OFF)",
-  },
-  {
-    code: "MEGA20",
-    discountType: "fixed",
-    value: 20,
-    minSubtotal: 100,
-    description: "Flat $20 OFF on orders over $100",
-  },
-];
+// Coupons are fetched from Firestore (no hardcoded values)
 
 
 
@@ -488,8 +467,8 @@ export default function CartPage() {
     toast.info("Shopping cart cleared");
   };
 
-  // Coupon Application Handler
-  const handleApplyCoupon = (codeToApply?: string) => {
+  // Coupon Application Handler — validates against Firestore (server-authoritative)
+  const handleApplyCoupon = async (codeToApply?: string) => {
     const code = (codeToApply || couponInput).trim().toUpperCase();
     setCouponError("");
 
@@ -499,33 +478,30 @@ export default function CartPage() {
     }
 
     setIsApplyingCoupon(true);
-
-    setTimeout(() => {
-      setIsApplyingCoupon(false);
-      const found = AVAILABLE_COUPONS.find((c) => c.code === code);
-
-      if (!found) {
-        setCouponError("Invalid voucher code. Try NEXA10 or FREESHIP.");
-        toast.error("Invalid voucher code");
-        return;
-      }
-
-      if (found.minSubtotal && itemsSubtotal < found.minSubtotal) {
-        setCouponError(
-          `Minimum subtotal of ${formatPrice(
-            found.minSubtotal
-          )} required for code ${found.code}`
-        );
-        toast.error(`Minimum order of ${formatPrice(found.minSubtotal)} required`);
-        return;
-      }
-
-      setAppliedCoupon(found);
-      setCouponCodeInput("");
-      toast.success(`Voucher code "${found.code}" applied!`, {
-        description: found.description,
+    try {
+      const result = await validateCoupon(code, itemsSubtotal);
+      setAppliedCoupon({
+        code: result.coupon.code,
+        discountType: result.coupon.type,
+        value: result.coupon.value,
+        minSubtotal: result.coupon.minSubtotal,
+        description: result.coupon.type === "percent"
+          ? `${result.coupon.value}% OFF`
+          : `${formatPrice(result.coupon.value)} OFF`,
       });
-    }, 400);
+      setCouponCodeInput("");
+      toast.success(`Voucher code "${result.coupon.code}" applied!`);
+    } catch (err) {
+      if (err instanceof CouponError) {
+        setCouponError(err.message);
+        toast.error(err.message);
+      } else {
+        setCouponError("Failed to validate coupon");
+        toast.error("Failed to validate coupon");
+      }
+    } finally {
+      setIsApplyingCoupon(false);
+    }
   };
 
   const handleRemoveCoupon = () => {
@@ -1025,7 +1001,7 @@ export default function CartPage() {
                         Available Store Vouchers:
                       </p>
                       <div className="flex flex-wrap gap-1.5">
-                        {AVAILABLE_COUPONS.map((c) => (
+                        {availableCoupons.slice(0, 6).map((c) => (
                           <button
                             key={c.code}
                             type="button"
