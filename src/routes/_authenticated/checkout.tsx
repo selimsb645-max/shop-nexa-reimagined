@@ -25,6 +25,7 @@ import {
   Pencil,
   Trash2,
   AlertCircle,
+  Gift,
 } from "lucide-react";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
@@ -251,6 +252,12 @@ function CheckoutPage() {
   const [couponError, setCouponError] = useState("");
   const [couponBusy, setCouponBusy] = useState(false);
 
+  // ---- Promo Code (NEXA####) ----
+  const [promoInput, setPromoInput] = useState("");
+  const [appliedPromoCode, setAppliedPromoCode] = useState<string | null>(null);
+  const [promoError, setPromoError] = useState("");
+  const [promoBusy, setPromoBusy] = useState(false);
+
   // ---- Reward Points ----
   const { data: rewardPoints = 0 } = useQuery({
     queryKey: ["reward-points", user?.uid],
@@ -443,6 +450,7 @@ function CheckoutPage() {
         },
         paymentMethod,
         couponCode: appliedCoupon?.coupon.code ?? null,
+        promoCode: appliedPromoCode,
         discount: couponDiscount,
         deliveryMethod: deliveryMethodId as "standard" | "express",
         rewardPoints: useRewardPoints ? rewardPointsToUse : 0,
@@ -870,6 +878,68 @@ function CheckoutPage() {
                 <p className="text-xs text-rose-600 mt-2 flex items-center gap-1">
                   <AlertCircle className="w-3 h-3" />
                   {couponError}
+                </p>
+              )}
+            </CheckoutSection>
+
+            {/* ---- PROMO CODE (NEXA####) ---- */}
+            <CheckoutSection
+              number={5}
+              icon={<Gift className="w-4 h-4" />}
+              title="Promo Code (NEXA)"
+            >
+              {appliedPromoCode ? (
+                <div className="flex items-center justify-between bg-orange-50 border border-orange-200 rounded-xl p-3">
+                  <div className="flex items-center gap-2">
+                    <Gift className="w-4 h-4 text-orange-600" />
+                    <div>
+                      <span className="text-sm font-bold text-orange-700 font-mono tracking-wider">
+                        {appliedPromoCode}
+                      </span>
+                      <p className="text-xs text-orange-600">
+                        Will be validated at checkout
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRemovePromo}
+                    className="p-1.5 text-slate-400 hover:text-rose-600 rounded-full hover:bg-rose-50 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={promoInput}
+                    onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleApplyPromo();
+                      }
+                    }}
+                    placeholder="Enter NEXA promo code"
+                    className="flex-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#f57224] transition-colors uppercase font-mono"
+                    maxLength={10}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleApplyPromo}
+                    disabled={promoBusy}
+                    className="px-4 py-2.5 bg-[#0f172a] hover:bg-slate-800 text-white text-sm font-bold rounded-lg transition-colors disabled:opacity-60 flex items-center gap-1.5"
+                  >
+                    <Gift className="w-3.5 h-3.5" />
+                    <span>Apply</span>
+                  </button>
+                </div>
+              )}
+              {promoError && (
+                <p className="text-xs text-rose-600 mt-2 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {promoError}
                 </p>
               )}
             </CheckoutSection>
