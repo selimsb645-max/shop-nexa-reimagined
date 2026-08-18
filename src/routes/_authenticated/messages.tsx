@@ -40,6 +40,8 @@ import { WhatsAppFab } from "@/components/layout/SiteChrome";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { useAuth } from "@/context/AuthContext";
 import { firebaseConfigured } from "@/services/firebase/config";
+import { onSnapshot, collection, query, where, orderBy, limit } from "firebase/firestore";
+import { getDb } from "@/services/firebase/config";
 import {
   listThreads,
   listMessages,
@@ -62,7 +64,9 @@ import {
 } from "@/services/firebase/support";
 import { listOrders } from "@/services/firebase/orders";
 import { formatPrice, formatDate } from "@/utils/format";
-import type { MessageThread } from "@/types/customer";
+import type { MessageThread, ChatMessage } from "@/types/customer";
+
+type TicketMessage = { id: string; body: string; from: "support" | "customer"; createdAt: number };
 import type { CustomerNotification, NotificationType } from "@/types/customer";
 import type { SupportTicket } from "@/types/customer";
 import type { Order } from "@/types/commerce";
@@ -1363,12 +1367,42 @@ function ChatView({ threadId, onBack, userId }: { threadId: string; onBack: () =
     enabled: !!userId,
   });
 
-  const messages = useQuery({
-    queryKey: ["messages", userId, threadId],
-    queryFn: () => listMessages(userId, threadId),
-    enabled: !!userId && !!threadId,
-    refetchInterval: 10_000,
-  });
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messagesLoading, setMessagesLoading] = useState(true);
+
+  useEffect(() => {
+    if (!userId || !threadId || !firebaseConfigured) return;
+    setMessagesLoading(true);
+    const unsub = onSnapshot(
+      query(
+        collection(getDb(), "users", userId, "messages"),
+        where("threadId", "==", threadId),
+        orderBy("createdAt", "asc"),
+        limit(300),
+      ),
+      (snap) => {
+        const mapped = snap.docs.map((d) => {
+          const data = d.data() as Record<string, unknown>;
+          return {
+            id: d.id,
+            threadId: String(data.threadId ?? ""),
+            body: String(data.body ?? ""),
+            from: data.from === "support" ? "support" as const : "customer" as const,
+            createdAt: typeof data.createdAt === "number"
+              ? data.createdAt
+              : (data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? Date.now(),
+          };
+        });
+        setMessages(mapped);
+        setMessagesLoading(false);
+      },
+      (err) => {
+        console.warn("Messages snapshot error:", err);
+        setMessagesLoading(false);
+      },
+    );
+    return () => unsub();
+  }, [userId, threadId]);
 
   useEffect(() => {
     markThreadRead(userId, threadId).catch(() => undefined);
@@ -1376,7 +1410,7 @@ function ChatView({ threadId, onBack, userId }: { threadId: string; onBack: () =
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.data]);
+  }, [messages]);
 
   const activeThread = thread.data?.find((t) => t.id === threadId);
 
@@ -1423,11 +1457,11 @@ function ChatView({ threadId, onBack, userId }: { threadId: string; onBack: () =
 
       {/* Messages */}
       <div className="flex-1 space-y-2 overflow-y-auto p-4">
-        {messages.isLoading ? (
+        {messagesLoading ? (
           <div className="flex h-full items-center justify-center">
             <Loader className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
-        ) : !messages.data || messages.data.length === 0 ? (
+        ) : !messages || messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center text-center">
             <MessageCircle className="mb-3 h-12 w-12 text-muted-foreground/30" />
             <p className="text-sm text-muted-foreground">No messages yet. Say hello!</p>
@@ -1440,7 +1474,7 @@ function ChatView({ threadId, onBack, userId }: { threadId: string; onBack: () =
                 <Pin className="h-3 w-3" /> {activeThread?.subject}
               </span>
             </div>
-            {messages.data.map((msg) => {
+            {messages.map((msg) => {
               const isMe = msg.from === "customer";
               return (
                 <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
@@ -1466,7 +1500,7 @@ function ChatView({ threadId, onBack, userId }: { threadId: string; onBack: () =
       </div>
 
       {/* Quick replies */}
-      {messages.data && messages.data.length < 4 && (
+      {messages && messages.length < 4 && (
         <div className="flex flex-wrap gap-1.5 border-t bg-background/80 px-3 py-2 backdrop-blur">
           {quickReplies.map((reply) => (
             <button
@@ -1541,18 +1575,46 @@ function TicketChatView({ ticketId, onBack, userId }: { ticketId: string; onBack
     enabled: !!userId,
   });
 
-  const messages = useQuery({
-    queryKey: ["ticketMessages", userId, ticketId],
-    queryFn: () => listTicketMessages(userId, ticketId),
-    enabled: !!userId && !!ticketId,
-    refetchInterval: 10_000,
-  });
+  const [messages, setMessages] = useState<TicketMessage[]>([]);
+  const [messagesLoading, setMessagesLoading] = useState(true);
+
+  useEffect(() => {
+    if (!userId || !ticketId || !firebaseConfigured) return;
+    setMessagesLoading(true);
+    const unsub = onSnapshot(
+      query(
+        collection(getDb(), "users", userId, "tickets", ticketId, "messages"),
+        orderBy("createdAt", "asc"),
+        limit(200),
+      ),
+      (snap) => {
+        const mapped = snap.docs.map((d) => {
+          const data = d.data() as Record<string, unknown>;
+          return {
+            id: d.id,
+            body: String(data.body ?? ""),
+            from: data.from === "support" ? "support" as const : "customer" as const,
+            createdAt: typeof data.createdAt === "number"
+              ? data.createdAt
+              : (data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? Date.now(),
+          };
+        });
+        setMessages(mapped);
+        setMessagesLoading(false);
+      },
+      (err) => {
+        console.warn("Ticket messages snapshot error:", err);
+        setMessagesLoading(false);
+      },
+    );
+    return () => unsub();
+  }, [userId, ticketId]);
 
   const activeTicket = tickets.data?.find((t) => t.id === ticketId);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.data]);
+  }, [messages]);
 
   const sendMutation = useMutation({
     mutationFn: () => replyToTicket(userId, ticketId, draft.trim()),
@@ -1584,17 +1646,17 @@ function TicketChatView({ ticketId, onBack, userId }: { ticketId: string; onBack
 
       {/* Messages */}
       <div className="flex-1 space-y-2 overflow-y-auto p-4">
-        {messages.isLoading ? (
+        {messagesLoading ? (
           <div className="flex h-full items-center justify-center">
             <Loader className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
-        ) : !messages.data || messages.data.length === 0 ? (
+        ) : !messages || messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center text-center">
             <Headphones className="mb-3 h-12 w-12 text-muted-foreground/30" />
             <p className="text-sm text-muted-foreground">No messages yet</p>
           </div>
         ) : (
-          messages.data.map((msg) => {
+          messages.map((msg) => {
             const isMe = msg.from === "customer";
             return (
               <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
