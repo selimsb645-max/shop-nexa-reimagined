@@ -145,8 +145,14 @@ service cloud.firestore {
     // Sellers
     match /sellers/{uid} {
       allow read: if isSelf(uid) || isAdmin();
-      allow create: if isSelf(uid) && request.resource.data.status == 'pending';
-      allow update: if (isSelf(uid) && request.resource.data.status == resource.data.status) || isAdmin();
+      allow create: if isSelf(uid) && request.resource.data.status == 'draft';
+      allow update: if isAdmin()
+        || (isSelf(uid)
+          && (
+            request.resource.data.status == resource.data.status
+            || (resource.data.status == 'draft' && request.resource.data.status == 'pending_review')
+            || (resource.data.status == 'need_documents' && request.resource.data.status == 'pending_review')
+          ));
       allow delete: if isAdmin();
 
       // Seller orders - created by server-side checkout only.
