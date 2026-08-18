@@ -349,6 +349,8 @@ export async function placeOrderServer(
         walletUsed,
         total,
         couponCode: appliedCoupon,
+        promoCode: appliedPromo,
+        promoDiscount: promoDiscount,
         status: "pending",
         payment: {
           method: req.paymentMethod,
