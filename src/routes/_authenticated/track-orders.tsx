@@ -1,5 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { onSnapshot, doc } from "firebase/firestore";
+import { getDb } from "@/services/firebase/config";
+import { useEffect, useState } from "react";
+import type { DeliveryTracking } from "@/services/firebase/deliveryTracking";
 import { ArrowLeft, Truck, MapPin, Clock, Package, CheckCircle2, Loader } from "lucide-react";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
@@ -72,12 +76,27 @@ function TrackOrdersPage() {
 }
 
 function TrackableOrderCard({ order }: { order: Order }) {
-  const { data: tracking } = useQuery({
-    queryKey: ["deliveryTracking", order.id],
-    queryFn: () => getDeliveryTracking(order.id),
-    enabled: firebaseConfigured,
-    refetchInterval: 30_000,
-  });
+  const [tracking, setTracking] = useState<DeliveryTracking | null>(null);
+
+  useEffect(() => {
+    if (!firebaseConfigured) return;
+    const unsub = onSnapshot(
+      doc(getDb(), "orders", order.id, "tracking", "live"),
+      (snap) => {
+        if (snap.exists()) {
+          const data = snap.data() as Record<string, unknown>;
+          setTracking({
+            orderId: order.id,
+            deliveryPartnerName: (data.deliveryPartnerName as string) || null,
+            estimatedDeliveryTime: (data.estimatedDeliveryTime as number) || null,
+            currentLocation: (data.currentLocation as { lat: number; lng: number }) || null,
+            notes: (data.notes as string[]) || [],
+          } as DeliveryTracking);
+        }
+      },
+    );
+    return () => unsub();
+  }, [order.id]);
 
   const steps = [
     { status: "pending", icon: <Package className="h-5 w-5" />, label: "Order Placed" },
