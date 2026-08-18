@@ -62,6 +62,19 @@ service cloud.firestore {
       allow update: if isAdmin();
     }
 
+    // Promo Codes - server-side generated only.
+    // Users can READ only their own promo codes (where userId == auth.uid).
+    // ALL client writes are blocked — generation, mutation, and status
+    // changes happen exclusively through trusted server functions
+    // (service account bypasses these rules).
+    // Admins can read all promo codes but cannot write from client either.
+    match /promoCodes/{code} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || isAdmin()
+      );
+      allow create, update, delete: if false;
+    }
+
     // Banners - public read, admin write
     match /banners/{id} {
       allow read: if true;
