@@ -12,6 +12,7 @@ import { createNotification } from "@/services/firebase/sellers";
 import { formatDateTime, formatPrice } from "@/utils/format";
 import type { SellerOrder, SellerOrderStatus } from "@/types/seller";
 import { mapFirebaseError } from "@/utils/errors";
+import { useAuth } from "@/context/AuthContext";
 
 export const Route = createFileRoute("/_authenticated/seller/orders/$orderId")({
   component: () => (
@@ -28,6 +29,7 @@ const STATUS_FLOW: SellerOrderStatus[] = [
 ];
 
 function OrderDetail({ sellerId }: { sellerId: string }) {
+  const { user } = useAuth();
   const { orderId } = useParams({ from: "/_authenticated/seller/orders/$orderId" });
   const [order, setOrder] = useState<SellerOrder | null>(null);
   const [loading, setLoading] = useState(true);
@@ -76,7 +78,10 @@ function OrderDetail({ sellerId }: { sellerId: string }) {
   const onUpdate = async () => {
     setSaving(true);
     try {
-      await updateSellerOrderStatus(sellerId, order.id, nextStatus, note);
+      // Get ID token for settlement server function
+      const idToken = user ? await user.getIdToken() : undefined;
+
+      await updateSellerOrderStatus(sellerId, order.id, nextStatus, note, idToken);
       try {
         await createNotification(sellerId, {
           type: "order",
@@ -130,7 +135,7 @@ function OrderDetail({ sellerId }: { sellerId: string }) {
                     alt=""
                     className="h-14 w-14 rounded-md object-cover"
                   />
-                  <div className="min-w-0 flex-1">
+                  <div className="min-0 flex-1">
                     <div className="truncate font-medium">{it.title}</div>
                     <div className="text-xs text-muted-foreground">
                       Qty {it.quantity} · {formatPrice(it.price)}
