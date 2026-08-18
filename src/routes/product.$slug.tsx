@@ -300,28 +300,15 @@ export function ProductDetailPage() {
           console.warn("getProductBySlug error or missing:", err);
         }
       }
-      // Fallback lookup or generic product
-      const foundMock = MOCK_PRODUCTS[slug];
-      if (foundMock) {
-        return foundMock as Product;
-      }
-      // Try fetching list from firebase or use default fallback
+      // Try fetching from product list as secondary lookup
       try {
         const all = await listProducts();
         const matched = all.find((p: Record<string, unknown>) => p.slug === slug || p.id === slug);
         if (matched) return matched;
       } catch (_) { /* ignore */ }
 
-      // Return synthetic product filled with slug name
-      const formattedTitle = slug
-        .replace(/-/g, " ")
-        .replace(/\b\w/g, (c) => c.toUpperCase());
-      return {
-        ...DEFAULT_FALLBACK_PRODUCT,
-        id: `prod-${slug}`,
-        slug,
-        title: formattedTitle || DEFAULT_FALLBACK_PRODUCT.title,
-      } as Product;
+      // Product not found - return null so UI shows proper "not found" state
+      return null;
     },
     staleTime: 1000 * 60 * 5,
   });
@@ -338,7 +325,7 @@ export function ProductDetailPage() {
           if (list && list.length > 0) return list;
         } catch (_) { /* ignore */ }
       }
-      return MOCK_RECOMMENDED_PRODUCTS as Product[];
+      return [] as Product[];
     },
     enabled: !!product,
   });
@@ -368,8 +355,8 @@ export function ProductDetailPage() {
         const reviews = await listReviews(product.id);
         if (!cancelled) setUserReviews(reviews);
       } catch (e) {
-        // Fall back to mock reviews if Firestore fails
-        if (!cancelled) setUserReviews(MOCK_REVIEWS);
+        // Show empty state instead of fake reviews
+        if (!cancelled) setUserReviews([]);
       }
     })();
     return () => { cancelled = true; };
@@ -1372,7 +1359,7 @@ export function ProductDetailPage() {
           </h3>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
-            {(relatedProducts.length > 0 ? relatedProducts : MOCK_RECOMMENDED_PRODUCTS).map(
+            {relatedProducts.map(
               (p) => (
                 <ProductCard key={p.id} product={p as Product} />
               )
