@@ -36,6 +36,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { getProductBySlug, listProducts } from "@/services/firebase/products";
+import { listReviews, upsertReview } from "@/services/firebase/reviews";
 import { firebaseConfigured } from "@/services/firebase/config";
 import { toast } from "sonner";
 import { formatPrice } from "@/utils/format";
@@ -355,8 +356,24 @@ export function ProductDetailPage() {
 
   // Share & Review State
   const [copied, setCopied] = useState<boolean>(false);
-  const [userReviews, setUserReviews] = useState<Review[]>(MOCK_REVIEWS);
+  const [userReviews, setUserReviews] = useState<Review[]>([]);
   const [newRating, setNewRating] = useState<number>(5);
+
+  // Load real reviews from Firestore
+  useEffect(() => {
+    if (!product?.id) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const reviews = await listReviews(product.id);
+        if (!cancelled) setUserReviews(reviews);
+      } catch (e) {
+        // Fall back to mock reviews if Firestore fails
+        if (!cancelled) setUserReviews(MOCK_REVIEWS);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [product?.id]);
   const [newComment, setNewComment] = useState<string>("");
   const [newTitle, setNewTitle] = useState<string>("");
   const [isSubmittingReview, setIsSubmittingReview] = useState<boolean>(false);
@@ -491,32 +508,44 @@ export function ProductDetailPage() {
   };
 
   // Submit Review Handler
-  const handleSubmitReview = (e: React.FormEvent) => {
+  const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim()) {
       toast.error("Please enter a review message.");
       return;
     }
+    if (!user) {
+      toast.error("Please log in to leave a review.");
+      return;
+    }
+    if (!product?.id) {
+      toast.error("Unable to submit review — product not found.");
+      return;
+    }
     setIsSubmittingReview(true);
-    setTimeout(() => {
-      const newRev: Review = {
-        id: `rev-${Date.now()}`,
-        userName: user?.displayName || user?.email?.split("@")[0] || "Verified Nexa Buyer",
+    try {
+      await upsertReview({
+        productId: product.id,
+        userId: user.uid,
+        userName: user.displayName || user.email?.split("@")[0] || "Verified Nexa Buyer",
+        userPhoto: user.photoURL || null,
         rating: newRating,
-        comment: newComment,
-        date: new Date().toISOString().split("T")[0],
         title: newTitle || "Verified Purchase Review",
-        verified: true,
-        helpfulCount: 0,
-        avatar: user?.photoURL || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80",
-      };
-      setUserReviews([newRev, ...userReviews]);
+        comment: newComment,
+      });
+      // Reload reviews after submission
+      const fresh = await listReviews(product.id);
+      setUserReviews(fresh);
       setNewComment("");
       setNewTitle("");
-      setIsSubmittingReview(false);
       toast.success("Thank you! Your review has been submitted successfully.");
-    }, 600);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to submit review.");
+    } finally {
+      setIsSubmittingReview(false);
+    }
   };
+
 
   // Calculations
   const price = product?.price ?? 0;
@@ -1244,21 +1273,21 @@ export function ProductDetailPage() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <img
-                          src={rev.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80"}
+                          src={(rev as Review).userPhoto || (rev as Record<string, unknown>).avatar as string | "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80"}
                           alt={rev.userName}
                           className="w-9 h-9 rounded-full object-cover border border-slate-200"
                         />
                         <div>
                           <h5 className="text-xs md:text-sm font-bold text-slate-800 flex items-center gap-1.5">
                             {rev.userName}
-                            {rev.verified && (
+                            {Boolean((rev as Record<string, unknown>).verified ?? true) && (
                               <span className="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.2 rounded font-semibold">
                                 Verified Purchase
                               </span>
                             )}
                           </h5>
                           <span className="text-[11px] text-slate-400">
-                            {rev.date}
+                            {rev.createdAt ? new Date(rev.createdAt).toISOString().split("T")[0] : (rev as Record<string, unknown>).date as string || ""}
                           </span>
                         </div>
                       </div>
@@ -1289,7 +1318,7 @@ export function ProductDetailPage() {
 
                     <div className="pt-2 flex items-center gap-4 text-xs text-slate-400">
                       <button className="flex items-center gap-1 hover:text-[#f97316] transition">
-                        <ThumbsUp className="w-3.5 h-3.5" /> Helpful ({rev.helpfulCount || 0})
+                        <ThumbsUp className="w-3.5 h-3.5" /> Helpful ({(rev as Record<string, unknown>).helpfulCount as number || 0})
                       </button>
                     </div>
                   </div>
