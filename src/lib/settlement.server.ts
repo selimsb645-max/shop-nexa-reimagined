@@ -1067,7 +1067,7 @@ export async function readAdminFinanceOverview(): Promise<{
 
   // Read all buyer orders via collectionGroup
   const ordersRes = await fetch(
-    `${baseUrl(projectId):runQuery}`,
+    `${baseUrl(projectId)}:runQuery`,
     {
       method: "POST",
       headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
@@ -1110,7 +1110,7 @@ export async function readAdminFinanceOverview(): Promise<{
 
   // Read all seller orders via collectionGroup for seller-side metrics
   const sellerOrdersRes = await fetch(
-    `${baseUrl(projectId):runQuery}`,
+    `${baseUrl(projectId)}:runQuery`,
     {
       method: "POST",
       headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
