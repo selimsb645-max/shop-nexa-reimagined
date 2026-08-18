@@ -39,17 +39,20 @@ function mapReward(id: string, d: Record<string, unknown>): RewardTx {
 }
 
 export async function listWalletTx(uid: string): Promise<WalletTx[]> {
-  const snap = await getDocs(query(walletCol(uid), orderBy("createdAt", "desc"), limit(100)));
+  const snap = await getDocs(query(walletCol(uid), orderBy("createdAt", "desc"), limit(500)));
   return snap.docs.map((d) => mapWallet(d.id, d.data() as Record<string, unknown>));
 }
 
 export async function getWalletBalance(uid: string): Promise<number> {
+  // TODO: For high-volume users, consider storing a running balance field
+  // on the user document (updated atomically by server functions) instead
+  // of summing all transactions client-side.
   const tx = await listWalletTx(uid);
   return Math.round(tx.reduce((s, t) => s + t.amount, 0) * 100) / 100;
 }
 
 export async function listRewardTx(uid: string): Promise<RewardTx[]> {
-  const snap = await getDocs(query(rewardCol(uid), orderBy("createdAt", "desc"), limit(100)));
+  const snap = await getDocs(query(rewardCol(uid), orderBy("createdAt", "desc"), limit(500)));
   return snap.docs.map((d) => mapReward(d.id, d.data() as Record<string, unknown>));
 }
 
