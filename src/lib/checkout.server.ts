@@ -52,6 +52,7 @@ export interface PlaceOrderRequest {
   };
   paymentMethod: "cash_on_delivery" | "card" | "mobile_banking";
   couponCode: string | null;
+  promoCode: string | null;
   deliveryMethod: "standard" | "express";
   rewardPoints: number;
   walletUsed: number;
@@ -61,11 +62,13 @@ export interface PlaceOrderResult {
   orderId: string;
   subtotal: number;
   discount: number;
+  promoDiscount: number;
   shipping: number;
   rewardDiscount: number;
   walletUsed: number;
   total: number;
   couponCode: string | null;
+  promoCode: string | null;
 }
 
 function round2(n: number): number {
@@ -100,10 +103,18 @@ export async function placeOrderServer(
   const couponName = couponCode
     ? docPath(projectId, ["coupons", couponCode])
     : null;
+  const promoCode = req.promoCode ? req.promoCode.trim().toUpperCase() : null;
+  const promoName = promoCode
+    ? docPath(projectId, ["promoCodes", promoCode])
+    : null;
+
+  const extraDocs: string[] = [];
+  if (couponName) extraDocs.push(couponName);
+  if (promoName) extraDocs.push(promoName);
 
   const docs = await batchGetDocs(
     projectId,
-    couponName ? [...productNames, couponName] : productNames,
+    extraDocs.length > 0 ? [...productNames, ...extraDocs] : productNames,
   );
 
   const orderId = newDocId();
@@ -189,7 +200,45 @@ export async function placeOrderServer(
     }
   }
 
-  const subAfterDiscount = round2(subtotal - discount);
+  // Promo Code: re-validated server side, same security model as coupons.
+  let promoDiscount = 0;
+  let appliedPromo: string | null = null;
+  let promoUpdateTime: string | null = null;
+  if (promoCode && promoName) {
+    const pDoc = docs.get(promoName);
+    if (pDoc?.exists) {
+      const p = pDoc.data;
+      const status = String(p["status"] ?? "");
+      const pUserId = String(p["userId"] ?? "");
+      const expiresAt = Number(p["expiresAt"] ?? 0);
+      const minOrder = Number(p["minimumOrderAmount"] ?? 0);
+      const usageLimit = Number(p["usageLimit"] ?? 1);
+      const usedCount = Number(p["usedCount"] ?? 0);
+      const pType = String(p["discountType"] ?? "percent");
+      const pValue = Number(p["discountValue"] ?? 0);
+
+      const usable =
+        status === "active" &&
+        pUserId === req.uid &&  // promo must belong to this user
+        (expiresAt <= 0 || expiresAt > nowMs) &&
+        subtotal >= minOrder &&
+        usedCount < usageLimit &&
+        Number.isFinite(pValue) &&
+        pValue > 0;
+
+      if (usable) {
+        promoDiscount = round2(
+          pType === "percent"
+            ? Math.min(subtotal - discount, (subtotal - discount) * (pValue / 100))
+            : Math.min(subtotal - discount, pValue),
+        );
+        appliedPromo = promoCode;
+        promoUpdateTime = pDoc.updateTime;
+      }
+    }
+  }
+
+  const subAfterDiscount = round2(subtotal - discount - promoDiscount);
   const shipping =
     req.deliveryMethod === "express"
       ? EXPRESS_SHIPPING_FLAT
@@ -477,5 +526,33 @@ export async function placeOrderServer(
   void nowIso;
   await commitWrites(projectId, writes);
 
-  return { orderId, subtotal, discount, shipping, rewardDiscount, walletUsed, total, couponCode: appliedCoupon };
+  // Mark promo code as used if it was applied
+  if (appliedPromo) {
+    writes.push({
+      transform: {
+        document: docPath(projectId, ["promoCodes", appliedPromo]),
+        fieldTransforms: [
+          { fieldPath: "usedCount", increment: { integerValue: "1" } },
+        ],
+      },
+      ...(promoUpdateTime ? { currentDocument: { updateTime: promoUpdateTime } } : {}),
+    });
+    // Set status to "used" and record order info
+    writes.push({
+      update: {
+        name: docPath(projectId, ["promoCodes", appliedPromo]),
+        fields: toFsFields({
+          status: "used",
+          usedAt: nowMs,
+          usedOrderId: orderId,
+          updatedAt: nowMs,
+        }),
+      },
+      updateMask: { fieldPaths: ["status", "usedAt", "usedOrderId", "updatedAt"] },
+    });
+  }
+
+  await commitWrites(projectId, writes);
+
+  return { orderId, subtotal, discount, promoDiscount, shipping, rewardDiscount, walletUsed, total, couponCode: appliedCoupon, promoCode: appliedPromo };
 }
