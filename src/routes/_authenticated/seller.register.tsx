@@ -127,7 +127,7 @@ function SellerRegisterPage() {
                 await refresh();
                 setCurrentStep("business_info");
                 toast.success("Store info saved");
-              } catch (_e) { toast.error(e instanceof Error ? e.message : "Failed"); }
+              } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
               setLoading(false);
             }}
             loading={loading}
@@ -145,7 +145,7 @@ function SellerRegisterPage() {
                 await refresh();
                 setCurrentStep("identity_verification");
                 toast.success("Business info saved");
-              } catch (_e) { toast.error(e instanceof Error ? e.message : "Failed"); }
+              } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
               setLoading(false);
             }}
             loading={loading}
@@ -163,7 +163,7 @@ function SellerRegisterPage() {
                 await refresh();
                 setCurrentStep("banking");
                 toast.success("Identity info saved");
-              } catch (_e) { toast.error(e instanceof Error ? e.message : "Failed"); }
+              } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
               setLoading(false);
             }}
             loading={loading}
@@ -181,7 +181,7 @@ function SellerRegisterPage() {
                 await refresh();
                 setCurrentStep("terms");
                 toast.success("Banking info saved");
-              } catch (_e) { toast.error(e instanceof Error ? e.message : "Failed"); }
+              } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
               setLoading(false);
             }}
             loading={loading}
@@ -199,7 +199,7 @@ function SellerRegisterPage() {
                 await refresh();
                 setCurrentStep("submitted");
                 toast.success("Application submitted for review!");
-              } catch (_e) { toast.error(e instanceof Error ? e.message : "Failed"); }
+              } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
               setLoading(false);
             }}
             loading={loading}
