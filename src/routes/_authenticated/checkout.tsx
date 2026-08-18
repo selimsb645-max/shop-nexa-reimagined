@@ -25,7 +25,6 @@ import {
   Pencil,
   Trash2,
   AlertCircle,
-  Gift,
 } from "lucide-react";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
