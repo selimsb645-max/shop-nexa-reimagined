@@ -30,6 +30,7 @@ export interface CreateOrderInput {
   shippingAddress: ShippingAddress;
   paymentMethod: PaymentMethod;
   couponCode: string | null;
+  promoCode: string | null;
   discount: number;
   deliveryMethod?: "standard" | "express";
   rewardPoints?: number;
@@ -105,6 +106,7 @@ export async function createOrder(input: CreateOrderInput): Promise<string> {
       },
       paymentMethod: input.paymentMethod,
       couponCode: input.couponCode,
+      promoCode: input.promoCode,
       deliveryMethod: input.deliveryMethod ?? "standard",
       rewardPoints: input.rewardPoints ?? 0,
       walletUsed: input.walletUsed ?? 0,
