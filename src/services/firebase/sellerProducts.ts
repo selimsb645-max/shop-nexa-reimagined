@@ -5,6 +5,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  limit as fbLimit,
   orderBy,
   query,
   serverTimestamp,
@@ -98,7 +99,7 @@ export async function getSellerProduct(sellerId: string, id: string): Promise<Pr
 
 export async function slugExists(slug: string, ignoreId?: string): Promise<boolean> {
   const snap = await getDocs(
-    query(collection(getDb(), PRODUCTS), where("slug", "==", slug)),
+    query(collection(getDb(), PRODUCTS), where("slug", "==", slug), fbLimit(1)),
   );
   return snap.docs.some((d) => d.id !== ignoreId);
 }
