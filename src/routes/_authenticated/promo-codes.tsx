@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { listMyPromoCodes, type PromoCode, formatPromoDiscount, isPromoUsable, formatPromoExpiry } from "@/services/firebase/promoCodes";
 import { generatePromoCode } from "@/lib/promo.functions";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/context/AuthContext";
 import { Spinner } from "@/components/common/Spinner";
 
 export const Route = createFileRoute("/_authenticated/promo-codes")({
@@ -86,7 +86,7 @@ function PromoCodesPage() {
           <div className="bg-gradient-to-r from-[#f57224] to-[#ff8a4c] rounded-xl p-6 mb-6 text-white">
             <h2 className="text-lg font-semibold mb-2">Welcome to Shop Nexa!</h2>
             <p className="text-sm text-white/90 mb-4">
-              Claim your welcome promo code and get 10% off your next order.
+              Your welcome promo code was not generated automatically. Claim it now and get 10% off your next order.
             </p>
             <button
               onClick={handleGenerate}
