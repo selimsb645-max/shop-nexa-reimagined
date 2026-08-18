@@ -56,6 +56,7 @@ function OrderDetailAdmin() {
     if (!user || !order) return;
     setSaving(true);
     try {
+      const idToken = await user.getIdToken();
       await updateOrderStatusAdmin(userId, orderId, status, note);
       await logActivity(
         { uid: user.uid, email: user.email },
@@ -76,14 +77,18 @@ function OrderDetailAdmin() {
   const cancel = async () => {
     if (!user) return;
     const reason = prompt("Cancellation reason:") ?? "";
-    if (!confirm("Cancel this order?")) return;
+    if (!confirm("Cancel this order? This will reverse all seller settlements.")) return;
+    setSaving(true);
     try {
-      await cancelOrderAdmin(userId, orderId, reason);
+      const idToken = await user.getIdToken();
+      await cancelOrderAdmin(userId, orderId, reason, idToken);
       await logActivity({ uid: user.uid, email: user.email }, "order.cancel", orderId, reason);
-      toast.success("Order cancelled");
+      toast.success("Order cancelled and seller settlements reversed");
       await refresh();
     } catch (err) {
       toast.error(mapFirebaseError(err));
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -208,17 +213,23 @@ function OrderDetailAdmin() {
             disabled={saving || status === order.status}
             className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
-            Save
+            {saving ? "Saving..." : "Save"}
           </button>
           {order.status !== "cancelled" && (
             <button
               onClick={cancel}
-              className="rounded-md border border-destructive px-4 py-2 text-sm text-destructive hover:bg-destructive/10"
+              disabled={saving}
+              className="rounded-md border border-destructive px-4 py-2 text-sm text-destructive hover:bg-destructive/10 disabled:opacity-50"
             >
               Cancel order
             </button>
           )}
         </div>
+        {order.status !== "cancelled" && (
+          <p className="mt-2 text-xs text-muted-foreground">
+            Cancelling will reverse all seller settlements for this order.
+          </p>
+        )}
       </div>
 
       <div className="rounded-lg border bg-background p-4">
