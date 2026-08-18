@@ -135,7 +135,7 @@ function CheckoutPage() {
           try {
             const p = await getProductById(pid);
             if (p) results[pid] = p;
-          } catch (_e) {
+          } catch (e) {
             console.warn("Failed to fetch product:", pid);
           }
         })
@@ -166,7 +166,7 @@ function CheckoutPage() {
                 verified: profile.status === "approved",
               };
             }
-          } catch (_e) {
+          } catch (e) {
             console.warn("Failed to fetch seller:", sid);
           }
         })
@@ -369,7 +369,8 @@ function CheckoutPage() {
       setShowAddressForm(false);
       setEditingAddress(null);
       toast.success(id ? "Address updated" : "Address saved");
-    } catch (_e) {
+    } catch (e) {
+      console.warn("Failed to save address:", e);
       toast.error("Failed to save address");
     }
   };
@@ -381,7 +382,8 @@ function CheckoutPage() {
       await refetchAddresses();
       setSelectedAddressId(id);
       toast.success("Default address updated");
-    } catch (_e) {
+    } catch (e) {
+      console.warn("Failed to set default address:", e);
       toast.error("Failed to update default address");
     }
   };
@@ -393,7 +395,8 @@ function CheckoutPage() {
       await refetchAddresses();
       if (selectedAddressId === id) setSelectedAddressId("");
       toast.success("Address deleted");
-    } catch (_e) {
+    } catch (e) {
+      console.warn("Failed to delete address:", e);
       toast.error("Failed to delete address");
     }
   };
