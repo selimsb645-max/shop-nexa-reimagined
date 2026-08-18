@@ -36,8 +36,9 @@ function SellerRegisterPage() {
         try {
           await initSellerDraft({ uid: user.uid, email: user.email });
           await refresh();
-        } catch (_e) {
-          // Profile may already exist
+        } catch (e) {
+          // Profile may already exist — safe to ignore
+          console.debug("initSellerDraft:", e);
         }
       } else if (profile.status === "draft") {
         setCurrentStep(profile.currentStep);
