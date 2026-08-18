@@ -4,6 +4,10 @@
  * Every money-affecting value (item price, subtotal, discount, shipping,
  * total), the stock decrement and the coupon usage increment are computed here
  * from Firestore data. The browser only says *what* it wants to buy.
+ *
+ * SETTLEMENT INTEGRATION: Every order now creates a seller-wise settlement
+ * breakdown with full financial fields, plus an immutable settlementTx
+ * ledger entry marking earnings as "pending".
  */
 import {
   batchGetDocs,
@@ -16,6 +20,11 @@ import {
   toFsValue,
   type FsWrite,
 } from "./firebase-admin.server";
+import {
+  computeSellerSettlement,
+  buildSellerOrderWrite,
+  buildSettlementPendingTxWrite,
+} from "./settlement.server";
 
 const SHIPPING_FLAT = 5;
 const FREE_SHIPPING_THRESHOLD = 50;
@@ -399,44 +408,55 @@ export async function placeOrderServer(
     sellerCommissionRates.set(sid, Number.isFinite(rate) ? rate : 0.08);
   }
 
-  // Seller mirrors + notifications.
+  // ====================================================================
+  // SETTLEMENT-ENABLED SELLER MIRRORS + NOTIFICATIONS
+  // Each seller gets:
+  // 1. Order mirror with full settlement breakdown
+  // 2. Immutable settlementTx ledger entry (pending)
+  // 3. Notification
+  // ====================================================================
   for (const [sid, sItems] of itemsBySeller.entries()) {
     const sellerSubtotal = round2(sItems.reduce((s, it) => s + it.subtotal, 0));
     const commissionRate = sellerCommissionRates.get(sid) ?? 0.08;
-    const commission = round2(sellerSubtotal * commissionRate);
-    const sellerEarnings = round2(sellerSubtotal - commission);
-    writes.push({
-      update: {
-        name: docPath(projectId, ["sellers", sid, "orders", orderId]),
-        fields: toFsFields({
-          sellerId: sid,
-          buyerId: req.uid,
-          buyerName: req.shippingAddress.fullName,
-          buyerEmail: req.buyerEmail,
-          items: sItems,
-          subtotal: sellerSubtotal,
-          commission,
-          earnings: sellerEarnings,
-          status: "pending",
-          shipping: {
-            courier: null,
-            trackingNumber: null,
-            shippingCharge: 0,
-            status: "pending",
-            shippedAt: null,
-            deliveredAt: null,
-            estimatedDays: null,
-          },
-          shippingAddress: req.shippingAddress,
-          paymentMethod: req.paymentMethod,
-          paymentStatus,
-          tracking: [{ status: "pending", note: "New order received", at: nowMs }],
-          createdAt: nowMs,
-          updatedAt: nowMs,
-        }),
-      },
-      currentDocument: { exists: false },
+
+    // Compute full settlement breakdown with pro-rata discount/shipping
+    const settlement = computeSellerSettlement({
+      sellerId: sid,
+      orderId,
+      sellerSubtotal,
+      orderSubtotal: subtotal,
+      orderDiscount: discount,
+      orderShipping: shipping,
+      commissionRate,
+      nowMs,
     });
+
+    // Seller order mirror WITH settlement data
+    writes.push(buildSellerOrderWrite({
+      projectId,
+      sellerId: sid,
+      orderId,
+      buyerId: req.uid,
+      buyerName: req.shippingAddress.fullName,
+      buyerEmail: req.buyerEmail,
+      items: sItems,
+      settlement,
+      paymentMethod: req.paymentMethod,
+      paymentStatus,
+      shippingAddress: req.shippingAddress,
+      nowMs,
+    }));
+
+    // Immutable settlement ledger: pending entry
+    writes.push(buildSettlementPendingTxWrite({
+      projectId,
+      sellerId: sid,
+      orderId,
+      sellerEarnings: settlement.sellerNetEarnings,
+      nowMs,
+    }));
+
+    // Seller notification
     writes.push({
       update: {
         name: docPath(projectId, ["sellers", sid, "notifications", newDocId()]),
