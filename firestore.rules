@@ -36,8 +36,6 @@ service cloud.firestore {
 
     match /products/{id} {
       allow read: if true;
-      // Moderation/curation fields are admin-only. Sellers must submit products
-      // unapproved and unfeatured, and may never flip those fields later.
       allow create: if isAdmin() ||
         (isApprovedSeller()
           && request.resource.data.sellerId == request.auth.uid
@@ -45,10 +43,6 @@ service cloud.firestore {
           && (!('featured' in request.resource.data) || request.resource.data.featured == false));
       allow delete: if isAdmin() ||
         (isApprovedSeller() && resource.data.sellerId == request.auth.uid);
-      // Only the owning seller or an admin may modify a product. Stock changes
-      // caused by a purchase are applied by the trusted server-side checkout
-      // (service account), never by a buyer's browser. Sellers may not touch
-      // moderation, curation or aggregate rating fields.
       allow update: if isAdmin()
         || (isApprovedSeller()
           && resource.data.sellerId == request.auth.uid
@@ -65,12 +59,8 @@ service cloud.firestore {
     match /coupons/{code} {
       allow read: if true;
       allow create, delete: if isAdmin();
-      // Only admins may edit coupons. The `uses` counter is incremented by the
-      // trusted server-side checkout, so clients can no longer burn through a
-      // coupon's usage limit without a real order.
       allow update: if isAdmin();
     }
-
 
     // Banners - public read, admin write
     match /banners/{id} {
@@ -125,7 +115,6 @@ service cloud.firestore {
         allow delete: if isAdmin();
       }
 
-
       // Wallet ledger - server-controlled only. Clients (including the owner)
       // may never write cashback/refund/topup/spend entries directly; only a
       // trusted admin/server context can. Owners may only read their own.
@@ -140,8 +129,7 @@ service cloud.firestore {
         allow write: if isAdmin();
       }
 
-      // Referral records - server-controlled only (bonusPoints is a balance-
-      // affecting field, so referral crediting must not be client-writable).
+      // Referral records - server-controlled only
       match /referrals/{refId} {
         allow read: if isSelf(uid) || isAdmin();
         allow write: if isAdmin();
@@ -161,24 +149,50 @@ service cloud.firestore {
       allow update: if (isSelf(uid) && request.resource.data.status == resource.data.status) || isAdmin();
       allow delete: if isAdmin();
 
+      // Seller orders - created by server-side checkout only.
+      // Sellers may update ONLY status/tracking/updatedAt.
+      // Settlement fields are protected — sellers CANNOT modify:
+      //   settlement, earnings, commission, commissionRate, discountShare,
+      //   shippingShare, netSubtotal, subtotal, paymentStatus, paymentMethod
       match /orders/{orderId} {
         allow read: if isSelf(uid) || isAdmin();
-        // The seller's copy of an order is written only by the trusted
-        // server-side checkout, so a buyer can no longer forge a seller order.
         allow create: if false;
-        // Seller may only progress status/tracking on their own mirror; admin can do anything.
         allow update: if isAdmin()
-          || (isSelf(uid) && onlyChanges(['status', 'tracking', 'updatedAt']));
+          || (isSelf(uid)
+            && onlyChanges(['status', 'tracking', 'updatedAt'])
+            && !request.resource.data.diff(resource.data).affectedKeys()
+                 .hasAny(['settlement', 'earnings', 'commission', 'commissionRate',
+                          'discountShare', 'shippingShare', 'netSubtotal',
+                          'subtotal', 'paymentStatus', 'paymentMethod']));
         allow delete: if isAdmin();
       }
+
+      // Settlement ledger — immutable, server-side only.
+      // Sellers can READ their own ledger but can NEVER create/update/delete.
+      match /settlementTx/{txId} {
+        allow read: if isSelf(uid) || isAdmin();
+        allow create, update, delete: if false;
+      }
+
+      // Wallet ledger (seller) — server-controlled only.
+      match /walletTx/{txId} {
+        allow read: if isSelf(uid) || isAdmin();
+        allow create, update, delete: if false;
+      }
+
+      // Withdrawals — created/updated by server functions only.
+      // Sellers can READ their own withdrawals but cannot mutate.
+      match /withdrawals/{withdrawalId} {
+        allow read: if isSelf(uid) || isAdmin();
+        allow create, update, delete: if false;
+      }
+
+      // Notifications
       match /notifications/{nid} {
         allow read: if isSelf(uid) || isAdmin();
-        // Order notifications come from the trusted server-side checkout.
-        // Only the seller themselves or an admin may create others.
         allow create: if isAdmin() || isSelf(uid);
         allow update, delete: if isSelf(uid) || isAdmin();
       }
-
     }
   }
 }
