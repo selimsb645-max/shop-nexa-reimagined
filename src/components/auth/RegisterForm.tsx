@@ -6,10 +6,27 @@ import { toast } from "sonner";
 import { registerSchema, type RegisterValues } from "@/utils/validation";
 import { signInWithGoogle, signUpWithEmail, waitForAuthUser } from "@/services/firebase/auth";
 import { mapFirebaseError } from "@/utils/errors";
+import { generatePromoCode } from "@/lib/promo.functions";
 import { Spinner } from "@/components/common/Spinner";
 import { GoogleButton } from "./GoogleButton";
 import { firebaseConfigured } from "@/services/firebase/config";
 import { useAuth } from "@/context/AuthContext";
+
+/**
+ * Attempts to generate a welcome promo code for a newly registered user.
+ * Called after successful registration / Google sign-in.
+ * Failures are non-blocking — we don't want promo code issues to break
+ * the registration flow. The user can manually claim from /promo-codes.
+ */
+async function tryGenerateWelcomePromo(user: { uid: string; getIdToken: () => Promise<string> }): Promise<void> {
+  try {
+    const idToken = await user.getIdToken();
+    await generatePromoCode({ data: { idToken, campaignType: "welcome" } });
+  } catch {
+    // Non-blocking: duplicate / network / server errors are swallowed.
+    // checkQualification already prevents duplicates server-side.
+  }
+}
 
 export function RegisterForm() {
   const navigate = useNavigate();
@@ -32,8 +49,10 @@ export function RegisterForm() {
     }
     try {
       await signUpWithEmail(values.email, values.password, values.displayName);
-      await waitForAuthUser();
-      toast.success("Account created — check your inbox to verify your email");
+      const authUser = await waitForAuthUser();
+      // Auto-generate welcome promo code (non-blocking)
+      await tryGenerateWelcomePromo(authUser);
+      toast.success("Account created! You got a welcome NEXA promo code — check My Promo Codes.");
       navigate({ to: "/", replace: true });
     } catch (err) {
       toast.error(mapFirebaseError(err));
@@ -48,8 +67,10 @@ export function RegisterForm() {
     setGoogleLoading(true);
     try {
       await signInWithGoogle();
-      await waitForAuthUser();
-      toast.success("Welcome to ShopNexa");
+      const authUser = await waitForAuthUser();
+      // Auto-generate welcome promo code for new Google users (non-blocking)
+      await tryGenerateWelcomePromo(authUser);
+      toast.success("Welcome to ShopNexa! Check My Promo Codes for your welcome discount.");
       navigate({ to: "/", replace: true });
     } catch (err) {
       toast.error(mapFirebaseError(err));
