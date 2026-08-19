@@ -200,7 +200,7 @@ function CommunicationCenter() {
   }, [threads, activeFilter, searchQuery]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-muted/30">
+    <div className="flex min-h-screen flex-col bg-muted/30 pb-24 md:pb-0">
       <SiteHeader />
 
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-4 sm:px-6">
@@ -678,7 +678,7 @@ function OrderConversationView({
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-muted/30">
+    <div className="flex min-h-screen flex-col bg-muted/30 pb-24 md:pb-0">
       <SiteHeader />
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-4 sm:px-6">
         <button onClick={onBack} className="mb-4 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
