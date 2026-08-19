@@ -1,8 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Gift, Sparkles, TrendingUp } from "lucide-react";
-import { PageHeader } from "@/components/common/PageHeader";
-import { Spinner } from "@/components/common/Spinner";
+import { Gift, Sparkles, TrendingUp, Loader } from "lucide-react";
+import { ServicePageLayout } from "@/components/common/ServicePageLayout";
 import { useAuth } from "@/context/AuthContext";
 import { POINTS_PER_CURRENCY_REDEEM, listRewardTx } from "@/services/firebase/wallet";
 import { formatDateTime, formatPrice } from "@/utils/format";
@@ -36,89 +35,95 @@ function RewardsPage() {
     : 100;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24 md:pb-6">
-      <PageHeader title="Rewards" subtitle="Your reward points and history" />
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">Rewards</h1>
-          <p className="text-sm text-muted-foreground">
-            Earn points on every order and convert them into wallet credit
+    <ServicePageLayout title="Rewards" subtitle="Earn points on every order">
+      {/* Points balance hero card */}
+      <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+        <div className="bg-gradient-to-br from-orange-50 to-white px-5 py-6">
+          <div className="flex items-center gap-2 text-sm text-slate-500">
+            <Sparkles className="h-4 w-4 text-[#f57224]" /> Points balance
+          </div>
+          <div className="mt-2 text-4xl font-black text-[#f57224]">{balance}</div>
+          <p className="mt-1 text-xs text-slate-400">
+            Worth {formatPrice(balance / POINTS_PER_CURRENCY_REDEEM)} in wallet credit
           </p>
         </div>
-
-        <div className="grid gap-4 sm:grid-cols-3">
-          <div className="rounded-lg border bg-background p-5">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Sparkles className="h-4 w-4" /> Points balance
+        <div className="grid grid-cols-2 divide-x divide-gray-100 border-t border-gray-100">
+          <div className="px-5 py-4">
+            <div className="flex items-center gap-1.5 text-xs text-slate-400">
+              <TrendingUp className="h-3.5 w-3.5" /> Lifetime earned
             </div>
-            <div className="mt-2 text-3xl font-bold text-primary">{balance}</div>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Worth {formatPrice(balance / POINTS_PER_CURRENCY_REDEEM)}
-            </p>
+            <div className="mt-1 text-lg font-bold text-slate-700">{earned}</div>
           </div>
-          <div className="rounded-lg border bg-background p-5">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <TrendingUp className="h-4 w-4" /> Lifetime earned
+          <div className="px-5 py-4">
+            <div className="flex items-center gap-1.5 text-xs text-slate-400">
+              <Gift className="h-3.5 w-3.5" /> Membership tier
             </div>
-            <div className="mt-2 text-2xl font-bold">{earned}</div>
-          </div>
-          <div className="rounded-lg border bg-background p-5">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Gift className="h-4 w-4" /> Membership tier
-            </div>
-            <div className="mt-2 text-2xl font-bold">{tier.name}</div>
-            <div className="mt-3 h-2 rounded-full bg-muted">
-              <div className="h-2 rounded-full bg-primary" style={{ width: `${progress}%` }} />
-            </div>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {next ? `${next.min - earned} points to ${next.name}` : "Top tier reached"}
-            </p>
+            <div className="mt-1 text-lg font-bold text-slate-700">{tier.name}</div>
           </div>
         </div>
-
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-background p-5">
-          <p className="text-sm text-muted-foreground">
-            Convert your points into store credit any time from your wallet.
+        {/* Progress bar */}
+        <div className="border-t border-gray-100 px-5 py-4">
+          <div className="h-2 rounded-full bg-slate-100">
+            <div
+              className="h-2 rounded-full bg-gradient-to-r from-orange-400 to-orange-500"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <p className="mt-1.5 text-xs text-slate-400">
+            {next ? `${next.min - earned} points to ${next.name}` : "Top tier reached"}
           </p>
-          <Link
-            to="/wallet"
-            className="rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:opacity-90"
-          >
-            Go to wallet
-          </Link>
         </div>
-
-        <section className="rounded-lg border bg-background">
-          <div className="border-b px-5 py-3 font-semibold">Points activity</div>
-          {isLoading ? (
-            <div className="py-16 text-center">
-              <Spinner />
-            </div>
-          ) : !data || data.length === 0 ? (
-            <div className="p-12 text-center text-sm text-muted-foreground">
-              No points yet. Place your first order to start earning.
-            </div>
-          ) : (
-            <ul className="divide-y">
-              {data.map((t) => (
-                <li key={t.id} className="flex items-center gap-3 px-5 py-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm font-medium capitalize">{t.type}</div>
-                    <div className="truncate text-xs text-muted-foreground">{t.note}</div>
-                    <div className="text-xs text-muted-foreground">{formatDateTime(t.createdAt)}</div>
-                  </div>
-                  <div
-                    className={`text-sm font-semibold ${t.points >= 0 ? "text-green-700" : "text-destructive"}`}
-                  >
-                    {t.points >= 0 ? "+" : ""}
-                    {t.points} pts
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
       </div>
-    </div>
+
+      {/* CTA */}
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+        <p className="text-sm text-slate-500">
+          Convert your points into store credit any time from your wallet.
+        </p>
+        <Link
+          to="/wallet"
+          className="rounded-xl bg-[#f57224] px-5 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-orange-600 active:scale-95"
+        >
+          Go to wallet
+        </Link>
+      </div>
+
+      {/* Points activity */}
+      <div className="mt-4 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+        <div className="border-b border-gray-100 px-5 py-3.5 font-bold text-slate-800">
+          Points activity
+        </div>
+        {isLoading ? (
+          <div className="py-16 text-center">
+            <Loader className="mx-auto h-8 w-8 animate-spin text-slate-300" />
+          </div>
+        ) : !data || data.length === 0 ? (
+          <div className="flex flex-col items-center py-14 text-center">
+            <span className="grid h-14 w-14 place-items-center rounded-full bg-orange-50 text-[#f57224]">
+              <Gift className="h-7 w-7" />
+            </span>
+            <h3 className="mt-4 text-sm font-bold text-slate-700">No points yet</h3>
+            <p className="mt-1 max-w-xs text-xs text-slate-400">
+              Place your first order to start earning.
+            </p>
+          </div>
+        ) : (
+          <ul className="divide-y divide-gray-100">
+            {data.map((t) => (
+              <li key={t.id} className="flex items-center gap-3 px-5 py-3.5">
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-semibold capitalize text-slate-700">{t.type}</div>
+                  <div className="truncate text-xs text-slate-400">{t.note}</div>
+                  <div className="text-xs text-slate-400">{formatDateTime(t.createdAt)}</div>
+                </div>
+                <div className={`text-sm font-bold ${t.points >= 0 ? "text-green-700" : "text-red-600"}`}>
+                  {t.points >= 0 ? "+" : ""}{t.points} pts
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </ServicePageLayout>
   );
 }
