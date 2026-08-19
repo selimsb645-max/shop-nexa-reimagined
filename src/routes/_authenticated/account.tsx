@@ -1,8 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useRef, useState } from "react";
-import { useForm } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import {
   CheckCircle2,
@@ -42,7 +40,6 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
-import { profileSchema, type ProfileValues } from "@/utils/validation";
 import { setDisplayName, setPhotoURL, resendVerification, signOut } from "@/services/firebase/auth";
 import { uploadAvatar } from "@/services/firebase/storage";
 import { mapFirebaseError } from "@/utils/errors";
@@ -89,7 +86,6 @@ function AccountPage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [resending, setResending] = useState(false);
-  const [editing, setEditing] = useState(false);
 
   const enabled = Boolean(user && firebaseConfigured);
   const uid = user?.uid;
@@ -132,30 +128,11 @@ function AccountPage() {
     ...live,
   });
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting, isDirty },
-    reset,
-  } = useForm<ProfileValues>({
-    resolver: zodResolver(profileSchema),
-    values: { displayName: profile?.displayName || user?.displayName || "" },
-  });
 
   if (!user) return null;
 
   const counts = bucketOrders(orders ?? []);
 
-  const onSave = async (v: ProfileValues) => {
-    try {
-      await setDisplayName(user, v.displayName);
-      await refreshProfile();
-      reset({ displayName: v.displayName });
-      toast.success("Profile updated");
-    } catch (err) {
-      toast.error(mapFirebaseError(err));
-    }
-  };
 
   const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -198,7 +175,7 @@ function AccountPage() {
   const totalOrders = orders?.length ?? 0;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-6">
+    <div className="min-h-screen bg-gray-50 pb-24 md:pb-6">
       {/* ===== Daraz-style Orange Header ===== */}
       <header className="relative overflow-hidden bg-gradient-to-r from-orange-500 via-orange-500 to-orange-600 text-white">
         <div
@@ -278,13 +255,12 @@ function AccountPage() {
                 )}
               </div>
               <p className="truncate text-sm text-white/80">{user.email}</p>
-              <button
-                type="button"
-                onClick={() => setEditing((v) => !v)}
+              <Link
+                to="/edit-profile"
                 className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-white/90 underline-offset-2 hover:underline"
               >
                 <Settings className="h-3 w-3" /> Edit Profile
-              </button>
+              </Link>
             </div>
           </div>
 
@@ -405,7 +381,7 @@ function AccountPage() {
           <DarazCardHeader title="Help & Support" />
           <div className="divide-y divide-gray-100">
             <DarazListRow to="/support" icon={<Headphones className="h-5 w-5" />} label="Customer Service" hint="Chat with our support team" />
-            <DarazListRow to="/help-center" icon={<BookOpen className="h-5 w-5" />} label="Help Center" hint="FAQs & guides" />
+            <DarazListRow to="/support" icon={<BookOpen className="h-5 w-5" />} label="Help Center" hint="FAQs & guides" />
             <DarazExternalRow href="https://wa.me/8801324997271" icon={<Phone className="h-5 w-5" />} label="Contact Us" hint="WhatsApp: 01324997271" />
           </div>
         </DarazCard>
@@ -443,59 +419,6 @@ function AccountPage() {
             </div>
           </div>
         </DarazCard>
-
-        {/* ===== Edit Profile Form ===== */}
-        {editing && (
-          <DarazCard>
-            <DarazCardHeader
-              title="Edit Profile"
-              action={
-                <button
-                  type="button"
-                  onClick={() => setEditing(false)}
-                  className="text-xs font-semibold text-gray-500 hover:text-gray-700"
-                >
-                  Close
-                </button>
-              }
-            />
-            <form onSubmit={handleSubmit(onSave)} className="space-y-4 p-4">
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">Display Name</label>
-                <input
-                  {...register("displayName")}
-                  className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none transition focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
-                />
-                {errors.displayName && (
-                  <p className="mt-1 text-xs text-red-500">{errors.displayName.message}</p>
-                )}
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">Email</label>
-                <input
-                  value={user.email ?? ""}
-                  readOnly
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-500"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">Account Type</label>
-                <input
-                  value={profile?.role ?? "customer"}
-                  readOnly
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm capitalize text-gray-500"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={isSubmitting || !isDirty}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-medium text-white shadow-md transition hover:bg-orange-600 active:scale-[0.98] disabled:opacity-50"
-              >
-                {isSubmitting && <Spinner />} Save Changes
-              </button>
-            </form>
-          </DarazCard>
-        )}
 
         {/* ===== Sign Out ===== */}
         <button
