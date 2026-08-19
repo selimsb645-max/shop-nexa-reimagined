@@ -1,8 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Eye } from "lucide-react";
+import { Eye, Loader } from "lucide-react";
 import { ServicePageLayout } from "@/components/common/ServicePageLayout";
-import { Spinner } from "@/components/common/Spinner";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { getProductById } from "@/services/firebase/products";
 import { firebaseConfigured } from "@/services/firebase/config";
@@ -37,35 +36,33 @@ function RecentlyViewedPage() {
 
   return (
     <ServicePageLayout title="Recently Viewed" subtitle="Products you've explored">
-      <div className="space-y-4">
-        {ids.length === 0 ? (
-          <EmptyState />
-        ) : isLoading ? (
-          <div className="py-20 text-center"><Spinner /></div>
-        ) : !products || products.length === 0 ? (
-          <EmptyState />
-        ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {products.map((p) => (
-              <Link
-                key={p.id}
-                to="/product/$slug"
-                params={{ slug: p.slug }}
-                className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition hover:shadow-md active:scale-[0.99]"
-              >
-                <img src={p.images?.[0]} alt={p.title} className="aspect-square w-full object-cover" />
-                <div className="p-3">
-                  <h2 className="line-clamp-2 text-xs font-semibold text-gray-800">{p.title}</h2>
-                  <div className="mt-1 text-sm font-bold text-orange-500">{formatPrice(p.price)}</div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
-
-
-    </div>
+      {ids.length === 0 ? (
+        <EmptyState />
+      ) : isLoading ? (
+        <div className="py-20 text-center">
+          <Loader className="mx-auto h-8 w-8 animate-spin text-slate-300" />
+        </div>
+      ) : !products || products.length === 0 ? (
+        <EmptyState />
+      ) : (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {products.map((p) => (
+            <Link
+              key={p.id}
+              to="/product/$slug"
+              params={{ slug: p.slug }}
+              className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition hover:shadow-md active:scale-[0.99]"
+            >
+              <img src={p.images?.[0]} alt={p.title} className="aspect-square w-full object-cover" />
+              <div className="p-3">
+                <h2 className="line-clamp-2 text-xs font-semibold text-gray-800">{p.title}</h2>
+                <div className="mt-1 text-sm font-bold text-orange-500">{formatPrice(p.price)}</div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+    </ServicePageLayout>
   );
 }
 
@@ -80,6 +77,6 @@ function EmptyState() {
       <Link to="/shop" className="mt-4 rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-orange-600 active:scale-95">
         Browse Products
       </Link>
-    </ServicePageLayout>
+    </div>
   );
 }
