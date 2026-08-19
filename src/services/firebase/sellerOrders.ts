@@ -9,7 +9,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { getDb } from "./config";
-import type { SellerOrder, SellerOrderStatus } from "@/types/seller";
+import type { SellerOrder, SellerOrderStatus , ShippingInfo } from "@/types/seller";
 import { markOrderDelivered } from "@/lib/settlement.functions";
 
 const SELLERS = "sellers";
@@ -29,6 +29,18 @@ function mapOrder(id: string, d: Record<string, unknown>): SellerOrder {
     buyerEmail: (r.buyerEmail as string | null) ?? null,
     items: (r.items as SellerOrder["items"]) ?? [],
     subtotal: Number(r.subtotal ?? 0),
+    commission: Number(r.commission ?? 0),
+    earnings: Number(r.earnings ?? 0),
+    shipping: (r.shipping as ShippingInfo) ?? {
+      courier: null,
+      trackingNumber: null,
+      shippingCharge: 0,
+      status: "pending",
+      shippedAt: null,
+      deliveredAt: null,
+      estimatedDays: null,
+      warehouseId: null,
+    },
     status: (r.status as SellerOrderStatus) ?? "pending",
     shippingAddress: (r.shippingAddress as SellerOrder["shippingAddress"]) ?? {
       fullName: "",

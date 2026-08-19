@@ -36,9 +36,13 @@ export function ProductForm({ sellerId, initial, onSubmit, submitLabel }: Props)
     () => ({
       title: initial?.title ?? "",
       slug: initial?.slug ?? "",
+      shortDescription: initial?.shortDescription ?? "",
+      brand: initial?.brand ?? "",
       description: initial?.description ?? "",
       price: initial?.price ?? 0,
       compareAtPrice: initial?.compareAtPrice ?? "",
+      costPrice: initial?.costPrice ?? "",
+      tax: initial?.tax ?? 0,
       categoryId: initial?.categoryId ?? "",
       categorySlug: initial?.categorySlug ?? "",
       subcategoryId: initial?.subcategoryId ?? "",
@@ -144,6 +148,19 @@ export function ProductForm({ sellerId, initial, onSubmit, submitLabel }: Props)
               className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:border-primary"
             />
           </Field>
+          <Field label="Short description" hint="Shown on product cards (max 200 chars)">
+            <input
+              {...register("shortDescription")}
+              maxLength={200}
+              className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:border-primary"
+            />
+          </Field>
+          <Field label="Brand" hint="Optional">
+            <input
+              {...register("brand")}
+              className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:border-primary"
+            />
+          </Field>
           <Field label="Description" error={errors.description?.message}>
             <textarea
               rows={5}
@@ -212,6 +229,24 @@ export function ProductForm({ sellerId, initial, onSubmit, submitLabel }: Props)
                 type="number"
                 step="0.01"
                 {...register("compareAtPrice")}
+                className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:border-primary"
+              />
+            </Field>
+            <Field label="Cost price" hint="Seller/admin only — not shown to buyers">
+              <input
+                type="number"
+                step="0.01"
+                {...register("costPrice")}
+                className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:border-primary"
+              />
+            </Field>
+            <Field label="Tax %" hint="0–100, default 0">
+              <input
+                type="number"
+                step="0.01"
+                min={0}
+                max={100}
+                {...register("tax")}
                 className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:border-primary"
               />
             </Field>

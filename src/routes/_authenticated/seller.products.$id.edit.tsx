@@ -75,9 +75,13 @@ function EditProduct({ sellerId }: { sellerId: string }) {
             await updateSellerProduct(sellerId, product.id, {
               title: v.title,
               slug: v.slug,
+              shortDescription: v.shortDescription ?? "",
               description: v.description,
+              brand: v.brand ? v.brand : null,
               price: Number(v.price),
               compareAtPrice: compareAt,
+              costPrice: v.costPrice ? Number(v.costPrice) : null,
+              tax: v.tax ? Number(v.tax) : 0,
               images: v.images,
               categoryId: v.categoryId,
               categorySlug: v.categorySlug,

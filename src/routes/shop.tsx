@@ -290,9 +290,9 @@ function ShopPage() {
   const categoryOptions = useMemo(() => {
     if (Array.isArray(rawCategories) && rawCategories.length > 0) {
       return rawCategories.map((cat: { id?: string; slug?: string; name?: string }) => ({
-        id: cat.id || cat.slug || cat.name?.toLowerCase(),
+        id: cat.id || cat.slug || cat.name?.toLowerCase() || "unknown",
         name: cat.name || "Category",
-        slug: cat.slug || cat.name?.toLowerCase().replace(/\s+/g, "-"),
+        slug: cat.slug || cat.name?.toLowerCase().replace(/\s+/g, "-") || "unknown",
       }));
     }
     // Fallback standard categories if empty

@@ -9,7 +9,9 @@ import { useSellerProfile } from "@/hooks/useSellerProfile";
 import {
   initSellerDraft, saveStoreInfo, saveBusinessInfo,
   saveIdentityInfo, saveBankingInfo, acceptTerms, submitForReview,
+  type StoreInfoInput, type BusinessInfoInput, type IdentityInput, type BankingInput,
 } from "@/services/firebase/sellers";
+import type { SellerProfile, SellerBusinessInfo, SellerBankInfo, SellerIdentityInfo } from "@/types/seller";
 import { firebaseConfigured } from "@/services/firebase/config";
 import { REGISTRATION_STEPS, type RegistrationStep } from "@/types/seller";
 import { toast } from "sonner";
@@ -137,7 +139,7 @@ function SellerRegisterPage() {
 
         {currentStep === "business_info" && (
           <BusinessInfoForm
-            initial={profile?.business}
+            initial={profile?.business ?? null}
             onBack={() => setCurrentStep("store_info")}
             onSubmit={async (data) => {
               setLoading(true);
@@ -155,7 +157,7 @@ function SellerRegisterPage() {
 
         {currentStep === "identity_verification" && (
           <IdentityForm
-            initial={profile?.identity}
+            initial={profile?.identity ?? null}
             onBack={() => setCurrentStep("business_info")}
             onSubmit={async (data) => {
               setLoading(true);
@@ -173,7 +175,7 @@ function SellerRegisterPage() {
 
         {currentStep === "banking" && (
           <BankingForm
-            initial={profile?.bankInfo}
+            initial={profile?.bankInfo ?? null}
             onBack={() => setCurrentStep("identity_verification")}
             onSubmit={async (data) => {
               setLoading(true);
@@ -247,8 +249,8 @@ function ReviewPending() {
 // Step 1: Store Info Form
 // ====================================================================
 function StoreInfoForm({ initial, onSubmit, loading }: {
-  initial?: Record<string, unknown>;
-  onSubmit: (data: Record<string, unknown>) => void;
+  initial?: SellerProfile;
+  onSubmit: (data: StoreInfoInput) => void;
   loading: boolean;
 }) {
   const [shopName, setShopName] = useState(initial?.shopName ?? "");
@@ -306,7 +308,7 @@ function StoreInfoForm({ initial, onSubmit, loading }: {
 // Step 2: Business Info Form
 // ====================================================================
 function BusinessInfoForm({ initial, onBack, onSubmit, loading }: {
-  initial?: Record<string, unknown>; onBack: () => void; onSubmit: (data: Record<string, unknown>) => void; loading: boolean;
+  initial?: SellerBusinessInfo | null; onBack: () => void; onSubmit: (data: BusinessInfoInput) => void; loading: boolean;
 }) {
   const [businessType, setBusinessType] = useState<"individual" | "company" | "partnership">(initial?.businessType ?? "individual");
   const [businessName, setBusinessName] = useState(initial?.businessName ?? "");
@@ -357,7 +359,7 @@ function BusinessInfoForm({ initial, onBack, onSubmit, loading }: {
 // Step 3: Identity Verification Form
 // ====================================================================
 function IdentityForm({ initial, onBack, onSubmit, loading }: {
-  initial?: Record<string, unknown>; onBack: () => void; onSubmit: (data: Record<string, unknown>) => void; loading: boolean;
+  initial?: SellerIdentityInfo | null; onBack: () => void; onSubmit: (data: IdentityInput) => void; loading: boolean;
 }) {
   const [fullName, setFullName] = useState(initial?.fullName ?? "");
   const [nidNumber, setNidNumber] = useState(initial?.nidNumber ?? "");
@@ -397,7 +399,7 @@ function IdentityForm({ initial, onBack, onSubmit, loading }: {
 // Step 4: Banking Form
 // ====================================================================
 function BankingForm({ initial, onBack, onSubmit, loading }: {
-  initial?: Record<string, unknown>; onBack: () => void; onSubmit: (data: Record<string, unknown>) => void; loading: boolean;
+  initial?: SellerBankInfo | null; onBack: () => void; onSubmit: (data: BankingInput) => void; loading: boolean;
 }) {
   const [payoutMethod, setPayoutMethod] = useState<"bank" | "mobile">(initial?.mobileBankingType ? "mobile" : "bank");
   const [bankName, setBankName] = useState(initial?.bankName ?? "");

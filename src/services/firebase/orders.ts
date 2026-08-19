@@ -19,6 +19,8 @@ import type {
 const SHIPPING_FLAT = 5;
 const FREE_SHIPPING_THRESHOLD = 50;
 
+import type { DeliveryAddressSnapshot } from "@/types/address";
+
 export function computeShipping(subtotalAfterDiscount: number): number {
   return subtotalAfterDiscount >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FLAT;
 }
@@ -35,6 +37,7 @@ export interface CreateOrderInput {
   deliveryMethod?: "standard" | "express";
   rewardPoints?: number;
   walletUsed?: number;
+  deliveryAddressSnapshot?: DeliveryAddressSnapshot | null;
 }
 
 
@@ -62,7 +65,8 @@ function mapOrder(id: string, data: Record<string, unknown>): Order {
       transactionId: null,
       paidAt: null,
     },
-    shippingAddress: (raw.shippingAddress as ShippingAddress) ?? {
+    deliveryAddressSnapshot: (raw.deliveryAddressSnapshot as DeliveryAddressSnapshot | null) ?? null,
+  shippingAddress: (raw.shippingAddress as ShippingAddress) ?? {
       fullName: "",
       phone: "",
       addressLine: "",
@@ -110,6 +114,7 @@ export async function createOrder(input: CreateOrderInput): Promise<string> {
       deliveryMethod: input.deliveryMethod ?? "standard",
       rewardPoints: input.rewardPoints ?? 0,
       walletUsed: input.walletUsed ?? 0,
+      ...(input.deliveryAddressSnapshot ? { deliveryAddressSnapshot: input.deliveryAddressSnapshot } : {}),
     },
   });
 

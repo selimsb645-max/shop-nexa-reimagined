@@ -58,7 +58,7 @@ function AdminDashboard() {
           totalUsers: users.length,
           totalSellers: sellers.length,
           approvedSellers: sellers.filter((s) => s.status === "approved").length,
-          pendingSellers: sellers.filter((s) => s.status === "pending").length,
+          pendingSellers: sellers.filter((s) => s.status === "pending_review").length,
           totalProducts: products.length,
           pendingProducts: products.filter((p) => !p.approved).length,
         });

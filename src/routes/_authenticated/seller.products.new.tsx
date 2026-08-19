@@ -107,7 +107,7 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
   }, [form, images]);
 
   // Rich text editor handlers
-  const execCmd = (cmd: string) => {
+  const execCmd = (cmd: string, _value?: string) => {
     document.execCommand(cmd, false);
     if (richTextRef.current) {
       setForm(f => ({ ...f, description: richTextRef.current!.innerHTML }));

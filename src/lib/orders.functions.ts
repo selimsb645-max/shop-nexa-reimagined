@@ -29,6 +29,7 @@ const placeOrderSchema = z.object({
   deliveryMethod: z.enum(["standard", "express"]).optional(),
   rewardPoints: z.number().int().min(0).max(1_000_000).optional(),
   walletUsed: z.number().min(0).max(1_000_000).optional(),
+  deliveryAddressSnapshot: z.record(z.string(), z.unknown()).nullable().optional(),
 });
 
 export type PlaceOrderInput = z.infer<typeof placeOrderSchema>;
@@ -58,5 +59,6 @@ export const placeOrder = createServerFn({ method: "POST" })
       deliveryMethod: data.deliveryMethod ?? "standard",
       rewardPoints: data.rewardPoints ?? 0,
       walletUsed: data.walletUsed ?? 0,
+      deliveryAddressSnapshot: (data as { deliveryAddressSnapshot?: Record<string, unknown> | null }).deliveryAddressSnapshot ?? null,
     });
   });

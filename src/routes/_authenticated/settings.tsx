@@ -36,7 +36,7 @@ export const Route = createFileRoute("/_authenticated/settings")({
 });
 
 function SettingsPage() {
-  const { user, profile, _refreshProfile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState<CustomerSettings>(DEFAULT_SETTINGS);
   const [saving, setSaving] = useState(false);

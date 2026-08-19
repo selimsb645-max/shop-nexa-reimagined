@@ -29,7 +29,7 @@ function mapTx(id: string, d: Record<string, unknown>): SellerWalletTx {
     createdAt:
       typeof r.createdAt === "number"
         ? r.createdAt
-        : (r.createdAt as { toMillis?: () => number })?.toMillis?.() ?? nowMs(),
+        : ((r.createdAt as unknown) as { toMillis?: () => number })?.toMillis?.() ?? nowMs(),
   };
 }
 

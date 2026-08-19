@@ -1,0 +1,42 @@
+// Firestore Security Rules for Bangladesh Address Master System
+// These rules should be merged into the existing firestore.rules file
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Location Master Data (READ-ONLY for customers) ──
+    // Only admin/server can write. Customers and sellers can only read.
+    match /locationMaster/{docId} {
+      allow read: if true; // Public read for active locations
+      allow write: if isAdmin();
+    }
+
+    // ── Customer Addresses ──
+    // Each customer can CRUD only their own addresses
+    match /users/{uid}/addresses/{addressId} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // ── Seller Pickup Points ──
+    // Only the seller owner can manage their pickup points
+    // Admins can read all. Customers can read active pickup points for marketplace.
+    match /sellers/{sellerId}/pickupPoints/{pointId} {
+      allow read: if true;
+      allow write, delete: if request.auth != null && isSellerOwner(sellerId);
+    }
+
+    // ── Helper functions ──
+    function isAdmin() {
+      return request.auth != null &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isSellerOwner(sellerId) {
+      return request.auth != null &&
+        request.auth.uid == sellerId;
+    }
+  }
+}

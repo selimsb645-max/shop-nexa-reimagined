@@ -21,6 +21,7 @@ import {
   fetchSellerFinancials,
   requestSellerWithdrawal,
   triggerSettlementRelease,
+  type SellerSettlementData,
 } from "@/services/firebase/sellerSettlements";
 import { SellerShell } from "@/components/seller/SellerShell";
 import { formatPrice } from "@/utils/format";
@@ -47,7 +48,7 @@ export const Route = createFileRoute("/_authenticated/seller/settlements")({
 
 function SellerSettlementsPage() {
   const { user } = useAuth();
-  const { seller } = useSellerProfile();
+  const { profile: seller } = useSellerProfile();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<SellerSettlementData | null>(null);
   const [showWithdraw, setShowWithdraw] = useState(false);
@@ -262,7 +263,7 @@ function SellerSettlementsPage() {
                 No transactions yet
               </div>
             ) : (
-              data?.recentTransactions.map((tx) => (
+              data?.recentTransactions.map((tx: NonNullable<SellerSettlementData["recentTransactions"]>[number]) => (
                 <div key={tx.id} className="flex items-center gap-3 px-4 py-3">
                   <div className={`flex h-8 w-8 items-center justify-center rounded-full ${
                     tx.amount > 0 ? "bg-green-100" : "bg-red-100"

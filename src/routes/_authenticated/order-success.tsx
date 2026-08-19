@@ -174,7 +174,7 @@ interface OrderData {
               <div className="flex items-center justify-between mb-4 pb-4 border-b border-slate-100">
                 <span className="text-sm text-slate-500">Order Total</span>
                 <span className="text-lg font-black text-[#f57224]">
-                  {formatPrice(order.total)}
+                  {formatPrice(order.total ?? 0)}
                 </span>
               </div>
             )}

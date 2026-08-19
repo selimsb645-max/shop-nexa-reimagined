@@ -38,7 +38,7 @@ function mapWithdrawal(id: string, d: Record<string, unknown>): WithdrawalReques
     requestedAt:
       typeof r.requestedAt === "number"
         ? r.requestedAt
-        : (r.requestedAt as { toMillis?: () => number })?.toMillis?.() ?? nowMs(),
+        : ((r.requestedAt as unknown) as { toMillis?: () => number })?.toMillis?.() ?? nowMs(),
     processedAt:
       r.processedAt != null
         ? typeof r.processedAt === "number"

@@ -8,7 +8,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { getDb } from "./config";
-import type { AppUserProfile, UserRole } from "@/types/user";
+import type { AppUserProfile, UserRole, AdminRole } from "@/types/user";
 
 const USERS = "users";
 
@@ -24,6 +24,7 @@ function mapUser(id: string, d: Record<string, unknown>): AdminUserRow {
     displayName: (d.displayName as string | null) ?? null,
     photoURL: (d.photoURL as string | null) ?? null,
     role: (d.role as UserRole) ?? "customer",
+    adminRole: (d.adminRole as AdminRole | null) ?? null,
     emailVerified: Boolean(d.emailVerified),
     blocked: Boolean(d.blocked),
     createdAt:

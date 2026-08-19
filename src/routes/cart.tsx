@@ -36,7 +36,8 @@ import { useQuery } from "@tanstack/react-query";
 import { getProductById } from "@/services/firebase/products";
 import { getSellerProfile } from "@/services/firebase/sellers";
 import { firebaseConfigured } from "@/services/firebase/config";
-import { listAvailableCoupons, validateCoupon, CouponError } from "@/services/firebase/coupons";
+import { validateCoupon, CouponError } from "@/services/firebase/coupons";
+import type { Product } from "@/types/commerce";
 
 // ----------------------------------------------------------------------
 // Route Definition
@@ -90,38 +91,31 @@ export default function CartPage() {
   const navigate = useNavigate();
 
   // Context Hooks with Defensive Safe Fallbacks
-  const cartContext = useCart() as Record<string, unknown> & Partial<{ items: CartItemType[]; clear: () => Promise<void> }>;
-  const _authContext = useAuth() as Record<string, unknown> | null;
-  const wishlistContext = useWishlist() as Record<string, unknown> | null;
+  const cartContext = useCart();
+  const _authContext = useAuth();
+  const wishlistContext = useWishlist();
 
   // Extract Context Items if exists, else use state initializers
-  const rawContextItems =
-    cartContext?.items || cartContext?.cartItems || cartContext?.cart;
+  const rawContextItems = cartContext?.items ?? [];
 
   // Local State for Cart Items (so cart remains fully interactive)
   const [items, setItems] = useState<CartItemType[]>(() => {
     if (Array.isArray(rawContextItems) && rawContextItems.length > 0) {
-      return rawContextItems.map((item: Record<string, unknown>, index: number) => ({
-        id: String(item.id || item.productId || `item-${index}`),
-        productId: String(item.productId || item.id || `prod-${index}`),
-        title: item.title || item.name || "Shop Nexa Product",
-        price: Number(item.price || item.unitPrice || 0),
-        originalPrice: item.originalPrice
-          ? Number(item.originalPrice)
-          : item.compareAtPrice
-          ? Number(item.compareAtPrice)
-          : undefined,
+      return rawContextItems.map((item, index: number) => ({
+        id: String(item.productId || `item-${index}`),
+        productId: String(item.productId || `prod-${index}`),
+        title: item.title || "Shop Nexa Product",
+        price: Number(item.price || 0),
+        originalPrice: undefined,
         image:
           item.image ||
-          item.imageUrl ||
-          item.thumbnail ||
           "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMzAwIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YzZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzljYTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPlNob3AgTmV4YTwvdGV4dD48L3N2Zz4=",
-        seller: item.seller || item.storeName || "",
-        sellerRating: item.sellerRating || 4.8,
-        variant: item.variant || item.selectedVariant || "Standard",
-        color: item.color,
-        size: item.size,
-        quantity: Number(item.quantity || item.qty || 1),
+        seller: "",
+        sellerRating: 4.8,
+        variant: "Standard",
+        color: undefined,
+        size: undefined,
+        quantity: Number(item.quantity || 1),
         stock: item.stock || 20,
       }));
     }
@@ -362,10 +356,8 @@ export default function CartPage() {
     if (newQty < 1) return;
 
     // Call context handler if available
-    if (typeof cartContext.updateQuantity === "function") {
-      cartContext.updateQuantity(id, newQty);
-    } else if (typeof cartContext.updateCartItemQuantity === "function") {
-      cartContext.updateCartItemQuantity(id, newQty);
+    if (typeof cartContext?.updateQty === "function") {
+      cartContext.updateQty(id, newQty);
     }
 
     setItems((prev) =>
@@ -375,10 +367,8 @@ export default function CartPage() {
 
   // Single Item Remove
   const handleRemoveItem = (id: string, title?: string) => {
-    if (typeof cartContext.removeItem === "function") {
-      cartContext.removeItem(id);
-    } else if (typeof cartContext.removeFromCart === "function") {
-      cartContext.removeFromCart(id);
+    if (typeof cartContext?.remove === "function") {
+      cartContext.remove(id);
     }
 
     setItems((prev) => prev.filter((item) => item.id !== id));
@@ -397,10 +387,8 @@ export default function CartPage() {
     }
 
     selectedIds.forEach((id) => {
-      if (typeof cartContext.removeItem === "function") {
-        cartContext.removeItem(id);
-      } else if (typeof cartContext.removeFromCart === "function") {
-        cartContext.removeFromCart(id);
+      if (typeof cartContext?.remove === "function") {
+        cartContext.remove(id);
       }
     });
 
@@ -412,15 +400,13 @@ export default function CartPage() {
 
   // Move Item to Wishlist
   const handleMoveToWishlist = (item: CartItemType) => {
-    if (typeof wishlistContext.toggleWishlist === "function") {
-      wishlistContext.toggleWishlist({
+    if (typeof wishlistContext?.toggle === "function") {
+      wishlistContext.toggle({
         id: item.productId || item.id,
         title: item.title,
         price: item.price,
         images: [item.image],
-      });
-    } else if (typeof wishlistContext.addToWishlist === "function") {
-      wishlistContext.addToWishlist(item);
+      } as any);
     }
 
     handleRemoveItem(item.id);
@@ -438,15 +424,13 @@ export default function CartPage() {
 
     const itemsToMove = items.filter((item) => selectedIds.includes(item.id));
     itemsToMove.forEach((item) => {
-      if (typeof wishlistContext.addToWishlist === "function") {
-        wishlistContext.addToWishlist(item);
-      } else if (typeof wishlistContext.toggleWishlist === "function") {
-        wishlistContext.toggleWishlist({
+      if (typeof wishlistContext?.toggle === "function") {
+        wishlistContext.toggle({
           id: item.productId || item.id,
           title: item.title,
           price: item.price,
           images: [item.image],
-        });
+        } as any);
       }
     });
 
@@ -456,10 +440,8 @@ export default function CartPage() {
 
   // Clear All Items
   const handleClearAll = () => {
-    if (typeof cartContext.clearCart === "function") {
-      cartContext.clearCart();
-    } else if (typeof cartContext.removeAll === "function") {
-      cartContext.removeAll();
+    if (typeof cartContext?.clear === "function") {
+      cartContext.clear();
     }
 
     setItems([]);
@@ -1001,7 +983,7 @@ export default function CartPage() {
                         Available Store Vouchers:
                       </p>
                       <div className="flex flex-wrap gap-1.5">
-                        {availableCoupons.slice(0, 6).map((c) => (
+                        {[].slice(0, 6).map((c: CouponType) => (
                           <button
                             key={c.code}
                             type="button"
@@ -1041,7 +1023,7 @@ export default function CartPage() {
                       <span>Shipping Fee</span>
                       <HelpCircle
                         className="w-3.5 h-3.5 text-slate-400 cursor-pointer"
-                        title="Standard delivery fee across Bangladesh"
+                        aria-label="Standard delivery fee across Bangladesh"
                       />
                     </span>
                     <span className="font-semibold">

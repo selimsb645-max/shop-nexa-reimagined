@@ -41,6 +41,7 @@ export interface PlaceOrderRequest {
   uid: string;
   buyerEmail: string | null;
   items: Array<{ productId: string; quantity: number }>;
+  deliveryAddressSnapshot?: Record<string, unknown> | null;
   shippingAddress: {
     fullName: string;
     phone: string;
@@ -360,6 +361,7 @@ export async function placeOrderServer(
           paidAt: null,
         },
         shippingAddress: req.shippingAddress,
+        deliveryAddressSnapshot: req.deliveryAddressSnapshot ?? null,
         tracking: [
           { status: "pending", note: "Order placed successfully", at: nowMs },
         ],

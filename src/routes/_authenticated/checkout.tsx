@@ -37,37 +37,35 @@ import { firebaseConfigured } from "@/services/firebase/config";
 import { getProductById } from "@/services/firebase/products";
 import { getSellerProfile } from "@/services/firebase/sellers";
 import {
-  listAddresses,
-  saveAddress,
-  setDefaultAddress,
-  deleteAddress,
-  type AddressInput,
-} from "@/services/firebase/addresses";
+  listStructuredAddresses,
+  saveStructuredAddress,
+} from "@/services/firebase/structuredAddresses";
+import { CheckoutAddressSelector } from "@/components/address/CheckoutAddressSelector";
+import type { DeliveryAddressSnapshot, StructuredAddress } from "@/types/address";
 import { getWalletBalance, getRewardPoints } from "@/services/firebase/wallet";
 import { validateCoupon, CouponError } from "@/services/firebase/coupons";
 import { computeShipping, createOrder } from "@/services/firebase/orders";
-import type { PaymentMethod, Coupon, CartItem } from "@/types/commerce";
-import type { Address } from "@/types/customer";
+import type { PaymentMethod, Coupon, CartItem, Product } from "@/types/commerce";
+
+
+type EnrichedCartItem = {
+  id: string;
+  productId: string;
+  title: string;
+  price: number;
+  image: string;
+  quantity: number;
+  stock: number;
+  originalPrice?: number;
+  sellerName: string;
+  sellerVerified: boolean;
+};
 
 export const Route = createFileRoute("/_authenticated/checkout")({
   ssr: false,
   component: CheckoutPage,
   head: () => ({ meta: [{ title: "Checkout — Shop Nexa" }] }),
 });
-
-// ----------------------------------------------------------------------
-// Bangladesh Divisions for Address Selector
-// ----------------------------------------------------------------------
-const BD_DIVISIONS = [
-  "Dhaka",
-  "Chattogram",
-  "Khulna",
-  "Rajshahi",
-  "Barishal",
-  "Sylhet",
-  "Rangpur",
-  "Mymensingh",
-] as const;
 
 // ----------------------------------------------------------------------
 // Delivery Methods
@@ -116,14 +114,12 @@ function CheckoutPage() {
   const { user } = useAuth();
 
   // ---- Cart ----
-  const cartContext = useCart() as Record<string, unknown> & Partial<{ items: CartItem[]; clear: () => Promise<void> }>;
-  const rawItems =
-    cartContext?.items || cartContext?.cartItems || cartContext?.cart || [];
-  const cartItems = Array.isArray(rawItems) ? rawItems : [];
+  const cartContext = useCart();
+  const cartItems = cartContext?.items ?? [];
 
   // ---- Fetch product details for seller info ----
   const productIds = cartItems
-    .map((i: CartItem) => i.productId || i.id)
+    .map((i: CartItem) => i.productId)
     .filter(Boolean);
   const { data: productDetails = {} } = useQuery({
     queryKey: ["checkout-products", productIds],
@@ -180,31 +176,22 @@ function CheckoutPage() {
   // ---- Enrich items with seller info ----
   const enrichedItems = useMemo(() => {
     return cartItems.map((item: CartItem, index: number) => {
-      const pid = item.productId || item.id;
+      const pid = item.productId;
       const product = productDetails[pid];
       const sellerId = product?.sellerId;
       const sellerInfo = sellerId ? sellerProfiles[sellerId] : null;
       return {
-        id: String(item.id || item.productId || `item-${index}`),
-        productId: String(item.productId || item.id || `prod-${index}`),
-        title: item.title || item.name || product?.title || "Product",
+        id: String(item.productId || `item-${index}`),
+        productId: String(item.productId || `prod-${index}`),
+        title: item.title || product?.title || "Product",
         price: Number(item.price || 0),
-        image:
-          item.image ||
-          item.imageUrl ||
-          item.thumbnail ||
-          product?.images?.[0] ||
-          "",
-        quantity: Number(item.quantity || item.qty || 1),
+        image: item.image || (product?.images?.[0] as string) || "",
+        quantity: Number(item.quantity || 1),
         stock: item.stock || product?.stock || 0,
-        originalPrice: item.originalPrice
-          ? Number(item.originalPrice)
-          : product?.compareAtPrice
-          ? Number(product.compareAtPrice)
-          : undefined,
+        originalPrice: product?.compareAtPrice ? Number(product.compareAtPrice) : undefined,
         sellerName: sellerInfo?.shopName || "Shop Nexa",
         sellerVerified: sellerInfo?.verified ?? false,
-      };
+      } satisfies EnrichedCartItem;
     });
   }, [cartItems, productDetails, sellerProfiles]);
 
@@ -218,23 +205,9 @@ function CheckoutPage() {
     return groups;
   }, [enrichedItems]);
 
-  // ---- Addresses ----
-  const { data: addresses = [], refetch: refetchAddresses } = useQuery({
-    queryKey: ["addresses", user?.uid],
-    queryFn: () => listAddresses(user!.uid),
-    enabled: !!user && firebaseConfigured,
-  });
-
+  // ---- Addresses (Structured) ----
   const [selectedAddressId, setSelectedAddressId] = useState<string>("");
-  const [showAddressForm, setShowAddressForm] = useState(false);
-  const [editingAddress, setEditingAddress] = useState<Address | null>(null);
-
-  useEffect(() => {
-    if (addresses.length > 0 && !selectedAddressId) {
-      const defaultAddr = addresses.find((a) => a.isDefault) || addresses[0];
-      setSelectedAddressId(defaultAddr.id);
-    }
-  }, [addresses, selectedAddressId]);
+  const [deliveryAddressSnapshot, setDeliveryAddressSnapshot] = useState<DeliveryAddressSnapshot | null>(null);
 
   // ---- Delivery Method ----
   const [deliveryMethodId, setDeliveryMethodId] = useState("standard");
@@ -293,7 +266,7 @@ function CheckoutPage() {
   const itemsSubtotal = useMemo(
     () =>
       enrichedItems.reduce(
-        (acc: number, i: CartItem) => acc + i.price * i.quantity,
+        (acc: number, i: EnrichedCartItem) => acc + i.price * i.quantity,
         0
       ),
     [enrichedItems]
@@ -366,46 +339,44 @@ function CheckoutPage() {
     toast.info("Voucher removed");
   };
 
-  // ---- Address handlers ----
-  const handleSaveAddress = async (data: AddressInput, id?: string) => {
-    if (!user) return;
+  // ---- Promo handlers (NEXA user-specific codes) ----
+  const handleApplyPromo = async () => {
+    const code = promoInput.trim().toUpperCase();
+    if (!code) {
+      setPromoError("Enter a promo code");
+      return;
+    }
+    setPromoError("");
+    setPromoBusy(true);
     try {
-      await saveAddress(user.uid, data, id);
-      await refetchAddresses();
-      setShowAddressForm(false);
-      setEditingAddress(null);
-      toast.success(id ? "Address updated" : "Address saved");
-    } catch (e) {
-      console.warn("Failed to save address:", e);
-      toast.error("Failed to save address");
+      const result = await validateCoupon(code, itemsSubtotal);
+      setAppliedPromoCode(result.coupon.code);
+      setAppliedCoupon(result);
+      setPromoInput("");
+      toast.success(`Promo "${result.coupon.code}" applied!`);
+    } catch (err) {
+      if (err instanceof CouponError) {
+        setPromoError(err.message);
+        toast.error(err.message);
+      } else {
+        setPromoError("Failed to validate promo code");
+        toast.error("Failed to validate promo code");
+      }
+    } finally {
+      setPromoBusy(false);
     }
   };
 
-  const handleSetDefault = async (id: string) => {
-    if (!user) return;
-    try {
-      await setDefaultAddress(user.uid, id);
-      await refetchAddresses();
-      setSelectedAddressId(id);
-      toast.success("Default address updated");
-    } catch (e) {
-      console.warn("Failed to set default address:", e);
-      toast.error("Failed to update default address");
-    }
+  const handleRemovePromo = () => {
+    setAppliedPromoCode(null);
+    setAppliedCoupon(null);
+    setPromoError("");
+    toast.info("Promo removed");
   };
 
-  const handleDeleteAddress = async (id: string) => {
-    if (!user) return;
-    try {
-      await deleteAddress(user.uid, id);
-      await refetchAddresses();
-      if (selectedAddressId === id) setSelectedAddressId("");
-      toast.success("Address deleted");
-    } catch (e) {
-      console.warn("Failed to delete address:", e);
-      toast.error("Failed to delete address");
-    }
-  };
+  // ---- Address snapshot is handled by CheckoutAddressSelector ----
+
+
 
   // ---- Place Order ----
   const handlePlaceOrder = async () => {
@@ -426,9 +397,8 @@ function CheckoutPage() {
       return;
     }
 
-    const selectedAddress = addresses.find((a) => a.id === selectedAddressId);
-    if (!selectedAddress) {
-      toast.error("Selected address not found");
+    if (!deliveryAddressSnapshot) {
+      toast.error("Please select a delivery address");
       return;
     }
 
@@ -439,13 +409,13 @@ function CheckoutPage() {
         buyerEmail: user.email ?? null,
         items: cartItems,
         shippingAddress: {
-          fullName: selectedAddress.fullName,
-          phone: selectedAddress.phone,
-          addressLine: selectedAddress.addressLine,
-          city: selectedAddress.city,
-          postalCode: selectedAddress.postalCode,
-          country: selectedAddress.country,
-          notes: selectedAddress.notes,
+          fullName: deliveryAddressSnapshot.fullName,
+          phone: deliveryAddressSnapshot.phone,
+          addressLine: deliveryAddressSnapshot.fullAddress,
+          city: deliveryAddressSnapshot.districtEn,
+          postalCode: deliveryAddressSnapshot.postalCode,
+          country: "Bangladesh",
+          notes: deliveryAddressSnapshot.deliveryInstructions || undefined,
         },
         paymentMethod,
         couponCode: appliedCoupon?.coupon.code ?? null,
@@ -454,14 +424,13 @@ function CheckoutPage() {
         deliveryMethod: deliveryMethodId as "standard" | "express",
         rewardPoints: useRewardPoints ? rewardPointsToUse : 0,
         walletUsed: walletUsed,
+        deliveryAddressSnapshot: deliveryAddressSnapshot,
       });
 
       if (typeof cartContext.clear === "function") {
         await cartContext.clear();
       }
-      if (typeof cartContext.clearCart === "function") {
-        await cartContext.clearCart();
-      }
+
 
       toast.success("Order placed successfully!");
       navigate({
@@ -551,127 +520,11 @@ function CheckoutPage() {
               icon={<MapPin className="w-4 h-4" />}
               title="Delivery Address"
             >
-              {addresses.length > 0 && !showAddressForm ? (
-                <div className="space-y-3">
-                  {addresses.map((addr) => (
-                    <div
-                      key={addr.id}
-                      onClick={() => setSelectedAddressId(addr.id)}
-                      className={`relative border-2 rounded-xl p-4 cursor-pointer transition-all ${
-                        selectedAddressId === addr.id
-                          ? "border-[#f57224] bg-orange-50/50"
-                          : "border-slate-200 hover:border-slate-300"
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div
-                          className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                            selectedAddressId === addr.id
-                              ? "border-[#f57224] bg-[#f57224]"
-                              : "border-slate-300"
-                          }`}
-                        >
-                          {selectedAddressId === addr.id && (
-                            <Check className="w-3 h-3 text-white" />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-sm font-bold text-[#0f172a]">
-                              {addr.fullName}
-                            </span>
-                            <span className="text-xs text-slate-400">
-                              {addr.phone}
-                            </span>
-                            {addr.isDefault && (
-                              <span className="bg-[#0f172a] text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
-                                DEFAULT
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs text-slate-600 leading-relaxed">
-                            {addr.label} · {addr.addressLine}
-                            {addr.city ? `, ${addr.city}` : ""}
-                            {addr.postalCode ? ` - ${addr.postalCode}` : ""}
-                            {addr.country ? `, ${addr.country}` : ""}
-                          </p>
-                          <div className="flex items-center gap-3 mt-2">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleSetDefault(addr.id);
-                              }}
-                              className="text-[10px] font-semibold text-[#f57224] hover:underline"
-                            >
-                              Set as default
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setEditingAddress(addr);
-                                setShowAddressForm(true);
-                              }}
-                              className="text-[10px] font-semibold text-slate-500 hover:text-[#0f172a] flex items-center gap-0.5"
-                            >
-                              <Pencil className="w-2.5 h-2.5" />
-                              Edit
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteAddress(addr.id);
-                              }}
-                              className="text-[10px] font-semibold text-slate-400 hover:text-rose-600 flex items-center gap-0.5"
-                            >
-                              <Trash2 className="w-2.5 h-2.5" />
-                              Delete
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditingAddress(null);
-                      setShowAddressForm(true);
-                    }}
-                    className="w-full border-2 border-dashed border-slate-200 hover:border-[#f57224] rounded-xl py-3 text-sm font-semibold text-slate-500 hover:text-[#f57224] transition-colors flex items-center justify-center gap-1.5"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Add New Address</span>
-                  </button>
-                </div>
-              ) : showAddressForm ? (
-                <AddressForm
-                  editing={editingAddress}
-                  onSave={handleSaveAddress}
-                  onCancel={() => {
-                    setShowAddressForm(false);
-                    setEditingAddress(null);
-                  }}
-                />
-              ) : (
-                <div className="text-center py-6">
-                  <MapPin className="mx-auto w-8 h-8 text-slate-300 mb-2" />
-                  <p className="text-sm text-slate-500 mb-4">
-                    No saved addresses yet
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setShowAddressForm(true)}
-                    className="inline-flex items-center gap-2 bg-[#0f172a] hover:bg-slate-800 text-white text-sm font-bold py-2.5 px-5 rounded-lg transition-colors"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Add Delivery Address</span>
-                  </button>
-                </div>
-              )}
+              <CheckoutAddressSelector
+                selectedAddressId={selectedAddressId}
+                setSelectedAddressId={setSelectedAddressId}
+                onAddressSelected={setDeliveryAddressSnapshot}
+              />
             </CheckoutSection>
 
             {/* ---- 2. DELIVERY METHOD ---- */}
@@ -762,7 +615,7 @@ function CheckoutPage() {
                       </div>
                       {/* Items */}
                       <div className="divide-y divide-slate-100">
-                        {sellerItems.map((item: CartItem) => (
+                        {sellerItems.map((item: EnrichedCartItem) => (
                           <div
                             key={item.id}
                             className="flex items-center gap-3 p-3"
@@ -1161,7 +1014,7 @@ function CheckoutPage() {
 
               {/* Items count */}
               <div className="space-y-2 mb-4">
-                {enrichedItems.slice(0, 5).map((item: CartItem) => (
+                {enrichedItems.slice(0, 5).map((item: EnrichedCartItem) => (
                   <div
                     key={item.id}
                     className="flex items-center gap-2.5 text-xs"
@@ -1442,148 +1295,6 @@ function PaymentOption({
 // ----------------------------------------------------------------------
 // Address Form Component
 // ----------------------------------------------------------------------
-function AddressForm({
-  editing,
-  onSave,
-  onCancel,
-}: {
-  editing: Address | null;
-  onSave: (data: AddressInput, id?: string) => void;
-  onCancel: () => void;
-}) {
-  const [form, setForm] = useState({
-    label: editing?.label || "Home",
-    fullName: editing?.fullName || "",
-    phone: editing?.phone || "",
-    addressLine: editing?.addressLine || "",
-    city: editing?.city || "",
-    postalCode: editing?.postalCode || "",
-    country: editing?.country || "Bangladesh",
-    notes: editing?.notes || "",
-    isDefault: editing?.isDefault || false,
-  });
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  const validate = () => {
-    const e: Record<string, string> = {};
-    if (!form.fullName.trim() || form.fullName.trim().length < 2)
-      e.fullName = "Enter receiver name";
-    if (!form.phone.trim() || form.phone.trim().length < 6)
-      e.phone = "Enter phone number";
-    if (!form.addressLine.trim() || form.addressLine.trim().length < 4)
-      e.addressLine = "Enter full address";
-    if (!form.city.trim() || form.city.trim().length < 2)
-      e.city = "Enter district/city";
-    setErrors(e);
-    return Object.keys(e).length === 0;
-  };
-
-  const handleSubmit = () => {
-    if (!validate()) return;
-    onSave(form, editing?.id);
-  };
-
-  return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-3">
-        <FormInput
-          label="Address Label"
-          value={form.label}
-          onChange={(v) => setForm({ ...form, label: v })}
-          placeholder="Home, Office..."
-        />
-        <FormInput
-          label="Receiver Name"
-          value={form.fullName}
-          onChange={(v) => setForm({ ...form, fullName: v })}
-          placeholder="Full name"
-          error={errors.fullName}
-        />
-      </div>
-      <FormInput
-        label="Phone Number"
-        value={form.phone}
-        onChange={(v) => setForm({ ...form, phone: v })}
-        placeholder="01XXXXXXXXX"
-        error={errors.phone}
-      />
-      <div>
-        <label className="mb-1 block text-xs font-medium text-slate-500">
-          Division
-        </label>
-        <select
-          value={form.city}
-          onChange={(e) => setForm({ ...form, city: e.target.value })}
-          className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#f57224] transition-colors"
-        >
-          <option value="">Select division</option>
-          {BD_DIVISIONS.map((d) => (
-            <option key={d} value={d}>
-              {d}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <FormInput
-          label="District / City"
-          value={form.city}
-          onChange={(v) => setForm({ ...form, city: v })}
-          placeholder="District"
-          error={errors.city}
-        />
-        <FormInput
-          label="Postal Code"
-          value={form.postalCode}
-          onChange={(v) => setForm({ ...form, postalCode: v })}
-          placeholder="Postal code"
-        />
-      </div>
-      <FormInput
-        label="Full Address"
-        value={form.addressLine}
-        onChange={(v) => setForm({ ...form, addressLine: v })}
-        placeholder="House, road, area..."
-        error={errors.addressLine}
-      />
-      <FormInput
-        label="Landmark (optional)"
-        value={form.notes}
-        onChange={(v) => setForm({ ...form, notes: v })}
-        placeholder="Nearby landmark"
-      />
-      <label className="flex items-center gap-2 cursor-pointer">
-        <input
-          type="checkbox"
-          checked={form.isDefault}
-          onChange={(e) => setForm({ ...form, isDefault: e.target.checked })}
-          className="w-4 h-4 accent-[#f57224] rounded"
-        />
-        <span className="text-xs font-semibold text-slate-600">
-          Set as default address
-        </span>
-      </label>
-      <div className="flex gap-2 pt-1">
-        <button
-          type="button"
-          onClick={handleSubmit}
-          className="flex-1 bg-[#0f172a] hover:bg-slate-800 text-white text-sm font-bold py-2.5 rounded-lg transition-colors flex items-center justify-center gap-1.5"
-        >
-          <Check className="w-4 h-4" />
-          <span>{editing ? "Update Address" : "Save Address"}</span>
-        </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="px-4 py-2.5 border border-slate-200 text-slate-600 text-sm font-bold rounded-lg hover:bg-slate-50 transition-colors"
-        >
-          Cancel
-        </button>
-      </div>
-    </div>
-  );
-}
-
 // ----------------------------------------------------------------------
 // Form Input Component
 // ----------------------------------------------------------------------

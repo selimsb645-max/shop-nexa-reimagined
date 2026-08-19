@@ -81,8 +81,12 @@ export const productSchema = z.object({
     .min(2, "Slug required")
     .max(80)
     .regex(slugRegex, "Use lowercase letters, numbers and dashes"),
+  shortDescription: z.string().trim().max(200).optional().or(z.literal("")),
+  brand: z.string().trim().max(100).optional().or(z.literal("")),
   description: z.string().trim().min(10, "Description too short").max(4000),
   price: z.coerce.number().min(0.01, "Price must be greater than 0").max(1_000_000),
+  costPrice: z.union([z.coerce.number().min(0).max(1_000_000), z.literal(""), z.null()]).optional(),
+  tax: z.coerce.number().min(0).max(100).optional(),
   compareAtPrice: z
     .union([z.coerce.number().min(0).max(1_000_000), z.literal(""), z.null()])
     .optional(),

@@ -161,6 +161,7 @@ function StatusPill({ status }: { status: SellerOrderStatus }) {
     shipped: "bg-accent/10 text-accent",
     delivered: "bg-green-500/10 text-green-600",
     cancelled: "bg-destructive/10 text-destructive",
+    returned: "bg-amber-500/10 text-amber-600",
   };
   return (
     <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${map[status]}`}>

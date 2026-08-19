@@ -440,9 +440,7 @@ export async function validatePromoCodeServer(
     return { valid: false, discount: 0, reason: "Promo code not found." };
   }
 
-  const data = fromFsFields(
-    (doc.data as unknown as { _raw?: Record<string, FsValue> }) as Record<string, unknown>,
-  );
+  const data = fromFsFields(doc.data as unknown as Record<string, FsValue>);
   const promo = mapPromo(normalized, data);
 
   // Check ownership — promo code belongs to the requesting user

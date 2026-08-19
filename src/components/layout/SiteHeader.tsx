@@ -372,7 +372,7 @@ export function SiteHeader() {
                       : catName.toLowerCase().replace(/\s+/g, "-");
                   return (
                     <Link
-                      key={cat.id || idx}
+                      key={typeof cat === "object" ? cat.id || idx : idx}
                       to="/products"
                       search={{ category: catSlug } as Record<string, string>}
                       onClick={() => setIsCategoryOpen(false)}
@@ -453,7 +453,7 @@ export function SiteHeader() {
                   : catName.toLowerCase().replace(/\s+/g, "-");
               return (
                 <Link
-                  key={cat.id || idx}
+                  key={typeof cat === "object" ? cat.id || idx : idx}
                   to="/products"
                   search={{ category: catSlug } as Record<string, string>}
                   onClick={() => setIsMobileMenuOpen(false)}

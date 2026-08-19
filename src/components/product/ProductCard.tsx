@@ -50,7 +50,7 @@ function getProductImage(product: Partial<Product>): string {
   if (Array.isArray(p.images) && p.images.length > 0) {
     const firstImg = p.images[0];
     if (typeof firstImg === 'string') return firstImg;
-    if (firstImg && typeof (firstImg as { url?: string }).url === 'string') return (firstImg as { url?: string }).url;
+    if (firstImg && typeof (firstImg as { url?: string }).url === 'string') return (firstImg as { url?: string }).url ?? "";
   }
   if (typeof p.imageUrl === 'string' && p.imageUrl) {
     return p.imageUrl;

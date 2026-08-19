@@ -59,6 +59,8 @@ type ProductWithExtras = Product & {
   imageUrl?: string;
   thumbnail?: string;
   compareAtPrice?: number;
+  specifications?: { name: string; value: string }[];
+  category?: string;
 };
 
 export const Route = createFileRoute("/product/$slug")({
@@ -83,11 +85,11 @@ export function ProductDetailPage() {
   const { slug } = Route.useParams();
 
   // Auth & Context Hooks
-  const authContext = (useAuth() as Record<string, unknown>) || {};
+  const authContext = useAuth();
   const user = authContext?.user ?? null;
 
-  const cartContext = (useCart() as Record<string, unknown>) || {};
-  const wishlistContext = (useWishlist() as Record<string, unknown>) || {};
+  const cartContext = useCart();
+  const wishlistContext = useWishlist();
 
   // Fetch Main Product
   const {
@@ -109,7 +111,7 @@ export function ProductDetailPage() {
       // Try fetching from product list as secondary lookup
       try {
         const all = await listProducts();
-        const matched = all.find((p: Record<string, unknown>) => p.slug === slug || p.id === slug);
+        const matched = all.find((p) => p.slug === slug || p.id === slug);
         if (matched) return matched;
       } catch (_) { /* ignore */ }
 
@@ -119,15 +121,15 @@ export function ProductDetailPage() {
     staleTime: 1000 * 60 * 5,
   });
 
-  const product = rawProduct as Partial<Product> | null;
+  const product = rawProduct as Partial<ProductWithExtras> | null;
 
   // Fetch Related Products
   const { data: relatedProducts = [] } = useQuery({
-    queryKey: ["related-products", product?.category || "all"],
+    queryKey: ["related-products", product?.categorySlug || "all"],
     queryFn: async () => {
       if (firebaseConfigured) {
         try {
-          const list = await listProducts({ category: product?.category });
+          const list = await listProducts({ categorySlug: product?.categorySlug });
           if (list && list.length > 0) return list;
         } catch (_) { /* ignore */ }
       }
@@ -158,7 +160,7 @@ export function ProductDetailPage() {
     let cancelled = false;
     (async () => {
       try {
-        const reviews = await listReviews(product.id);
+        const reviews = product?.id ? await listReviews(product.id) : [];
         if (!cancelled) setUserReviews(reviews);
       } catch (e) {
         // Show empty state instead of fake reviews
@@ -189,8 +191,8 @@ export function ProductDetailPage() {
   const images = useMemo(() => {
     if (!product) return [];
     if (Array.isArray(product.images) && product.images.length > 0) {
-      return product.images.map((img: unknown) =>
-        typeof img === "string" ? img : img.url || img.src || ""
+      return product.images.map((img) =>
+        typeof img === "string" ? img : ""
       );
     }
     if ((product as ProductWithExtras).imageUrl) return [(product as ProductWithExtras).imageUrl!];
@@ -201,25 +203,16 @@ export function ProductDetailPage() {
   // Wishlist Check & Handler
   const isWishlisted = useMemo(() => {
     if (!product?.id) return false;
-    if (typeof wishlistContext.isInWishlist === "function") {
-      return wishlistContext.isInWishlist(product.id);
-    }
-    if (Array.isArray(wishlistContext.items)) {
-      return wishlistContext.items.some(
-        (i: Record<string, unknown>) => i.id === product.id || i.productId === product.id
-      );
+    if (typeof wishlistContext?.has === "function") {
+      return wishlistContext.has(product.id);
     }
     return false;
   }, [wishlistContext, product?.id]);
 
   const handleToggleWishlist = () => {
     if (!product) return;
-    if (typeof wishlistContext.toggleWishlist === "function") {
-      wishlistContext.toggleWishlist(product);
-    } else if (typeof wishlistContext.toggleItem === "function") {
-      wishlistContext.toggleItem(product);
-    } else if (typeof wishlistContext.addToWishlist === "function") {
-      wishlistContext.addToWishlist(product);
+    if (typeof wishlistContext?.toggle === "function") {
+      wishlistContext.toggle(product as any);
     }
     toast.success(
       isWishlisted
@@ -241,12 +234,8 @@ export function ProductDetailPage() {
         quantity,
       };
 
-      if (typeof cartContext.addToCart === "function") {
-        cartContext.addToCart(product, quantity, { color: selectedColor, size: selectedSize });
-      } else if (typeof cartContext.addItem === "function") {
-        cartContext.addItem(itemToAdd);
-      } else if (typeof cartContext.addItemToCart === "function") {
-        cartContext.addItemToCart(itemToAdd);
+      if (typeof cartContext?.add === "function") {
+        cartContext.add(product as any, quantity);
       }
 
       toast.success(
@@ -318,16 +307,16 @@ export function ProductDetailPage() {
     setIsSubmittingReview(true);
     try {
       await upsertReview({
-        productId: product.id,
-        userId: user.uid,
-        userName: user.displayName || user.email?.split("@")[0] || "Verified Nexa Buyer",
-        userPhoto: user.photoURL || null,
+        productId: product?.id ?? "",
+        userId: user?.uid ?? "",
+        userName: user?.displayName || user?.email?.split("@")[0] || "Verified Nexa Buyer",
+        userPhoto: user?.photoURL || null,
         rating: newRating,
         title: newTitle || "Verified Purchase Review",
         comment: newComment,
       });
       // Reload reviews after submission
-      const fresh = await listReviews(product.id);
+      const fresh = product?.id ? await listReviews(product.id) : [];
       setUserReviews(fresh);
       setNewComment("");
       setNewTitle("");
@@ -344,7 +333,7 @@ export function ProductDetailPage() {
   const price = product?.price ?? 0;
   const originalPrice = product?.compareAtPrice ?? (product as ProductWithExtras)?.compareAtPrice;
   const discountPercent = useMemo(() => {
-    if (product?.discount && (product as ProductWithExtras).discount! > 0) return Math.round((product as ProductWithExtras).discount!);
+    if (product?.discount && product.discount > 0) return Math.round(product.discount);
     if (originalPrice && originalPrice > price) {
       return Math.round(((originalPrice - price) / originalPrice) * 100);
     }
@@ -925,10 +914,10 @@ export function ProductDetailPage() {
                   {(product.specifications || [
                     { name: "Brand", value: (product as ProductWithExtras).brand || "Shop Nexa" },
                     { name: "SKU", value: product.id },
-                    { name: "Category", value: product.category || "General" },
+                    { name: "Category", value: product.categorySlug || "General" },
                     { name: "In Stock", value: (product as ProductWithExtras).inStock ? "Yes" : "No" },
                     { name: "Warranty", value: "1 Year Official Warranty" },
-                  ]).map((spec, idx) => (
+                  ]).map((spec: { name: string; value: string | undefined }, idx: number) => (
                     <tr
                       key={idx}
                       className={idx % 2 === 0 ? "bg-slate-50" : "bg-white"}
@@ -1066,21 +1055,21 @@ export function ProductDetailPage() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <img
-                          src={(rev as Review).userPhoto || (rev as Record<string, unknown>).avatar as string | "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80"}
+                          src={rev.userPhoto || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80"}
                           alt={rev.userName}
                           className="w-9 h-9 rounded-full object-cover border border-slate-200"
                         />
                         <div>
                           <h5 className="text-xs md:text-sm font-bold text-slate-800 flex items-center gap-1.5">
                             {rev.userName}
-                            {Boolean((rev as Record<string, unknown>).verified ?? true) && (
+                            {Boolean(true) && (
                               <span className="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.2 rounded font-semibold">
                                 Verified Purchase
                               </span>
                             )}
                           </h5>
                           <span className="text-[11px] text-slate-400">
-                            {rev.createdAt ? new Date(rev.createdAt).toISOString().split("T")[0] : (rev as Record<string, unknown>).date as string || ""}
+                            {rev.createdAt ? new Date(rev.createdAt).toISOString().split("T")[0] : ""}
                           </span>
                         </div>
                       </div>
@@ -1111,7 +1100,7 @@ export function ProductDetailPage() {
 
                     <div className="pt-2 flex items-center gap-4 text-xs text-slate-400">
                       <button className="flex items-center gap-1 hover:text-[#f97316] transition">
-                        <ThumbsUp className="w-3.5 h-3.5" /> Helpful ({(rev as Record<string, unknown>).helpfulCount as number || 0})
+                        <ThumbsUp className="w-3.5 h-3.5" /> Helpful ({((rev as unknown) as { helpfulCount?: number }).helpfulCount || 0})
                       </button>
                     </div>
                   </div>

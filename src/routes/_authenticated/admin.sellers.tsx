@@ -137,7 +137,7 @@ function SellersAdmin() {
                         "rounded-full px-2 py-0.5 text-xs " +
                         (s.status === "approved"
                           ? "bg-emerald-500/10 text-emerald-600"
-                          : s.status === "pending"
+                          : s.status === "pending_review"
                             ? "bg-amber-500/10 text-amber-600"
                             : s.status === "suspended"
                               ? "bg-orange-500/10 text-orange-600"

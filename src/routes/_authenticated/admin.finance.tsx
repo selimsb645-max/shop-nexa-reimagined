@@ -23,6 +23,7 @@ import {
 } from "@/services/firebase/adminSettlements";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { listAllWithdrawalRequests } from "@/services/firebase/adminWithdrawals";
+import type { AdminFinanceData } from "@/services/firebase/adminSettlements";
 import { formatPrice } from "@/utils/format";
 import { toast } from "sonner";
 import {

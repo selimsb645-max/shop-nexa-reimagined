@@ -84,7 +84,7 @@ function OrderDetail({ sellerId }: { sellerId: string }) {
       await updateSellerOrderStatus(sellerId, order.id, nextStatus, note, idToken);
       try {
         await createNotification(sellerId, {
-          type: "order",
+          type: "new_order",
           title: `Order #${order.id.slice(0, 8)} → ${nextStatus}`,
           message: note || `Status updated to ${nextStatus}`,
           link: `/seller/orders/${order.id}`,

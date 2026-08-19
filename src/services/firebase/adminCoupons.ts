@@ -25,6 +25,9 @@ function mapCoupon(id: string, d: Record<string, unknown>): Coupon {
     active: Boolean(d.active),
     usageLimit: d.usageLimit != null ? Number(d.usageLimit) : null,
     uses: Number(d.uses ?? 0),
+    sellerId: (d.sellerId as string | null) ?? null,
+    productIds: Array.isArray(d.productIds) ? (d.productIds as string[]) : [],
+    maxDiscount: d.maxDiscount != null ? Number(d.maxDiscount) : null,
   };
 }
 

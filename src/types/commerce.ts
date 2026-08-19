@@ -42,6 +42,9 @@ export interface Product {
   sizes?: string[];
   createdAt: number;
   updatedAt: number;
+}
+
+export interface Coupon {
   // Seller coupon fields (null = marketplace-wide admin coupon)
   sellerId: string | null;
   productIds: string[];
@@ -137,10 +140,13 @@ export interface Order {
   status: OrderStatus;
   payment: PaymentInfo;
   shippingAddress: ShippingAddress;
+  deliveryAddressSnapshot?: DeliveryAddressSnapshot | null;
   tracking: TrackingEvent[];
   createdAt: number;
   updatedAt: number;
 }
+
+import type { DeliveryAddressSnapshot } from "./address";
 
 export type CouponType = "percent" | "fixed";
 

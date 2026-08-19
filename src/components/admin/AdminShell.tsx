@@ -14,7 +14,7 @@ import {
   LogOut,
   Shield,
   Home,
-} from "lucide-react";
+MapPin} from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { signOut } from "@/services/firebase/auth";
 import { toast } from "sonner";
@@ -73,6 +73,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
             <AItem to="/admin/orders" icon={<ShoppingBag className="h-4 w-4" />} label="Orders" />
             <AItem to="/admin/coupons" icon={<Ticket className="h-4 w-4" />} label="Coupons" />
             <AItem to="/admin/banners" icon={<ImageIcon className="h-4 w-4" />} label="Banners" />
+            <AItem to="/admin/locations" icon={<MapPin className="h-4 w-4" />} label="Locations" />
             <AItem to="/admin/homepage" icon={<Home className="h-4 w-4" />} label="Homepage" />
             <AItem to="/admin/settings" icon={<Settings className="h-4 w-4" />} label="Settings" />
             <AItem to="/admin/logs" icon={<Activity className="h-4 w-4" />} label="Activity Logs" />
