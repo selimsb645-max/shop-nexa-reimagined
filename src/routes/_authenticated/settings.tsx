@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
-  ArrowLeft,
   Bell,
   Mail,
   Smartphone,
@@ -25,6 +24,7 @@ import {
   Info,
   FileText,
 } from "lucide-react";
+import { ServicePageLayout } from "@/components/common/ServicePageLayout";
 import { Spinner } from "@/components/common/Spinner";
 import { useAuth } from "@/context/AuthContext";
 import { getCustomerSettings, saveCustomerSettings } from "@/services/firebase/customerSettings";
@@ -96,7 +96,7 @@ function SettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-slate-50">
         <div className="py-20 text-center">
           <Spinner />
         </div>
@@ -105,26 +105,8 @@ function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24 md:pb-6">
-      {/* ===== Daraz-style Header ===== */}
-      <header className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
-        <div className="mx-auto max-w-5xl px-4 py-4 sm:px-6">
-          <div className="flex items-center gap-3">
-            <Link
-              to="/account"
-              className="grid h-9 w-9 place-items-center rounded-full bg-white/15 transition hover:bg-white/25 active:scale-95"
-            >
-              <ArrowLeft className="h-5 w-5" strokeWidth={2} />
-            </Link>
-            <div>
-              <h1 className="text-lg font-bold">Settings</h1>
-              <p className="text-xs text-white/80">Manage your account preferences</p>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="mx-auto max-w-5xl space-y-4 px-4 py-4 sm:px-6">
+    <ServicePageLayout title="Settings" subtitle="Manage your account preferences">
+      <div className="space-y-4">
         {/* ===== Account Info Card ===== */}
         <DarazCard>
           <DarazCardHeader title="Account Information" />
@@ -332,7 +314,7 @@ function SettingsPage() {
           <p className="mt-1 text-[10px] text-gray-300">Version 1.0.0</p>
         </div>
       </div>
-    </div>
+    </ServicePageLayout>
   );
 }
 
