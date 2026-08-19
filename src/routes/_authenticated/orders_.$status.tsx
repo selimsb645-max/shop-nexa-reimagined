@@ -89,7 +89,7 @@ function OrderStatusPage() {
   const list = filterOrders(orders ?? [], status);
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-8">
+    <div className="min-h-screen bg-gray-50 pb-24 md:pb-8">
       <header className="relative overflow-hidden bg-gradient-to-r from-orange-500 via-orange-500 to-orange-600 text-white">
         <div aria-hidden className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
         <div className="relative mx-auto max-w-5xl px-4 pb-4 pt-4 sm:px-6">
