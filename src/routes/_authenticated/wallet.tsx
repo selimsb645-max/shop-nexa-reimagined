@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowDownLeft, ArrowUpRight, Wallet } from "lucide-react";
-import { AppShell } from "@/components/layout/AppShell";
+import { PageHeader } from "@/components/common/PageHeader";
 import { Spinner } from "@/components/common/Spinner";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -63,7 +63,8 @@ function WalletPage() {
   };
 
   return (
-    <AppShell>
+    <div className="min-h-screen bg-gray-50 pb-24 md:pb-6">
+      <PageHeader title="My Wallet" subtitle="View your balance and transactions" />
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold">My Wallet</h1>
@@ -144,6 +145,6 @@ function WalletPage() {
           )}
         </section>
       </div>
-    </AppShell>
+    </div>
   );
 }
