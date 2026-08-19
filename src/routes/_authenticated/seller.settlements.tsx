@@ -39,11 +39,11 @@ import {
   Landmark,
 } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/seller.settlements", {
+export const Route = createFileRoute("/_authenticated/seller/settlements")({
   ssr: false,
   component: SellerSettlementsPage,
   head: () => ({ meta: [{ title: "Settlements — Shop Nexa Seller" }] }),
-});
+})
 
 function SellerSettlementsPage() {
   const { user } = useAuth();

@@ -164,7 +164,7 @@ export async function processWithdrawalServer(input: {
   const withdrawDoc = await withdrawRes.json();
   const withdrawData = fromFsFields(withdrawDoc.fields ?? {});
   const amount = Number(withdrawData.amount ?? 0);
-  const method = String(withData.method ?? "bank");
+  const method = String(withdrawData.method ?? "bank");
   const currentStatus = String(withdrawData.status ?? "pending");
 
   if (currentStatus !== "pending") {

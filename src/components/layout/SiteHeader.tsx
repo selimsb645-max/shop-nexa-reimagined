@@ -38,30 +38,14 @@ export function TopBar({ className: _className = "" }: TopBarProps) {
 
 export function SiteHeader() {
   const navigate = useNavigate();
-  const authContext = (useAuth() as Record<string, unknown>) || {};
-  const user = authContext?.user ?? null;
+  const { user } = useAuth();
+  
 
-  const cartContext = (useCart() as Record<string, unknown>) || {};
-  const cartCount =
-    cartContext?.cartCount ??
-    cartContext?.totalItems ??
-    cartContext?.count ??
-    (Array.isArray(cartContext?.items)
-      ? cartContext.items.reduce(
-          (acc: number, item: { quantity?: number }) => acc + (item.quantity || 1),
-          0
-        )
-      : 0);
+  const { count: cartCount } = useCart();
+  
 
-  const wishlistContext = (useWishlist() as Record<string, unknown>) || {};
-  const wishlistCount =
-    wishlistContext?.count ??
-    wishlistContext?.totalItems ??
-    (Array.isArray(wishlistContext?.items)
-      ? wishlistContext.items.length
-      : Array.isArray(wishlistContext?.wishlistItems)
-      ? wishlistContext.wishlistItems.length
-      : 0);
+  const { count: wishlistCount } = useWishlist();
+  
 
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
@@ -112,11 +96,7 @@ export function SiteHeader() {
 
   const handleSignOut = async () => {
     try {
-      if (typeof signOut === "function") {
-        await signOut();
-      } else if (authContext?.signOut) {
-        await authContext.signOut();
-      }
+      await signOut();
       setIsAccountMenuOpen(false);
       navigate({ to: "/login" });
     } catch (err) {
@@ -381,7 +361,7 @@ export function SiteHeader() {
                 className="absolute top-full left-0 w-64 bg-white border border-slate-200 shadow-xl rounded-b-lg py-2 z-50"
                 onMouseLeave={() => setIsCategoryOpen(false)}
               >
-                {categories.map((cat: { id?: string; name?: string; slug?: string; label?: string } | string, idx: number) => {
+                {categories.map((cat: { id?: string; name?: string; slug?: string; label?: string; title?: string } | string, idx: number) => {
                   const catName =
                     typeof cat === "string"
                       ? cat
@@ -462,7 +442,7 @@ export function SiteHeader() {
             Categories
           </div>
           <div className="grid grid-cols-2 gap-2 text-xs">
-            {categories.slice(0, 6).map((cat: { id?: string; name?: string; slug?: string; label?: string } | string, idx: number) => {
+            {categories.slice(0, 6).map((cat: { id?: string; name?: string; slug?: string; label?: string; title?: string } | string, idx: number) => {
               const catName =
                 typeof cat === "string"
                   ? cat

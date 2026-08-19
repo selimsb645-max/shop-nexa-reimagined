@@ -22,7 +22,7 @@ import {
   rejectWithdrawal,
 } from "@/services/firebase/adminSettlements";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { listAllWithdrawalRequests } from "@/services/firebase/adminSellers";
+import { listAllWithdrawalRequests } from "@/services/firebase/adminWithdrawals";
 import { formatPrice } from "@/utils/format";
 import { toast } from "sonner";
 import {
@@ -37,11 +37,11 @@ import {
   RotateCcw,
 } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/admin.finance", {
+export const Route = createFileRoute("/_authenticated/admin/finance")({
   ssr: false,
   component: AdminFinancePage,
   head: () => ({ meta: [{ title: "Finance — Shop Nexa Admin" }] }),
-});
+})
 
 function AdminFinancePage() {
   const { user } = useAuth();

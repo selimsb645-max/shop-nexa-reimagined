@@ -5,7 +5,7 @@ import {
   Wallet, Tag, Settings, BarChart3, Truck,
   ArrowUpRight, ArrowDownRight, Bell, Star, AlertTriangle,
   Clock, CheckCircle2, XCircle, PackageX, Loader, Banknote,
-  Inventory,
+  Boxes,
 } from "lucide-react";
 import { SellerGate } from "@/components/seller/SellerGate";
 import { listSellerProducts } from "@/services/firebase/sellerProducts";
@@ -160,7 +160,7 @@ function Dashboard({ sellerId, profile }: { sellerId: string; profile: SellerPro
           <QuickAction to="/seller/withdrawals" icon={<Banknote className="w-5 h-5" />} label="Withdraw" color="#059669" />
           <QuickAction to="/seller/coupons" icon={<Tag className="w-5 h-5" />} label="Coupons" color="#d97706" />
           <QuickAction to="/seller/analytics" icon={<BarChart3 className="w-5 h-5" />} label="Analytics" color="#6366f1" />
-          <QuickAction to="/seller/products" icon={<Inventory className="w-5 h-5" />} label="Inventory" color="#0f172a" />
+          <QuickAction to="/seller/products" icon={<Boxes className="w-5 h-5" />} label="Inventory" color="#0f172a" />
           <QuickAction to="/seller/settings" icon={<Settings className="w-5 h-5" />} label="Settings" color="#64748b" />
           <QuickAction to="/seller/notifications" icon={<Bell className="w-5 h-5" />} label="Support" color="#f59e0b" badge={unreadCount} />
         </div>
