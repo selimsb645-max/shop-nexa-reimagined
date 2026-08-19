@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Copy, TicketPercent } from "lucide-react";
 import { toast } from "sonner";
-import { AppShell } from "@/components/layout/AppShell";
+import { PageHeader } from "@/components/common/PageHeader";
 import { Spinner } from "@/components/common/Spinner";
 import { listAvailableCoupons } from "@/services/firebase/customerCoupons";
 import { formatDate, formatPrice } from "@/utils/format";
@@ -27,7 +27,8 @@ function CouponsPage() {
   };
 
   return (
-    <AppShell>
+    <div className="min-h-screen bg-gray-50 pb-24 md:pb-6">
+      <PageHeader title="Vouchers" subtitle="Available coupons and discounts" />
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold">My Coupons</h1>
@@ -88,6 +89,6 @@ function CouponsPage() {
           </div>
         )}
       </div>
-    </AppShell>
+    </div>
   );
 }
