@@ -10,7 +10,7 @@ import { setDisplayName, setPhotoURL } from "@/services/firebase/auth";
 import { uploadAvatar } from "@/services/firebase/storage";
 import { mapFirebaseError } from "@/utils/errors";
 import { Spinner } from "@/components/common/Spinner";
-import { PageHeader } from "@/components/common/PageHeader";
+import { ServicePageLayout } from "@/components/common/ServicePageLayout";
 
 export const Route = createFileRoute("/_authenticated/edit-profile")({
   component: EditProfilePage,
@@ -68,8 +68,7 @@ function EditProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24 md:pb-6">
-      <PageHeader title="Edit Profile" subtitle="Update your account information" />
+    <ServicePageLayout title="Edit Profile" subtitle="Update your account information">
 
       <div className="mx-auto max-w-2xl px-4 py-4 sm:px-6">
         {/* Avatar section */}
@@ -152,6 +151,6 @@ function EditProfilePage() {
           </button>
         </form>
       </div>
-    </div>
+    </ServicePageLayout>
   );
 }
