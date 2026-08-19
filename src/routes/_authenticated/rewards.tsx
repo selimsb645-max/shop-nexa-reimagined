@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Gift, Sparkles, TrendingUp } from "lucide-react";
-import { AppShell } from "@/components/layout/AppShell";
+import { PageHeader } from "@/components/common/PageHeader";
 import { Spinner } from "@/components/common/Spinner";
 import { useAuth } from "@/context/AuthContext";
 import { POINTS_PER_CURRENCY_REDEEM, listRewardTx } from "@/services/firebase/wallet";
@@ -36,7 +36,8 @@ function RewardsPage() {
     : 100;
 
   return (
-    <AppShell>
+    <div className="min-h-screen bg-gray-50 pb-24 md:pb-6">
+      <PageHeader title="Rewards" subtitle="Your reward points and history" />
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold">Rewards</h1>
@@ -118,6 +119,6 @@ function RewardsPage() {
           )}
         </section>
       </div>
-    </AppShell>
+    </div>
   );
 }
