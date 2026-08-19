@@ -16,7 +16,37 @@ function WishlistPage() {
   const { add } = useCart();
 
   const handleAddToCart = async (item: typeof items[number]) => {
-    add({ id: item.productId, title: item.title, price: item.price, image: item.image, qty: 1 });
+    // Construct a minimal Product object for the cart add function
+    add(
+      {
+        id: item.productId,
+        title: item.title,
+        slug: item.slug || item.productId,
+        shortDescription: "",
+        description: "",
+        brand: null,
+        price: item.price,
+        compareAtPrice: null,
+        costPrice: null,
+        tax: 0,
+        images: item.image ? [item.image] : [],
+        categoryId: "",
+        categorySlug: "",
+        subcategoryId: null,
+        subcategorySlug: null,
+        stock: 99, // Default stock — actual stock checked at checkout
+        rating: 0,
+        reviewCount: 0,
+        tags: [],
+        featured: false,
+        sellerId: null,
+        productIds: [],
+        maxDiscount: null,
+        createdAt: item.addedAt,
+        updatedAt: item.addedAt,
+      },
+      1,
+    );
     toast.success("Added to cart");
   };
 
