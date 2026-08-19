@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { z } from "zod";
 import { MapPin, Plus, Star, Trash2, Pencil } from "lucide-react";
-import { AppShell } from "@/components/layout/AppShell";
+import { PageHeader } from "@/components/common/PageHeader";
 import { Spinner } from "@/components/common/Spinner";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -126,7 +126,8 @@ function AddressesPage() {
   const field = "w-full rounded-md border px-3 py-2.5 text-sm outline-none focus:border-primary";
 
   return (
-    <AppShell>
+    <div className="min-h-screen bg-gray-50 pb-24 md:pb-6">
+      <PageHeader title="Address Book" subtitle="Manage your delivery addresses" />
       <div className="space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -281,6 +282,6 @@ function AddressesPage() {
           </div>
         )}
       </div>
-    </AppShell>
+    </div>
   );
 }
