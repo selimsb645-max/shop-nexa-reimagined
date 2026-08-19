@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Copy, Share2, UserPlus, Users } from "lucide-react";
 import { toast } from "sonner";
-import { AppShell } from "@/components/layout/AppShell";
+import { PageHeader } from "@/components/common/PageHeader";
 import { Spinner } from "@/components/common/Spinner";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -93,7 +93,8 @@ function ReferralPage() {
   };
 
   return (
-    <AppShell>
+    <div className="min-h-screen bg-gray-50 pb-24 md:pb-6">
+      <PageHeader title="Refer & Earn" subtitle="Invite friends and earn rewards" />
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold">Refer &amp; Earn</h1>
@@ -183,6 +184,6 @@ function ReferralPage() {
           )}
         </section>
       </div>
-    </AppShell>
+    </div>
   );
 }
