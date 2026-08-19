@@ -40,7 +40,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
-import { setDisplayName, setPhotoURL, resendVerification, signOut } from "@/services/firebase/auth";
+import { setPhotoURL, resendVerification, signOut } from "@/services/firebase/auth";
 import { uploadAvatar } from "@/services/firebase/storage";
 import { mapFirebaseError } from "@/utils/errors";
 import { Spinner } from "@/components/common/Spinner";
