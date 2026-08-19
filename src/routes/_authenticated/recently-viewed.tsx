@@ -1,8 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Eye } from "lucide-react";
-import { SiteFooter } from "@/components/layout/SiteFooter";
-import { WhatsAppFab } from "@/components/layout/SiteChrome";
+import { Eye } from "lucide-react";
+import { ServicePageLayout } from "@/components/common/ServicePageLayout";
 import { Spinner } from "@/components/common/Spinner";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { getProductById } from "@/services/firebase/products";
@@ -37,23 +36,8 @@ function RecentlyViewedPage() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24 md:pb-8">
-      <header className="relative overflow-hidden bg-gradient-to-r from-orange-500 via-orange-500 to-orange-600 text-white">
-        <div aria-hidden className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
-        <div className="relative mx-auto max-w-5xl px-4 pb-4 pt-4 sm:px-6">
-          <div className="flex items-center gap-2">
-            <Link to="/account" aria-label="Back to account" className="grid h-9 w-9 place-items-center rounded-full bg-white/15 transition hover:bg-white/25 active:scale-95">
-              <ArrowLeft className="h-5 w-5" strokeWidth={2} />
-            </Link>
-            <div className="min-w-0">
-              <h1 className="truncate text-lg font-bold sm:text-xl">Recently Viewed</h1>
-              <p className="truncate text-xs text-white/80">Pick up where you left off</p>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="mx-auto max-w-5xl px-4 py-4 sm:px-6">
+    <ServicePageLayout title="Recently Viewed" subtitle="Products you've explored">
+      <div className="space-y-4">
         {ids.length === 0 ? (
           <EmptyState />
         ) : isLoading ? (
@@ -80,8 +64,7 @@ function RecentlyViewedPage() {
         )}
       </div>
 
-      <SiteFooter />
-      <WhatsAppFab />
+
     </div>
   );
 }
@@ -97,6 +80,6 @@ function EmptyState() {
       <Link to="/shop" className="mt-4 rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-orange-600 active:scale-95">
         Browse Products
       </Link>
-    </div>
+    </ServicePageLayout>
   );
 }
