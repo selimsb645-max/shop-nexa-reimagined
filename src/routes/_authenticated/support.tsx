@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { LifeBuoy, Phone, Plus, Send, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
-import { AppShell } from "@/components/layout/AppShell";
+import { PageHeader } from "@/components/common/PageHeader";
 import { Spinner } from "@/components/common/Spinner";
 import { useAuth } from "@/context/AuthContext";
 import { listOrders } from "@/services/firebase/orders";
@@ -136,7 +136,8 @@ function SupportPage() {
   };
 
   return (
-    <AppShell>
+    <div className="min-h-screen bg-gray-50 pb-24 md:pb-6">
+      <PageHeader title="Help & Support" subtitle="Get help and support" />
       <div className="space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -337,6 +338,6 @@ function SupportPage() {
           </div>
         </section>
       </div>
-    </AppShell>
+    </div>
   );
 }
