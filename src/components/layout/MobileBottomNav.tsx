@@ -1,3 +1,7 @@
+/**
+ * Pocket Storefront design: a visible, safe-area-aware mobile navigation keeps
+ * ShopNexa's five primary destinations within thumb reach without covering content.
+ */
 import { Link } from "@tanstack/react-router";
 import { Home, LayoutGrid, MessageCircle, ShoppingCart, User } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -17,7 +21,7 @@ function Badge({ n }: { n: number }) {
 }
 
 const itemCls =
-  "group relative flex min-h-12 flex-1 flex-col items-center justify-center gap-1 rounded-xl px-1 py-1.5 text-[12px] font-medium text-muted-foreground transition-all duration-200 active:scale-90";
+  "group relative flex min-h-12 flex-1 flex-col items-center justify-center gap-1 rounded-xl px-1 py-1.5 text-[11px] font-semibold text-muted-foreground transition-all duration-200 active:scale-[0.97]";
 const activeCls = "text-primary";
 
 function Indicator() {
@@ -42,7 +46,7 @@ export function MobileBottomNav() {
       className="fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] md:hidden"
       aria-label="Bottom navigation"
     >
-      <div className="mx-auto flex max-w-md items-stretch gap-0.5 rounded-2xl border bg-background/95 p-1 shadow-[0_6px_24px_rgba(0,0,0,0.12)] backdrop-blur-md">
+      <div className="mx-auto flex max-w-md items-stretch gap-0.5 rounded-2xl border border-blue-100 bg-background/95 p-1 shadow-[0_8px_26px_rgba(20,85,198,0.18)] backdrop-blur-md">
         <Link to="/" activeOptions={{ exact: true }} activeProps={{ className: activeCls }} className={itemCls}>
           <Indicator />
           <Home className="h-[26px] w-[26px]" strokeWidth={1.8} />

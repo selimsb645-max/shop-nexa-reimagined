@@ -1,3 +1,7 @@
+/**
+ * Pocket Storefront design: ShopNexa's blue-and-orange desktop merchandising is
+ * reflowed for thumb-friendly discovery, readable mobile cards, and swipeable rails.
+ */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -70,9 +74,39 @@ const DEFAULT_CATEGORIES: CategoryItem[] = [
 
 // Hero banner slide configuration
 const HERO_SLIDES = [
-  { id: "mega-sale", tag: "MEGA SALE • UP TO 70% OFF", title: "Shop Nexa Grand Shopping Festival", description: "Unbeatable discounts across thousands of top-tier electronics, fashion, and home lifestyle products.", ctaText: "Shop Mega Sale", ctaLink: "/flash-sales", gradient: "from-slate-900 via-slate-800 to-orange-600", badgeText: "HOT DEAL", badgeColor: "bg-orange-500 text-white" },
-  { id: "electronics", tag: "TECH INNOVATION 2026", title: "Next-Gen Smartphones & Audio Gear", description: "Upgrade your lifestyle with noise-canceling headphones, smartwatches, and latest flagship gadgets.", ctaText: "Explore Electronics", ctaLink: "/shop", gradient: "from-slate-950 via-blue-950 to-slate-900", badgeText: "NEW ARRIVALS", badgeColor: "bg-blue-600 text-white" },
-  { id: "fashion", tag: "SUMMER FASHION TRENDS", title: "Contemporary Styles & Streetwear", description: "Refresh your wardrobe with premium apparel, designer sneakers, and signature accessories.", ctaText: "Upgrade Wardrobe", ctaLink: "/shop", gradient: "from-slate-900 via-orange-950 to-slate-950", badgeText: "TRENDING", badgeColor: "bg-amber-500 text-slate-950 font-bold" },
+  {
+    id: "shop-smarter",
+    tag: "BEST QUALITY, BEST PRICE",
+    title: "Shop Smarter. Live Better.",
+    description: "Everything you need in one place. Top quality products at unbeatable prices.",
+    ctaText: "Shop Now",
+    ctaLink: "/shop",
+    badgeText: "BIG SALE",
+    badgeColor: "bg-[#1455c6] text-white",
+    image: "/manus-storage/shopnexa-mobile-hero_00d53e24.jpg",
+  },
+  {
+    id: "electronics",
+    tag: "ELECTRONICS SALE",
+    title: "Better sound. Better everyday tech.",
+    description: "Discover capable audio and mobile essentials selected for your next upgrade.",
+    ctaText: "Explore Electronics",
+    ctaLink: "/shop",
+    badgeText: "UP TO 60% OFF",
+    badgeColor: "bg-[#1455c6] text-white",
+    image: "/manus-storage/shopnexa-tech-sale_10bd6408.jpg",
+  },
+  {
+    id: "fashion",
+    tag: "FASHION SALE",
+    title: "Find your next favourite look.",
+    description: "Fresh styles, easy confidence, and wardrobe essentials for every day.",
+    ctaText: "Shop Fashion",
+    ctaLink: "/shop",
+    badgeText: "UP TO 70% OFF",
+    badgeColor: "bg-[#ff7a00] text-white",
+    image: "/manus-storage/shopnexa-fashion-sale_12251764.jpg",
+  },
 ];
 
 function HomePage() {
@@ -144,7 +178,7 @@ function HomePage() {
       {/* Unified header — logo, search, nav directly at top */}
       <SiteHeader />
 
-      <main className="mx-auto max-w-7xl px-3 pb-16 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-7xl px-3 pb-28 sm:px-6 sm:pb-16 lg:px-8">
         {/* 1. Hero Carousel */}
         <section className="mt-3 sm:mt-4">
           <HeroCarousel />
@@ -216,22 +250,22 @@ function HeroCarousel() {
     >
       <div className="flex transition-transform duration-700 ease-out" style={{ transform: `translateX(-${currentIndex * 100}%)` }}>
         {HERO_SLIDES.map((slide) => (
-          <div key={slide.id} className={`min-w-full relative bg-gradient-to-r ${slide.gradient} px-4 py-6 sm:px-12 sm:py-16 md:py-20 text-white flex flex-col justify-between overflow-hidden`}>
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.1),transparent)] pointer-events-none" />
-            <div className="absolute -right-16 -top-16 h-60 w-60 sm:h-80 sm:w-80 rounded-full bg-orange-500/20 blur-3xl pointer-events-none" />
-            <div className="absolute -left-16 -bottom-16 h-60 w-60 sm:h-80 sm:w-80 rounded-full bg-blue-500/20 blur-3xl pointer-events-none" />
-            <div className="relative z-10 max-w-2xl">
-              <div className="flex items-center gap-2 mb-2 sm:mb-3">
-                <span className={`inline-block rounded-full px-2.5 py-0.5 sm:px-3 sm:py-1 text-[10px] sm:text-xs font-extrabold uppercase tracking-wider ${slide.badgeColor}`}>{slide.badgeText}</span>
-                <span className="text-[10px] sm:text-xs font-semibold tracking-wider text-orange-300 uppercase">{slide.tag}</span>
+          <div key={slide.id} className="min-w-full relative min-h-[330px] overflow-hidden bg-[#eaf1ff] px-5 py-7 sm:min-h-[400px] sm:px-12 sm:py-16 md:py-20">
+            <img src={slide.image} alt="" className="absolute inset-0 h-full w-full object-cover object-[64%_center]" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#eaf1ff] via-[#eaf1ff]/95 via-40% to-[#eaf1ff]/10" />
+            <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#eaf1ff]/40 to-transparent" />
+            <div className="relative z-10 flex h-full max-w-[58%] min-h-[276px] flex-col justify-center sm:max-w-md">
+              <div className="mb-3 flex flex-col items-start gap-2 sm:mb-4 sm:flex-row sm:items-center">
+                <span className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#ff7a00] sm:text-xs">{slide.tag}</span>
+                <span className={`inline-block rounded-full px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-wider shadow-sm sm:text-[10px] ${slide.badgeColor}`}>{slide.badgeText}</span>
               </div>
-              <h2 className="text-xl font-black tracking-tight sm:text-4xl md:text-5xl leading-tight drop-shadow-md">{slide.title}</h2>
-              <p className="mt-2 sm:mt-3 text-xs sm:text-base text-slate-100 line-clamp-2 max-w-lg drop-shadow-sm">{slide.description}</p>
-              <div className="mt-4 sm:mt-6 flex items-center gap-3 sm:gap-4">
-                <Link to={slide.ctaLink} className="inline-flex items-center gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl bg-orange-500 px-4 py-2 sm:px-6 sm:py-3 text-xs sm:text-sm font-bold text-white shadow-lg transition hover:bg-orange-600 active:scale-95">
+              <h2 className="text-[28px] font-black leading-[0.98] tracking-[-0.05em] text-slate-950 sm:text-4xl md:text-5xl">{slide.title}</h2>
+              <p className="mt-3 max-w-xs text-[11px] font-medium leading-relaxed text-slate-700 sm:mt-4 sm:text-base">{slide.description}</p>
+              <div className="mt-5 flex items-center gap-3 sm:mt-6 sm:gap-4">
+                <Link to={slide.ctaLink} className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-[#1455c6] px-4 py-2.5 text-xs font-bold text-white shadow-[0_8px_18px_rgba(20,85,198,0.22)] transition hover:bg-[#0f459f] active:scale-[0.97] sm:px-6 sm:text-sm">
                   {slide.ctaText} <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 </Link>
-                <Link to="/shop" className="hidden sm:inline-flex items-center gap-2 rounded-xl bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20">Browse Catalog</Link>
+                <Link to="/shop" className="hidden min-h-11 items-center gap-2 rounded-lg border border-[#1455c6] bg-white/65 px-5 py-3 text-sm font-bold text-[#1455c6] backdrop-blur transition hover:bg-white sm:inline-flex">Browse Catalog</Link>
               </div>
             </div>
           </div>
@@ -359,12 +393,12 @@ function CategoriesGrid({ categories, isLoading }: { categories: CategoryItem[];
         </div>
         <Link to="/shop" className="text-[11px] sm:text-xs font-bold text-orange-600 hover:underline flex items-center gap-1">All Categories <ChevronRight className="h-3.5 w-3.5" /></Link>
       </div>
-      <div className="grid grid-cols-4 sm:grid-cols-4 lg:grid-cols-8 gap-2.5 sm:gap-4">
-        {isLoading ? Array.from({ length: 8 }).map((_, i) => (<div key={i} className="flex flex-col items-center justify-center rounded-xl p-3 bg-slate-100 animate-pulse h-24 sm:h-28" />))
+      <div className="-mr-3 flex snap-x snap-mandatory gap-2.5 overflow-x-auto pb-1 pr-3 scrollbar-none sm:mr-0 sm:grid sm:grid-cols-4 sm:gap-4 sm:overflow-visible sm:pr-0 lg:grid-cols-8">
+        {isLoading ? Array.from({ length: 8 }).map((_, i) => (<div key={i} className="h-24 min-w-[78px] snap-start animate-pulse rounded-xl bg-slate-100 p-3 sm:min-w-0 sm:h-28" />))
         : categories.map((cat) => {
           const IconComp = cat.icon || Smartphone;
           return (
-            <Link key={cat.id} to="/shop" search={{ category: cat.slug }} className="group flex flex-col items-center justify-center rounded-xl border border-slate-100 p-2.5 sm:p-3.5 text-center transition-all duration-200 hover:-translate-y-1 hover:border-orange-200 hover:shadow-md bg-white h-24 sm:h-28">
+            <Link key={cat.id} to="/shop" search={{ category: cat.slug }} className="group flex h-24 min-w-[78px] snap-start flex-col items-center justify-center rounded-xl border border-slate-100 bg-white p-2.5 text-center transition-all duration-200 hover:-translate-y-1 hover:border-orange-200 hover:shadow-md sm:h-28 sm:min-w-0 sm:p-3.5">
               <div className={`grid h-11 w-11 sm:h-14 sm:w-14 place-items-center rounded-full ${cat.bgColor} ${cat.textColor} transition-transform duration-200 group-hover:scale-110`}><IconComp className="h-5 w-5 sm:h-7 sm:w-7" /></div>
               <span className="mt-2 text-[10px] sm:text-xs font-bold text-slate-800 line-clamp-1 group-hover:text-orange-600">{cat.name}</span>
             </Link>
@@ -378,17 +412,19 @@ function CategoriesGrid({ categories, isLoading }: { categories: CategoryItem[];
 /* ========================================================================== Promotional Banner ========================================================================== */
 function PromotionalBanner() {
   return (
-    <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900 to-orange-600 p-5 sm:p-8 text-white shadow-lg sm:shadow-xl">
+    <div className="relative overflow-hidden rounded-xl bg-[#eaf1ff] p-5 shadow-lg sm:rounded-2xl sm:p-8 sm:shadow-xl">
+      <img src="/manus-storage/shopnexa-tech-sale_10bd6408.jpg" alt="" className="absolute inset-0 h-full w-full object-cover object-right" />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#eaf1ff] via-[#eaf1ff]/95 to-[#eaf1ff]/20" />
       <div className="absolute -right-10 -bottom-10 h-48 w-48 sm:h-64 sm:w-64 rounded-full bg-orange-500/30 blur-3xl pointer-events-none" />
       <div className="absolute right-1/3 -top-10 h-32 w-32 sm:h-40 sm:w-40 rounded-full bg-blue-500/20 blur-2xl pointer-events-none" />
-      <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
-        <div className="max-w-xl">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-orange-500/20 border border-orange-400/30 px-2.5 py-0.5 sm:px-3 sm:py-1 text-[10px] sm:text-xs font-bold text-orange-300"><Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-orange-400" />Shop Nexa App Exclusive</div>
-          <h2 className="mt-2 sm:mt-3 text-xl sm:text-3xl font-black tracking-tight leading-snug">Get Extra 15% OFF + Free Shipping</h2>
-          <p className="mt-1.5 sm:mt-2 text-[11px] sm:text-sm text-slate-300">Use promo code <span className="font-mono font-bold text-orange-400">NEXA15</span> at checkout on your first order.</p>
+      <div className="relative z-10 flex flex-col justify-between gap-4 sm:gap-6 md:flex-row md:items-center">
+        <div className="max-w-[62%] sm:max-w-xl">
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-[#1455c6]/15 bg-white/80 px-2.5 py-0.5 text-[10px] font-bold text-[#1455c6] sm:px-3 sm:py-1 sm:text-xs"><Sparkles className="h-3 w-3 text-[#ff7a00] sm:h-3.5 sm:w-3.5" />Shop Nexa App Exclusive</div>
+          <h2 className="mt-2 text-xl font-black leading-snug tracking-tight text-slate-950 sm:mt-3 sm:text-3xl">Get Extra 15% OFF + Free Shipping</h2>
+          <p className="mt-1.5 text-[11px] text-slate-700 sm:mt-2 sm:text-sm">Use promo code <span className="font-mono font-bold text-[#ff7a00]">NEXA15</span> at checkout on your first order.</p>
         </div>
         <div className="flex items-center gap-3 shrink-0">
-          <Link to="/shop" className="inline-flex items-center justify-center rounded-lg sm:rounded-xl bg-orange-500 px-5 py-2.5 sm:px-6 sm:py-3.5 text-xs sm:text-sm font-bold text-white shadow-lg transition hover:bg-orange-600 active:scale-95">Claim Discount Now</Link>
+          <Link to="/shop" className="inline-flex min-h-11 items-center justify-center rounded-lg bg-[#ff7a00] px-5 py-2.5 text-xs font-bold text-white shadow-lg transition hover:bg-[#e56500] active:scale-[0.97] sm:rounded-xl sm:px-6 sm:py-3.5 sm:text-sm">Claim Discount Now</Link>
         </div>
       </div>
     </div>
@@ -440,11 +476,11 @@ function FeaturesStrip() {
     { icon: Headset, title: "24/7 Customer Support", description: "Dedicated live assistance whenever you need help", bgColor: "bg-purple-50 text-purple-600" },
   ];
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="-mr-3 flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1 pr-3 scrollbar-none sm:mr-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:pr-0 lg:grid-cols-4">
       {features.map((item, idx) => {
         const Icon = item.icon;
         return (
-          <div key={idx} className="flex items-center gap-3 sm:gap-4 rounded-xl sm:rounded-2xl border border-slate-100 bg-white p-3 sm:p-4 shadow-sm transition hover:shadow-md">
+          <div key={idx} className="flex min-w-[256px] snap-start items-center gap-3 rounded-xl border border-slate-100 bg-white p-3 shadow-sm transition hover:shadow-md sm:min-w-0 sm:gap-4 sm:rounded-2xl sm:p-4">
             <div className={`grid h-10 w-10 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-xl ${item.bgColor}`}><Icon className="h-5 w-5 sm:h-6 sm:w-6" /></div>
             <div><h3 className="text-xs sm:text-sm font-bold text-slate-900">{item.title}</h3><p className="mt-0.5 text-[11px] sm:text-xs text-slate-500">{item.description}</p></div>
           </div>

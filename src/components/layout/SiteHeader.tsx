@@ -1,3 +1,7 @@
+/**
+ * Pocket Storefront design: compact ShopNexa mobile utility, search, and drawer
+ * preserve desktop information hierarchy while prioritizing one-handed shopping.
+ */
 import { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -105,17 +109,24 @@ export function SiteHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white shadow-sm font-sans">
+    <header className="sticky top-0 z-40 bg-white font-sans shadow-sm">
+      <div className="bg-[#1455c6] px-3 py-1.5 text-white">
+        <div className="mx-auto flex max-w-7xl items-center justify-between text-[10px] font-semibold sm:px-4 sm:text-xs">
+          <span className="flex items-center gap-1.5"><ShoppingCart className="h-3 w-3" />Free delivery on orders over $50</span>
+          <span className="hidden sm:inline">Welcome to ShopNexa</span>
+          <span className="hidden sm:inline">Track Order&nbsp;&nbsp;·&nbsp;&nbsp;Help &amp; Support</span>
+        </div>
+      </div>
       {/* Main Header Bar */}
-      <div className="bg-white border-b border-slate-100 py-2.5 sm:py-3.5 px-3 sm:px-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 md:gap-8">
+      <div className="border-b border-slate-100 bg-white px-3 py-2.5 sm:px-4 sm:py-3.5">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 md:gap-8">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
-            <div className="bg-[#1a1f3a] p-1.5 sm:p-2 rounded-xl text-white group-hover:bg-[#252b52] transition-colors shadow-sm">
+            <div className="rounded-xl bg-[#1455c6] p-1.5 text-white shadow-sm transition-colors group-hover:bg-[#0f459f] sm:p-2">
               <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6 text-[#f57224]" />
             </div>
             <div className="flex items-baseline">
-              <span className="text-[#1a1f3a] font-extrabold text-xl sm:text-2xl tracking-tight">
+              <span className="text-[#1455c6] font-extrabold text-xl sm:text-2xl tracking-tight">
                 Shop
               </span>
               <span className="text-[#f57224] font-extrabold text-xl sm:text-2xl tracking-tight">
@@ -152,7 +163,7 @@ export function SiteHeader() {
             {/* Wishlist Icon */}
             <Link
               to="/wishlist"
-              className="relative p-2 text-slate-700 hover:text-[#f57224] transition-colors flex flex-col items-center group"
+              className="relative hidden p-2 text-slate-700 transition-colors hover:text-[#ff7a00] sm:flex sm:flex-col sm:items-center sm:group"
               aria-label="Wishlist"
             >
               <div className="relative">
@@ -171,7 +182,7 @@ export function SiteHeader() {
             {/* Cart Icon */}
             <Link
               to="/cart"
-              className="relative p-2 text-slate-700 hover:text-[#f57224] transition-colors flex flex-col items-center group"
+              className="relative flex min-h-11 min-w-11 items-center justify-center rounded-lg p-2 text-slate-700 transition-colors hover:bg-blue-50 hover:text-[#1455c6] sm:min-h-0 sm:min-w-0 sm:flex-col sm:items-center sm:group"
               aria-label="Shopping Cart"
             >
               <div className="relative">
@@ -188,7 +199,7 @@ export function SiteHeader() {
             </Link>
 
             {/* Account Menu */}
-            <div className="relative">
+            <div className="relative hidden sm:block">
               <button
                 type="button"
                 onClick={() => setIsAccountMenuOpen(!isAccountMenuOpen)}
@@ -304,7 +315,7 @@ export function SiteHeader() {
             <button
               type="button"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 text-slate-700 hover:text-[#1a1f3a] focus:outline-none"
+              className="min-h-11 min-w-11 rounded-lg p-2 text-slate-700 transition-colors hover:bg-blue-50 hover:text-[#1455c6] focus:outline-none md:hidden"
               aria-label="Toggle navigation menu"
             >
               {isMobileMenuOpen ? (
@@ -317,18 +328,18 @@ export function SiteHeader() {
         </div>
 
         {/* Mobile Search Bar — improved height, padding, border radius */}
-        <div className="mt-2.5 md:hidden sticky top-0 z-30">
+        <div className="mt-2.5 md:hidden">
           <form onSubmit={handleSearchSubmit} className="flex items-center relative">
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search products, brands and more..."
-              className="w-full pl-4 pr-14 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#f57224]/30 focus:border-[#f57224] focus:bg-white transition-all text-slate-800 placeholder-slate-400"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-4 pr-14 text-sm text-slate-800 transition-all placeholder-slate-400 focus:border-[#1455c6] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1455c6]/20"
             />
             <button
               type="submit"
-              className="absolute right-1.5 top-1.5 bottom-1.5 px-3.5 bg-[#f57224] text-white rounded-lg hover:bg-[#e0621f] transition-colors flex items-center justify-center"
+              className="absolute bottom-1.5 right-1.5 top-1.5 flex items-center justify-center rounded-lg bg-[#ff7a00] px-3.5 text-white transition-colors hover:bg-[#e56500]"
             >
               <Search className="w-4 h-4" />
             </button>
@@ -437,7 +448,11 @@ export function SiteHeader() {
 
       {/* Mobile Drawer Navigation */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-white border-b border-slate-200 py-4 px-4 space-y-4">
+        <div className="space-y-4 border-b border-slate-200 bg-white px-4 py-4 shadow-lg md:hidden">
+          <div className="flex items-center justify-between rounded-xl bg-blue-50 px-3 py-2.5">
+            <div className="flex items-center gap-2 text-xs font-semibold text-[#1455c6]"><User className="h-4 w-4" />{user ? user.displayName || "My Account" : "Hello, sign in to ShopNexa"}</div>
+            <Link to={user ? "/account" : "/login"} onClick={() => setIsMobileMenuOpen(false)} className="rounded-lg bg-[#1455c6] px-3 py-1.5 text-[10px] font-bold text-white">{user ? "Account" : "Sign In"}</Link>
+          </div>
           <div className="font-bold text-xs uppercase tracking-wider text-slate-400 border-b pb-1">
             Categories
           </div>
@@ -457,7 +472,7 @@ export function SiteHeader() {
                   to="/products"
                   search={{ category: catSlug } as Record<string, string>}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="py-1.5 px-2 rounded bg-slate-50 hover:bg-slate-100 text-slate-700 text-center truncate"
+                  className="rounded-lg bg-slate-50 px-2 py-2 text-center text-xs text-slate-700 transition-colors hover:bg-blue-50 hover:text-[#1455c6] truncate"
                 >
                   {catName}
                 </Link>
