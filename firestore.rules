@@ -24,6 +24,12 @@ service cloud.firestore {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowed);
     }
 
+    // Bangladesh location master data — read-only for customers, admin-managed
+    match /locations/{locId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // Categories - admin managed
     match /categories/{cat} {
       allow read: if true;
