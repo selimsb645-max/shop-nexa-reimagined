@@ -1126,7 +1126,7 @@ function CheckoutPage() {
               <button
                 type="button"
                 onClick={handlePlaceOrder}
-                disabled={placing || !agreeTerms}
+                disabled={placing || !agreeTerms || !deliveryAddressSnapshot}
                 className="mt-5 w-full bg-[#f57224] hover:bg-[#e0621f] text-white font-bold py-3.5 px-6 rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {placing ? (
@@ -1144,6 +1144,12 @@ function CheckoutPage() {
               {!agreeTerms && (
                 <p className="text-xs text-slate-400 text-center mt-2">
                   Please accept terms to continue
+                </p>
+              )}
+
+              {!deliveryAddressSnapshot && (
+                <p className="text-xs text-orange-400 text-center mt-1">
+                  Please select a delivery address above
                 </p>
               )}
 
@@ -1189,7 +1195,7 @@ function CheckoutPage() {
         <button
           type="button"
           onClick={handlePlaceOrder}
-          disabled={placing || !agreeTerms}
+          disabled={placing || !agreeTerms || !deliveryAddressSnapshot}
           className="bg-[#f57224] hover:bg-[#e0621f] text-white font-bold text-sm py-3 px-6 rounded-xl flex items-center gap-2 shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {placing ? (
