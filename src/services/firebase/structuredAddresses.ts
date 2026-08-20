@@ -8,7 +8,6 @@ import {
   query,
   serverTimestamp,
   setDoc,
-  updateDoc,
   writeBatch,
 } from "firebase/firestore";
 import { getDb } from "./config";
@@ -36,6 +35,7 @@ function mapAddress(id: string, data: Record<string, unknown>): StructuredAddres
     addressType: (data.addressType as AddressType) ?? "HOME",
     fullName: String(data.fullName ?? ""),
     phone: String(data.phone ?? ""),
+    alternativePhone: (data.alternativePhone as string | null) ?? null,
     location: {
       divisionId: String(loc.divisionId ?? ""),
       divisionEn: String(loc.divisionEn ?? ""),
@@ -55,6 +55,11 @@ function mapAddress(id: string, data: Record<string, unknown>): StructuredAddres
       postOfficeBn: String(loc.postOfficeBn ?? ""),
       postalCode: String(loc.postalCode ?? ""),
     },
+    house: String(data.house ?? ""),
+    road: String(data.road ?? ""),
+    block: (data.block as string | null) ?? null,
+    floor: (data.floor as string | null) ?? null,
+    landmark: (data.landmark as string | null) ?? null,
     detailedAddress: String(data.detailedAddress ?? ""),
     deliveryInstructions: String(data.deliveryInstructions ?? ""),
     latitude: (data.latitude as number) ?? null,
@@ -70,7 +75,13 @@ export interface StructuredAddressInput {
   addressType: AddressType;
   fullName: string;
   phone: string;
+  alternativePhone: string | null;
   location: StructuredLocation;
+  house: string;
+  road: string;
+  block: string | null;
+  floor: string | null;
+  landmark: string | null;
   detailedAddress: string;
   deliveryInstructions: string;
   latitude: number | null;
@@ -108,7 +119,13 @@ export async function saveStructuredAddress(
       addressType: input.addressType,
       fullName: input.fullName,
       phone: input.phone,
+      alternativePhone: input.alternativePhone,
       location: input.location,
+      house: input.house,
+      road: input.road,
+      block: input.block,
+      floor: input.floor,
+      landmark: input.landmark,
       detailedAddress: input.detailedAddress,
       deliveryInstructions: input.deliveryInstructions,
       latitude: input.latitude,

@@ -38,7 +38,13 @@ function AddressesPage() {
         addressType: values.addressType,
         fullName: values.fullName,
         phone: values.phone,
+        alternativePhone: values.alternativePhone,
         location: values.location,
+        house: values.house,
+        road: values.road,
+        block: values.block,
+        floor: values.floor,
+        landmark: values.landmark,
         detailedAddress: values.detailedAddress,
         deliveryInstructions: values.deliveryInstructions,
         latitude: null,
@@ -71,9 +77,8 @@ function AddressesPage() {
   });
 
   return (
-    <ServicePageLayout title="My Addresses" >
+    <ServicePageLayout title="My Addresses">
       <div className="max-w-2xl mx-auto px-4 pb-24 space-y-4">
-        {/* Add Button */}
         {!showForm && (
           <button
             onClick={() => { setEditing(null); setShowForm(true); }}
@@ -84,7 +89,6 @@ function AddressesPage() {
           </button>
         )}
 
-        {/* Form */}
         {showForm && (
           <div className="bg-white rounded-2xl border-2 border-slate-200 p-5 shadow-sm">
             <div className="flex items-center justify-between mb-4">
@@ -105,8 +109,13 @@ function AddressesPage() {
                 addressType: editing.addressType,
                 fullName: editing.fullName,
                 phone: editing.phone,
+                alternativePhone: editing.alternativePhone,
                 location: editing.location,
-                detailedAddress: editing.detailedAddress,
+                house: editing.house,
+                road: editing.road,
+                block: editing.block,
+                floor: editing.floor,
+                landmark: editing.landmark,
                 deliveryInstructions: editing.deliveryInstructions,
                 isDefault: editing.isDefault,
               } : undefined}
@@ -117,7 +126,6 @@ function AddressesPage() {
           </div>
         )}
 
-        {/* Address List */}
         {isLoading && !addresses.length ? (
           <div className="text-center py-12 text-slate-400 text-sm">Loading addresses...</div>
         ) : addresses.length === 0 && !showForm ? (

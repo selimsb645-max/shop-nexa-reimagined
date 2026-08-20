@@ -148,6 +148,14 @@ service cloud.firestore {
         allow write: if isAdmin();
       }
 
+      // Customer addresses - owner can CRUD, nobody else
+      match /addresses/{addressId} {
+        allow read: if isSelf(uid) || isAdmin();
+        allow create: if isSelf(uid);
+        allow update: if isSelf(uid) || isAdmin();
+        allow delete: if isSelf(uid) || isAdmin();
+      }
+
       // Any other user-owned subcollection remains owner-scoped
       match /{sub}/{docId} {
         allow read, write: if (isSelf(uid) || isAdmin())

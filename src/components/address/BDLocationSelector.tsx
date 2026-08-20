@@ -16,7 +16,7 @@ import {
   type BDPostOffice,
 } from "@/data/bd-locations";
 import type { StructuredLocation } from "@/types/address";
-import { ChevronDown, Search, MapPin } from "lucide-react";
+import { ChevronDown, Search, MapPin, Check, Lock } from "lucide-react";
 
 interface BDLocationSelectorProps {
   value: Partial<StructuredLocation>;
@@ -34,8 +34,8 @@ function useDebounce<T>(value: T, delay: number): T {
   return debounced;
 }
 
+// ── Searchable Select Field with Bengali + English support ──
 function SelectField({
-  label,
   items,
   value,
   onChange,
@@ -44,9 +44,9 @@ function SelectField({
   getKey,
   getLabel,
   getSubLabel,
+  getSearchText,
   disabled,
 }: {
-  label: string;
   items: Array<Record<string, unknown>>;
   value: string;
   onChange: (v: string) => void;
@@ -55,6 +55,7 @@ function SelectField({
   getKey: (item: Record<string, unknown>) => string;
   getLabel: (item: Record<string, unknown>) => string;
   getSubLabel?: (item: Record<string, unknown>) => string;
+  getSearchText?: (item: Record<string, unknown>) => string;
   disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
@@ -64,11 +65,14 @@ function SelectField({
   const filtered = useMemo(() => {
     if (!debouncedSearch) return items;
     const q = debouncedSearch.toLowerCase();
-    return items.filter((item) =>
-      getLabel(item).toLowerCase().includes(q) ||
-      (item.nameBn as string)?.toLowerCase().includes(q)
-    );
-  }, [items, debouncedSearch, getLabel]);
+    const qBn = debouncedSearch;
+    return items.filter((item) => {
+      const en = getLabel(item).toLowerCase();
+      const bn = (item.nameBn as string)?.toLowerCase() ?? "";
+      const extra = getSearchText?.(item)?.toLowerCase() ?? "";
+      return en.includes(q) || bn.includes(q) || bn.includes(qBn) || extra.includes(q);
+    });
+  }, [items, debouncedSearch, getLabel, getSearchText]);
 
   const selectedItem = items.find((item) => getKey(item) === value);
 
@@ -78,7 +82,7 @@ function SelectField({
         type="button"
         disabled={disabled}
         onClick={() => setOpen(!open)}
-        className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all
+        className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl border-2 transition-all
           ${disabled
             ? "border-slate-100 bg-slate-50 cursor-not-allowed"
             : open
@@ -89,19 +93,28 @@ function SelectField({
           }`}
       >
         <div className="flex items-center gap-2 flex-1 text-left min-w-0">
-          <MapPin className={`w-4 h-4 shrink-0 ${value ? "text-orange-500" : "text-slate-300"}`} />
-          <span className={`truncate text-sm ${value ? "text-slate-800 font-medium" : "text-slate-400"}`}>
+          {disabled ? (
+            <Lock className="w-4 h-4 shrink-0 text-slate-300" />
+          ) : (
+            <MapPin className={`w-4 h-4 shrink-0 ${value ? "text-orange-500" : "text-slate-300"}`} />
+          )}
+          <span className={`truncate text-sm ${disabled ? "text-slate-300" : value ? "text-slate-800 font-medium" : "text-slate-400"}`}>
             {selectedItem ? getLabel(selectedItem) : placeholder}
           </span>
         </div>
-        <ChevronDown className={`w-4 h-4 shrink-0 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} />
+        <div className="flex items-center gap-1 shrink-0">
+          {selectedItem && !disabled && (
+            <Check className="w-4 h-4 text-orange-500" />
+          )}
+          <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} />
+        </div>
       </button>
 
       {open && !disabled && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute z-50 mt-1 w-full bg-white rounded-xl border-2 border-slate-200 shadow-xl max-h-64 overflow-hidden flex flex-col">
-            <div className="p-2 border-b border-slate-100 sticky top-0 bg-white">
+          <div className="absolute z-50 mt-1 w-full bg-white rounded-xl border-2 border-slate-200 shadow-xl max-h-72 overflow-hidden flex flex-col">
+            <div className="p-2 border-b border-slate-100 sticky top-0 bg-white z-10">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
@@ -110,11 +123,14 @@ function SelectField({
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder={searchPlaceholder}
-                  className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-slate-50 border border-slate-200 focus:outline-none focus:border-orange-400"
+                  className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-slate-50 border border-slate-200 focus:outline-none focus:border-orange-400 focus:bg-white"
                 />
               </div>
+              <div className="text-[10px] text-slate-400 mt-1 px-1">
+                {filtered.length} {filtered.length === 1 ? "result" : "results"}
+              </div>
             </div>
-            <div className="overflow-y-auto flex-1">
+            <div className="overflow-y-auto flex-1 overscroll-contain">
               {filtered.length === 0 ? (
                 <div className="p-4 text-center text-sm text-slate-400">No matches found</div>
               ) : (
@@ -131,17 +147,18 @@ function SelectField({
                         setSearch("");
                         setOpen(false);
                       }}
-                      className={`w-full px-4 py-2.5 text-left text-sm hover:bg-orange-50 transition-colors border-b border-slate-50 last:border-0
+                      className={`w-full px-4 py-3 text-left text-sm hover:bg-orange-50 transition-colors border-b border-slate-50 last:border-0
                         ${value === key ? "bg-orange-50 text-orange-700 font-medium" : "text-slate-700"}`}
                     >
-                      <div className="flex items-center justify-between">
-                        <span>{label}</span>
-                        {subLabel && (
-                          <span className="text-xs text-slate-400 ml-2 shrink-0">{subLabel}</span>
-                        )}
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="truncate">{label}</span>
+                        {value === key && <Check className="w-4 h-4 text-orange-500 shrink-0" />}
                       </div>
                       {(item as Record<string, unknown>).nameBn ? (
                         <span className="text-xs text-slate-400">{String((item as Record<string, unknown>).nameBn)}</span>
+                      ) : null}
+                      {subLabel ? (
+                        <span className="text-xs text-slate-400 block mt-0.5">Postal: {subLabel}</span>
                       ) : null}
                     </button>
                   );
@@ -173,6 +190,7 @@ export function BDLocationSelector({ value, onChange, showLabels = true }: BDLoc
   // ── Division ──
   const onDivisionChange = useCallback((id: string) => {
     setDivisionId(id);
+    // Reset all children
     setDistrictId("");
     setUpazilaId("");
     setUnionId("");
@@ -201,6 +219,7 @@ export function BDLocationSelector({ value, onChange, showLabels = true }: BDLoc
 
   const onDistrictChange = useCallback((id: string) => {
     setDistrictId(id);
+    // Reset children
     setUpazilaId("");
     setUnionId("");
     setPostOfficeIdx("");
@@ -227,6 +246,7 @@ export function BDLocationSelector({ value, onChange, showLabels = true }: BDLoc
 
   const onUpazilaChange = useCallback((id: string) => {
     setUpazilaId(id);
+    // Reset children
     setUnionId("");
     setPostOfficeIdx("");
     const upz = upazilas.find((u) => u.id === id);
@@ -237,7 +257,7 @@ export function BDLocationSelector({ value, onChange, showLabels = true }: BDLoc
         divisionId: div.id, divisionEn: div.nameEn, divisionBn: div.nameBn,
         districtId: dist.id, districtEn: dist.nameEn, districtBn: dist.nameBn,
         upazilaId: upz.id, upazilaEn: upz.nameEn, upazilaBn: upz.nameBn,
-        thanaEn: upz.nameEn, thanaBn: upz.nameBn, // Default: thana = upazila name
+        thanaEn: upz.nameEn, thanaBn: upz.nameBn,
         unionId: "", unionEn: "", unionBn: "",
         postOfficeEn: "", postOfficeBn: "",
         postalCode: "",
@@ -309,18 +329,37 @@ export function BDLocationSelector({ value, onChange, showLabels = true }: BDLoc
     }
   }, [availablePostOffices, postOfficeIdx, onPostOfficeChange]);
 
+  // ── Selected Location Summary ──
+  const hasSelection = divisionId && districtId;
+  const summaryParts: string[] = [];
+  if (value.divisionEn) summaryParts.push(value.divisionEn);
+  if (value.districtEn) summaryParts.push(value.districtEn);
+  if (value.upazilaEn) summaryParts.push(value.upazilaEn);
+  if (value.unionEn) summaryParts.push(value.unionEn);
+  if (value.postOfficeEn) summaryParts.push(value.postOfficeEn);
+  if (value.postalCode) summaryParts.push(`- ${value.postalCode}`);
+
   return (
     <div className="space-y-3">
+      {/* Country (auto: Bangladesh) */}
+      <div className="flex items-center gap-3 p-3.5 rounded-xl bg-green-50 border-2 border-green-200">
+        <span className="text-2xl">🇧🇩</span>
+        <div>
+          <div className="text-sm font-semibold text-slate-800">Bangladesh</div>
+          <div className="text-xs text-slate-500">বাংলাদেশ (auto-selected)</div>
+        </div>
+        <Check className="w-5 h-5 text-green-500 ml-auto" />
+      </div>
+
       {/* Division */}
       <div>
         {showLabels && <label className="block text-xs font-semibold text-slate-600 mb-1.5">বিভাগ / Division</label>}
         <SelectField
-          label="Division"
           items={divisions as unknown as Array<Record<string, unknown>>}
           value={divisionId}
           onChange={onDivisionChange}
-          placeholder="Select Division"
-          searchPlaceholder="Search division..."
+          placeholder="বিভাগ নির্বাচন করুন / Select Division"
+          searchPlaceholder="Search division... (Bengali or English)"
           getKey={(item) => String(item.id)}
           getLabel={(item) => String(item.nameEn)}
         />
@@ -330,12 +369,11 @@ export function BDLocationSelector({ value, onChange, showLabels = true }: BDLoc
       <div>
         {showLabels && <label className="block text-xs font-semibold text-slate-600 mb-1.5">জেলা / District</label>}
         <SelectField
-          label="District"
           items={availableDistricts as unknown as Array<Record<string, unknown>>}
           value={districtId}
           onChange={onDistrictChange}
-          placeholder="Select District"
-          searchPlaceholder="Search district..."
+          placeholder="জেলা নির্বাচন করুন / Select District"
+          searchPlaceholder="Search district... (Bengali or English)"
           getKey={(item) => String(item.id)}
           getLabel={(item) => String(item.nameEn)}
           disabled={!divisionId}
@@ -344,14 +382,13 @@ export function BDLocationSelector({ value, onChange, showLabels = true }: BDLoc
 
       {/* Upazila */}
       <div>
-        {showLabels && <label className="block text-xs font-semibold text-slate-600 mb-1.5">উপজেলা / Upazila</label>}
+        {showLabels && <label className="block text-xs font-semibold text-slate-600 mb-1.5">উপজেলা / থানা / Upazila</label>}
         <SelectField
-          label="Upazila"
           items={availableUpazilas as unknown as Array<Record<string, unknown>>}
           value={upazilaId}
           onChange={onUpazilaChange}
-          placeholder="Select Upazila"
-          searchPlaceholder="Search upazila..."
+          placeholder="উপজেলা নির্বাচন করুন / Select Upazila"
+          searchPlaceholder="Search upazila... (Bengali or English)"
           getKey={(item) => String(item.id)}
           getLabel={(item) => String(item.nameEn)}
           disabled={!districtId}
@@ -362,12 +399,11 @@ export function BDLocationSelector({ value, onChange, showLabels = true }: BDLoc
       <div>
         {showLabels && <label className="block text-xs font-semibold text-slate-600 mb-1.5">ইউনিয়ন / Union</label>}
         <SelectField
-          label="Union"
           items={availableUnions as unknown as Array<Record<string, unknown>>}
           value={unionId}
           onChange={onUnionChange}
-          placeholder="Select Union"
-          searchPlaceholder="Search union..."
+          placeholder="ইউনিয়ন নির্বাচন করুন / Select Union"
+          searchPlaceholder="Search union... (Bengali or English)"
           getKey={(item) => String(item.id)}
           getLabel={(item) => String(item.nameEn)}
           disabled={!upazilaId}
@@ -380,11 +416,10 @@ export function BDLocationSelector({ value, onChange, showLabels = true }: BDLoc
           <div className="col-span-2">
             {showLabels && <label className="block text-xs font-semibold text-slate-600 mb-1.5">পোস্ট অফিস / Post Office</label>}
             <SelectField
-              label="Post Office"
               items={availablePostOffices.map((po, idx) => ({ ...po, _idx: idx })) as unknown as Array<Record<string, unknown>>}
               value={postOfficeIdx}
               onChange={onPostOfficeChange}
-              placeholder="Select Post Office"
+              placeholder="পোস্ট অফিস নির্বাচন করুন"
               searchPlaceholder="Search post office..."
               getKey={(item) => String(item._idx ?? 0)}
               getLabel={(item) => String(item.subofficeEn)}
@@ -399,8 +434,21 @@ export function BDLocationSelector({ value, onChange, showLabels = true }: BDLoc
               readOnly
               value={value.postalCode ?? ""}
               placeholder="Auto"
-              className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 bg-slate-50 text-sm font-medium text-slate-700 cursor-not-allowed"
+              className="w-full px-4 py-3.5 rounded-xl border-2 border-slate-200 bg-slate-50 text-sm font-medium text-slate-700 cursor-not-allowed"
             />
+          </div>
+        </div>
+      )}
+
+      {/* Selected Location Summary */}
+      {hasSelection && (
+        <div className="p-3 rounded-xl bg-orange-50 border-2 border-orange-200">
+          <div className="flex items-center gap-2 mb-1.5">
+            <MapPin className="w-4 h-4 text-orange-500" />
+            <span className="text-xs font-semibold text-orange-700">Selected Location</span>
+          </div>
+          <div className="text-sm text-slate-700">
+            {summaryParts.join(" → ")}
           </div>
         </div>
       )}

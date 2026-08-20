@@ -36,7 +36,6 @@ export function CheckoutAddressSelector({
 
   const selected = addresses.find((a) => a.id === selectedAddressId);
 
-  // Auto-select default address
   useEffect(() => {
     if (addresses.length > 0 && !selectedAddressId) {
       const def = addresses.find((a) => a.isDefault) ?? addresses[0];
@@ -44,7 +43,6 @@ export function CheckoutAddressSelector({
     }
   }, [addresses, selectedAddressId, setSelectedAddressId]);
 
-  // Emit snapshot when selection changes
   useEffect(() => {
     if (selected) {
       onAddressSelected(toDeliverySnapshot(selected));
@@ -60,7 +58,13 @@ export function CheckoutAddressSelector({
         addressType: values.addressType,
         fullName: values.fullName,
         phone: values.phone,
+        alternativePhone: values.alternativePhone,
         location: values.location,
+        house: values.house,
+        road: values.road,
+        block: values.block,
+        floor: values.floor,
+        landmark: values.landmark,
         detailedAddress: values.detailedAddress,
         deliveryInstructions: values.deliveryInstructions,
         latitude: null,
@@ -76,7 +80,6 @@ export function CheckoutAddressSelector({
     onError: (err: Error) => toast.error("Failed: " + err.message),
   });
 
-  // Compact selected display
   if (selected && !showSavedList && !showForm) {
     const loc = selected.location;
     return (
@@ -101,7 +104,7 @@ export function CheckoutAddressSelector({
             {selected.detailedAddress}
           </div>
           <div className="text-xs text-slate-400 mt-1">
-            {loc.upazilaEn}, {loc.districtEn} - {loc.postalCode}, {loc.divisionEn}
+            {loc.unionEn}, {loc.upazilaEn} - {loc.postalCode}, {loc.districtEn}, {loc.divisionEn}
           </div>
         </div>
       </div>
@@ -131,7 +134,6 @@ export function CheckoutAddressSelector({
 
       {!showForm && (
         <>
-          {/* Saved Addresses */}
           {addresses.length > 0 && showSavedList && (
             <div className="space-y-3">
               {addresses.map((addr) => (
@@ -149,7 +151,6 @@ export function CheckoutAddressSelector({
             </div>
           )}
 
-          {/* Add New */}
           <button
             onClick={() => setShowForm(true)}
             className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border-2 border-dashed border-orange-300 text-orange-600 font-semibold text-sm hover:bg-orange-50 transition-colors"
