@@ -9,29 +9,14 @@
 // open-source dataset exists for Bangladesh's ~64,000 villages.
 // The "detailedAddress" field captures specific house/road/village info.
 
-export type AddressType =
-  | "HOME"
-  | "OFFICE"
-  | "SHOP"
-  | "SCHOOL"
-  | "FACTORY"
-  | "HOTEL"
-  | "COURIER"
-  | "STORE_PICKUP"
-  | "RELATIVE"
-  | "OTHER";
+// Simplified to 3 categories per compact "Address Category" row UX
+// (matches reference: Home / Office / Other, single-row radio selector).
+export type AddressType = "HOME" | "OFFICE" | "OTHER";
 
 export const ADDRESS_TYPE_META: Record<AddressType, { labelEn: string; labelBn: string; icon: string }> = {
-  HOME:         { labelEn: "Home",        labelBn: "বাসা / বাড়ি / ফ্ল্যাট",       icon: "🏠" },
-  OFFICE:       { labelEn: "Office",      labelBn: "অফিস / কর্মস্থল",             icon: "🏢" },
-  SHOP:         { labelEn: "Shop",        labelBn: "দোকান / ব্যবসা প্রতিষ্ঠান",    icon: "🏪" },
-  SCHOOL:       { labelEn: "School",      labelBn: "শিক্ষা প্রতিষ্ঠান",           icon: "🎓" },
-  FACTORY:      { labelEn: "Factory",     labelBn: "কারখানা / কর্মস্থল",          icon: "🏭" },
-  HOTEL:        { labelEn: "Hotel",       labelBn: "হোটেল / গেস্ট হাউস",          icon: "🏨" },
-  COURIER:      { labelEn: "Courier",     labelBn: "কুরিয়ার / পিকআপ পয়েন্ট",     icon: "📦" },
-  STORE_PICKUP: { labelEn: "Store Pickup",labelBn: "Shop Nexa স্টোর / শাখা",      icon: "🏬" },
-  RELATIVE:     { labelEn: "Relative",    labelBn: "অন্য কারও ঠিকানায়",          icon: "👨‍👩‍👧" },
-  OTHER:        { labelEn: "Other",       labelBn: "কাস্টম ঠিকানা",               icon: "📍" },
+  HOME:   { labelEn: "Home",   labelBn: "বাসা / বাড়ি", icon: "🏠" },
+  OFFICE: { labelEn: "Office", labelBn: "অফিস",         icon: "🏢" },
+  OTHER:  { labelEn: "Other",  labelBn: "অন্যান্য",      icon: "📍" },
 };
 
 export type LocationType =

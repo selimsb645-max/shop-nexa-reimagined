@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { BDLocationSelector } from "./BDLocationSelector";
 import type { StructuredLocation, AddressType } from "@/types/address";
 import { ADDRESS_TYPE_META, isValidBDPhone, normalizeBDPhone, buildDetailedAddress } from "@/types/address";
-import { User, Phone, FileText, MessageSquare, Star, Home as HomeIcon, MapPin } from "lucide-react";
+import { User, Phone, FileText, MessageSquare, Star, Home as HomeIcon, MapPin, Check } from "lucide-react";
 
 export interface StructuredAddressFormValues {
   label: string;
@@ -38,8 +38,6 @@ const EMPTY_LOCATION: StructuredLocation = {
   postOfficeEn: "", postOfficeBn: "",
   postalCode: "",
 };
-
-const ALL_ADDRESS_TYPES = Object.keys(ADDRESS_TYPE_META) as AddressType[];
 
 export function StructuredAddressForm({
   initialValues,
@@ -129,34 +127,46 @@ export function StructuredAddressForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      {/* Address Type Cards */}
-      <div>
-        <label className="block text-xs font-semibold text-slate-600 mb-2">
-          "Where should we deliver?" — ঠিকানার ধরন
-        </label>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-          {ALL_ADDRESS_TYPES.map((type) => {
-            const meta = ADDRESS_TYPE_META[type];
-            const isSelected = addressType === type;
-            return (
-              <button
-                key={type}
-                type="button"
-                onClick={() => setAddressType(type)}
-                className={`flex items-center gap-2 px-3 py-3 rounded-xl border-2 transition-all text-left
-                  ${isSelected
-                    ? "border-orange-400 bg-orange-50 text-orange-700"
-                    : "border-slate-200 bg-white text-slate-500 hover:border-slate-300"
-                  }`}
-              >
-                <span className="text-xl shrink-0">{meta.icon}</span>
-                <div className="min-w-0">
-                  <div className="text-xs font-semibold truncate">{meta.labelEn}</div>
-                  <div className="text-[10px] text-slate-400 truncate">{meta.labelBn}</div>
-                </div>
-              </button>
-            );
-          })}
+      {/* Address Category + Default — compact rows */}
+      <div className="rounded-xl border border-slate-200 divide-y divide-slate-200 overflow-hidden bg-white">
+        <div className="flex items-center justify-between gap-3 px-4 py-3.5 flex-wrap">
+          <span className="text-sm font-medium text-slate-700 shrink-0">Address Category</span>
+          <div className="flex items-center gap-4">
+            {(["HOME", "OFFICE", "OTHER"] as AddressType[]).map((type) => {
+              const isSelected = addressType === type;
+              return (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => setAddressType(type)}
+                  className="flex items-center gap-1.5"
+                >
+                  <span
+                    className={`w-5 h-5 rounded-full flex items-center justify-center border-2 transition-colors shrink-0
+                      ${isSelected ? "bg-orange-500 border-orange-500" : "border-slate-300 bg-white"}`}
+                  >
+                    {isSelected && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+                  </span>
+                  <span className={`text-sm ${isSelected ? "text-slate-800 font-medium" : "text-slate-500"}`}>
+                    {ADDRESS_TYPE_META[type].labelEn}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <div className="flex items-center justify-between gap-3 px-4 py-3.5">
+          <span className="text-sm font-medium text-slate-700 flex items-center gap-1.5">
+            <Star className="w-3.5 h-3.5 text-slate-400" />
+            Set as Default
+          </span>
+          <button
+            type="button"
+            onClick={() => setIsDefault(!isDefault)}
+            className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${isDefault ? "bg-orange-500" : "bg-slate-300"}`}
+          >
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${isDefault ? "translate-x-5" : ""}`} />
+          </button>
         </div>
       </div>
 
@@ -354,21 +364,6 @@ export function StructuredAddressForm({
           />
         </div>
       </div>
-
-      {/* Set as Default */}
-      <label className="flex items-center gap-2 cursor-pointer">
-        <button
-          type="button"
-          onClick={() => setIsDefault(!isDefault)}
-          className={`relative w-11 h-6 rounded-full transition-colors ${isDefault ? "bg-orange-500" : "bg-slate-300"}`}
-        >
-          <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${isDefault ? "translate-x-5" : ""}`} />
-        </button>
-        <span className="text-sm text-slate-600 flex items-center gap-1">
-          <Star className="w-3.5 h-3.5 text-slate-400" />
-          Set as default delivery address
-        </span>
-      </label>
 
       {/* Actions */}
       <div className="flex gap-3 pt-2">
