@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
-  ArrowLeft,
   Package,
   ChevronRight,
   Check,
@@ -15,8 +14,7 @@ import {
   BadgeDollarSign,
   XCircle,
 } from "lucide-react";
-import { SiteFooter } from "@/components/layout/SiteFooter";
-import { WhatsAppFab } from "@/components/layout/SiteChrome";
+import { ServicePageLayout } from "@/components/common/ServicePageLayout";
 import { Spinner } from "@/components/common/Spinner";
 import { useAuth } from "@/context/AuthContext";
 import { firebaseConfigured } from "@/services/firebase/config";
@@ -89,22 +87,7 @@ function OrderStatusPage() {
   const list = filterOrders(orders ?? [], status);
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24 md:pb-8">
-      <header className="relative overflow-hidden bg-gradient-to-r from-orange-500 via-orange-500 to-orange-600 text-white">
-        <div aria-hidden className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
-        <div className="relative mx-auto max-w-5xl px-4 pb-4 pt-4 sm:px-6">
-          <div className="flex items-center gap-2">
-            <Link to="/account" aria-label="Back to account" className="grid h-9 w-9 place-items-center rounded-full bg-white/15 transition hover:bg-white/25 active:scale-95">
-              <ArrowLeft className="h-5 w-5" strokeWidth={2} />
-            </Link>
-            <div className="min-w-0">
-              <h1 className="truncate text-lg font-bold sm:text-xl">{meta.title}</h1>
-              <p className="truncate text-xs text-white/80">{meta.subtitle}</p>
-            </div>
-          </div>
-        </div>
-      </header>
-
+    <ServicePageLayout title={meta.title} subtitle={meta.subtitle} backTo="/account">
       {/* Status tabs */}
       <div className="border-b border-gray-100 bg-white">
         <div className="mx-auto flex max-w-5xl gap-1 overflow-x-auto px-3 py-2 sm:px-6">
@@ -132,7 +115,7 @@ function OrderStatusPage() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-5xl space-y-3 px-4 py-4 sm:px-6">
+      <div className="space-y-3 py-2">
         {isLoading ? (
           <div className="py-20 text-center"><Spinner /></div>
         ) : list.length === 0 ? (
@@ -152,10 +135,7 @@ function OrderStatusPage() {
           list.map((o) => <OrderStatusCard key={o.id} order={o} view={status} />)
         )}
       </div>
-
-      <SiteFooter />
-      <WhatsAppFab />
-    </div>
+    </ServicePageLayout>
   );
 }
 

@@ -7,7 +7,12 @@
  *   - SiteFooter + WhatsAppFab + MobileBottomNav
  *
  * Usage:
- *   <ServicePageLayout title="My Wallet" subtitle="Balance & transactions" icon={<Wallet />}>
+ *   <ServicePageLayout title="My Wallet" subtitle="Balance & transactions">
+ *     {children}
+ *   </ServicePageLayout>
+ *
+ * With custom back route:
+ *   <ServicePageLayout title="Order Details" backTo="/orders">
  *     {children}
  *   </ServicePageLayout>
  */
@@ -21,10 +26,12 @@ import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 export function ServicePageLayout({
   title,
   subtitle,
+  backTo = "/account",
   children,
 }: {
   title: string;
   subtitle?: string;
+  backTo?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -38,8 +45,8 @@ export function ServicePageLayout({
         <div className="relative mx-auto max-w-5xl px-4 pb-4 pt-4 sm:px-6">
           <div className="flex items-center gap-2">
             <Link
-              to="/account"
-              aria-label="Back to account"
+              to={backTo}
+              aria-label="Back"
               className="grid h-9 w-9 place-items-center rounded-full bg-white/15 transition hover:bg-white/25 active:scale-95"
             >
               <ArrowLeft className="h-5 w-5" strokeWidth={2} />

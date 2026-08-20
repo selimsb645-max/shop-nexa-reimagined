@@ -7,7 +7,6 @@ import {
   Truck,
   Home,
   XCircle,
-  ChevronRight,
   ArrowLeft,
   Loader,
   MapPin,
@@ -16,10 +15,7 @@ import {
   Gift,
   Wallet,
 } from "lucide-react";
-import { SiteHeader } from "@/components/layout/SiteHeader";
-import { SiteFooter } from "@/components/layout/SiteFooter";
-import { WhatsAppFab } from "@/components/layout/SiteChrome";
-import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
+import { ServicePageLayout } from "@/components/common/ServicePageLayout";
 import { useAuth } from "@/context/AuthContext";
 import { getOrder } from "@/services/firebase/orders";
 import { formatDateTime, formatPrice } from "@/utils/format";
@@ -58,41 +54,33 @@ function OrderDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col bg-slate-50 font-sans">
-        <SiteHeader />
-        <main className="flex-1 max-w-4xl w-full mx-auto px-4 py-20 text-center">
+      <ServicePageLayout title="Order Details" backTo="/orders">
+        <div className="py-20 text-center">
           <Loader className="mx-auto w-8 h-8 animate-spin text-slate-300" />
           <p className="mt-3 text-sm text-slate-400">Loading order details...</p>
-        </main>
-        <SiteFooter />
-        <MobileBottomNav />
-      </div>
+        </div>
+      </ServicePageLayout>
     );
   }
 
   if (!rawOrder) {
     return (
-      <div className="min-h-screen flex flex-col bg-slate-50 font-sans">
-        <SiteHeader />
-        <main className="flex-1 max-w-4xl w-full mx-auto px-4 py-12">
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-8 text-center">
-            <Package className="mx-auto w-12 h-12 text-slate-300 mb-3" />
-            <h2 className="text-lg font-bold text-[#0f172a]">Order not found</h2>
-            <p className="text-sm text-slate-500 mb-5">
-              This order may have been removed or doesn't exist.
-            </p>
-            <Link
-              to="/orders"
-              className="inline-flex items-center gap-2 bg-[#0f172a] hover:bg-slate-800 text-white font-bold py-3 px-6 rounded-xl text-sm transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back to Orders</span>
-            </Link>
-          </div>
-        </main>
-        <SiteFooter />
-        <MobileBottomNav />
-      </div>
+      <ServicePageLayout title="Order Details" backTo="/orders">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-8 text-center">
+          <Package className="mx-auto w-12 h-12 text-slate-300 mb-3" />
+          <h2 className="text-lg font-bold text-[#0f172a]">Order not found</h2>
+          <p className="text-sm text-slate-500 mb-5">
+            This order may have been removed or doesn't exist.
+          </p>
+          <Link
+            to="/orders"
+            className="inline-flex items-center gap-2 bg-[#0f172a] hover:bg-slate-800 text-white font-bold py-3 px-6 rounded-xl text-sm transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Orders</span>
+          </Link>
+        </div>
+      </ServicePageLayout>
     );
   }
 
@@ -101,25 +89,7 @@ function OrderDetailPage() {
   const currentStep = stepIndex(order.status);
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 font-sans antialiased">
-      <SiteHeader />
-
-      <main className="flex-1 max-w-4xl w-full mx-auto px-3 sm:px-4 md:px-6 py-4 md:py-6 pb-24 lg:pb-8">
-        {/* Breadcrumb */}
-        <nav className="mb-4 text-xs sm:text-sm text-slate-500 flex items-center gap-1.5">
-          <Link to="/" className="hover:text-[#f57224] transition-colors">
-            Home
-          </Link>
-          <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-          <Link to="/orders" className="hover:text-[#f57224] transition-colors">
-            My Orders
-          </Link>
-          <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-          <span className="font-semibold text-[#0f172a]">
-            #{order.id.slice(0, 8).toUpperCase()}
-          </span>
-        </nav>
-
+    <ServicePageLayout title={`Order #${order.id.slice(0, 8).toUpperCase()}`} subtitle={`Placed on ${formatDateTime(order.createdAt)}`} backTo="/orders">
         {/* Order Header */}
         <div className="mb-5 bg-white rounded-xl shadow-sm border border-slate-200/80 p-4 sm:p-5">
           <div className="flex items-start justify-between gap-3">
@@ -393,11 +363,6 @@ function OrderDetailPage() {
             </div>
           </aside>
         </div>
-      </main>
-
-      <SiteFooter />
-      <WhatsAppFab />
-      <MobileBottomNav />
-    </div>
+    </ServicePageLayout>
   );
 }
