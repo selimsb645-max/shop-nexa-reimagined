@@ -107,6 +107,9 @@ export interface StructuredAddress {
   floor: string | null;
   landmark: string | null;
 
+  // Village / Area / Locality — manually entered by customer
+  villageArea: string | null;
+
   // Combined detailed address (for backward compat / courier labels)
   detailedAddress: string;
 
@@ -146,6 +149,7 @@ export interface DeliveryAddressSnapshot {
   block: string | null;
   floor: string | null;
   landmark: string | null;
+  villageArea: string | null;
   detailedAddress: string;
   deliveryInstructions: string;
 
@@ -211,8 +215,10 @@ export function buildDetailedAddress(
   block?: string | null,
   floor?: string | null,
   landmark?: string | null,
+  villageArea?: string | null,
 ): string {
   const parts: string[] = [];
+  if (villageArea) parts.push(villageArea);
   if (house) parts.push(house);
   if (road) parts.push(road);
   if (block) parts.push(block);
@@ -246,6 +252,7 @@ export function toDeliverySnapshot(addr: StructuredAddress): DeliveryAddressSnap
     block: addr.block,
     floor: addr.floor,
     landmark: addr.landmark,
+    villageArea: addr.villageArea,
     detailedAddress: addr.detailedAddress,
     deliveryInstructions: addr.deliveryInstructions,
     fullAddress: formatFullAddress(addr.location, addr.detailedAddress),

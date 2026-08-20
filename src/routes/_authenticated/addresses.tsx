@@ -45,6 +45,7 @@ function AddressesPage() {
         block: values.block,
         floor: values.floor,
         landmark: values.landmark,
+        villageArea: values.villageArea,
         detailedAddress: values.detailedAddress,
         deliveryInstructions: values.deliveryInstructions,
         latitude: null,

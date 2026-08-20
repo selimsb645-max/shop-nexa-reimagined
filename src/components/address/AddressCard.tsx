@@ -83,6 +83,11 @@ export function AddressCard({
 
         {/* Location */}
         <div className="ml-[52px]">
+          {address.villageArea && (
+            <div className="text-sm text-slate-700 font-semibold mb-1">
+              {address.villageArea}
+            </div>
+          )}
           <div className="text-sm text-slate-600 font-medium mb-1">
             {address.detailedAddress || `${address.house}, ${address.road}`}
           </div>

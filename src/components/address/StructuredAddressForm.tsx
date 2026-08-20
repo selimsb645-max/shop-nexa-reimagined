@@ -16,6 +16,7 @@ export interface StructuredAddressFormValues {
   block: string | null;
   floor: string | null;
   landmark: string | null;
+  villageArea: string | null;
   detailedAddress: string;
   deliveryInstructions: string;
   isDefault: boolean;
@@ -58,6 +59,7 @@ export function StructuredAddressForm({
   const [block, setBlock] = useState(initialValues?.block ?? "");
   const [floor, setFloor] = useState(initialValues?.floor ?? "");
   const [landmark, setLandmark] = useState(initialValues?.landmark ?? "");
+  const [villageArea, setVillageArea] = useState(initialValues?.villageArea ?? "");
   const [deliveryInstructions, setDeliveryInstructions] = useState(
     initialValues?.deliveryInstructions ?? "",
   );
@@ -74,7 +76,7 @@ export function StructuredAddressForm({
   }, [addressType]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Build detailed address from individual fields
-  const detailedAddress = buildDetailedAddress(house, road, block || null, floor || null, landmark || null);
+  const detailedAddress = buildDetailedAddress(house, road, block || null, floor || null, landmark || null, villageArea || null);
 
   function validate(): boolean {
     const errs: Record<string, string> = {};
@@ -118,6 +120,7 @@ export function StructuredAddressForm({
       block: block.trim() || null,
       floor: floor.trim() || null,
       landmark: landmark.trim() || null,
+      villageArea: villageArea.trim() || null,
       detailedAddress,
       deliveryInstructions: deliveryInstructions.trim(),
       isDefault,
@@ -229,6 +232,23 @@ export function StructuredAddressForm({
             {errors.division || errors.district || errors.upazila || errors.postalCode}
           </div>
         )}
+      </div>
+
+      {/* Village / Area / Locality — manual entry */}
+      <div>
+        <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+          গ্রাম/এলাকা/লোকেশন / Village / Area / Locality <span className="text-slate-400">(optional)</span>
+        </label>
+        <div className="relative">
+          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input
+            type="text"
+            value={villageArea}
+            onChange={(e) => setVillageArea(e.target.value)}
+            placeholder="e.g. Rampura, Badda, Mirpur DOHS, or village name"
+            className="w-full pl-9 pr-3 py-3.5 rounded-xl border-2 border-slate-200 text-sm focus:outline-none focus:border-orange-400 bg-white"
+          />
+        </div>
       </div>
 
       {/* Detailed Delivery Address */}

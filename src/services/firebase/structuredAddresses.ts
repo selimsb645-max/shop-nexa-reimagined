@@ -60,6 +60,7 @@ function mapAddress(id: string, data: Record<string, unknown>): StructuredAddres
     block: (data.block as string | null) ?? null,
     floor: (data.floor as string | null) ?? null,
     landmark: (data.landmark as string | null) ?? null,
+    villageArea: (data.villageArea as string | null) ?? null,
     detailedAddress: String(data.detailedAddress ?? ""),
     deliveryInstructions: String(data.deliveryInstructions ?? ""),
     latitude: (data.latitude as number) ?? null,
@@ -82,6 +83,7 @@ export interface StructuredAddressInput {
   block: string | null;
   floor: string | null;
   landmark: string | null;
+  villageArea: string | null;
   detailedAddress: string;
   deliveryInstructions: string;
   latitude: number | null;
@@ -126,6 +128,7 @@ export async function saveStructuredAddress(
       block: input.block,
       floor: input.floor,
       landmark: input.landmark,
+      villageArea: input.villageArea,
       detailedAddress: input.detailedAddress,
       deliveryInstructions: input.deliveryInstructions,
       latitude: input.latitude,
