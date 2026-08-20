@@ -44,8 +44,9 @@ import { CheckoutAddressSelector } from "@/components/address/CheckoutAddressSel
 import type { DeliveryAddressSnapshot, StructuredAddress } from "@/types/address";
 import { getWalletBalance, getRewardPoints } from "@/services/firebase/wallet";
 import { validateCoupon, CouponError } from "@/services/firebase/coupons";
-import { computeShipping, createOrder } from "@/services/firebase/orders";
+import { createOrder, detectZoneFromSnapshot } from "@/services/firebase/orders";
 import type { PaymentMethod, Coupon, CartItem, Product } from "@/types/commerce";
+import { DELIVERY_ZONES, type DeliveryZoneId } from "@/data/bd-locations/deliveryZones";
 
 
 type EnrichedCartItem = {
@@ -67,39 +68,7 @@ export const Route = createFileRoute("/_authenticated/checkout")({
   head: () => ({ meta: [{ title: "Checkout — Shop Nexa" }] }),
 });
 
-// ----------------------------------------------------------------------
-// Delivery Methods
-// ----------------------------------------------------------------------
-interface DeliveryMethod {
-  id: string;
-  name: string;
-  desc: string;
-  charge: number;
-  etaDays: [number, number];
-  icon: typeof Truck;
-  badge?: string;
-}
 
-const DELIVERY_METHODS: DeliveryMethod[] = [
-  {
-    id: "standard",
-    name: "Standard Delivery",
-    desc: "Regular delivery via courier",
-    charge: 5.0,
-    etaDays: [3, 5],
-    icon: Truck,
-    badge: "Free over $50",
-  },
-  {
-    id: "express",
-    name: "Express Delivery",
-    desc: "Fastest delivery option",
-    charge: 12.0,
-    etaDays: [1, 2],
-    icon: Zap,
-    badge: "1-2 days",
-  },
-];
 
 // ----------------------------------------------------------------------
 // Reward Points Conversion (from wallet service)
@@ -209,11 +178,13 @@ function CheckoutPage() {
   const [selectedAddressId, setSelectedAddressId] = useState<string>("");
   const [deliveryAddressSnapshot, setDeliveryAddressSnapshot] = useState<DeliveryAddressSnapshot | null>(null);
 
-  // ---- Delivery Method ----
-  const [deliveryMethodId, setDeliveryMethodId] = useState("standard");
-  const selectedDelivery = DELIVERY_METHODS.find(
-    (m) => m.id === deliveryMethodId
-  )!;
+  // ---- Delivery Zone (auto-detected) ----
+  const deliveryZoneInfo = useMemo(
+    () => detectZoneFromSnapshot(deliveryAddressSnapshot),
+    [deliveryAddressSnapshot],
+  );
+  const deliveryZoneId: DeliveryZoneId = deliveryZoneInfo?.zone ?? "OUTSIDE_DHAKA";
+  const deliveryZoneConfig = DELIVERY_ZONES[deliveryZoneId];
 
   // ---- Coupon ----
   const [couponInput, setCouponInput] = useState("");
@@ -277,11 +248,11 @@ function CheckoutPage() {
   const rewardDiscountValue = Math.min(rewardDiscount, afterCoupon);
   const afterReward = Math.max(0, afterCoupon - rewardDiscountValue);
 
+  // Delivery charge: auto-calculated from address zone (server is authoritative)
   const deliveryCharge = useMemo(() => {
-    if (enrichedItems.length === 0) return 0;
-    if (deliveryMethodId === "express") return DELIVERY_METHODS[1].charge;
-    return computeShipping(afterReward);
-  }, [afterReward, deliveryMethodId, enrichedItems.length]);
+    if (enrichedItems.length === 0 || !deliveryAddressSnapshot) return 0;
+    return deliveryZoneInfo?.charge ?? 0;
+  }, [enrichedItems.length, deliveryAddressSnapshot, deliveryZoneInfo]);
 
   const maxWalletUse = Math.max(0, afterReward + deliveryCharge - 0);
   const walletUsed = useWallet ? Math.min(walletBalance, maxWalletUse) : 0;
@@ -291,7 +262,7 @@ function CheckoutPage() {
 
   // ---- Estimated delivery date ----
   const estimatedDelivery = useMemo(() => {
-    const [minDays, maxDays] = selectedDelivery.etaDays;
+    const [minDays, maxDays] = deliveryZoneConfig.etaDays;
     const now = new Date();
     const min = new Date(now);
     min.setDate(now.getDate() + minDays);
@@ -304,7 +275,7 @@ function CheckoutPage() {
       month: "short",
       day: "numeric",
     })}`;
-  }, [selectedDelivery]);
+  }, [deliveryZoneConfig]);
 
   // ---- Coupon handlers ----
   const handleApplyCoupon = async () => {
@@ -421,7 +392,6 @@ function CheckoutPage() {
         couponCode: appliedCoupon?.coupon.code ?? null,
         promoCode: appliedPromoCode,
         discount: couponDiscount,
-        deliveryMethod: deliveryMethodId as "standard" | "express",
         rewardPoints: useRewardPoints ? rewardPointsToUse : 0,
         walletUsed: walletUsed,
         deliveryAddressSnapshot: deliveryAddressSnapshot,
@@ -527,65 +497,48 @@ function CheckoutPage() {
               />
             </CheckoutSection>
 
-            {/* ---- 2. DELIVERY METHOD ---- */}
+            {/* ---- 2. DELIVERY ZONE (Auto-detected) ---- */}
             <CheckoutSection
               number={2}
               icon={<Truck className="w-4 h-4" />}
-              title="Delivery Method"
+              title="Delivery Zone"
             >
-              <div className="space-y-3">
-                {DELIVERY_METHODS.map((method) => {
-                  const Icon = method.icon;
-                  const isSelected = deliveryMethodId === method.id;
-                  return (
-                    <div
-                      key={method.id}
-                      onClick={() => setDeliveryMethodId(method.id)}
-                      className={`border-2 rounded-xl p-4 cursor-pointer transition-all flex items-center gap-3 ${
-                        isSelected
-                          ? "border-[#f57224] bg-orange-50/50"
-                          : "border-slate-200 hover:border-slate-300"
-                      }`}
-                    >
-                      <div
-                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                          isSelected
-                            ? "border-[#f57224] bg-[#f57224]"
-                            : "border-slate-300"
-                        }`}
-                      >
-                        {isSelected && <Check className="w-3 h-3 text-white" />}
+              {deliveryAddressSnapshot ? (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-orange-50 to-amber-50 border-2 border-orange-200">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
+                        <MapPin className="w-5 h-5 text-orange-600" />
                       </div>
-                      <Icon
-                        className={`w-5 h-5 ${
-                          isSelected ? "text-[#f57224]" : "text-slate-400"
-                        }`}
-                      />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-bold text-[#0f172a]">
-                            {method.name}
-                          </span>
-                          {method.badge && (
-                            <span className="bg-emerald-100 text-emerald-700 text-[9px] font-bold px-1.5 py-0.5 rounded">
-                              {method.badge}
-                            </span>
-                          )}
+                      <div>
+                        <div className="text-sm font-bold text-slate-800">
+                          {deliveryZoneConfig.labelBn} · {deliveryZoneConfig.labelEn}
                         </div>
-                        <p className="text-xs text-slate-500 mt-0.5">
-                          {method.desc} · ETA{" "}
-                          {method.etaDays[0]}-{method.etaDays[1]} days
-                        </p>
+                        <div className="text-xs text-slate-500">
+                          {deliveryZoneConfig.description}
+                        </div>
                       </div>
-                      <span className="text-sm font-bold text-[#0f172a]">
-                        {method.charge === 0
-                          ? "Free"
-                          : formatPrice(method.charge)}
-                      </span>
                     </div>
-                  );
-                })}
-              </div>
+                    <div className="text-right">
+                      <div className="text-lg font-black text-orange-600">
+                        ৳{deliveryZoneConfig.charge}
+                      </div>
+                      <div className="text-[10px] text-slate-400">Delivery Charge</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <Clock className="w-3.5 h-3.5" />
+                    <span>Estimated delivery: {deliveryZoneConfig.etaDays[0]}-{deliveryZoneConfig.etaDays[1]} days</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 rounded-xl bg-slate-50 border-2 border-dashed border-slate-200 text-center">
+                  <Truck className="w-6 h-6 text-slate-300 mx-auto mb-2" />
+                  <p className="text-xs text-slate-400">
+                    Select a delivery address to auto-detect your delivery zone and charge
+                  </p>
+                </div>
+              )}
             </CheckoutSection>
 
             {/* ---- 3. SELLER-WISE ORDER SPLIT ---- */}
@@ -1076,9 +1029,9 @@ function CheckoutPage() {
                 )}
                 <div className="flex justify-between">
                   <span className="text-slate-500">
-                    Delivery Fee{" "}
+                    Delivery Charge{" "}
                     <span className="text-[10px] text-slate-400">
-                      ({selectedDelivery.name})
+                      ({deliveryZoneConfig.labelEn})
                     </span>
                   </span>
                   <span

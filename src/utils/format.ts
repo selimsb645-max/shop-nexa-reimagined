@@ -1,4 +1,12 @@
-export function formatPrice(v: number, currency = "USD"): string {
+export function formatPrice(v: number, currency = "BDT"): string {
+  // Bangladesh Taka formatting: ৳1,234.00
+  if (currency === "BDT") {
+    const formatted = new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(v);
+    return `৳${formatted}`;
+  }
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,

@@ -16,13 +16,43 @@ import type {
   ShippingAddress,
 } from "@/types/commerce";
 
-const SHIPPING_FLAT = 5;
-const FREE_SHIPPING_THRESHOLD = 50;
-
 import type { DeliveryAddressSnapshot } from "@/types/address";
+import { detectDeliveryZone, getDeliveryCharge, type DeliveryLocationInput } from "@/data/bd-locations/deliveryZones";
 
-export function computeShipping(subtotalAfterDiscount: number): number {
-  return subtotalAfterDiscount >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FLAT;
+/**
+ * Compute delivery charge based on the customer's delivery address zone.
+ * This is a CLIENT-SIDE preview only — the authoritative calculation
+ * happens server-side in checkout.server.ts.
+ *
+ * Returns ৳60 / ৳100 / ৳170 based on zone, or 0 if no address selected yet.
+ */
+export function computeDeliveryChargePreview(
+  location: DeliveryLocationInput | null | undefined,
+): number {
+  if (!location || !location.districtEn) return 0;
+  return getDeliveryCharge(location);
+}
+
+/**
+ * Detect the delivery zone from a DeliveryAddressSnapshot.
+ */
+export function detectZoneFromSnapshot(
+  snapshot: DeliveryAddressSnapshot | null | undefined,
+) {
+  if (!snapshot) return null;
+  return detectDeliveryZone({
+    divisionEn: snapshot.divisionEn,
+    districtEn: snapshot.districtEn,
+    upazilaEn: snapshot.upazilaEn,
+    thanaEn: snapshot.thanaEn,
+    postOfficeEn: snapshot.postOfficeEn,
+    postalCode: snapshot.postalCode,
+  });
+}
+
+// Legacy function kept for backward compat — now returns 0 (unused)
+export function computeShipping(_subtotalAfterDiscount: number): number {
+  return 0;
 }
 
 export interface CreateOrderInput {
@@ -34,7 +64,6 @@ export interface CreateOrderInput {
   couponCode: string | null;
   promoCode: string | null;
   discount: number;
-  deliveryMethod?: "standard" | "express";
   rewardPoints?: number;
   walletUsed?: number;
   deliveryAddressSnapshot?: DeliveryAddressSnapshot | null;
@@ -66,6 +95,9 @@ function mapOrder(id: string, data: Record<string, unknown>): Order {
       paidAt: null,
     },
     deliveryAddressSnapshot: (raw.deliveryAddressSnapshot as DeliveryAddressSnapshot | null) ?? null,
+    deliveryZone: (raw.deliveryZone as string | null) ?? null,
+    deliveryZoneLabel: (raw.deliveryZoneLabel as string | null) ?? null,
+    deliveryCharge: (raw.deliveryCharge as number | null) ?? null,
   shippingAddress: (raw.shippingAddress as ShippingAddress) ?? {
       fullName: "",
       phone: "",
@@ -111,7 +143,6 @@ export async function createOrder(input: CreateOrderInput): Promise<string> {
       paymentMethod: input.paymentMethod,
       couponCode: input.couponCode,
       promoCode: input.promoCode,
-      deliveryMethod: input.deliveryMethod ?? "standard",
       rewardPoints: input.rewardPoints ?? 0,
       walletUsed: input.walletUsed ?? 0,
       ...(input.deliveryAddressSnapshot ? { deliveryAddressSnapshot: input.deliveryAddressSnapshot } : {}),

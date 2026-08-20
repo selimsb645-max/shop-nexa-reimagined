@@ -26,15 +26,42 @@ import {
   buildSettlementPendingTxWrite,
 } from "./settlement.server";
 
-const SHIPPING_FLAT = 5;
-const FREE_SHIPPING_THRESHOLD = 50;
-const EXPRESS_SHIPPING_FLAT = 12;
+import {
+  detectDeliveryZone,
+  DELIVERY_ZONES,
+  type DeliveryZoneId,
+} from "@/data/bd-locations/deliveryZones";
+
 const POINTS_PER_CURRENCY_REDEEM = 100;
 const MAX_LINE_ITEMS = 100;
 const MAX_QTY_PER_ITEM = 100;
 
-export function computeShippingServer(subtotalAfterDiscount: number): number {
-  return subtotalAfterDiscount >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FLAT;
+/**
+ * Server-side delivery charge calculation based on the customer's address zone.
+ * This is the AUTHORITATIVE calculation — the frontend value is just a preview.
+ *
+ * Uses the deliveryAddressSnapshot (which is already server-validated) to
+ * determine the zone and return the correct charge.
+ */
+export function computeDeliveryChargeServer(
+  deliveryAddressSnapshot: Record<string, unknown> | null | undefined,
+): { zone: DeliveryZoneId; charge: number; label: string } {
+  if (!deliveryAddressSnapshot) {
+    // Fallback: no address → Outside Dhaka charge (safest default)
+    return { zone: "OUTSIDE_DHAKA", charge: DELIVERY_ZONES.OUTSIDE_DHAKA.charge, label: DELIVERY_ZONES.OUTSIDE_DHAKA.labelEn };
+  }
+
+  const districtEn = String(deliveryAddressSnapshot["districtEn"] ?? "");
+  const upazilaEn = String(deliveryAddressSnapshot["upazilaEn"] ?? "");
+  const thanaEn = String(deliveryAddressSnapshot["thanaEn"] ?? "");
+
+  const result = detectDeliveryZone({
+    districtEn,
+    upazilaEn,
+    thanaEn,
+  });
+
+  return { zone: result.zone, charge: result.charge, label: result.config.labelEn };
 }
 
 export interface PlaceOrderRequest {
@@ -54,7 +81,6 @@ export interface PlaceOrderRequest {
   paymentMethod: "cash_on_delivery" | "card" | "mobile_banking";
   couponCode: string | null;
   promoCode: string | null;
-  deliveryMethod: "standard" | "express";
   rewardPoints: number;
   walletUsed: number;
 }
@@ -65,6 +91,9 @@ export interface PlaceOrderResult {
   discount: number;
   promoDiscount: number;
   shipping: number;
+  deliveryZone: string;
+  deliveryZoneLabel: string;
+  deliveryCharge: number;
   rewardDiscount: number;
   walletUsed: number;
   total: number;
@@ -240,10 +269,11 @@ export async function placeOrderServer(
   }
 
   const subAfterDiscount = round2(subtotal - discount - promoDiscount);
-  const shipping =
-    req.deliveryMethod === "express"
-      ? EXPRESS_SHIPPING_FLAT
-      : computeShippingServer(subAfterDiscount);
+  // Delivery charge is computed server-side from the address zone.
+  // Customer cannot manipulate this — it's based on their delivery address.
+  const { zone: deliveryZone, charge: deliveryCharge, label: deliveryZoneLabel } =
+    computeDeliveryChargeServer(req.deliveryAddressSnapshot);
+  const shipping = deliveryCharge;
   // Reward points deduction (server-side verified)
   let rewardDiscount = 0;
   if (req.rewardPoints > 0) {
@@ -346,6 +376,9 @@ export async function placeOrderServer(
         subtotal,
         discount,
         shipping,
+        deliveryZone,
+        deliveryZoneLabel,
+        deliveryCharge,
         rewardDiscount,
         walletUsed,
         total,
@@ -558,5 +591,5 @@ export async function placeOrderServer(
 
   await commitWrites(projectId, writes);
 
-  return { orderId, subtotal, discount, promoDiscount, shipping, rewardDiscount, walletUsed, total, couponCode: appliedCoupon, promoCode: appliedPromo };
+  return { orderId, subtotal, discount, promoDiscount, shipping, deliveryZone, deliveryZoneLabel, deliveryCharge, rewardDiscount, walletUsed, total, couponCode: appliedCoupon, promoCode: appliedPromo };
 }

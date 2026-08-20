@@ -141,6 +141,10 @@ export interface Order {
   payment: PaymentInfo;
   shippingAddress: ShippingAddress;
   deliveryAddressSnapshot?: DeliveryAddressSnapshot | null;
+  // Delivery zone snapshot (saved at checkout, never recalculated)
+  deliveryZone?: string | null;       // "INSIDE_DHAKA" | "DHAKA_SUBURB" | "OUTSIDE_DHAKA"
+  deliveryZoneLabel?: string | null;  // Human-readable label
+  deliveryCharge?: number | null;     // Charge at time of order (BDT)
   tracking: TrackingEvent[];
   createdAt: number;
   updatedAt: number;
