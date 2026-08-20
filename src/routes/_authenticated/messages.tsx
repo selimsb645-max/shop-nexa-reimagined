@@ -34,6 +34,7 @@ import {
   Pin,
   ChevronRight,
 } from "lucide-react";
+import { ServicePageLayout } from "@/components/common/ServicePageLayout";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { WhatsAppFab } from "@/components/layout/SiteChrome";
@@ -200,30 +201,23 @@ function CommunicationCenter() {
   }, [threads, activeFilter, searchQuery]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-muted/30 pb-24 md:pb-0">
-      <SiteHeader />
-
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-4 sm:px-6">
-        {/* Header */}
-        <div className="mb-4">
-          <h1 className="text-xl font-bold sm:text-2xl">Communication Center</h1>
-          <p className="text-sm text-muted-foreground">Your hub for orders, chats, support & notifications</p>
-        </div>
+    <ServicePageLayout title="Messages" subtitle="Your hub for orders, chats, support & notifications">
+        {/* Search bar */}
 
         {/* Search bar */}
         <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search chats, orders, sellers, tickets..."
-            className="w-full rounded-xl border bg-background py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-primary"
+            className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-[#f57224]"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
             >
               <XCircle className="h-4 w-4" />
             </button>
@@ -287,12 +281,7 @@ function CommunicationCenter() {
 
           {activeTab === "announcements" && <AnnouncementCenter />}
         </div>
-      </main>
-
-      <SiteFooter />
-      <WhatsAppFab />
-      <MobileBottomNav />
-    </div>
+    </ServicePageLayout>
   );
 }
 
@@ -334,8 +323,8 @@ function TabBar({
               onClick={() => onChange(tab.id)}
               className={`relative flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-200 ${
                 isActive
-                  ? "bg-primary text-primary-foreground shadow-md"
-                  : "border bg-background text-muted-foreground hover:bg-muted/50"
+                  ? "bg-[#f57224] text-white shadow-md"
+                  : "border border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
               }`}
             >
               {tab.icon}
