@@ -91,8 +91,12 @@ export function StructuredAddressForm({
     if (!location.divisionId) errs.division = "বিভাগ নির্বাচন করুন / Select division";
     if (!location.districtId) errs.district = "জেলা নির্বাচন করুন / Select district";
     if (!location.upazilaId) errs.upazila = "উপজেলা নির্বাচন করুন / Select upazila";
-    if (!house.trim()) errs.house = "বাড়ি/ফ্ল্যাট নম্বর দিন / House/Flat no. is required";
-    if (!road.trim()) errs.road = "রাস্তা দিন / Road is required";
+    // House/Road are optional — villages usually don't have house/holding numbers
+    // or named roads. If BOTH are empty, Landmark becomes mandatory so the
+    // courier still has something concrete to find the delivery point.
+    if (!house.trim() && !road.trim() && !landmark.trim()) {
+      errs.landmark = "বাড়ি/রাস্তা না দিলে ল্যান্ডমার্ক আবশ্যক / Landmark is required when House & Road are empty";
+    }
     if (!location.postalCode) errs.postalCode = "পোস্ট অফিস নির্বাচন করুন / Select a post office";
 
     setErrors(errs);
@@ -270,15 +274,44 @@ export function StructuredAddressForm({
           </span>
         </div>
         <p className="text-xs text-slate-400 mb-3">
-          এখানে আপনার বাসা/অফিস/দোকানের সঠিক ঠিকানা লিখুন।
+          শহরে বাড়ি/রাস্তা নম্বর দিন। গ্রামে সেগুলো না থাকলে নিচের ল্যান্ডমার্ক ঘরে
+          পরিচিত কোনো জায়গার নাম দিন — যেমন মসজিদ, বাজার, স্কুল বা ব্রিজ।
         </p>
 
         <div className="space-y-3">
-          {/* House + Road */}
+          {/* Landmark — prioritized for village addresses */}
+          <div className="p-3.5 rounded-xl bg-orange-50 border-2 border-orange-200">
+            <label className="flex items-center justify-between gap-2 mb-1.5">
+              <span className="text-xs font-semibold text-slate-700 flex items-center gap-1">
+                <MapPin className="w-3.5 h-3.5 text-orange-500" />
+                ল্যান্ডমার্ক / Landmark
+              </span>
+              {(!house.trim() && !road.trim()) ? (
+                <span className="text-[10px] font-semibold text-red-500 shrink-0">
+                  * গ্রামে আবশ্যক / Required
+                </span>
+              ) : (
+                <span className="text-[10px] text-slate-400 shrink-0">(recommended)</span>
+              )}
+            </label>
+            <input
+              type="text"
+              value={landmark}
+              onChange={(e) => setLandmark(e.target.value)}
+              placeholder="e.g. Central Mosque, Village Bazar, Primary School, Bridge"
+              className="w-full px-3 py-3 rounded-xl border-2 border-orange-200 text-sm focus:outline-none focus:border-orange-400 bg-white"
+            />
+            {errors.landmark && <p className="text-xs text-red-500 mt-1">{errors.landmark}</p>}
+            <p className="text-[10px] text-slate-400 mt-1.5">
+              গ্রামের ঠিকানার জন্য এটিই সবচেয়ে গুরুত্বপূর্ণ তথ্য — ডেলিভারি ম্যান এটি দিয়েই বাড়ি খুঁজে পাবে।
+            </p>
+          </div>
+
+          {/* House + Road — optional (city addresses) */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-                বাড়ি/ফ্ল্যাট/হোল্ডিং নং <span className="text-red-500">*</span>
+                বাড়ি/ফ্ল্যাট/হোল্ডিং নং <span className="text-slate-400">(optional)</span>
               </label>
               <input
                 type="text"
@@ -287,11 +320,10 @@ export function StructuredAddressForm({
                 placeholder="House / Flat / Holding No."
                 className="w-full px-3 py-3 rounded-xl border-2 border-slate-200 text-sm focus:outline-none focus:border-orange-400 bg-white"
               />
-              {errors.house && <p className="text-xs text-red-500 mt-1">{errors.house}</p>}
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-                রাস্তা/সড়ক/লেন <span className="text-red-500">*</span>
+                রাস্তা/সড়ক/লেন <span className="text-slate-400">(optional)</span>
               </label>
               <input
                 type="text"
@@ -300,7 +332,6 @@ export function StructuredAddressForm({
                 placeholder="Road / Street / Lane"
                 className="w-full px-3 py-3 rounded-xl border-2 border-slate-200 text-sm focus:outline-none focus:border-orange-400 bg-white"
               />
-              {errors.road && <p className="text-xs text-red-500 mt-1">{errors.road}</p>}
             </div>
           </div>
 
@@ -330,20 +361,6 @@ export function StructuredAddressForm({
                 className="w-full px-3 py-3 rounded-xl border-2 border-slate-200 text-sm focus:outline-none focus:border-orange-400 bg-white"
               />
             </div>
-          </div>
-
-          {/* Landmark (optional) */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-              ল্যান্ডমার্ক / Landmark <span className="text-slate-400">(optional)</span>
-            </label>
-            <input
-              type="text"
-              value={landmark}
-              onChange={(e) => setLandmark(e.target.value)}
-              placeholder="Near Central Mosque / Beside City Hospital"
-              className="w-full px-3 py-3 rounded-xl border-2 border-slate-200 text-sm focus:outline-none focus:border-orange-400 bg-white"
-            />
           </div>
         </div>
       </div>
