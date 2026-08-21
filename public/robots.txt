@@ -9,5 +9,24 @@ Disallow: /verify-email
 Disallow: /cart
 Disallow: /checkout
 Disallow: /account
+Disallow: /orders
+Disallow: /wishlist
+Disallow: /addresses
+Disallow: /settings
+Disallow: /messages
+Disallow: /notifications
+Disallow: /support
+Disallow: /returns
+Disallow: /wallet
+Disallow: /rewards
+Disallow: /referral
+Disallow: /membership
+Disallow: /gift-cards
+Disallow: /coupons
+Disallow: /promo-codes
+Disallow: /recently-viewed
+Disallow: /my-reviews
+Disallow: /edit-profile
+Disallow: /track-orders
 
 Sitemap: https://shop-nexa.lovable.app/sitemap.xml
