@@ -1,12 +1,12 @@
 /**
  * Shop Nexa — Settlement Server Functions
- * 
+ *
  * These are TanStack Start server functions that bridge the client to the
  * settlement server module. Each function:
  * 1. Validates the Firebase ID token (verifies caller identity)
  * 2. Checks permissions (seller vs admin)
  * 3. Delegates to settlement.server.ts
- * 
+ *
  * SECURITY: Financial mutations ONLY happen through these verified endpoints.
  */
 
@@ -49,14 +49,33 @@ export const requestSettlementWithdrawal = createServerFn({ method: "POST" })
     const { verifyIdToken } = await import("./firebase-admin.server");
     const { requestSettlementWithdrawal: requestWithdrawal } = await import("./settlement.server");
 
-    const { uid } = await verifyIdToken(data.idToken);
+    const { uid, email } = await verifyIdToken(data.idToken);
 
-    return requestWithdrawal({
+    const result = await requestWithdrawal({
       uid,
       amount: data.amount,
       method: data.method,
       destination: data.destination,
     });
+
+    // Send withdrawal requested email (best-effort, never blocks)
+    if (email && result.withdrawalId) {
+      try {
+        const { sendWithdrawalEmail } = await import("./email.server");
+        await sendWithdrawalEmail("WITHDRAWAL_REQUESTED", email, {
+          sellerName: uid,
+          withdrawalId: result.withdrawalId,
+          amount: data.amount,
+          requestDate: new Date().toISOString(),
+          status: "requested",
+          paymentMethod: data.method,
+        });
+      } catch {
+        // Email failure should not block withdrawal request
+      }
+    }
+
+    return result;
   });
 
 // ====================================================================
@@ -92,7 +111,7 @@ export const processSettlementWithdrawal = createServerFn({ method: "POST" })
     const role = userDoc.fields?.role?.stringValue ?? "customer";
     if (role !== "admin") throw new Error("Only admins can process withdrawals.");
 
-    return processWithdrawal({
+    const result = await processWithdrawal({
       adminUid: uid,
       sellerId: data.sellerId,
       withdrawalId: data.withdrawalId,
@@ -100,6 +119,37 @@ export const processSettlementWithdrawal = createServerFn({ method: "POST" })
       note: data.note,
       txRef: data.txRef,
     });
+
+    // Send withdrawal status email (best-effort, never blocks)
+    try {
+      const { sendWithdrawalEmail } = await import("./email.server");
+      // Fetch seller email
+      const sellerDocRes = await fetch(
+        `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/sellers/${encodeURIComponent(data.sellerId)}`,
+        { headers: { authorization: `Bearer ${token}` } },
+      );
+      if (sellerDocRes.ok) {
+        const sellerDoc = await sellerDocRes.json();
+        const sellerEmail = sellerDoc.fields?.email?.stringValue;
+        const sellerName = sellerDoc.fields?.businessName?.stringValue ?? data.sellerId;
+        if (sellerEmail) {
+          const event = data.action === "approve" ? "WITHDRAWAL_APPROVED" : "WITHDRAWAL_REJECTED";
+          await sendWithdrawalEmail(event, sellerEmail, {
+            sellerName,
+            withdrawalId: data.withdrawalId,
+            amount: result.amount ?? 0,
+            requestDate: new Date().toISOString(),
+            status: data.action === "approve" ? "approved" : "rejected",
+            paymentMethod: result.method ?? "N/A",
+            reason: data.note,
+          });
+        }
+      }
+    } catch {
+      // Email failure should not block withdrawal processing
+    }
+
+    return result;
   });
 
 // ====================================================================

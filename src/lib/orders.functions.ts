@@ -157,7 +157,7 @@ export const placeOrder = createServerFn({ method: "POST" })
       // Best-effort — session is already consumed, this just updates the orderId
     }
 
-    // 7. Send order confirmation notification
+    // 7. Send order confirmation notification (SMS/WhatsApp)
     try {
       const { sendOrderNotification } = await import("./notifications.server");
       await sendOrderNotification("ORDER_CREATED", {
@@ -168,6 +168,38 @@ export const placeOrder = createServerFn({ method: "POST" })
       });
     } catch {
       // Notification failure should not block order creation
+    }
+
+    // 8. Send order confirmation email
+    try {
+      const { sendOrderEmail } = await import("./email.server");
+      await sendOrderEmail("ORDER_CREATED", email ?? "", {
+        orderId: result.orderId,
+        customerName: data.shippingAddress.fullName,
+        orderDate: new Date().toISOString(),
+        status: "confirmed",
+        items: result.items.map(
+          (item: { name: string; quantity: number; price: number; image?: string }) => ({
+            name: item.name,
+            quantity: item.quantity,
+            price: item.price,
+            image: item.image,
+          }),
+        ),
+        subtotal: result.subtotal,
+        discount: result.discount,
+        deliveryFee: result.shipping,
+        grandTotal: result.total,
+        deliveryAddress: {
+          fullName: data.shippingAddress.fullName,
+          addressLine: data.shippingAddress.addressLine,
+          city: data.shippingAddress.city,
+          postalCode: data.shippingAddress.postalCode,
+          phone: data.shippingAddress.phone,
+        },
+      });
+    } catch {
+      // Email failure should not block order creation
     }
 
     return result;
