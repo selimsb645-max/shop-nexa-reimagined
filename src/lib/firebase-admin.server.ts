@@ -16,9 +16,7 @@ interface ServiceAccount {
 function readServiceAccount(): ServiceAccount {
   const raw = Deno.env.get("FIREBASE_SERVICE_ACCOUNT");
   if (!raw) {
-    throw new Error(
-      "Checkout is not configured on the server (missing FIREBASE_SERVICE_ACCOUNT).",
-    );
+    throw new Error("Checkout is not configured on the server (missing FIREBASE_SERVICE_ACCOUNT).");
   }
   let parsed: Partial<ServiceAccount>;
   try {
@@ -37,6 +35,9 @@ function readServiceAccount(): ServiceAccount {
 }
 
 export function getProjectId(): string {
+  // In emulator mode, use a test project ID
+  const testProject = Deno.env.get("FIRESTORE_TEST_PROJECT");
+  if (testProject) return testProject;
   return readServiceAccount().project_id;
 }
 
@@ -61,6 +62,10 @@ let cachedToken: { token: string; expiresAt: number } | null = null;
 
 /** OAuth2 access token for the Firestore REST API (cached until near expiry). */
 export async function getAccessToken(): Promise<string> {
+  // In emulator mode, auth is disabled — return a dummy token
+  if (Deno.env.get("FIRESTORE_EMULATOR_HOST")) {
+    return "emulator-token";
+  }
   if (cachedToken && cachedToken.expiresAt > Date.now() + 60_000) {
     return cachedToken.token;
   }
@@ -86,11 +91,7 @@ export async function getAccessToken(): Promise<string> {
     false,
     ["sign"],
   );
-  const sig = await crypto.subtle.sign(
-    "RSASSA-PKCS1-v1_5",
-    key,
-    enc.encode(`${header}.${claims}`),
-  );
+  const sig = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", key, enc.encode(`${header}.${claims}`));
   const assertion = `${header}.${claims}.${b64url(new Uint8Array(sig))}`;
 
   const res = await fetch("https://oauth2.googleapis.com/token", {
@@ -117,6 +118,15 @@ export async function getAccessToken(): Promise<string> {
 export async function verifyIdToken(
   idToken: string,
 ): Promise<{ uid: string; email: string | null }> {
+  // In emulator/test mode, accept test tokens directly
+  if (Deno.env.get("FIRESTORE_EMULATOR_HOST")) {
+    try {
+      const decoded = JSON.parse(atob(idToken));
+      return { uid: decoded.uid, email: decoded.email ?? null };
+    } catch {
+      throw new Error("Invalid test token.");
+    }
+  }
   const apiKey = Deno.env.get("VITE_FIREBASE_API_KEY") ?? Deno.env.get("FIREBASE_API_KEY");
   if (!apiKey) throw new Error("Server auth verification is not configured.");
   const res = await fetch(
@@ -196,6 +206,10 @@ export function fromFsFields(fields: Record<string, FsValue>): Record<string, un
 /* ------------------------------------------------------------------ */
 
 function baseUrl(projectId: string): string {
+  const emulatorHost = Deno.env.get("FIRESTORE_EMULATOR_HOST");
+  if (emulatorHost) {
+    return `http://${emulatorHost}/v1/projects/${projectId}/databases/(default)/documents`;
+  }
   return `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents`;
 }
 
@@ -247,10 +261,7 @@ export async function batchGetDocs(
 export type FsWrite = Record<string, unknown>;
 
 /** Atomically apply a set of writes. */
-export async function commitWrites(
-  projectId: string,
-  writes: FsWrite[],
-): Promise<void> {
+export async function commitWrites(projectId: string, writes: FsWrite[]): Promise<void> {
   const token = await getAccessToken();
   const res = await fetch(`${baseUrl(projectId)}:commit`, {
     method: "POST",

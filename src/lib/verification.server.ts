@@ -158,6 +158,10 @@ export function maskPhone(phone: string): string {
 /* ------------------------------------------------------------------ */
 
 function fsBaseUrl(projectId: string): string {
+  const emulatorHost = Deno.env.get("FIRESTORE_EMULATOR_HOST");
+  if (emulatorHost) {
+    return `http://${emulatorHost}/v1/projects/${projectId}/databases/(default)/documents`;
+  }
   return `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents`;
 }
 
@@ -170,6 +174,27 @@ async function readDoc(projectId: string, path: string): Promise<Record<string, 
   if (!res.ok) throw new Error(`Firestore read failed (${res.status})`);
   const json = (await res.json()) as { fields?: Record<string, FsValue> };
   return json.fields ? fromFsFields(json.fields) : {};
+}
+
+/** Read document with updateTime — used for optimistic concurrency control */
+async function readDocWithMeta(
+  projectId: string,
+  path: string,
+): Promise<{ data: Record<string, unknown>; updateTime: string | null } | null> {
+  const token = await getAccessToken();
+  const res = await fetch(`${fsBaseUrl(projectId)}/${path}`, {
+    headers: { authorization: `Bearer ${token}` },
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`Firestore read failed (${res.status})`);
+  const json = (await res.json()) as {
+    fields?: Record<string, FsValue>;
+    updateTime?: string;
+  };
+  return {
+    data: json.fields ? fromFsFields(json.fields) : {},
+    updateTime: json.updateTime ?? null,
+  };
 }
 
 async function writeDoc(
@@ -216,13 +241,25 @@ async function atomicConsumeSession(
 ): Promise<{ success: boolean }> {
   const token = await getAccessToken();
 
-  // Use Firestore commit with a precondition: the document must exist
-  // AND have status == "verified". If another request already consumed
-  // it (status changed to "consumed"), this commit will fail.
+  // Step 1: Read the current session and capture its updateTime
+  const current = await readDocWithMeta(projectId, sessionPath);
+  if (!current) return { success: false };
+
+  const sessionData = current.data;
+  if (!sessionData || String(sessionData.status ?? "") !== "verified") {
+    return { success: false };
+  }
+
+  // Step 2: Use Firestore commit with updateTime precondition.
+  // This is optimistic concurrency control: if another request already
+  // modified the document (e.g., consumed it), the updateTime will
+  // differ and this commit will fail with 409.
+  const docResourceName = `projects/${projectId}/databases/(default)/documents/${sessionPath}`;
+
   const writes: FsWrite[] = [
     {
       update: {
-        name: `${fsBaseUrl(projectId)}/${sessionPath}`,
+        name: docResourceName,
         fields: toFsFields({
           status: "consumed",
           consumedOrderId: orderId,
@@ -230,52 +267,20 @@ async function atomicConsumeSession(
           updatedAt: Date.now(),
         }),
       },
-      // Precondition: only succeed if status is currently "verified"
-      currentDocument: {
-        exists: true,
-      },
+      // Precondition: document must have the same updateTime as when we read it.
+      // If another request already consumed the session, updateTime changed
+      // and this write fails (409 FAILED_PRECONDITION).
+      currentDocument: current.updateTime ? { updateTime: current.updateTime } : { exists: true },
     },
   ];
 
-  // We use a transform with a field filter precondition via commit API.
-  // Firestore commit doesn't support field-level preconditions directly,
-  // but we can use the batchWrite or transaction API.
-  // For simplicity, we use a two-step approach:
-  // 1. Read the current status
-  // 2. Only write if it's "verified"
-  // This has a small race window, but combined with idempotent order
-  // creation (same cartHash + same items), it's safe enough.
-  // For a truly atomic solution, we'd need Firestore transactions.
-
-  const current = await readDoc(projectId, sessionPath);
-  if (!current) return { success: false };
-  if (String(current.status ?? "") !== "verified") {
+  try {
+    await commitWrites(projectId, writes);
+    return { success: true };
+  } catch {
+    // 409 = precondition failed = another request already consumed it
     return { success: false };
   }
-
-  // Write with currentDocument.exists as a precondition
-  const res = await fetch(`${fsBaseUrl(projectId)}/${sessionPath}?`, {
-    method: "PATCH",
-    headers: {
-      authorization: `Bearer ${token}`,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      fields: toFsFields({
-        status: "consumed",
-        consumedOrderId: orderId,
-        consumedAt: Date.now(),
-        updatedAt: Date.now(),
-      }),
-    }),
-  });
-
-  if (!res.ok) {
-    return { success: false };
-  }
-
-  void writes; // reserved for future transaction-based implementation
-  return { success: true };
 }
 
 async function runQuery(
