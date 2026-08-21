@@ -7,6 +7,7 @@ import type { DeliveryTracking } from "@/services/firebase/deliveryTracking";
 import { Truck, MapPin, Clock, Package, CheckCircle2, Loader } from "lucide-react";
 import { ServicePageLayout } from "@/components/common/ServicePageLayout";
 import { useAuth } from "@/context/AuthContext";
+import { useI18n } from "@/i18n/I18nContext";
 import { listOrdersForTracking } from "@/services/firebase/deliveryTracking";
 import { firebaseConfigured } from "@/services/firebase/config";
 import { formatPrice } from "@/utils/format";
@@ -19,6 +20,7 @@ export const Route = createFileRoute("/_authenticated/track-orders")({
 });
 
 function TrackOrdersPage() {
+  const { t } = useI18n();
   const { user } = useAuth();
   const { data: orders, isLoading } = useQuery({
     queryKey: ["orders", "trackable", user?.uid],
@@ -27,7 +29,7 @@ function TrackOrdersPage() {
   });
 
   return (
-    <ServicePageLayout title="Track Orders" subtitle="Live tracking for your shipments">
+    <ServicePageLayout title={t("tracking.title")} subtitle={t("tracking.subtitle")}>
       {isLoading ? (
         <div className="py-20 text-center">
           <Loader className="mx-auto w-8 h-8 animate-spin text-slate-300" />

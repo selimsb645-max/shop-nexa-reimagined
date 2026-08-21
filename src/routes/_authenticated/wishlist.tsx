@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Heart, Loader, ShoppingBag, Trash2 } from "lucide-react";
 import { ServicePageLayout } from "@/components/common/ServicePageLayout";
 import { useAuth } from "@/context/AuthContext";
+import { useI18n } from "@/i18n/I18nContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { useCart } from "@/context/CartContext";
 import { formatPrice } from "@/utils/format";
@@ -15,6 +16,7 @@ export const Route = createFileRoute("/_authenticated/wishlist")({
 });
 
 function WishlistPage() {
+  const { t } = useI18n();
   const { user } = useAuth();
   const { items, remove, loading } = useWishlist();
   const { add } = useCart();
@@ -67,7 +69,7 @@ function WishlistPage() {
   };
 
   return (
-    <ServicePageLayout title="My Wishlist" subtitle={`${items.length} saved item${items.length === 1 ? "" : "s"}`}>
+    <ServicePageLayout title={t("wishlist.title")} subtitle={`${items.length} ${items.length === 1 ? t("account.savedItem") : t("account.savedItems")}`}>
       {loading ? (
         <div className="py-20 text-center">
           <Loader className="mx-auto h-8 w-8 animate-spin text-slate-300" />
@@ -77,15 +79,15 @@ function WishlistPage() {
           <span className="grid h-14 w-14 place-items-center rounded-full bg-orange-50 text-[#f57224]">
             <Heart className="h-7 w-7" />
           </span>
-          <h3 className="mt-4 text-base font-bold text-slate-800">Your wishlist is empty</h3>
+          <h3 className="mt-4 text-base font-bold text-slate-800">{t("wishlist.empty")}</h3>
           <p className="mt-1 max-w-xs text-sm text-slate-500">
-            Save items you love and find them all here later.
+            {t("wishlist.emptyHint")}
           </p>
           <Link
             to="/shop"
             className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#f57224] px-6 py-3 text-sm font-bold text-white shadow-md transition hover:bg-orange-600 active:scale-95"
           >
-            <ShoppingBag className="h-4 w-4" /> Browse products
+            <ShoppingBag className="h-4 w-4" /> {t("wishlist.startShopping")}
           </Link>
         </div>
       ) : (

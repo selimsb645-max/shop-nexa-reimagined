@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowDownLeft, ArrowUpRight, Wallet, Loader, Sparkles, TrendingUp } from "lucide-react";
 import { ServicePageLayout } from "@/components/common/ServicePageLayout";
 import { useAuth } from "@/context/AuthContext";
+import { useI18n } from "@/i18n/I18nContext";
 import {
   POINTS_PER_CURRENCY_REDEEM,
   getRewardPoints,
@@ -26,6 +27,7 @@ const TYPE_LABEL: Record<string, string> = {
 };
 
 function WalletPage() {
+  const { t } = useI18n();
   const { user } = useAuth();
   const [redeeming, setRedeeming] = useState(false);
 
@@ -60,7 +62,7 @@ function WalletPage() {
   };
 
   return (
-    <ServicePageLayout title="My Wallet" subtitle="Balance, cashback & transactions">
+    <ServicePageLayout title={t("wallet.title")} subtitle={t("wallet.subtitle")}>
       {/* Balance card */}
       <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
         <div className="bg-gradient-to-br from-orange-50 to-white px-5 py-6">

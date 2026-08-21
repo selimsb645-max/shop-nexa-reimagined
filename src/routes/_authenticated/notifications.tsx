@@ -4,6 +4,7 @@ import { Bell, CheckCheck, Trash2, Loader } from "lucide-react";
 import { toast } from "sonner";
 import { ServicePageLayout } from "@/components/common/ServicePageLayout";
 import { useAuth } from "@/context/AuthContext";
+import { useI18n } from "@/i18n/I18nContext";
 import {
   deleteNotification,
   listNotifications,
@@ -26,6 +27,7 @@ const TYPE_STYLE: Record<string, string> = {
 };
 
 function NotificationsPage() {
+  const { t } = useI18n();
   const { user } = useAuth();
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["notifications", user?.uid],
@@ -43,7 +45,7 @@ function NotificationsPage() {
   };
 
   return (
-    <ServicePageLayout title="Notifications" subtitle={unread > 0 ? `${unread} unread` : "You're all caught up"}>
+    <ServicePageLayout title={t("notifications.title")} subtitle={unread > 0 ? `${unread} unread` : "You're all caught up"}>
       {unread > 0 && (
         <div className="mb-4 flex justify-end">
           <button
@@ -64,7 +66,7 @@ function NotificationsPage() {
           <span className="grid h-14 w-14 place-items-center rounded-full bg-orange-50 text-[#f57224]">
             <Bell className="h-7 w-7" />
           </span>
-          <h3 className="mt-4 text-base font-bold text-slate-800">No notifications yet</h3>
+          <h3 className="mt-4 text-base font-bold text-slate-800">{t("notifications.empty")} yet</h3>
           <p className="mt-1 max-w-xs text-sm text-slate-500">
             Order updates, cashback and offers will show up here.
           </p>

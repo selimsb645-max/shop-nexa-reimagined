@@ -17,6 +17,7 @@ import {
 import { ServicePageLayout } from "@/components/common/ServicePageLayout";
 import { Spinner } from "@/components/common/Spinner";
 import { useAuth } from "@/context/AuthContext";
+import { useI18n } from "@/i18n/I18nContext";
 import { firebaseConfigured } from "@/services/firebase/config";
 import { listOrders } from "@/services/firebase/orders";
 import { formatDateTime, formatPrice } from "@/utils/format";
@@ -70,6 +71,7 @@ const TAB_LABEL: Record<OrderView, string> = {
 };
 
 function OrderStatusPage() {
+  const { t } = useI18n();
   const raw = Route.useParams().status as string;
   const status: OrderView = isOrderView(raw) ? raw : "pending";
   const { user } = useAuth();

@@ -5,6 +5,7 @@ import { LifeBuoy, Phone, Plus, Send, MessageSquare, Loader, X } from "lucide-re
 import { toast } from "sonner";
 import { ServicePageLayout } from "@/components/common/ServicePageLayout";
 import { useAuth } from "@/context/AuthContext";
+import { useI18n } from "@/i18n/I18nContext";
 import { listOrders } from "@/services/firebase/orders";
 import {
   closeTicket,
@@ -37,6 +38,7 @@ const STATUS_STYLE: Record<string, string> = {
 };
 
 function SupportPage() {
+  const { t } = useI18n();
   const { user } = useAuth();
   const [creating, setCreating] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -79,7 +81,7 @@ function SupportPage() {
   };
 
   return (
-    <ServicePageLayout title="Help & Support" subtitle="Get help with orders and your account">
+    <ServicePageLayout title={t("support.title")} subtitle={t("support.subtitle")}>
       {/* Quick contact cards */}
       <div className="grid gap-4 sm:grid-cols-3">
         <a href="https://wa.me/8801324997271" target="_blank" rel="noreferrer" className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:border-orange-200 hover:shadow-md">

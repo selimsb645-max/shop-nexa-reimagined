@@ -7,6 +7,7 @@ import { getProductById } from "@/services/firebase/products";
 import { firebaseConfigured } from "@/services/firebase/config";
 import { formatPrice } from "@/utils/format";
 import type { Product } from "@/types/commerce";
+import { useI18n } from "@/i18n/I18nContext";
 
 export const Route = createFileRoute("/_authenticated/recently-viewed")({
   ssr: false,
@@ -23,6 +24,7 @@ export const Route = createFileRoute("/_authenticated/recently-viewed")({
 });
 
 function RecentlyViewedPage() {
+  const { t } = useI18n();
   const { ids } = useRecentlyViewed();
 
   const { data: products, isLoading } = useQuery({
@@ -35,7 +37,7 @@ function RecentlyViewedPage() {
   });
 
   return (
-    <ServicePageLayout title="Recently Viewed" subtitle="Products you've explored">
+    <ServicePageLayout title={t("recentlyViewed.title")} subtitle={t("recentlyViewed.subtitle")}>
       {ids.length === 0 ? (
         <EmptyState />
       ) : isLoading ? (

@@ -11,6 +11,7 @@ import { ServicePageLayout } from "@/components/common/ServicePageLayout";
 import { firebaseConfigured } from "@/services/firebase/config";
 import { getRewardPoints } from "@/services/firebase/wallet";
 import { useAuth } from "@/context/AuthContext";
+import { useI18n } from "@/i18n/I18nContext";
 
 export const Route = createFileRoute("/_authenticated/membership")({
   ssr: false,
@@ -46,6 +47,7 @@ const TIERS = [
 ];
 
 function MembershipPage() {
+  const { t } = useI18n();
   const { user } = useAuth();
   const { data: points } = useQuery({
     queryKey: ["rewards", "points", user?.uid],
@@ -58,7 +60,7 @@ function MembershipPage() {
   const nextTier = TIERS.find((t) => t.minPoints > currentPoints);
 
   return (
-    <ServicePageLayout title="Nexa Prime Membership" subtitle="Exclusive rewards & benefits">
+    <ServicePageLayout title={t("membership.title")} subtitle={t("membership.subtitle")}>
 
         {/* Current status */}
         <div className="mb-6 rounded-2xl border bg-gradient-to-br from-primary to-primary/80 p-6 text-primary-foreground shadow-sm">

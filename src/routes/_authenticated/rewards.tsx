@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Gift, Sparkles, TrendingUp, Loader } from "lucide-react";
 import { ServicePageLayout } from "@/components/common/ServicePageLayout";
 import { useAuth } from "@/context/AuthContext";
+import { useI18n } from "@/i18n/I18nContext";
 import { POINTS_PER_CURRENCY_REDEEM, listRewardTx } from "@/services/firebase/wallet";
 import { formatDateTime, formatPrice } from "@/utils/format";
 
@@ -18,6 +19,7 @@ const TIERS = [
 ];
 
 function RewardsPage() {
+  const { t } = useI18n();
   const { user } = useAuth();
   const { data, isLoading } = useQuery({
     queryKey: ["rewardTx", user?.uid],
@@ -35,7 +37,7 @@ function RewardsPage() {
     : 100;
 
   return (
-    <ServicePageLayout title="Rewards" subtitle="Earn points on every order">
+    <ServicePageLayout title={t("rewards.title")} subtitle={t("rewards.subtitle")}>
       {/* Points balance hero card */}
       <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
         <div className="bg-gradient-to-br from-orange-50 to-white px-5 py-6">

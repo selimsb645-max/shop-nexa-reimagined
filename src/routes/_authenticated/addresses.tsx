@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { MapPin, Plus, X } from "lucide-react";
 import { ServicePageLayout } from "@/components/common/ServicePageLayout";
 import { useAuth } from "@/context/AuthContext";
+import { useI18n } from "@/i18n/I18nContext";
 import {
   listStructuredAddresses,
   saveStructuredAddress,
@@ -20,6 +21,7 @@ export const Route = createFileRoute("/_authenticated/addresses")({
 });
 
 function AddressesPage() {
+  const { t } = useI18n();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
@@ -78,7 +80,7 @@ function AddressesPage() {
   });
 
   return (
-    <ServicePageLayout title="My Addresses">
+    <ServicePageLayout title={t("addresses.title")} subtitle={t("addresses.subtitle")}>
       <div className="max-w-2xl mx-auto px-4 pb-24 space-y-4">
         {!showForm && (
           <button
@@ -86,7 +88,7 @@ function AddressesPage() {
             className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border-2 border-dashed border-orange-300 text-orange-600 font-semibold text-sm hover:bg-orange-50 transition-colors"
           >
             <Plus className="w-5 h-5" />
-            Add New Address
+            {t("addresses.addNew")}
           </button>
         )}
 
@@ -132,7 +134,7 @@ function AddressesPage() {
         ) : addresses.length === 0 && !showForm ? (
           <div className="text-center py-16">
             <MapPin className="w-12 h-12 text-slate-200 mx-auto mb-3" />
-            <p className="text-slate-400 text-sm">No saved addresses yet</p>
+            <p className="text-slate-400 text-sm">{t("addresses.empty")} yet</p>
             <p className="text-slate-300 text-xs mt-1">Add your first delivery address</p>
           </div>
         ) : (

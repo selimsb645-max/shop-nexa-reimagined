@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { ServicePageLayout } from "@/components/common/ServicePageLayout";
 import { useAuth } from "@/context/AuthContext";
+import { useI18n } from "@/i18n/I18nContext";
 import { firebaseConfigured } from "@/services/firebase/config";
 import { onSnapshot, collection, query, where, orderBy, limit } from "firebase/firestore";
 import { getDb } from "@/services/firebase/config";
@@ -87,6 +88,7 @@ type FilterType = "all" | "unread" | "orders" | "support" | "sellers" | "archive
 // ═══════════════════════════════════════════════════════════════
 
 function CommunicationCenter() {
+  const { t } = useI18n();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>("inbox");
   const [searchQuery, setSearchQuery] = useState("");

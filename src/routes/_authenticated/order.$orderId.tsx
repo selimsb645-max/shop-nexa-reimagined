@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { ServicePageLayout } from "@/components/common/ServicePageLayout";
 import { useAuth } from "@/context/AuthContext";
+import { useI18n } from "@/i18n/I18nContext";
 import { getOrder } from "@/services/firebase/orders";
 import { formatDateTime, formatPrice } from "@/utils/format";
 import { firebaseConfigured } from "@/services/firebase/config";
@@ -30,12 +31,12 @@ export const Route = createFileRoute("/_authenticated/order/$orderId")({
   head: () => ({ meta: [{ title: "Order Details — Shop Nexa" }] }),
 });
 
-const FLOW: { key: OrderStatus | "out_for_delivery"; label: string; labelBn: string; icon: typeof Package; desc: string }[] = [
-  { key: "confirmed", label: "Order Confirmed", labelBn: "অর্ডার কনফার্মড", icon: CheckCircle2, desc: "Order auto-confirmed" },
-  { key: "processing", label: "Packed", labelBn: "প্যাক করা হয়েছে", icon: PackageCheck, desc: "Seller is packing your items" },
-  { key: "shipped", label: "Shipped", labelBn: "কুরিয়ারে দেওয়া হয়েছে", icon: Truck, desc: "Handed over to courier" },
-  { key: "out_for_delivery", label: "Out for Delivery", labelBn: "ডেলিভারির পথে", icon: Bike, desc: "Courier is on the way" },
-  { key: "delivered", label: "Delivered", labelBn: "ডেলিভারি সম্পন্ন", icon: Home, desc: "Package delivered successfully" },
+const FLOW: { key: OrderStatus | "out_for_delivery"; labelKey: string; descKey: string; icon: typeof Package }[] = [
+  { key: "confirmed", labelKey: "orders.orderConfirmed", descKey: "orders.orderConfirmedDesc", icon: CheckCircle2 },
+  { key: "processing", labelKey: "orders.packed", descKey: "orders.packedDesc", icon: PackageCheck },
+  { key: "shipped", labelKey: "orders.shipped", descKey: "orders.shippedDesc", icon: Truck },
+  { key: "out_for_delivery", labelKey: "orders.outForDelivery", descKey: "orders.outForDeliveryDesc", icon: Bike },
+  { key: "delivered", labelKey: "orders.delivered", descKey: "orders.deliveredDesc", icon: Home },
 ];
 
 function stepIndex(status: OrderStatus): number {
@@ -54,6 +55,7 @@ type ExtendedOrder = Order & { rewardDiscount?: number; walletUsed?: number };
 function OrderDetailPage() {
   const { orderId } = Route.useParams();
   const { user } = useAuth();
+  const { t } = useI18n();
   const { data: rawOrder, isLoading } = useQuery({
     queryKey: ["order", user?.uid, orderId],
     queryFn: () => getOrder(user!.uid, orderId),
@@ -62,10 +64,10 @@ function OrderDetailPage() {
 
   if (isLoading) {
     return (
-      <ServicePageLayout title="Order Details" backTo="/orders">
+      <ServicePageLayout title={t("orders.orderDetails")} backTo="/orders">
         <div className="py-20 text-center">
           <Loader className="mx-auto w-8 h-8 animate-spin text-slate-300" />
-          <p className="mt-3 text-sm text-slate-400">Loading order details...</p>
+          <p className="mt-3 text-sm text-slate-400">{t("orders.loadingDetails")}</p>
         </div>
       </ServicePageLayout>
     );
@@ -73,19 +75,19 @@ function OrderDetailPage() {
 
   if (!rawOrder) {
     return (
-      <ServicePageLayout title="Order Details" backTo="/orders">
+      <ServicePageLayout title={t("orders.orderDetails")} backTo="/orders">
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-8 text-center">
           <Package className="mx-auto w-12 h-12 text-slate-300 mb-3" />
-          <h2 className="text-lg font-bold text-[#0f172a]">Order not found</h2>
+          <h2 className="text-lg font-bold text-[#0f172a]">{t("orders.notFound")}</h2>
           <p className="text-sm text-slate-500 mb-5">
-            This order may have been removed or doesn't exist.
+            {t("orders.notFoundHint")}
           </p>
           <Link
             to="/orders"
             className="inline-flex items-center gap-2 bg-[#0f172a] hover:bg-slate-800 text-white font-bold py-3 px-6 rounded-xl text-sm transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Back to Orders</span>
+            <span>{t("orders.backToOrders")}</span>
           </Link>
         </div>
       </ServicePageLayout>
@@ -99,7 +101,7 @@ function OrderDetailPage() {
   const currentStep = outForDelivery ? 3 : stepIndex(order.status);
 
   return (
-    <ServicePageLayout title={`Order #${order.id.slice(0, 8).toUpperCase()}`} subtitle={`Placed on ${formatDateTime(order.createdAt)}`} backTo="/orders">
+    <ServicePageLayout title={`Order #${order.id.slice(0, 8).toUpperCase()}`} subtitle={t("orders.placedOn", { date: formatDateTime(order.createdAt) })} backTo="/orders">
         {/* Order Header */}
         <div className="mb-5 bg-white rounded-xl shadow-sm border border-slate-200/80 p-4 sm:p-5">
           <div className="flex items-start justify-between gap-3">
@@ -108,7 +110,7 @@ function OrderDetailPage() {
                 Order #{order.id.slice(0, 8).toUpperCase()}
               </h1>
               <p className="text-sm text-slate-500 mt-1">
-                Placed on {formatDateTime(order.createdAt)}
+                {t("orders.placedOn", { date: formatDateTime(order.createdAt) })}
               </p>
             </div>
             <span
@@ -129,16 +131,16 @@ function OrderDetailPage() {
         <div className="mb-5 bg-white rounded-xl shadow-sm border border-slate-200/80 p-5">
           <h2 className="text-sm font-bold text-[#0f172a] mb-5 flex items-center gap-2">
             <Truck className="w-4 h-4 text-[#f57224]" />
-            Order Tracking
+            {t("orders.orderTracking")}
           </h2>
 
           {cancelled ? (
             <div className="flex items-center gap-3 rounded-lg bg-rose-50 p-4 text-rose-800 border border-rose-100">
               <XCircle className="w-6 h-6 flex-shrink-0" />
               <div>
-                <div className="font-bold text-sm">Order Cancelled</div>
+                <div className="font-bold text-sm">{t("orders.orderCancelledTitle")}</div>
                 <div className="text-xs text-rose-600">
-                  This order has been cancelled.
+                  {t("orders.orderCancelledHint")}
                 </div>
               </div>
             </div>
@@ -177,14 +179,11 @@ function OrderDetailPage() {
                           done ? "text-[#0f172a]" : "text-slate-400"
                         }`}
                       >
-                        {step.label}
-                      </p>
-                      <p className={`text-[11px] ${done ? "text-slate-500" : "text-slate-300"}`}>
-                        {step.labelBn}
+                        {t(step.labelKey as any)}
                       </p>
                       {isActive && (
                         <p className="text-xs text-[#f57224] font-medium mt-0.5">
-                          {step.desc}
+                          {t(step.descKey as any)}
                         </p>
                       )}
                     </div>
@@ -199,22 +198,22 @@ function OrderDetailPage() {
             <div className="mt-4 rounded-lg bg-blue-50 border border-blue-100 p-4">
               <div className="flex items-center gap-2 mb-2">
                 <Truck className="w-4 h-4 text-blue-600" />
-                <span className="text-sm font-bold text-blue-900">Courier Info</span>
+                <span className="text-sm font-bold text-blue-900">{t("orders.courierInfo")}</span>
               </div>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div>
-                  <span className="text-blue-600">Courier:</span>{" "}
+                  <span className="text-blue-600">{t("orders.courier")}:</span>{" "}
                   <span className="font-semibold text-blue-900">{order.courierInfo.name}</span>
                 </div>
                 {order.courierInfo.trackingNumber && (
                   <div>
-                    <span className="text-blue-600">Tracking #:</span>{" "}
+                    <span className="text-blue-600">{t("orders.trackingHash")}:</span>{" "}
                     <span className="font-mono font-semibold text-blue-900">{order.courierInfo.trackingNumber}</span>
                   </div>
                 )}
                 {order.courierInfo.estimatedDays && (
                   <div>
-                    <span className="text-blue-600">ETA:</span>{" "}
+                    <span className="text-blue-600">{t("orders.eta")}:</span>{" "}
                     <span className="font-semibold text-blue-900">{order.courierInfo.estimatedDays} days</span>
                   </div>
                 )}
@@ -222,7 +221,7 @@ function OrderDetailPage() {
                   <div>
                     <a href={order.courierInfo.trackingUrl} target="_blank" rel="noopener noreferrer"
                        className="text-blue-600 font-semibold underline">
-                      Track on courier site →
+                      {t("orders.trackOnSite")}
                     </a>
                   </div>
                 )}

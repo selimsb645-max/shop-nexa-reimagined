@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Star, Loader, Star as StarIcon } from "lucide-react";
 import { ServicePageLayout } from "@/components/common/ServicePageLayout";
 import { useAuth } from "@/context/AuthContext";
+import { useI18n } from "@/i18n/I18nContext";
 import { listReviews } from "@/services/firebase/reviews";
 import { listAllProducts } from "@/services/firebase/products";
 import { firebaseConfigured } from "@/services/firebase/config";
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/_authenticated/my-reviews")({
 });
 
 function MyReviewsPage() {
+  const { t } = useI18n();
   const { user } = useAuth();
   const { data: products, isLoading } = useQuery({
     queryKey: ["products", "all"],
@@ -43,7 +45,7 @@ function MyReviewsPage() {
   const myReviews = reviewsQuery.data ?? [];
 
   return (
-    <ServicePageLayout title="My Reviews" subtitle="Reviews you've written">
+    <ServicePageLayout title={t("reviews.title")} subtitle={t("reviews.subtitle")}>
 
         {isLoading || reviewsQuery.isLoading ? (
           <div className="py-20 text-center">
@@ -52,7 +54,7 @@ function MyReviewsPage() {
         ) : myReviews.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-2xl border bg-muted/30 py-20 text-center">
             <Star className="mb-4 h-12 w-12 text-muted-foreground/40" />
-            <h2 className="text-lg font-semibold">No reviews yet</h2>
+            <h2 className="text-lg font-semibold">{t("reviews.empty")}</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               Reviews you write will appear here
             </p>

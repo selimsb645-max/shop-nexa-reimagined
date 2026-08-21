@@ -5,6 +5,7 @@ import { Copy, Share2, UserPlus, Users, Loader, Gift } from "lucide-react";
 import { toast } from "sonner";
 import { ServicePageLayout } from "@/components/common/ServicePageLayout";
 import { useAuth } from "@/context/AuthContext";
+import { useI18n } from "@/i18n/I18nContext";
 import {
   REFERRAL_BONUS_POINTS,
   REFERRAL_WELCOME_POINTS,
@@ -21,6 +22,7 @@ export const Route = createFileRoute("/_authenticated/referral")({
 });
 
 function ReferralPage() {
+  const { t } = useI18n();
   const { user, profile } = useAuth();
   const [code, setCode] = useState("");
   const [friendCode, setFriendCode] = useState("");
@@ -90,7 +92,7 @@ function ReferralPage() {
   };
 
   return (
-    <ServicePageLayout title="Refer & Earn" subtitle={`Get ${REFERRAL_BONUS_POINTS} points per signup`}>
+    <ServicePageLayout title={t("referral.title")} subtitle={t("referral.subtitle")}>
       {/* Referral code hero card */}
       <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
         <div className="bg-gradient-to-br from-orange-50 to-white px-5 py-6">

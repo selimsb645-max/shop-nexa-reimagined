@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { ServicePageLayout } from "@/components/common/ServicePageLayout";
 import { useAuth } from "@/context/AuthContext";
+import { useI18n } from "@/i18n/I18nContext";
 import { listUserReturns, createReturnRequest, type ReturnReason } from "@/services/firebase/returns";
 import { listOrders } from "@/services/firebase/orders";
 import { firebaseConfigured } from "@/services/firebase/config";
@@ -48,6 +49,7 @@ const STATUS_CONFIG: Record<ReturnStatus, { icon: React.ReactNode; color: string
 };
 
 function ReturnsPage() {
+  const { t } = useI18n();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
@@ -100,9 +102,9 @@ function ReturnsPage() {
   });
 
   return (
-    <ServicePageLayout title="Returns & Refunds" subtitle="Manage return requests and refunds">
+    <ServicePageLayout title={t("returns.title")} subtitle={t("returns.subtitle")}>
 
-        {/* New Return Request Button */}
+        {/* {t("returns.newReturn")} Button */}
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
@@ -204,7 +206,7 @@ function ReturnsPage() {
         ) : !returns || returns.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-2xl border bg-muted/30 py-20 text-center">
             <Undo2 className="mb-4 h-12 w-12 text-muted-foreground/40" />
-            <h2 className="text-lg font-semibold">No return requests</h2>
+            <h2 className="text-lg font-semibold">{t("returns.empty")}</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               Your return and refund history will appear here
             </p>

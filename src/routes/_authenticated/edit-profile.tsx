@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { Upload, CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useI18n } from "@/i18n/I18nContext";
 import { profileSchema, type ProfileValues } from "@/utils/validation";
 import { setDisplayName, setPhotoURL } from "@/services/firebase/auth";
 import { uploadAvatar } from "@/services/firebase/storage";
@@ -17,6 +18,7 @@ export const Route = createFileRoute("/_authenticated/edit-profile")({
 });
 
 function EditProfilePage() {
+  const { t } = useI18n();
   const { user, profile, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -68,7 +70,7 @@ function EditProfilePage() {
   };
 
   return (
-    <ServicePageLayout title="Edit Profile" subtitle="Update your account information">
+    <ServicePageLayout title={t("editProfile.title")} subtitle={t("editProfile.subtitle")}>
 
       <div className="mx-auto max-w-2xl px-4 py-4 sm:px-6">
         {/* Avatar section */}
@@ -147,7 +149,7 @@ function EditProfilePage() {
             disabled={isSubmitting || !isDirty}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-orange-500 px-5 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-orange-600 active:scale-[0.98] disabled:opacity-50"
           >
-            {isSubmitting && <Spinner />} Save Changes
+            {isSubmitting && <Spinner />} {t("editProfile.save")}
           </button>
         </form>
       </div>

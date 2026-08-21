@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { ServicePageLayout } from "@/components/common/ServicePageLayout";
 import { useAuth } from "@/context/AuthContext";
+import { useI18n } from "@/i18n/I18nContext";
 import { listUserGiftCards, purchaseGiftCard } from "@/services/firebase/giftCards";
 import { firebaseConfigured } from "@/services/firebase/config";
 import { formatPrice } from "@/utils/format";
@@ -26,6 +27,7 @@ export const Route = createFileRoute("/_authenticated/gift-cards")({
 const PRESET_AMOUNTS = [500, 1000, 2000, 5000, 10000, 20000];
 
 function GiftCardsPage() {
+  const { t } = useI18n();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
@@ -64,9 +66,9 @@ function GiftCardsPage() {
   });
 
   return (
-    <ServicePageLayout title="Gift Cards" subtitle="Buy and manage gift cards">
+    <ServicePageLayout title={t("giftCards.title")} subtitle={t("giftCards.subtitle")}>
 
-        {/* Buy Gift Card Button */}
+        {/* {t("giftCards.buy")} Button */}
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
@@ -173,7 +175,7 @@ function GiftCardsPage() {
         ) : !giftCards || giftCards.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-2xl border bg-muted/30 py-20 text-center">
             <Gift className="mb-4 h-12 w-12 text-muted-foreground/40" />
-            <h2 className="text-lg font-semibold">No gift cards yet</h2>
+            <h2 className="text-lg font-semibold">{t("giftCards.empty")} yet</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               Purchase a gift card for friends and family
             </p>

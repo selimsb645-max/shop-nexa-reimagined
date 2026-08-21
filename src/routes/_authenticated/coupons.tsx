@@ -5,12 +5,14 @@ import { toast } from "sonner";
 import { ServicePageLayout } from "@/components/common/ServicePageLayout";
 import { listAvailableCoupons } from "@/services/firebase/customerCoupons";
 import { formatDate, formatPrice } from "@/utils/format";
+import { useI18n } from "@/i18n/I18nContext";
 
 export const Route = createFileRoute("/_authenticated/coupons")({
   component: CouponsPage,
 });
 
 function CouponsPage() {
+  const { t } = useI18n();
   const { data, isLoading } = useQuery({
     queryKey: ["availableCoupons"],
     queryFn: listAvailableCoupons,
@@ -26,7 +28,7 @@ function CouponsPage() {
   };
 
   return (
-    <ServicePageLayout title="My Vouchers" subtitle="Active coupons and discounts">
+    <ServicePageLayout title={t("coupons.title")} subtitle={t("coupons.subtitle")}>
       {isLoading ? (
         <div className="py-20 text-center">
           <Loader className="mx-auto h-8 w-8 animate-spin text-slate-300" />
@@ -36,7 +38,7 @@ function CouponsPage() {
           <span className="grid h-14 w-14 place-items-center rounded-full bg-orange-50 text-[#f57224]">
             <TicketPercent className="h-7 w-7" />
           </span>
-          <h3 className="mt-4 text-base font-bold text-slate-800">No vouchers available</h3>
+          <h3 className="mt-4 text-base font-bold text-slate-800">{t("coupons.empty")}</h3>
           <p className="mt-1 max-w-xs text-sm text-slate-500">
             Check back soon — new offers are added regularly.
           </p>
@@ -78,7 +80,7 @@ function CouponsPage() {
                     onClick={() => void copy(c.code)}
                     className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 active:scale-95"
                   >
-                    <Copy className="h-3.5 w-3.5" /> Copy
+                    <Copy className="h-3.5 w-3.5" /> {t("coupons.copy")}
                   </button>
                 </div>
                 <Link
