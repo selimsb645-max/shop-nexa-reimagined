@@ -356,7 +356,7 @@ function OrderDetailPage() {
               </h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Subtotal</span>
+                  <span className="text-slate-500">{t("order.subtotal")}</span>
                   <span className="font-semibold text-[#0f172a]">
                     {formatPrice(order.subtotal)}
                   </span>
@@ -394,7 +394,7 @@ function OrderDetailPage() {
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Shipping</span>
+                  <span className="text-slate-500">{t("order.shipping")}</span>
                   <span className="font-semibold text-[#0f172a]">
                     {order.shipping === 0 ? "FREE" : formatPrice(order.shipping)}
                   </span>

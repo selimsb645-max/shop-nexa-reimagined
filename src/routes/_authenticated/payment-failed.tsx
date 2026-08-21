@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { XCircle, ArrowLeft } from "lucide-react";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
+import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/payment-failed")({
   ssr: false,
@@ -10,6 +11,7 @@ export const Route = createFileRoute("/_authenticated/payment-failed")({
 });
 
 function PaymentFailedPage() {
+  const { t } = useI18n();
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
@@ -18,7 +20,7 @@ function PaymentFailedPage() {
           <div className="mb-4 grid h-20 w-20 place-items-center rounded-full bg-red-100">
             <XCircle className="h-12 w-12 text-red-500" />
           </div>
-          <h1 className="text-2xl font-bold">Payment Failed</h1>
+          <h1 className="text-2xl font-bold">{t("paymentFailed.title")}</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             We couldn't process your payment. Please try again or use a different payment method.
           </p>

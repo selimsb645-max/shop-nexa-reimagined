@@ -47,6 +47,7 @@ import { validateCoupon, CouponError } from "@/services/firebase/coupons";
 import { createOrder, detectZoneFromSnapshot } from "@/services/firebase/orders";
 import type { PaymentMethod, Coupon, CartItem, Product } from "@/types/commerce";
 import { DELIVERY_ZONES, type DeliveryZoneId } from "@/data/bd-locations/deliveryZones";
+import { useI18n } from "@/i18n";
 
 
 type EnrichedCartItem = {
@@ -79,6 +80,7 @@ const POINTS_PER_CURRENCY_REDEEM = 100; // 100 points = $1
 // Main Checkout Component
 // ----------------------------------------------------------------------
 function CheckoutPage() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -297,7 +299,7 @@ function CheckoutPage() {
         toast.error(err.message);
       } else {
         setCouponError("Failed to validate coupon");
-        toast.error("Failed to validate coupon");
+        toast.error(t("checkout.couponFailed"));
       }
     } finally {
       setCouponBusy(false);
@@ -331,7 +333,7 @@ function CheckoutPage() {
         toast.error(err.message);
       } else {
         setPromoError("Failed to validate promo code");
-        toast.error("Failed to validate promo code");
+        toast.error(t("checkout.promoFailed"));
       }
     } finally {
       setPromoBusy(false);
@@ -352,11 +354,11 @@ function CheckoutPage() {
   // ---- Place Order ----
   const handlePlaceOrder = async () => {
     if (!user) {
-      toast.error("Please sign in to place your order");
+      toast.error(t("checkout.signInRequired"));
       return;
     }
     if (cartItems.length === 0) {
-      toast.error("Your cart is empty");
+      toast.error(t("checkout.cartEmpty"));
       return;
     }
     if (!selectedAddressId) {

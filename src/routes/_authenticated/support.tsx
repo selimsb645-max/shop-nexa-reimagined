@@ -122,7 +122,7 @@ function SupportPage() {
             <input value={subject} onChange={e => setSubject(e.target.value)} maxLength={100} className={field} placeholder={t("support.briefDescPlaceholder")} />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Category</label>
+            <label className="mb-1 block text-sm font-medium text-slate-700">{t("support.category")}</label>
             <select value={category} onChange={e => setCategory(e.target.value as SupportTicket["category"])} className={field}>
               {CATEGORIES.map(c => <option key={c} value={c} className="capitalize">{c}</option>)}
             </select>
@@ -130,7 +130,7 @@ function SupportPage() {
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">Related order (optional)</label>
             <select value={orderId} onChange={e => setOrderId(e.target.value)} className={field}>
-              <option value="">None</option>
+              <option value="">{t("support.none")}</option>
               {(orders.data ?? []).map(o => <option key={o.id} value={o.id}>#{o.id.slice(0, 8).toUpperCase()} · {o.items.length} item{o.items.length === 1 ? "" : "s"}</option>)}
             </select>
           </div>

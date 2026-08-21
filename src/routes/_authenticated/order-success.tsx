@@ -22,6 +22,7 @@ import { useAuth } from "@/context/AuthContext";
 import { getOrder } from "@/services/firebase/orders";
 import { formatPrice } from "@/utils/format";
 import { toast } from "sonner";
+import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/order-success")({
   ssr: false,
@@ -42,6 +43,7 @@ const TIMELINE_STEPS = [
 ];
 
 function OrderSuccessPage() {
+  const { t } = useI18n();
   const { user } = useAuth();
   const navigate = useNavigate();
   const search = Route.useSearch();
@@ -140,12 +142,12 @@ interface OrderData {
                 {copied ? (
                   <>
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Copied</span>
+                    <span>{t("orderSuccess.copied")}</span>
                   </>
                 ) : (
                   <>
                     <Copy className="w-3.5 h-3.5" />
-                    <span>Copy</span>
+                    <span>{t("orderSuccess.copy")}</span>
                   </>
                 )}
               </button>
@@ -159,7 +161,7 @@ interface OrderData {
                 <Truck className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-xs text-slate-500">Estimated Delivery</p>
+                <p className="text-xs text-slate-500">{t("orderSuccess.estimatedDelivery")}</p>
                 <p className="text-lg font-bold text-[#0f172a]">
                   {estimatedDelivery}
                 </p>
@@ -172,7 +174,7 @@ interface OrderData {
             {/* Order total */}
             {order && (
               <div className="flex items-center justify-between mb-4 pb-4 border-b border-slate-100">
-                <span className="text-sm text-slate-500">Order Total</span>
+                <span className="text-sm text-slate-500">{t("orderSuccess.orderTotal")}</span>
                 <span className="text-lg font-black text-[#f57224]">
                   {formatPrice(order.total ?? 0)}
                 </span>
@@ -182,7 +184,7 @@ interface OrderData {
             {/* Payment method */}
             {order && (
               <div className="flex items-center justify-between mb-4 pb-4 border-b border-slate-100">
-                <span className="text-sm text-slate-500">Payment Method</span>
+                <span className="text-sm text-slate-500">{t("orderSuccess.paymentMethod")}</span>
                 <span className="text-sm font-semibold text-[#0f172a] capitalize">
                   {order.payment?.method === "cash_on_delivery"
                     ? "Cash on Delivery"
@@ -269,7 +271,7 @@ interface OrderData {
             className="flex-1 flex items-center justify-center gap-2 bg-[#0f172a] hover:bg-slate-800 text-white font-bold py-3.5 px-6 rounded-xl transition-all shadow-md text-sm"
           >
             <Truck className="w-4 h-4" />
-            <span>Track Order</span>
+            <span>{t("orderSuccess.trackOrder")}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
           <Link

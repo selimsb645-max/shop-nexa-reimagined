@@ -4,12 +4,14 @@ import { listMyPromoCodes, type PromoCode, formatPromoDiscount, isPromoUsable, f
 import { generatePromoCode } from "@/lib/promo.functions";
 import { useAuth } from "@/context/AuthContext";
 import { Spinner } from "@/components/common/Spinner";
+import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/promo-codes")({
   component: PromoCodesPage,
 });
 
 function PromoCodesPage() {
+  const { t } = useI18n();
   const { user } = useAuth();
   const [promos, setPromos] = useState<PromoCode[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,7 +86,7 @@ function PromoCodesPage() {
         {/* Generate button - only show if no welcome promo yet */}
         {!hasWelcomePromo && !generating && (
           <div className="bg-gradient-to-r from-[#f57224] to-[#ff8a4c] rounded-xl p-6 mb-6 text-white">
-            <h2 className="text-lg font-semibold mb-2">Welcome to Shop Nexa!</h2>
+            <h2 className="text-lg font-semibold mb-2">{t("promoCodes.welcome")}</h2>
             <p className="text-sm text-white/90 mb-4">
               Your welcome promo code was not generated automatically. Claim it now and get 10% off your next order.
             </p>
