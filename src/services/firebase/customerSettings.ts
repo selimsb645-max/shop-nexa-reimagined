@@ -16,7 +16,7 @@ export async function getCustomerSettings(uid: string): Promise<CustomerSettings
     emailPromotions: Boolean(d.emailPromotions),
     smsOrderUpdates: d.smsOrderUpdates !== false,
     pushNotifications: d.pushNotifications !== false,
-    currency: d.currency === "BDT" ? "BDT" : "USD",
+    currency: d.currency === "USD" ? "USD" : "BDT",
     language: d.language === "bn" ? "bn" : "en",
     updatedAt: toMs(d.updatedAt, 0),
   };

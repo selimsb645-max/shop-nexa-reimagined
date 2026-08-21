@@ -110,7 +110,7 @@ export const DEFAULT_SETTINGS: CustomerSettings = {
   emailPromotions: false,
   smsOrderUpdates: true,
   pushNotifications: true,
-  currency: "USD",
+  currency: "BDT",
   language: "en",
   updatedAt: 0,
 };

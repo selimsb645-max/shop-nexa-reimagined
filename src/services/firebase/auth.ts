@@ -103,7 +103,13 @@ export async function completePasswordReset(
 }
 
 export async function signOut(): Promise<void> {
-  await fbSignOut(getFirebaseAuth());
+  const auth = getFirebaseAuth();
+  const uid = auth.currentUser?.uid;
+  if (uid) {
+    const { removeCurrentSession } = await import("./sessions");
+    await removeCurrentSession(uid).catch(() => {});
+  }
+  await fbSignOut(auth);
 }
 
 export async function resendVerification(user: User): Promise<void> {

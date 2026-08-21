@@ -162,10 +162,23 @@ service cloud.firestore {
         allow delete: if isSelf(uid) || isAdmin();
       }
 
+      // Customer preferences (language, currency, notifications)
+      match /prefs/{docId} {
+        allow read: if isSelf(uid);
+        allow write: if isSelf(uid);
+      }
+
+      // Device sessions — only the owner can read or manage their sessions
+      match /sessions/{sessionId} {
+        allow read, delete: if isSelf(uid);
+        allow create: if isSelf(uid);
+        allow update: if isSelf(uid);
+      }
+
       // Any other user-owned subcollection remains owner-scoped
       match /{sub}/{docId} {
         allow read, write: if (isSelf(uid) || isAdmin())
-          && !(sub in ['orders', 'walletTx', 'rewardTx', 'referrals']);
+          && !(sub in ['orders', 'walletTx', 'rewardTx', 'referrals', 'prefs', 'sessions']);
       }
     }
 

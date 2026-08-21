@@ -9,9 +9,10 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 import { Toaster } from "sonner";
-import { AuthProvider } from "../context/AuthContext";
+import { AuthProvider, useAuth } from "../context/AuthContext";
 import { CartProvider } from "../context/CartContext";
 import { WishlistProvider } from "../context/WishlistContext";
+import { I18nProvider } from "../i18n/I18nContext";
 import { MobileBottomNav } from "../components/layout/MobileBottomNav";
 
 import appCss from "../styles.css?url";
@@ -125,18 +126,26 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <CartProvider>
-          <WishlistProvider>
-            {/* Required: nested routes render here. */}
-            <div className="animate-fade-in pb-24 md:pb-0">
-              <Outlet />
-            </div>
-            <MobileBottomNav />
-            <Toaster position="top-right" richColors />
-          </WishlistProvider>
-        </CartProvider>
+        <I18nBridge>
+          <CartProvider>
+            <WishlistProvider>
+              {/* Required: nested routes render here. */}
+              <div className="animate-fade-in pb-24 md:pb-0">
+                <Outlet />
+              </div>
+              <MobileBottomNav />
+              <Toaster position="top-right" richColors />
+            </WishlistProvider>
+          </CartProvider>
+        </I18nBridge>
       </AuthProvider>
     </QueryClientProvider>
   );
+}
+
+/** Bridge: reads the current user from AuthContext and passes uid to I18nProvider */
+function I18nBridge({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
+  return <I18nProvider uid={user?.uid}>{children}</I18nProvider>;
 }
 
