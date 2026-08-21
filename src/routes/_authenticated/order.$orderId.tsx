@@ -14,6 +14,8 @@ import {
   Store,
   Gift,
   Wallet,
+  Bike,
+  PackageCheck,
 } from "lucide-react";
 import { ServicePageLayout } from "@/components/common/ServicePageLayout";
 import { useAuth } from "@/context/AuthContext";
@@ -28,17 +30,23 @@ export const Route = createFileRoute("/_authenticated/order/$orderId")({
   head: () => ({ meta: [{ title: "Order Details — Shop Nexa" }] }),
 });
 
-const FLOW: { key: OrderStatus; label: string; icon: typeof Package }[] = [
-  { key: "pending", label: "Order Placed", icon: CheckCircle2 },
-  { key: "confirmed", label: "Confirmed", icon: CheckCircle2 },
-  { key: "processing", label: "Packed", icon: Package },
-  { key: "shipped", label: "Shipped", icon: Truck },
-  { key: "delivered", label: "Delivered", icon: Home },
+const FLOW: { key: OrderStatus | "out_for_delivery"; label: string; labelBn: string; icon: typeof Package; desc: string }[] = [
+  { key: "confirmed", label: "Order Confirmed", labelBn: "অর্ডার কনফার্মড", icon: CheckCircle2, desc: "Order auto-confirmed" },
+  { key: "processing", label: "Packed", labelBn: "প্যাক করা হয়েছে", icon: PackageCheck, desc: "Seller is packing your items" },
+  { key: "shipped", label: "Shipped", labelBn: "কুরিয়ারে দেওয়া হয়েছে", icon: Truck, desc: "Handed over to courier" },
+  { key: "out_for_delivery", label: "Out for Delivery", labelBn: "ডেলিভারির পথে", icon: Bike, desc: "Courier is on the way" },
+  { key: "delivered", label: "Delivered", labelBn: "ডেলিভারি সম্পন্ন", icon: Home, desc: "Package delivered successfully" },
 ];
 
 function stepIndex(status: OrderStatus): number {
+  // Check if any tracking event has "out_for_delivery"
+  // This is handled separately via tracking events
   const idx = FLOW.findIndex((s) => s.key === status);
   return idx < 0 ? 0 : idx;
+}
+
+function isOutForDelivery(order: ExtendedOrder): boolean {
+  return order.tracking?.some((t) => /out for delivery/i.test(t.note)) ?? false;
 }
 
 type ExtendedOrder = Order & { rewardDiscount?: number; walletUsed?: number };
@@ -86,7 +94,9 @@ function OrderDetailPage() {
 
   const order = rawOrder as ExtendedOrder;
   const cancelled = order.status === "cancelled";
-  const currentStep = stepIndex(order.status);
+  const outForDelivery = isOutForDelivery(order);
+  // If shipped + out for delivery tracking note, show that step
+  const currentStep = outForDelivery ? 3 : stepIndex(order.status);
 
   return (
     <ServicePageLayout title={`Order #${order.id.slice(0, 8).toUpperCase()}`} subtitle={`Placed on ${formatDateTime(order.createdAt)}`} backTo="/orders">
@@ -169,15 +179,54 @@ function OrderDetailPage() {
                       >
                         {step.label}
                       </p>
+                      <p className={`text-[11px] ${done ? "text-slate-500" : "text-slate-300"}`}>
+                        {step.labelBn}
+                      </p>
                       {isActive && (
-                        <p className="text-xs text-[#f57224] font-medium">
-                          Current status
+                        <p className="text-xs text-[#f57224] font-medium mt-0.5">
+                          {step.desc}
                         </p>
                       )}
                     </div>
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {/* Courier info */}
+          {order.courierInfo?.name && (
+            <div className="mt-4 rounded-lg bg-blue-50 border border-blue-100 p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Truck className="w-4 h-4 text-blue-600" />
+                <span className="text-sm font-bold text-blue-900">Courier Info</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <span className="text-blue-600">Courier:</span>{" "}
+                  <span className="font-semibold text-blue-900">{order.courierInfo.name}</span>
+                </div>
+                {order.courierInfo.trackingNumber && (
+                  <div>
+                    <span className="text-blue-600">Tracking #:</span>{" "}
+                    <span className="font-mono font-semibold text-blue-900">{order.courierInfo.trackingNumber}</span>
+                  </div>
+                )}
+                {order.courierInfo.estimatedDays && (
+                  <div>
+                    <span className="text-blue-600">ETA:</span>{" "}
+                    <span className="font-semibold text-blue-900">{order.courierInfo.estimatedDays} days</span>
+                  </div>
+                )}
+                {order.courierInfo.trackingUrl && (
+                  <div>
+                    <a href={order.courierInfo.trackingUrl} target="_blank" rel="noopener noreferrer"
+                       className="text-blue-600 font-semibold underline">
+                      Track on courier site →
+                    </a>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

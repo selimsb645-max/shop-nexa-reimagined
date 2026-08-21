@@ -123,9 +123,17 @@ export interface OrderItem {
 }
 
 export interface TrackingEvent {
-  status: OrderStatus;
+  status: OrderStatus | "out_for_delivery";
   note: string;
   at: number;
+}
+
+export interface CourierInfo {
+  name: string | null;        // Courier company name (e.g. "Steadfast", "RedX")
+  trackingNumber: string | null; // Tracking number from courier
+  trackingUrl: string | null;  // Optional URL to track on courier site
+  shippedAt: number | null;    // Timestamp when handed to courier
+  estimatedDays: number | null; // Estimated delivery days
 }
 
 export interface Order {
@@ -146,6 +154,7 @@ export interface Order {
   deliveryZoneLabel?: string | null;  // Human-readable label
   deliveryCharge?: number | null;     // Charge at time of order (BDT)
   tracking: TrackingEvent[];
+  courierInfo?: CourierInfo | null;
   createdAt: number;
   updatedAt: number;
 }

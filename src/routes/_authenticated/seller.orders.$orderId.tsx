@@ -1,6 +1,13 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, MapPin, Package } from "lucide-react";
+import {
+  ArrowLeft,
+  MapPin,
+  Package,
+  Truck,
+  CheckCircle2,
+  XCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 import { SellerGate } from "@/components/seller/SellerGate";
 import { Spinner } from "@/components/common/Spinner";
@@ -21,7 +28,6 @@ export const Route = createFileRoute("/_authenticated/seller/orders/$orderId")({
 });
 
 const STATUS_FLOW: SellerOrderStatus[] = [
-  "pending",
   "confirmed",
   "processing",
   "shipped",
@@ -33,8 +39,11 @@ function OrderDetail({ sellerId }: { sellerId: string }) {
   const { orderId } = useParams({ from: "/_authenticated/seller/orders/$orderId" });
   const [order, setOrder] = useState<SellerOrder | null>(null);
   const [loading, setLoading] = useState(true);
-  const [nextStatus, setNextStatus] = useState<SellerOrderStatus>("confirmed");
+  const [nextStatus, setNextStatus] = useState<SellerOrderStatus>("processing");
   const [note, setNote] = useState("");
+  const [courierName, setCourierName] = useState("");
+  const [trackingNumber, setTrackingNumber] = useState("");
+  const [trackingUrl, setTrackingUrl] = useState("");
   const [saving, setSaving] = useState(false);
 
   const load = async () => {
@@ -81,7 +90,10 @@ function OrderDetail({ sellerId }: { sellerId: string }) {
       // Get ID token for settlement server function
       const idToken = user ? await user.getIdToken() : undefined;
 
-      await updateSellerOrderStatus(sellerId, order.id, nextStatus, note, idToken);
+      const courier = nextStatus === "shipped" && courierName
+        ? { name: courierName, trackingNumber: trackingNumber || undefined, trackingUrl: trackingUrl || undefined }
+        : undefined;
+      await updateSellerOrderStatus(sellerId, order.id, nextStatus, note, idToken, courier);
       try {
         await createNotification(sellerId, {
           type: "new_order",
@@ -213,26 +225,87 @@ function OrderDetail({ sellerId }: { sellerId: string }) {
 
           <div className="rounded-lg border bg-background p-4">
             <div className="mb-3 text-sm font-semibold">Update status</div>
-            <label className="mb-1 block text-xs font-medium">New status</label>
-            <select
-              value={nextStatus}
-              onChange={(e) => setNextStatus(e.target.value as SellerOrderStatus)}
-              className="mb-3 w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-            >
-              <option value="pending">Pending</option>
-              <option value="confirmed">Confirmed</option>
-              <option value="processing">Processing</option>
-              <option value="shipped">Shipped</option>
-              <option value="delivered">Delivered</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
+            {/* Quick action buttons */}
+            <label className="mb-2 block text-xs font-medium">Update status</label>
+            <div className="mb-3 grid grid-cols-2 gap-2">
+              <button
+                onClick={() => setNextStatus("processing")}
+                className={`rounded-md border px-3 py-2.5 text-xs font-semibold transition-all ${
+                  nextStatus === "processing"
+                    ? "border-primary bg-primary/5 text-primary"
+                    : "border-slate-200 text-slate-500 hover:border-slate-300"
+                }`}
+              >
+                <Package className="mb-1 inline h-4 w-4" />
+                <br />Packed
+              </button>
+              <button
+                onClick={() => setNextStatus("shipped")}
+                className={`rounded-md border px-3 py-2.5 text-xs font-semibold transition-all ${
+                  nextStatus === "shipped"
+                    ? "border-primary bg-primary/5 text-primary"
+                    : "border-slate-200 text-slate-500 hover:border-slate-300"
+                }`}
+              >
+                <Truck className="mb-1 inline h-4 w-4" />
+                <br />Shipped
+              </button>
+              <button
+                onClick={() => setNextStatus("delivered")}
+                className={`rounded-md border px-3 py-2.5 text-xs font-semibold transition-all ${
+                  nextStatus === "delivered"
+                    ? "border-primary bg-primary/5 text-primary"
+                    : "border-slate-200 text-slate-500 hover:border-slate-300"
+                }`}
+              >
+                <CheckCircle2 className="mb-1 inline h-4 w-4" />
+                <br />Delivered
+              </button>
+              <button
+                onClick={() => setNextStatus("cancelled")}
+                className={`rounded-md border px-3 py-2.5 text-xs font-semibold transition-all ${
+                  nextStatus === "cancelled"
+                    ? "border-rose-500 bg-rose-50 text-rose-600"
+                    : "border-slate-200 text-slate-500 hover:border-rose-200"
+                }`}
+              >
+                <XCircle className="mb-1 inline h-4 w-4" />
+                <br />Cancel
+              </button>
+            </div>
+            {nextStatus === "shipped" && (
+              <div className="mb-3 rounded-md bg-blue-50 border border-blue-100 p-3">
+                <p className="mb-2 text-xs font-semibold text-blue-700">Courier Info (for customer tracking)</p>
+                <input
+                  type="text"
+                  value={courierName}
+                  onChange={(e) => setCourierName(e.target.value)}
+                  placeholder="Courier name (e.g. Steadfast, RedX)"
+                  className="mb-2 w-full rounded-md border border-blue-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-400"
+                />
+                <input
+                  type="text"
+                  value={trackingNumber}
+                  onChange={(e) => setTrackingNumber(e.target.value)}
+                  placeholder="Tracking number"
+                  className="mb-2 w-full rounded-md border border-blue-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-400"
+                />
+                <input
+                  type="text"
+                  value={trackingUrl}
+                  onChange={(e) => setTrackingUrl(e.target.value)}
+                  placeholder="Tracking URL (optional)"
+                  className="w-full rounded-md border border-blue-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-400"
+                />
+              </div>
+            )}
             <label className="mb-1 block text-xs font-medium">Note (optional)</label>
             <textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
               rows={3}
               maxLength={300}
-              placeholder="Tracking number, dispatch note..."
+              placeholder={nextStatus === "shipped" ? "Out for delivery..." : "Add a note..."}
               className="mb-3 w-full rounded-md border px-3 py-2 text-sm outline-none focus:border-primary"
             />
             <button

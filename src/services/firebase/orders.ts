@@ -98,6 +98,7 @@ function mapOrder(id: string, data: Record<string, unknown>): Order {
     deliveryZone: (raw.deliveryZone as string | null) ?? null,
     deliveryZoneLabel: (raw.deliveryZoneLabel as string | null) ?? null,
     deliveryCharge: (raw.deliveryCharge as number | null) ?? null,
+    courierInfo: (raw.courierInfo as Order["courierInfo"]) ?? null,
   shippingAddress: (raw.shippingAddress as ShippingAddress) ?? {
       fullName: "",
       phone: "",

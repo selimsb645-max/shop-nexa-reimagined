@@ -67,7 +67,8 @@ function bucketOrders(orders: Order[]) {
   const out = orders.filter((o) => o.status === "shipped" && isOutForDelivery(o));
   const outIds = new Set(out.map((o) => o.id));
   return {
-    pending: orders.filter((o) => o.status === "pending").length,
+    confirmed: orders.filter((o) => o.status === "confirmed").length,
+    pending: 0, // Orders auto-confirm, so pending is always 0
     processing: orders.filter((o) => o.status === "processing").length,
     packed: orders.filter((o) => o.status === "confirmed").length,
     shipped: orders.filter((o) => o.status === "shipped" && !outIds.has(o.id)).length,
@@ -297,7 +298,7 @@ function AccountPage() {
             }
           />
           <div className="grid grid-cols-5 gap-1 px-2 py-3">
-            <DarazOrderIcon status="pending" icon={<Clock3 className="h-6 w-6" />} label="Pending" count={counts.pending} />
+            <DarazOrderIcon status="packed" icon={<CheckCircle2 className="h-6 w-6" />} label="Confirmed" count={counts.packed} />
             <DarazOrderIcon status="processing" icon={<Loader className="h-6 w-6" />} label="Processing" count={counts.processing} />
             <DarazOrderIcon status="shipped" icon={<Truck className="h-6 w-6" />} label="Shipped" count={counts.shipped} />
             <DarazOrderIcon status="delivery" icon={<Bike className="h-6 w-6" />} label="Delivery" count={counts.outForDelivery} />

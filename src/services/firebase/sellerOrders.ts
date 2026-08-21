@@ -98,6 +98,7 @@ export async function updateSellerOrderStatus(
   status: SellerOrderStatus,
   note: string,
   idToken?: string,
+  courierInfo?: { name?: string; trackingNumber?: string; trackingUrl?: string },
 ): Promise<void> {
   const ref = doc(getDb(), SELLERS, sellerId, ORDERS, orderId);
   const snap = await getDoc(ref);
@@ -108,28 +109,93 @@ export async function updateSellerOrderStatus(
   if (currentStatus === status) return;
 
   const existingTracking = (snap.data().tracking as SellerOrder["tracking"]) ?? [];
+  const ts = nowMs();
+
+  // Build tracking note
+  let trackingNote = note || `Order marked as ${status}`;
+  if (status === "shipped" && courierInfo?.name) {
+    trackingNote = `Shipped via ${courierInfo.name}${courierInfo.trackingNumber ? ` (Tracking: ${courierInfo.trackingNumber})` : ""}`;
+  }
+
   const tracking = [
     ...existingTracking,
-    { status, note: note || `Order marked as ${status}`, at: nowMs() },
+    { status, note: trackingNote, at: ts },
   ];
-  await updateDoc(ref, {
+
+  const sellerUpdate: Record<string, unknown> = {
     status,
     tracking,
     updatedAt: serverTimestamp(),
-  });
+  };
+
+  // Save courier info on seller order when shipping
+  if (status === "shipped" && courierInfo) {
+    const existingShipping = (snap.data().shipping as Record<string, unknown>) ?? {};
+    sellerUpdate.shipping = {
+      courier: courierInfo.name ?? null,
+      trackingNumber: courierInfo.trackingNumber ?? null,
+      shippingCharge: existingShipping.shippingCharge ?? 0,
+      status: "shipped",
+      shippedAt: ts,
+      deliveredAt: null,
+      estimatedDays: existingShipping.estimatedDays ?? null,
+      warehouseId: existingShipping.warehouseId ?? null,
+    };
+  }
+
+  await updateDoc(ref, sellerUpdate);
+
+  // SYNC: Update customer's main order so they can see tracking
+  const buyerId = String(snap.data().buyerId ?? "");
+  if (buyerId) {
+    const mainRef = doc(getDb(), "users", buyerId, "orders", orderId);
+    const mainSnap = await getDoc(mainRef);
+    if (mainSnap.exists()) {
+      const mainTracking = ((mainSnap.data().tracking as unknown[]) ?? []).slice();
+      mainTracking.push({ status, note: trackingNote, at: ts });
+
+      const mainUpdate: Record<string, unknown> = {
+        tracking: mainTracking,
+        updatedAt: serverTimestamp(),
+      };
+
+      // Map seller status to OrderStatus for main order
+      const statusMap: Record<string, string> = {
+        confirmed: "confirmed",
+        processing: "processing",
+        shipped: "shipped",
+        delivered: "delivered",
+        cancelled: "cancelled",
+        returned: "cancelled",
+      };
+      const mappedStatus = statusMap[status];
+      if (mappedStatus && mappedStatus !== mainSnap.data().status) {
+        mainUpdate.status = mappedStatus;
+      }
+
+      // Add courier info to main order
+      if (status === "shipped" && courierInfo) {
+        mainUpdate.courierInfo = {
+          name: courierInfo.name ?? null,
+          trackingNumber: courierInfo.trackingNumber ?? null,
+          trackingUrl: courierInfo.trackingUrl ?? null,
+          shippedAt: ts,
+          estimatedDays: null,
+        };
+      }
+
+      await updateDoc(mainRef, mainUpdate);
+    }
+  }
 
   // SETTLEMENT: When order is delivered, trigger settlement hold period.
-  // The server function is idempotent — it checks settlement.settlementStatus
-  // and only transitions from "pending" to "hold". Duplicate calls are safe.
   if (status === "delivered" && idToken) {
     try {
       await markOrderDelivered({
         data: { idToken, sellerId, orderId },
       });
     } catch {
-      // Non-fatal: settlement will be synced later. The order status
-      // update is the source of truth — settlement can catch up.
-      // In production, a scheduled job would also check for this.
+      // Non-fatal: settlement will be synced later.
     }
   }
 }

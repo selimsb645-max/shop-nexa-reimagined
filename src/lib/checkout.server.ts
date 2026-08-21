@@ -385,7 +385,7 @@ export async function placeOrderServer(
         couponCode: appliedCoupon,
         promoCode: appliedPromo,
         promoDiscount: promoDiscount,
-        status: "pending",
+        status: "confirmed",
         payment: {
           method: req.paymentMethod,
           status: paymentStatus,
@@ -396,7 +396,7 @@ export async function placeOrderServer(
         shippingAddress: req.shippingAddress,
         deliveryAddressSnapshot: req.deliveryAddressSnapshot ?? null,
         tracking: [
-          { status: "pending", note: "Order placed successfully", at: nowMs },
+          { status: "confirmed", note: "Order placed and auto-confirmed", at: nowMs },
         ],
         createdAt: nowMs,
         updatedAt: nowMs,
