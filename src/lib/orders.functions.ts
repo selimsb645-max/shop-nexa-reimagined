@@ -43,11 +43,15 @@ export type PlaceOrderInput = z.infer<typeof placeOrderSchema>;
  * SECURITY: A valid verificationSessionId is REQUIRED. The server independently
  * validates that the session is verified, not expired, and that the cart
  * fingerprint matches. Orders cannot be created without verification.
+ *
+ * RACE CONDITION PREVENTION: The session is atomically consumed BEFORE
+ * the order is created. If two concurrent requests try to use the same
+ * session, only the first will succeed.
  */
 export const placeOrder = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => placeOrderSchema.parse(data))
   .handler(async ({ data }) => {
-    const { verifyIdToken } = await import("./firebase-admin.server");
+    const { verifyIdToken, getProjectId } = await import("./firebase-admin.server");
     const { placeOrderServer } = await import("./checkout.server");
     const {
       validateVerificationSession,
@@ -58,68 +62,102 @@ export const placeOrder = createServerFn({ method: "POST" })
 
     const { uid, email } = await verifyIdToken(data.idToken);
 
-    // 1. Validate verification session (server-side, independent)
+    // 1. Prepare cart data for validation
     const cartItems = data.items.map((i) => ({
       productId: i.productId,
       quantity: i.quantity,
     }));
     const deliveryLocation = `${data.shippingAddress.addressLine}, ${data.shippingAddress.city}`;
-    // We don't know the final server-computed total yet, but we can compute
-    // a preliminary fingerprint from the items + address. The full validation
-    // happens inside placeOrderServer which has the authoritative totals.
-    // For the verification session check, we use the same fingerprint
-    // that was computed when the OTP was requested.
     const cartHash = await computeCartFingerprint(
       cartItems,
-      0, // total is computed server-side; session uses items+address hash
+      0, // orderTotal intentionally excluded from fingerprint
       deliveryLocation,
     );
 
+    // 2. Validate verification session (server-side, independent)
+    // This checks: session exists, belongs to user, is "verified",
+    // not expired, cart fingerprint matches, AND phone number matches.
     const validation = await validateVerificationSession({
       userId: uid,
       sessionId: data.verificationSessionId,
       cartItems,
-      orderTotal: 0, // will be validated inside placeOrderServer
+      orderTotal: 0, // not checked — server computes real total later
       deliveryLocation,
+      shippingPhone: data.shippingAddress.phone,
     });
 
     if (!validation.valid) {
       throw new Error(validation.reason ?? "Phone verification is required to place this order.");
     }
 
-    // 2. Duplicate order detection (pre-check)
-    const projectId = (await import("./firebase-admin.server")).getProjectId();
+    // 3. Duplicate order detection (pre-check)
+    const projectId = getProjectId();
     const dupCheck = await detectDuplicateOrder(
       projectId,
       uid,
       data.shippingAddress.phone,
       cartHash,
-      0, // total not yet known
+      0,
     );
     if (dupCheck.suspicious) {
       throw new Error(dupCheck.reason ?? "Duplicate order detected.");
     }
 
-    // 3. Create the order (all financial calculations server-side)
-    const result = await placeOrderServer({
+    // 4. ATOMIC SESSION CONSUMPTION (race condition prevention)
+    // Consume the session BEFORE creating the order. If another request
+    // already consumed it (e.g., double-click, concurrent tab), this fails.
+    // We use a placeholder orderId here; the real one is set after order creation.
+    const consumeResult = await consumeVerificationSession(
       uid,
-      buyerEmail: email,
-      items: data.items,
-      shippingAddress: data.shippingAddress,
-      paymentMethod: data.paymentMethod,
-      couponCode: data.couponCode ?? null,
-      promoCode: data.promoCode ?? null,
-      rewardPoints: data.rewardPoints ?? 0,
-      walletUsed: data.walletUsed ?? 0,
-      deliveryAddressSnapshot:
-        (data as { deliveryAddressSnapshot?: Record<string, unknown> | null })
-          .deliveryAddressSnapshot ?? null,
-    });
+      data.verificationSessionId,
+      "pending_order",
+    );
 
-    // 4. Consume the verification session (prevents reuse)
-    await consumeVerificationSession(uid, data.verificationSessionId, result.orderId);
+    if (!consumeResult.success) {
+      throw new Error("This verification has already been used. Please verify your order again.");
+    }
 
-    // 5. Send order confirmation notification
+    // 5. Create the order (all financial calculations server-side)
+    // If this fails, the session is already consumed — the user must
+    // re-verify. This is intentional: better to require re-verification
+    // than risk double-order creation.
+    let result;
+    try {
+      result = await placeOrderServer({
+        uid,
+        buyerEmail: email,
+        items: data.items,
+        shippingAddress: data.shippingAddress,
+        paymentMethod: data.paymentMethod,
+        couponCode: data.couponCode ?? null,
+        promoCode: data.promoCode ?? null,
+        rewardPoints: data.rewardPoints ?? 0,
+        walletUsed: data.walletUsed ?? 0,
+        deliveryAddressSnapshot:
+          (data as { deliveryAddressSnapshot?: Record<string, unknown> | null })
+            .deliveryAddressSnapshot ?? null,
+        cartHash,
+      });
+    } catch (err) {
+      // Order creation failed — update session back to "verified" so user
+      // can retry without re-verifying their phone.
+      // Session is already consumed — user must re-verify if order failed.
+      // This is intentional: safer to require re-verification than risk
+      // double-order creation from retry.
+      console.error("Order creation failed after session consumption:", err);
+      throw err;
+    }
+
+    // 6. Update session with real orderId (already consumed in step 4)
+    try {
+      // The session is already "consumed" from step 4, but we want to
+      // record the real orderId. This is a best-effort update.
+      await consumeVerificationSession(uid, data.verificationSessionId, result.orderId);
+    } catch {
+      // Best-effort — session is already consumed, this just updates the orderId
+    }
+
+    // 7. Send order confirmation notification
     try {
       const { sendOrderNotification } = await import("./notifications.server");
       await sendOrderNotification("ORDER_CREATED", {

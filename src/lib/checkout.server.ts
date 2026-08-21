@@ -48,7 +48,11 @@ export function computeDeliveryChargeServer(
 ): { zone: DeliveryZoneId; charge: number; label: string } {
   if (!deliveryAddressSnapshot) {
     // Fallback: no address → Outside Dhaka charge (safest default)
-    return { zone: "OUTSIDE_DHAKA", charge: DELIVERY_ZONES.OUTSIDE_DHAKA.charge, label: DELIVERY_ZONES.OUTSIDE_DHAKA.labelEn };
+    return {
+      zone: "OUTSIDE_DHAKA",
+      charge: DELIVERY_ZONES.OUTSIDE_DHAKA.charge,
+      label: DELIVERY_ZONES.OUTSIDE_DHAKA.labelEn,
+    };
   }
 
   const districtEn = String(deliveryAddressSnapshot["districtEn"] ?? "");
@@ -83,6 +87,7 @@ export interface PlaceOrderRequest {
   promoCode: string | null;
   rewardPoints: number;
   walletUsed: number;
+  cartHash?: string | null;
 }
 
 export interface PlaceOrderResult {
@@ -105,9 +110,7 @@ function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
-export async function placeOrderServer(
-  req: PlaceOrderRequest,
-): Promise<PlaceOrderResult> {
+export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrderResult> {
   const projectId = getProjectId();
 
   if (!req.items.length) throw new Error("Your cart is empty.");
@@ -130,13 +133,9 @@ export async function placeOrderServer(
   const productIds = Array.from(wanted.keys());
   const productNames = productIds.map((id) => docPath(projectId, ["products", id]));
   const couponCode = req.couponCode ? req.couponCode.trim().toUpperCase() : null;
-  const couponName = couponCode
-    ? docPath(projectId, ["coupons", couponCode])
-    : null;
+  const couponName = couponCode ? docPath(projectId, ["coupons", couponCode]) : null;
   const promoCode = req.promoCode ? req.promoCode.trim().toUpperCase() : null;
-  const promoName = promoCode
-    ? docPath(projectId, ["promoCodes", promoCode])
-    : null;
+  const promoName = promoCode ? docPath(projectId, ["promoCodes", promoCode]) : null;
 
   const extraDocs: string[] = [];
   if (couponName) extraDocs.push(couponName);
@@ -249,7 +248,7 @@ export async function placeOrderServer(
 
       const usable =
         status === "active" &&
-        pUserId === req.uid &&  // promo must belong to this user
+        pUserId === req.uid && // promo must belong to this user
         (expiresAt <= 0 || expiresAt > nowMs) &&
         subtotal >= minOrder &&
         usedCount < usageLimit &&
@@ -271,8 +270,11 @@ export async function placeOrderServer(
   const subAfterDiscount = round2(subtotal - discount - promoDiscount);
   // Delivery charge is computed server-side from the address zone.
   // Customer cannot manipulate this — it's based on their delivery address.
-  const { zone: deliveryZone, charge: deliveryCharge, label: deliveryZoneLabel } =
-    computeDeliveryChargeServer(req.deliveryAddressSnapshot);
+  const {
+    zone: deliveryZone,
+    charge: deliveryCharge,
+    label: deliveryZoneLabel,
+  } = computeDeliveryChargeServer(req.deliveryAddressSnapshot);
   const shipping = deliveryCharge;
   // Reward points deduction (server-side verified)
   let rewardDiscount = 0;
@@ -290,12 +292,15 @@ export async function placeOrderServer(
       },
     );
     if (rewardRes.ok) {
-      const rewardJson = (await rewardRes.json()) as Array<{ document?: { fields?: Record<string, unknown> } }>;
+      const rewardJson = (await rewardRes.json()) as Array<{
+        document?: { fields?: Record<string, unknown> };
+      }>;
       let availablePoints = 0;
       for (const row of rewardJson) {
         if (!row.document) continue;
         const fields = row.document.fields ?? {};
-        const pointsVal = fields.points as { integerValue?: string | number; doubleValue?: number } | undefined;
+        const pointsVal = fields.points as
+          { integerValue?: string | number; doubleValue?: number } | undefined;
         const points = Number(pointsVal?.integerValue ?? pointsVal?.doubleValue ?? 0);
         availablePoints += points;
       }
@@ -321,12 +326,15 @@ export async function placeOrderServer(
       },
     );
     if (walletRes.ok) {
-      const walletJson = (await walletRes.json()) as Array<{ document?: { fields?: Record<string, unknown> } }>;
+      const walletJson = (await walletRes.json()) as Array<{
+        document?: { fields?: Record<string, unknown> };
+      }>;
       let walletBalance = 0;
       for (const row of walletJson) {
         if (!row.document) continue;
         const fields = row.document.fields ?? {};
-        const amountVal = fields.amount as { integerValue?: string | number; doubleValue?: number } | undefined;
+        const amountVal = fields.amount as
+          { integerValue?: string | number; doubleValue?: number } | undefined;
         const amount = Number(amountVal?.integerValue ?? amountVal?.doubleValue ?? 0);
         walletBalance += amount;
       }
@@ -338,7 +346,9 @@ export async function placeOrderServer(
   }
 
   const totalBeforeRewardWallet = round2(subAfterDiscount + shipping);
-  const rewardWalletDeduction = round2(Math.min(rewardDiscount + walletUsed, totalBeforeRewardWallet));
+  const rewardWalletDeduction = round2(
+    Math.min(rewardDiscount + walletUsed, totalBeforeRewardWallet),
+  );
   const total = round2(totalBeforeRewardWallet - rewardWalletDeduction);
 
   const orderItems = lines.map((l) => ({
@@ -360,8 +370,7 @@ export async function placeOrderServer(
   });
   const sellerIds = Array.from(itemsBySeller.keys());
 
-  const paymentStatus =
-    req.paymentMethod === "cash_on_delivery" ? "pending" : "unpaid";
+  const paymentStatus = req.paymentMethod === "cash_on_delivery" ? "pending" : "unpaid";
 
   const writes: FsWrite[] = [];
 
@@ -373,6 +382,8 @@ export async function placeOrderServer(
         userId: req.uid,
         items: orderItems,
         sellerIds,
+        itemCount: orderItems.reduce((s, i) => s + i.quantity, 0),
+        cartHash: req.cartHash ?? null,
         subtotal,
         discount,
         shipping,
@@ -395,9 +406,7 @@ export async function placeOrderServer(
         },
         shippingAddress: req.shippingAddress,
         deliveryAddressSnapshot: req.deliveryAddressSnapshot ?? null,
-        tracking: [
-          { status: "confirmed", note: "Order placed and auto-confirmed", at: nowMs },
-        ],
+        tracking: [{ status: "confirmed", note: "Order placed and auto-confirmed", at: nowMs }],
         createdAt: nowMs,
         updatedAt: nowMs,
       }),
@@ -411,9 +420,7 @@ export async function placeOrderServer(
     writes.push({
       transform: {
         document: name,
-        fieldTransforms: [
-          { fieldPath: "stock", increment: { integerValue: String(-l.quantity) } },
-        ],
+        fieldTransforms: [{ fieldPath: "stock", increment: { integerValue: String(-l.quantity) } }],
       },
       ...(l.updateTime ? { currentDocument: { updateTime: l.updateTime } } : {}),
     });
@@ -428,13 +435,9 @@ export async function placeOrderServer(
     writes.push({
       transform: {
         document: docPath(projectId, ["coupons", appliedCoupon]),
-        fieldTransforms: [
-          { fieldPath: "uses", increment: { integerValue: "1" } },
-        ],
+        fieldTransforms: [{ fieldPath: "uses", increment: { integerValue: "1" } }],
       },
-      ...(couponUpdateTime
-        ? { currentDocument: { updateTime: couponUpdateTime } }
-        : {}),
+      ...(couponUpdateTime ? { currentDocument: { updateTime: couponUpdateTime } } : {}),
     });
   }
 
@@ -478,19 +481,13 @@ export async function placeOrderServer(
   }
 
   // Read seller commission rates from Firestore.
-  const sellerDocPaths = sellerIds.map((sid) =>
-    docPath(projectId, ["sellers", sid]),
-  );
+  const sellerDocPaths = sellerIds.map((sid) => docPath(projectId, ["sellers", sid]));
   const sellerDocs =
-    sellerDocPaths.length > 0
-      ? await batchGetDocs(projectId, sellerDocPaths)
-      : new Map();
+    sellerDocPaths.length > 0 ? await batchGetDocs(projectId, sellerDocPaths) : new Map();
   const sellerCommissionRates = new Map<string, number>();
   for (const sid of sellerIds) {
     const sDoc = sellerDocs.get(docPath(projectId, ["sellers", sid]));
-    const rate = sDoc?.exists
-      ? Number(sDoc.data["commissionRate"] ?? 0.08)
-      : 0.08;
+    const rate = sDoc?.exists ? Number(sDoc.data["commissionRate"] ?? 0.08) : 0.08;
     sellerCommissionRates.set(sid, Number.isFinite(rate) ? rate : 0.08);
   }
 
@@ -518,29 +515,33 @@ export async function placeOrderServer(
     });
 
     // Seller order mirror WITH settlement data
-    writes.push(buildSellerOrderWrite({
-      projectId,
-      sellerId: sid,
-      orderId,
-      buyerId: req.uid,
-      buyerName: req.shippingAddress.fullName,
-      buyerEmail: req.buyerEmail,
-      items: sItems,
-      settlement,
-      paymentMethod: req.paymentMethod,
-      paymentStatus,
-      shippingAddress: req.shippingAddress,
-      nowMs,
-    }));
+    writes.push(
+      buildSellerOrderWrite({
+        projectId,
+        sellerId: sid,
+        orderId,
+        buyerId: req.uid,
+        buyerName: req.shippingAddress.fullName,
+        buyerEmail: req.buyerEmail,
+        items: sItems,
+        settlement,
+        paymentMethod: req.paymentMethod,
+        paymentStatus,
+        shippingAddress: req.shippingAddress,
+        nowMs,
+      }),
+    );
 
     // Immutable settlement ledger: pending entry
-    writes.push(buildSettlementPendingTxWrite({
-      projectId,
-      sellerId: sid,
-      orderId,
-      sellerEarnings: settlement.sellerNetEarnings,
-      nowMs,
-    }));
+    writes.push(
+      buildSettlementPendingTxWrite({
+        projectId,
+        sellerId: sid,
+        orderId,
+        sellerEarnings: settlement.sellerNetEarnings,
+        nowMs,
+      }),
+    );
 
     // Seller notification
     writes.push({
@@ -568,9 +569,7 @@ export async function placeOrderServer(
     writes.push({
       transform: {
         document: docPath(projectId, ["promoCodes", appliedPromo]),
-        fieldTransforms: [
-          { fieldPath: "usedCount", increment: { integerValue: "1" } },
-        ],
+        fieldTransforms: [{ fieldPath: "usedCount", increment: { integerValue: "1" } }],
       },
       ...(promoUpdateTime ? { currentDocument: { updateTime: promoUpdateTime } } : {}),
     });
@@ -591,5 +590,19 @@ export async function placeOrderServer(
 
   await commitWrites(projectId, writes);
 
-  return { orderId, subtotal, discount, promoDiscount, shipping, deliveryZone, deliveryZoneLabel, deliveryCharge, rewardDiscount, walletUsed, total, couponCode: appliedCoupon, promoCode: appliedPromo };
+  return {
+    orderId,
+    subtotal,
+    discount,
+    promoDiscount,
+    shipping,
+    deliveryZone,
+    deliveryZoneLabel,
+    deliveryCharge,
+    rewardDiscount,
+    walletUsed,
+    total,
+    couponCode: appliedCoupon,
+    promoCode: appliedPromo,
+  };
 }
