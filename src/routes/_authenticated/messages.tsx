@@ -35,10 +35,6 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { ServicePageLayout } from "@/components/common/ServicePageLayout";
-import { SiteHeader } from "@/components/layout/SiteHeader";
-import { SiteFooter } from "@/components/layout/SiteFooter";
-import { WhatsAppFab } from "@/components/layout/SiteChrome";
-import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { useAuth } from "@/context/AuthContext";
 import { firebaseConfigured } from "@/services/firebase/config";
 import { onSnapshot, collection, query, where, orderBy, limit } from "firebase/firestore";
@@ -667,12 +663,8 @@ function OrderConversationView({
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-muted/30 pb-24 md:pb-0">
-      <SiteHeader />
-      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-4 sm:px-6">
-        <button onClick={onBack} className="mb-4 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" /> Back
-        </button>
+    <ServicePageLayout title={`Order #${order.id.slice(0, 8)}`} subtitle="Order conversation & details" backTo="/messages">
+      <div className="mx-auto w-full max-w-3xl">
 
         {/* Order header */}
         <div className="mb-4 rounded-2xl border bg-background p-5 shadow-sm">
@@ -781,10 +773,8 @@ function OrderConversationView({
             <FileText className="h-4 w-4" /> View Invoice
           </Link>
         </div>
-      </main>
-      <SiteFooter />
-      <MobileBottomNav />
-    </div>
+      </div>
+    </ServicePageLayout>
   );
 }
 
