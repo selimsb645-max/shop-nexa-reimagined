@@ -130,12 +130,12 @@ function AddressesPage() {
         )}
 
         {isLoading && !addresses.length ? (
-          <div className="text-center py-12 text-slate-400 text-sm">Loading addresses...</div>
+          <div className="text-center py-12 text-slate-400 text-sm">{t("addresses.loading")}</div>
         ) : addresses.length === 0 && !showForm ? (
           <div className="text-center py-16">
             <MapPin className="w-12 h-12 text-slate-200 mx-auto mb-3" />
             <p className="text-slate-400 text-sm">{t("addresses.empty")} yet</p>
-            <p className="text-slate-300 text-xs mt-1">Add your first delivery address</p>
+            <p className="text-slate-300 text-xs mt-1">{t("addresses.addFirst")}</p>
           </div>
         ) : (
           <div className="space-y-3">

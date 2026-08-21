@@ -117,16 +117,16 @@ function ReturnsPage() {
         {/* Return Form */}
         {showForm && (
           <div className="mb-6 rounded-2xl border bg-background p-5 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold">Create Return Request</h2>
+            <h2 className="mb-4 text-lg font-semibold">{t("returns.createReturn")}</h2>
             <div className="space-y-4">
               <div>
-                <label className="mb-1 block text-sm font-medium">Select Order</label>
+                <label className="mb-1 block text-sm font-medium">{t("returns.selectOrder")}</label>
                 <select
                   value={selectedOrderId}
                   onChange={(e) => setSelectedOrderId(e.target.value)}
                   className="w-full rounded-lg border px-3 py-2.5 text-sm outline-none focus:border-primary"
                 >
-                  <option value="">Choose an order...</option>
+                  <option value="">{t("returns.chooseOrder")}</option>
                   {deliveredOrders.map((order) => (
                     <option key={order.id} value={order.id}>
                       Order #{order.id.slice(0, 8)} — {formatPrice(order.total)}
@@ -137,13 +137,13 @@ function ReturnsPage() {
 
               {selectedOrderId && (
                 <div>
-                  <label className="mb-1 block text-sm font-medium">Select Product</label>
+                  <label className="mb-1 block text-sm font-medium">{t("returns.selectProduct")}</label>
                   <select
                     value={selectedItemId}
                     onChange={(e) => setSelectedItemId(e.target.value)}
                     className="w-full rounded-lg border px-3 py-2.5 text-sm outline-none focus:border-primary"
                   >
-                    <option value="">Choose a product...</option>
+                    <option value="">{t("returns.chooseProduct")}</option>
                     {orders
                       ?.find((o) => o.id === selectedOrderId)
                       ?.items.map((item) => (

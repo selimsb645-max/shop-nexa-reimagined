@@ -33,14 +33,14 @@ function TrackOrdersPage() {
       {isLoading ? (
         <div className="py-20 text-center">
           <Loader className="mx-auto w-8 h-8 animate-spin text-slate-300" />
-          <p className="mt-3 text-sm text-slate-400">Loading trackable orders...</p>
+          <p className="mt-3 text-sm text-slate-400">{t("tracking.loading")}</p>
         </div>
       ) : !orders || orders.length === 0 ? (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-8 flex flex-col items-center text-center">
           <div className="w-20 h-20 rounded-full bg-orange-50 border-2 border-orange-100 flex items-center justify-center mb-4 text-[#f57224]">
             <Truck className="w-10 h-10 stroke-[1.5]" />
           </div>
-          <h2 className="text-lg font-bold text-[#0f172a] mb-2">No trackable orders</h2>
+          <h2 className="text-lg font-bold text-[#0f172a] mb-2">{t("tracking.noTrackable")}</h2>
           <p className="text-sm text-slate-500 mb-6 max-w-sm">
             Your shipped and delivered orders will appear here for live tracking.
           </p>
@@ -49,7 +49,7 @@ function TrackOrdersPage() {
             className="inline-flex items-center gap-2 bg-[#0f172a] hover:bg-slate-800 text-white font-bold py-3.5 px-8 rounded-xl transition-all shadow-md text-sm"
           >
             <Package className="w-4 h-4" />
-            <span>View All Orders</span>
+            <span>{t("tracking.viewAllOrders")}</span>
           </Link>
         </div>
       ) : (

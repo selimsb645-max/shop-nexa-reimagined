@@ -98,7 +98,7 @@ function EditProfilePage() {
             </button>
             <input ref={fileRef} type="file" accept="image/*" onChange={onFile} className="hidden" />
           </div>
-          <p className="text-xs text-gray-500">Tap the camera icon to change your photo</p>
+          <p className="text-xs text-gray-500">{t("editProfile.changePhoto")}</p>
         </div>
 
         {/* Edit form */}
@@ -107,7 +107,7 @@ function EditProfilePage() {
           className="space-y-5 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm"
         >
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">Display Name</label>
+            <label className="mb-1.5 block text-sm font-medium text-gray-700">{t("editProfile.displayName")}</label>
             <input
               {...register("displayName")}
               className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
@@ -125,11 +125,11 @@ function EditProfilePage() {
               readOnly
               className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-500"
             />
-            <p className="mt-1 text-xs text-gray-400">Email cannot be changed</p>
+            <p className="mt-1 text-xs text-gray-400">{t("editProfile.emailLocked")}</p>
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">Account Type</label>
+            <label className="mb-1.5 block text-sm font-medium text-gray-700">{t("editProfile.accountType")}</label>
             <input
               value={profile?.role ?? "customer"}
               readOnly

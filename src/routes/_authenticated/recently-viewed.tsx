@@ -69,13 +69,14 @@ function RecentlyViewedPage() {
 }
 
 function EmptyState() {
+  const { t } = useI18n();
   return (
     <div className="flex flex-col items-center justify-center rounded-2xl border border-gray-100 bg-white py-16 text-center shadow-sm">
       <span className="grid h-14 w-14 place-items-center rounded-full bg-orange-50 text-orange-500">
         <Eye className="h-7 w-7" />
       </span>
-      <h2 className="mt-4 text-base font-bold text-gray-800">Nothing viewed yet</h2>
-      <p className="mt-1 max-w-xs text-xs text-gray-500">Products you open will show up here for quick access.</p>
+      <h2 className="mt-4 text-base font-bold text-gray-800">{t("recentlyViewed.nothing")}</h2>
+      <p className="mt-1 max-w-xs text-xs text-gray-500">{t("recentlyViewed.nothingHint")}</p>
       <Link to="/shop" className="mt-4 rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-orange-600 active:scale-95">
         Browse Products
       </Link>

@@ -121,7 +121,7 @@ function WalletPage() {
             <span className="grid h-14 w-14 place-items-center rounded-full bg-orange-50 text-[#f57224]">
               <Wallet className="h-7 w-7" />
             </span>
-            <h3 className="mt-4 text-sm font-bold text-slate-700">No wallet activity yet</h3>
+            <h3 className="mt-4 text-sm font-bold text-slate-700">{t("wallet.noActivity")}</h3>
             <p className="mt-1 max-w-xs text-xs text-slate-400">
               Earn cashback on every order you place.
             </p>

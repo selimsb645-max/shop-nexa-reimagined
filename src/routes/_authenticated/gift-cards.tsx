@@ -81,11 +81,11 @@ function GiftCardsPage() {
         {/* Purchase Form */}
         {showForm && (
           <div className="mb-6 rounded-2xl border bg-background p-5 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold">Purchase Gift Card</h2>
+            <h2 className="mb-4 text-lg font-semibold">{t("giftCards.purchase")}</h2>
             <div className="space-y-4">
               {/* Amount Selection */}
               <div>
-                <label className="mb-2 block text-sm font-medium">Select Amount</label>
+                <label className="mb-2 block text-sm font-medium">{t("giftCards.selectAmount")}</label>
                 <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
                   {PRESET_AMOUNTS.map((amt) => (
                     <button
@@ -115,7 +115,7 @@ function GiftCardsPage() {
 
               {/* Recipient */}
               <div>
-                <label className="mb-1 block text-sm font-medium">Recipient Name</label>
+                <label className="mb-1 block text-sm font-medium">{t("giftCards.recipientName")}</label>
                 <input
                   type="text"
                   value={recipientName}
@@ -125,7 +125,7 @@ function GiftCardsPage() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">Recipient Email</label>
+                <label className="mb-1 block text-sm font-medium">{t("giftCards.recipientEmail")}</label>
                 <input
                   type="email"
                   value={recipientEmail}
@@ -135,7 +135,7 @@ function GiftCardsPage() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">Message (Optional)</label>
+                <label className="mb-1 block text-sm font-medium">{t("giftCards.messageOptional")}</label>
                 <textarea
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
@@ -151,7 +151,7 @@ function GiftCardsPage() {
                   className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground disabled:opacity-50"
                 >
                   {purchaseMutation.isPending ? (
-                    <><Loader className="h-4 w-4" /> Processing...</>
+                    <><Loader className="h-4 w-4" />{t("giftCards.processing")}</>
                   ) : (
                     <><DollarSign className="h-4 w-4" /> Buy for {formatPrice(amount)}</>
                   )}

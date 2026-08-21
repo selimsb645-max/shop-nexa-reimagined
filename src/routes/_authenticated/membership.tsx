@@ -66,14 +66,14 @@ function MembershipPage() {
         <div className="mb-6 rounded-2xl border bg-gradient-to-br from-primary to-primary/80 p-6 text-primary-foreground shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm opacity-80">Current Tier</p>
+              <p className="text-sm opacity-80">{t("membership.currentTier")}</p>
               <h2 className="flex items-center gap-2 text-2xl font-bold">
                 {currentTier.icon}
                 {currentTier.name} Member
               </h2>
             </div>
             <div className="text-right">
-              <p className="text-sm opacity-80">Reward Points</p>
+              <p className="text-sm opacity-80">{t("rewards.points")}</p>
               <p className="text-2xl font-bold">{currentPoints}</p>
             </div>
           </div>

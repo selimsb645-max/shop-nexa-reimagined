@@ -86,18 +86,18 @@ function SupportPage() {
       <div className="grid gap-4 sm:grid-cols-3">
         <a href="https://wa.me/8801324997271" target="_blank" rel="noreferrer" className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:border-orange-200 hover:shadow-md">
           <Phone className="h-5 w-5 text-[#f57224]" />
-          <div className="mt-2 font-bold text-slate-800">WhatsApp</div>
+          <div className="mt-2 font-bold text-slate-800">{t("support.whatsapp")}</div>
           <p className="text-sm text-slate-500">01324997271 · 9am–9pm</p>
         </a>
         <Link to="/messages" className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:border-orange-200 hover:shadow-md">
           <MessageSquare className="h-5 w-5 text-[#f57224]" />
-          <div className="mt-2 font-bold text-slate-800">Live messages</div>
-          <p className="text-sm text-slate-500">Chat with our team</p>
+          <div className="mt-2 font-bold text-slate-800">{t("support.liveMessages")}</div>
+          <p className="text-sm text-slate-500">{t("support.chatWithTeam")}</p>
         </Link>
         <Link to="/orders" className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:border-orange-200 hover:shadow-md">
           <LifeBuoy className="h-5 w-5 text-[#f57224]" />
-          <div className="mt-2 font-bold text-slate-800">Order help</div>
-          <p className="text-sm text-slate-500">Track or review an order</p>
+          <div className="mt-2 font-bold text-slate-800">{t("support.orderHelp")}</div>
+          <p className="text-sm text-slate-500">{t("support.trackOrReview")}</p>
         </Link>
       </div>
 
@@ -112,7 +112,7 @@ function SupportPage() {
       {creating && (
         <div className="mt-4 grid gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm sm:grid-cols-2">
           <div className="flex items-center justify-between sm:col-span-2">
-            <h2 className="font-bold text-slate-800">Create a support ticket</h2>
+            <h2 className="font-bold text-slate-800">{t("support.createTicket")}</h2>
             <button type="button" onClick={() => setCreating(false)} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100">
               <X className="h-4 w-4" />
             </button>
