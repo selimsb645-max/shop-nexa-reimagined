@@ -26,6 +26,7 @@ import {
 import { SellerShell } from "@/components/seller/SellerShell";
 import { formatPrice } from "@/utils/format";
 import { toast } from "sonner";
+import { useI18n } from "@/i18n";
 import {
   DollarSign,
   TrendingUp,
@@ -47,6 +48,7 @@ export const Route = createFileRoute("/_authenticated/seller/settlements")({
 })
 
 function SellerSettlementsPage() {
+  const { t } = useI18n();
   const { user } = useAuth();
   const { profile: seller } = useSellerProfile();
   const [loading, setLoading] = useState(true);
@@ -66,7 +68,7 @@ function SellerSettlementsPage() {
       const financials = await fetchSellerFinancials(idToken);
       setData(financials);
     } catch (err) {
-      toast.error("Could not load your financial data");
+      toast.error(t("seller.couldNotLoadFinance"));
     } finally {
       setLoading(false);
     }
@@ -84,7 +86,7 @@ function SellerSettlementsPage() {
       return;
     }
     if (data && amount > data.availableBalance) {
-      toast.error("Insufficient available balance");
+      toast.error(t("seller.insufficientBalance"));
       return;
     }
 
@@ -93,13 +95,13 @@ function SellerSettlementsPage() {
     if (withdrawMethod === "bank") {
       destination = seller?.bankInfo?.accountNumber ?? "";
       if (!destination) {
-        toast.error("Please add your bank account details in settings first");
+        toast.error(t("seller.addBankFirst"));
         return;
       }
     } else {
       destination = seller?.bankInfo?.mobileBankingNumber ?? "";
       if (!destination) {
-        toast.error("Please add your mobile banking number in settings first");
+        toast.error(t("seller.addMobileBankingFirst"));
         return;
       }
     }
@@ -191,7 +193,7 @@ function SellerSettlementsPage() {
         {/* Withdrawal Form */}
         {showWithdraw && (
           <div className="rounded-xl border bg-card p-4">
-            <h2 className="text-lg font-semibold mb-4">Request Withdrawal</h2>
+            <h2 className="text-lg font-semibold mb-4">{t("seller.requestWithdrawal")}</h2>
             <div className="space-y-4">
               <div>
                 <label className="text-sm font-medium">Amount ($)</label>
@@ -207,7 +209,7 @@ function SellerSettlementsPage() {
                 </p>
               </div>
               <div>
-                <label className="text-sm font-medium">Payout Method</label>
+                <label className="text-sm font-medium">{t("seller.payoutMethod")}</label>
                 <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {[
                     { id: "bkash", label: "bKash", icon: Smartphone },
@@ -293,7 +295,7 @@ function SellerSettlementsPage() {
 
         {/* Settlement Lifecycle Info */}
         <div className="rounded-xl border bg-muted/30 p-4">
-          <h3 className="text-sm font-semibold mb-2">How Settlements Work</h3>
+          <h3 className="text-sm font-semibold mb-2">{t("seller.howSettlementsWork")}</h3>
           <div className="space-y-1 text-xs text-muted-foreground">
             <div>1. Customer places order → Your earnings are "Pending"</div>
             <div>2. Order is delivered → Earnings enter 7-day hold period</div>

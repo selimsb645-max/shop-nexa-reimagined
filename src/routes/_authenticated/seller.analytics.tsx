@@ -8,6 +8,7 @@ import { listSellerProducts } from "@/services/firebase/sellerProducts";
 import { formatPrice } from "@/utils/format";
 import type { SellerOrder } from "@/types/seller";
 import type { Product } from "@/types/commerce";
+import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/seller/analytics")({
   component: () => (
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/_authenticated/seller/analytics")({
 });
 
 function AnalyticsPage({ sellerId }: { sellerId: string }) {
+  const { t } = useI18n();
   const [orders, setOrders] = useState<SellerOrder[] | null>(null);
   const [products, setProducts] = useState<Product[] | null>(null);
   const [range, setRange] = useState<7 | 30 | 90>(30);
@@ -89,7 +91,7 @@ function AnalyticsPage({ sellerId }: { sellerId: string }) {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Analytics</h1>
+          <h1 className="text-2xl font-bold">{t("seller.analytics")}</h1>
           <p className="text-sm text-muted-foreground">
             Sales performance and product insights
           </p>
@@ -123,7 +125,7 @@ function AnalyticsPage({ sellerId }: { sellerId: string }) {
           </div>
 
           <div className="rounded-lg border bg-background p-5">
-            <h2 className="mb-4 text-sm font-semibold">Revenue over time</h2>
+            <h2 className="mb-4 text-sm font-semibold">{t("seller.revenueOverTime")}</h2>
             <div className="flex h-40 items-end gap-1">
               {stats.series.map((d) => (
                 <div key={d.date} className="flex flex-1 flex-col items-center gap-1">
@@ -142,7 +144,7 @@ function AnalyticsPage({ sellerId }: { sellerId: string }) {
           </div>
 
           <div className="rounded-lg border bg-background">
-            <div className="border-b p-4 text-sm font-semibold">Best-selling products</div>
+            <div className="border-b p-4 text-sm font-semibold">{t("seller.bestSelling")}</div>
             {stats.topProducts.length === 0 ? (
               <div className="p-6 text-center text-sm text-muted-foreground">
                 No sales in this period.

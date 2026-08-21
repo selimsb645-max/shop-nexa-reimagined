@@ -20,6 +20,7 @@ import { formatDateTime, formatPrice } from "@/utils/format";
 import type { SellerOrder, SellerOrderStatus } from "@/types/seller";
 import { mapFirebaseError } from "@/utils/errors";
 import { useAuth } from "@/context/AuthContext";
+import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/seller/orders/$orderId")({
   component: () => (
@@ -35,6 +36,7 @@ const STATUS_FLOW: SellerOrderStatus[] = [
 ];
 
 function OrderDetail({ sellerId }: { sellerId: string }) {
+  const { t } = useI18n();
   const { user } = useAuth();
   const { orderId } = useParams({ from: "/_authenticated/seller/orders/$orderId" });
   const [order, setOrder] = useState<SellerOrder | null>(null);
@@ -104,7 +106,7 @@ function OrderDetail({ sellerId }: { sellerId: string }) {
       } catch {
         // Non-fatal.
       }
-      toast.success("Order updated");
+      toast.success(t("seller.orderUpdated"));
       setNote("");
       await load();
     } catch (err) {
@@ -158,7 +160,7 @@ function OrderDetail({ sellerId }: { sellerId: string }) {
               ))}
             </div>
             <div className="flex items-center justify-between border-t p-4 text-sm">
-              <span className="text-muted-foreground">Subtotal</span>
+              <span className="text-muted-foreground">{t("order.subtotal")}</span>
               <span className="font-semibold">{formatPrice(order.subtotal)}</span>
             </div>
           </div>
@@ -183,7 +185,7 @@ function OrderDetail({ sellerId }: { sellerId: string }) {
           </div>
 
           <div className="rounded-lg border bg-background">
-            <div className="border-b p-4 text-sm font-semibold">Tracking history</div>
+            <div className="border-b p-4 text-sm font-semibold">{t("seller.trackingHistory")}</div>
             <ol className="divide-y">
               {order.tracking
                 .slice()
@@ -206,19 +208,19 @@ function OrderDetail({ sellerId }: { sellerId: string }) {
 
         <div className="space-y-4">
           <div className="rounded-lg border bg-background p-4 text-sm">
-            <div className="mb-3 font-semibold">Customer</div>
+            <div className="mb-3 font-semibold">{t("seller.customer")}</div>
             <div className="font-medium">{order.buyerName}</div>
             <div className="text-muted-foreground">{order.buyerEmail ?? "—"}</div>
           </div>
 
           <div className="rounded-lg border bg-background p-4 text-sm">
-            <div className="mb-3 font-semibold">Payment</div>
+            <div className="mb-3 font-semibold">{t("seller.payment")}</div>
             <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Method</span>
+              <span className="text-muted-foreground">{t("seller.method")}</span>
               <span className="capitalize">{order.paymentMethod.replace(/_/g, " ")}</span>
             </div>
             <div className="mt-1 flex items-center justify-between">
-              <span className="text-muted-foreground">Status</span>
+              <span className="text-muted-foreground">{t("seller.status")}</span>
               <span className="capitalize">{order.paymentStatus}</span>
             </div>
           </div>
@@ -287,7 +289,7 @@ function OrderDetail({ sellerId }: { sellerId: string }) {
                   type="text"
                   value={trackingNumber}
                   onChange={(e) => setTrackingNumber(e.target.value)}
-                  placeholder="Tracking number"
+                  placeholder={t("seller.trackingNumber")}
                   className="mb-2 w-full rounded-md border border-blue-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-400"
                 />
                 <input

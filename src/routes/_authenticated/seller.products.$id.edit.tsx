@@ -10,6 +10,7 @@ import {
 } from "@/services/firebase/sellerProducts";
 import { mapFirebaseError } from "@/utils/errors";
 import type { Product } from "@/types/commerce";
+import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/seller/products/$id/edit")({
   component: () => (
@@ -18,6 +19,7 @@ export const Route = createFileRoute("/_authenticated/seller/products/$id/edit")
 });
 
 function EditProduct({ sellerId }: { sellerId: string }) {
+  const { t } = useI18n();
   const { id } = useParams({ from: "/_authenticated/seller/products/$id/edit" });
   const navigate = useNavigate();
   const [product, setProduct] = useState<Product | null>(null);
@@ -59,7 +61,7 @@ function EditProduct({ sellerId }: { sellerId: string }) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Edit product</h1>
+        <h1 className="text-2xl font-bold">{t("seller.editProduct")}</h1>
         <p className="text-sm text-muted-foreground">{product.title}</p>
       </div>
       <ProductForm
@@ -95,7 +97,7 @@ function EditProduct({ sellerId }: { sellerId: string }) {
               featured: Boolean(v.featured),
               status: v.status,
             });
-            toast.success("Product updated");
+            toast.success(t("seller.productUpdated"));
             navigate({ to: "/seller/products" });
           } catch (err) {
             toast.error(mapFirebaseError(err));

@@ -6,6 +6,7 @@ import { Spinner } from "@/components/common/Spinner";
 import { listSellerOrders } from "@/services/firebase/sellerOrders";
 import { formatPrice, formatDateTime } from "@/utils/format";
 import type { SellerOrder, SellerOrderStatus } from "@/types/seller";
+import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/seller/orders/")({
   component: () => (
@@ -24,6 +25,7 @@ const STATUS_OPTIONS: Array<{ v: "all" | SellerOrderStatus; label: string }> = [
 ];
 
 function OrdersPage({ sellerId }: { sellerId: string }) {
+  const { t } = useI18n();
   const [orders, setOrders] = useState<SellerOrder[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
@@ -61,7 +63,7 @@ function OrdersPage({ sellerId }: { sellerId: string }) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Orders</h1>
+        <h1 className="text-2xl font-bold">{t("seller.orders")}</h1>
         <p className="text-sm text-muted-foreground">
           Fulfil orders and update customers on shipping.
         </p>
@@ -111,12 +113,12 @@ function OrdersPage({ sellerId }: { sellerId: string }) {
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-xs uppercase text-muted-foreground">
               <tr>
-                <th className="px-4 py-3 text-left">Order</th>
-                <th className="px-4 py-3 text-left">Buyer</th>
-                <th className="px-4 py-3 text-right">Items</th>
-                <th className="px-4 py-3 text-right">Total</th>
-                <th className="px-4 py-3 text-left">Status</th>
-                <th className="px-4 py-3 text-left">Placed</th>
+                <th className="px-4 py-3 text-left">{t("seller.order")}</th>
+                <th className="px-4 py-3 text-left">{t("seller.buyer")}</th>
+                <th className="px-4 py-3 text-right">{t("seller.items")}</th>
+                <th className="px-4 py-3 text-right">{t("seller.total")}</th>
+                <th className="px-4 py-3 text-left">{t("seller.status")}</th>
+                <th className="px-4 py-3 text-left">{t("seller.placed")}</th>
               </tr>
             </thead>
             <tbody className="divide-y">

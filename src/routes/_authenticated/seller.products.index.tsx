@@ -12,6 +12,7 @@ import {
 import { mapFirebaseError } from "@/utils/errors";
 import { formatPrice } from "@/utils/format";
 import type { Product } from "@/types/commerce";
+import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/seller/products/")({
   component: () => (
@@ -20,6 +21,7 @@ export const Route = createFileRoute("/_authenticated/seller/products/")({
 });
 
 function ProductsPage({ sellerId }: { sellerId: string }) {
+  const { t } = useI18n();
   const [products, setProducts] = useState<Product[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
@@ -58,7 +60,7 @@ function ProductsPage({ sellerId }: { sellerId: string }) {
     if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
     try {
       await deleteSellerProduct(sellerId, id);
-      toast.success("Product deleted");
+      toast.success(t("seller.productDeleted"));
       void refresh();
     } catch (err) {
       toast.error(mapFirebaseError(err));
@@ -80,8 +82,8 @@ function ProductsPage({ sellerId }: { sellerId: string }) {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Products</h1>
-          <p className="text-sm text-muted-foreground">Manage your listings and inventory.</p>
+          <h1 className="text-2xl font-bold">{t("seller.products")}</h1>
+          <p className="text-sm text-muted-foreground">{t("seller.manageListings")}</p>
         </div>
         <Link
           to="/seller/products/new"
@@ -106,10 +108,10 @@ function ProductsPage({ sellerId }: { sellerId: string }) {
           onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
           className="rounded-md border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
         >
-          <option value="all">All statuses</option>
-          <option value="published">Published</option>
-          <option value="draft">Draft</option>
-          <option value="archived">Archived</option>
+          <option value="all">{t("seller.allStatuses")}</option>
+          <option value="published">{t("seller.published")}</option>
+          <option value="draft">{t("seller.draft")}</option>
+          <option value="archived">{t("seller.archived")}</option>
         </select>
       </div>
 
@@ -144,7 +146,7 @@ function ProductsPage({ sellerId }: { sellerId: string }) {
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-xs uppercase text-muted-foreground">
               <tr>
-                <th className="px-4 py-3 text-left">Product</th>
+                <th className="px-4 py-3 text-left">{t("seller.product")}</th>
                 <th className="px-4 py-3 text-left">SKU</th>
                 <th className="px-4 py-3 text-right">Price</th>
                 <th className="px-4 py-3 text-right">Stock</th>

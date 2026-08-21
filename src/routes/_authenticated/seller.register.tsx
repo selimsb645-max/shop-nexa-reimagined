@@ -15,6 +15,7 @@ import type { SellerProfile, SellerBusinessInfo, SellerBankInfo, SellerIdentityI
 import { firebaseConfigured } from "@/services/firebase/config";
 import { REGISTRATION_STEPS, type RegistrationStep } from "@/types/seller";
 import { toast } from "sonner";
+import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/seller/register")({
   ssr: false,
@@ -23,6 +24,7 @@ export const Route = createFileRoute("/_authenticated/seller/register")({
 });
 
 function SellerRegisterPage() {
+  const { t } = useI18n();
   const { user } = useAuth();
   const { profile, refresh } = useSellerProfile();
   const navigate = useNavigate();
@@ -129,7 +131,7 @@ function SellerRegisterPage() {
                 await saveStoreInfo(user!.uid, data);
                 await refresh();
                 setCurrentStep("business_info");
-                toast.success("Store info saved");
+                toast.success(t("seller.storeInfoSaved"));
               } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
               setLoading(false);
             }}
@@ -147,7 +149,7 @@ function SellerRegisterPage() {
                 await saveBusinessInfo(user!.uid, data);
                 await refresh();
                 setCurrentStep("identity_verification");
-                toast.success("Business info saved");
+                toast.success(t("seller.businessInfoSaved"));
               } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
               setLoading(false);
             }}
@@ -165,7 +167,7 @@ function SellerRegisterPage() {
                 await saveIdentityInfo(user!.uid, data);
                 await refresh();
                 setCurrentStep("banking");
-                toast.success("Identity info saved");
+                toast.success(t("seller.identityInfoSaved"));
               } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
               setLoading(false);
             }}
@@ -183,7 +185,7 @@ function SellerRegisterPage() {
                 await saveBankingInfo(user!.uid, data);
                 await refresh();
                 setCurrentStep("terms");
-                toast.success("Banking info saved");
+                toast.success(t("seller.bankingInfoSaved"));
               } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
               setLoading(false);
             }}

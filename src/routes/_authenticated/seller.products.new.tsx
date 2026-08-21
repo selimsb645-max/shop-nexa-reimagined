@@ -12,6 +12,7 @@ import { uploadProductImage } from "@/services/firebase/storage";
 import { firebaseConfigured } from "@/services/firebase/config";
 import { toast } from "sonner";
 import type { Category, Subcategory } from "@/types/commerce";
+import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/seller/products/new")({
   ssr: false,
@@ -51,6 +52,7 @@ const EMPTY_DRAFT: DraftState = {
 // Main Page
 // ====================================================================
 function AddProductPage({ sellerId }: { sellerId: string }) {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
@@ -171,13 +173,13 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
   // Submit
   const handleSubmit = async (status: "draft" | "published") => {
     if (!validate()) {
-      toast.error("Please fix the errors before saving");
+      toast.error(t("seller.fixErrors"));
       return;
     }
     setSaving(true);
     try {
       const cat = categories.find(c => c.id === form.categoryId);
-      if (!cat) { toast.error("Invalid category"); setSaving(false); return; }
+      if (!cat) { toast.error(t("seller.invalidCategory")); setSaving(false); return; }
       const sub = subcategories.find(s => s.id === form.subcategoryId);
       const slug = slugify(form.title);
 
@@ -219,7 +221,7 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
     setForm(EMPTY_DRAFT);
     setImages([]);
     if (richTextRef.current) richTextRef.current.innerHTML = "";
-    toast.success("Draft cleared");
+    toast.success(t("seller.draftCleared"));
   };
 
   return (
@@ -232,7 +234,7 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
             <ChevronLeft className="w-5 h-5 text-slate-600" />
           </button>
           <div>
-            <h1 className="text-xl font-bold text-[#0f172a]">Add New Product</h1>
+            <h1 className="text-xl font-bold text-[#0f172a]">{t("seller.addNewProduct")}</h1>
             <p className="text-xs text-slate-500">
               {draftSaved ? "✓ Draft auto-saved" : "Fill in the product details below"}
             </p>
@@ -326,7 +328,7 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
                     onChange={e => setForm(f => ({ ...f, categoryId: e.target.value, subcategoryId: "" }))}
                     className="input-field"
                   >
-                    <option value="">Select category</option>
+                    <option value="">{t("seller.selectCategory")}</option>
                     {categories.map(c => (
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
@@ -340,7 +342,7 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
                     className="input-field"
                     disabled={!form.categoryId}
                   >
-                    <option value="">None</option>
+                    <option value="">{t("seller.none")}</option>
                     {subcategories.map(s => (
                       <option key={s.id} value={s.id}>{s.name}</option>
                     ))}
@@ -422,10 +424,10 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
               {/* Price Summary */}
               {form.price && (
                 <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
-                  <p className="text-xs font-bold text-slate-600 mb-2">Price Summary</p>
+                  <p className="text-xs font-bold text-slate-600 mb-2">{t("seller.priceSummary")}</p>
                   <div className="space-y-1 text-xs">
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Regular Price:</span>
+                      <span className="text-slate-500">{t("seller.regularPrice")}</span>
                       <span className="font-semibold text-slate-700">৳{Number(form.price || 0).toFixed(2)}</span>
                     </div>
                     {form.compareAtPrice && (

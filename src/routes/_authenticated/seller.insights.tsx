@@ -15,6 +15,7 @@ import { listAllProducts } from "@/services/firebase/products";
 import { firebaseConfigured } from "@/services/firebase/config";
 import { formatPrice } from "@/utils/format";
 import type { Product } from "@/types/commerce";
+import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/seller/insights")({
   ssr: false,
@@ -23,6 +24,7 @@ export const Route = createFileRoute("/_authenticated/seller/insights")({
 });
 
 function SellerInsightsPage() {
+  const { t } = useI18n();
   const { data: products, isLoading } = useQuery({
     queryKey: ["products", "all"],
     queryFn: listAllProducts,
@@ -66,7 +68,7 @@ function SellerInsightsPage() {
 
         {/* Top products */}
         <div className="rounded-2xl border bg-background p-5 shadow-sm">
-          <h2 className="mb-3 text-sm font-semibold">Top Performing Products</h2>
+          <h2 className="mb-3 text-sm font-semibold">{t("seller.topPerforming")}</h2>
           {isLoading ? (
             <div className="py-12 text-center">
               <Loader className="mx-auto h-8 w-8 animate-spin text-muted-foreground" />
@@ -110,7 +112,7 @@ function SellerInsightsPage() {
         {/* Low stock alerts */}
         {lowStock.length > 0 && (
           <div className="mt-4 rounded-2xl border border-orange-200 bg-orange-50 p-5">
-            <h2 className="mb-3 text-sm font-semibold text-orange-700">Low Stock Alerts</h2>
+            <h2 className="mb-3 text-sm font-semibold text-orange-700">{t("seller.lowStockAlerts")}</h2>
             <div className="space-y-2">
               {lowStock.map((product: Product) => (
                 <div key={product.id} className="flex items-center gap-3 rounded-lg bg-white p-3">

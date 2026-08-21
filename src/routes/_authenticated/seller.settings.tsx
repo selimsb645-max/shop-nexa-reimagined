@@ -15,12 +15,14 @@ import {
 } from "@/utils/validation";
 import { mapFirebaseError } from "@/utils/errors";
 import type { SellerProfile } from "@/types/seller";
+import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/seller/settings")({
   component: () => <SellerGate>{(profile) => <SettingsPage profile={profile} />}</SellerGate>,
 });
 
 function SettingsPage({ profile }: { profile: SellerProfile }) {
+  const { t } = useI18n();
   const { user } = useAuth();
   const [logoUrl, setLogoUrl] = useState<string | null>(profile.logoUrl);
   const [uploading, setUploading] = useState(false);
@@ -63,7 +65,7 @@ function SettingsPage({ profile }: { profile: SellerProfile }) {
       const url = await uploadShopLogo(user.uid, f);
       setLogoUrl(url);
       await updateSellerProfile(user.uid, { logoUrl: url });
-      toast.success("Logo updated");
+      toast.success(t("seller.logoUpdated"));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload failed");
     } finally {
@@ -75,7 +77,7 @@ function SettingsPage({ profile }: { profile: SellerProfile }) {
   const onSubmit = async (values: SellerSettingsValues) => {
     try {
       await updateSellerProfile(profile.uid, values);
-      toast.success("Settings saved");
+      toast.success(t("seller.settingsSaved"));
     } catch (err) {
       toast.error(mapFirebaseError(err));
     }
@@ -84,8 +86,8 @@ function SettingsPage({ profile }: { profile: SellerProfile }) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Seller settings</h1>
-        <p className="text-sm text-muted-foreground">Manage your shop profile and branding.</p>
+        <h1 className="text-2xl font-bold">{t("seller.sellerSettings")}</h1>
+        <p className="text-sm text-muted-foreground">{t("seller.manageShopProfile")}</p>
       </div>
 
       <form

@@ -15,6 +15,7 @@ import { countUnreadNotifications } from "@/services/firebase/sellers";
 import { formatPrice } from "@/utils/format";
 import type { Product } from "@/types/commerce";
 import type { SellerOrder, SellerProfile } from "@/types/seller";
+import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/seller/")({
   ssr: false,
@@ -23,6 +24,7 @@ export const Route = createFileRoute("/_authenticated/seller/")({
 });
 
 function Dashboard({ sellerId, profile }: { sellerId: string; profile: SellerProfile }) {
+  const { t } = useI18n();
   const [products, setProducts] = useState<Product[] | null>(null);
   const [orders, setOrders] = useState<SellerOrder[] | null>(null);
   const [walletBalance, setWalletBalance] = useState(0);
@@ -132,7 +134,7 @@ function Dashboard({ sellerId, profile }: { sellerId: string; profile: SellerPro
 
       {/* Order Status Breakdown */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-        <h3 className="text-sm font-bold text-[#0f172a] mb-3">Order Overview</h3>
+        <h3 className="text-sm font-bold text-[#0f172a] mb-3">{t("seller.orderOverview")}</h3>
         <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
           <OrderStat label="Pending" count={countByStatus("pending")} icon={<Clock className="w-4 h-4" />} color="#d97706" bgColor="#fffbeb" />
           <OrderStat label="Processing" count={countByStatus("processing")} icon={<Package className="w-4 h-4" />} color="#0ea5e9" bgColor="#f0f9ff" />
@@ -153,7 +155,7 @@ function Dashboard({ sellerId, profile }: { sellerId: string; profile: SellerPro
 
       {/* Quick Actions */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-        <h3 className="text-sm font-bold text-[#0f172a] mb-3">Quick Actions</h3>
+        <h3 className="text-sm font-bold text-[#0f172a] mb-3">{t("seller.quickActions")}</h3>
         <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
           <QuickAction to="/seller/products/new" icon={<Plus className="w-5 h-5" />} label="Add Product" color="#f57224" />
           <QuickAction to="/seller/orders" icon={<ShoppingBag className="w-5 h-5" />} label="Orders" color="#0ea5e9" />
@@ -169,7 +171,7 @@ function Dashboard({ sellerId, profile }: { sellerId: string; profile: SellerPro
       {/* Recent Orders */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
         <div className="flex items-center justify-between p-4 border-b border-slate-100">
-          <h3 className="text-sm font-bold text-[#0f172a]">Recent Orders</h3>
+          <h3 className="text-sm font-bold text-[#0f172a]">{t("seller.recentOrders")}</h3>
           <Link to="/seller/orders" className="text-xs font-medium text-[#f57224] hover:underline">
             View All
           </Link>
@@ -208,7 +210,7 @@ function Dashboard({ sellerId, profile }: { sellerId: string; profile: SellerPro
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
             <AlertTriangle className="w-4 h-4 text-amber-600" />
-            <h3 className="text-sm font-bold text-amber-800">Low Stock Alert</h3>
+            <h3 className="text-sm font-bold text-amber-800">{t("seller.lowStockAlert")}</h3>
           </div>
           <div className="space-y-1.5">
             {products?.filter(p => p.stock > 0 && p.stock <= 5).slice(0, 3).map((p) => (
