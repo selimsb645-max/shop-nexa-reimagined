@@ -731,11 +731,11 @@ function OrderConversationView({
             </h3>
             <div className="space-y-1 text-xs">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Method</span>
+                <span className="text-muted-foreground">{t("messages.paymentMethod")}</span>
                 <span className="font-medium">{order.payment.method.replace(/_/g, " ")}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Status</span>
+                <span className="text-muted-foreground">{t("messages.paymentStatus")}</span>
                 <span className={`font-medium ${order.payment.status === "paid" ? "text-green-500" : "text-orange-500"}`}>
                   {order.payment.status}
                 </span>
@@ -1013,7 +1013,7 @@ function SupportCenter({
 function AIAssistant() {
   const { t } = useI18n();
   const [messages, setMessages] = useState<{ role: "user" | "ai"; text: string }[]>([
-    { role: "ai", text: "Hi! I'm your AI Shopping Assistant. I can help you find products, track orders, suggest coupons, and more. How can I help today?" },
+    { role: "ai", text: t("messages.aiWelcome") },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -1038,7 +1038,7 @@ function AIAssistant() {
     setLoading(true);
 
     // Simple AI response logic (connect to backend in production)
-    const aiResponse = generateAIResponse(userMsg);
+    const aiResponse = generateAIResponse(userMsg, t);
     setTimeout(() => {
       setMessages((prev) => [...prev, { role: "ai", text: aiResponse }]);
       setLoading(false);
@@ -1120,24 +1120,24 @@ function AIAssistant() {
   );
 }
 
-function generateAIResponse(query: string): string {
+function generateAIResponse(query: string, t: (key: any) => string): string {
   const q = query.toLowerCase();
   if (q.includes("track") || q.includes("order")) {
-    return "To track your order, go to the Orders tab above and tap on any order to see real-time tracking updates. You can also visit the Track Orders page for live delivery tracking.";
+    return t("messages.aiTrackOrder");
   }
   if (q.includes("coupon") || q.includes("discount")) {
-    return "You can find all available coupons on the Coupons page. We frequently offer flash sale discounts and promo codes. Check back often for new deals!";
+    return t("messages.aiCoupon");
   }
   if (q.includes("flash") || q.includes("sale")) {
-    return "Flash sales are live on the Flash Sales page! These are limited-time deals with significant discounts. Act fast before they end!";
+    return t("messages.aiFlashSale");
   }
   if (q.includes("return") || q.includes("refund")) {
-    return "You can request a return from the Returns & Refunds page. We accept returns within 7 days of delivery for eligible products.";
+    return t("messages.aiReturn");
   }
   if (q.includes("product") || q.includes("find") || q.includes("search")) {
-    return "You can browse all products on the Shop page. Use the search bar at the top to find specific items, or filter by category to discover new products.";
+    return t("messages.aiProduct");
   }
-  return "I'm here to help! You can ask me about orders, products, coupons, returns, flash sales, and more. What would you like to know?";
+  return t("messages.aiDefault");
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1165,13 +1165,14 @@ function NotificationCenter({
   onMarkAllRead: () => void;
   userId: string;
 }) {
+  const { t } = useI18n();
   const [filter, setFilter] = useState<NotificationType | "all">("all");
   const queryClient = useQueryClient();
 
   const handleMarkAll = async () => {
     await markAllNotificationsRead(userId);
     queryClient.invalidateQueries({ queryKey: ["notifications"] });
-    toast.success("All notifications marked as read");
+    toast.success(t("messages.notifAllRead"));
   };
 
   const filtered = useMemo(() => {
@@ -1185,12 +1186,12 @@ function NotificationCenter({
   }, [notifications, filter, searchQuery]);
 
   const filterTabs: { id: NotificationType | "all"; label: string }[] = [
-    { id: "all", label: "All" },
-    { id: "order", label: "Orders" },
-    { id: "promo", label: "Offers" },
-    { id: "wallet", label: "Wallet" },
-    { id: "reward", label: "Rewards" },
-    { id: "system", label: "System" },
+    { id: "all", label: t("messages.filterAll") },
+    { id: "order", label: t("messages.filterOrders") },
+    { id: "promo", label: t("messages.filterOffers") },
+    { id: "wallet", label: t("messages.filterWallet") },
+    { id: "reward", label: t("messages.filterRewards") },
+    { id: "system", label: t("messages.filterSystem") },
   ];
 
   const unreadCount = notifications.filter((n) => !n.read).length;

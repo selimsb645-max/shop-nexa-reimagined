@@ -476,6 +476,23 @@ export interface TranslationKeys {
   "account.becomeSellerHint": string;
   "orders.unknownStatus": string;
   "orders.backToAccount": string;
+  "messages.paymentMethod": string;
+  "messages.paymentStatus": string;
+  "messages.aiWelcome": string;
+  "messages.aiTrackOrder": string;
+  "messages.aiCoupon": string;
+  "messages.aiFlashSale": string;
+  "messages.aiReturn": string;
+  "messages.aiProduct": string;
+  "messages.aiDefault": string;
+  "messages.notifAllRead": string;
+  "messages.notifMarkAllRead": string;
+  "messages.filterAll": string;
+  "messages.filterOrders": string;
+  "messages.filterOffers": string;
+  "messages.filterWallet": string;
+  "messages.filterRewards": string;
+  "messages.filterSystem": string;
 
   // Notifications
   "notifications.title": string;
