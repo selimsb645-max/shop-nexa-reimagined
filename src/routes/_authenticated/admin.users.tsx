@@ -9,13 +9,15 @@ import { Spinner } from "@/components/common/Spinner";
 import { formatDate } from "@/utils/format";
 import { mapFirebaseError } from "@/utils/errors";
 import type { UserRole } from "@/types/user";
+import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/admin/users")({
   component: UsersAdmin,
 });
 
 function UsersAdmin() {
-  const { user } = useAuth();
+
+  const { t } = useI18n();  const { user } = useAuth();
   const [rows, setRows] = useState<AdminUserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
@@ -78,7 +80,7 @@ function UsersAdmin() {
         r.uid,
         `${r.role} -> ${nr}`,
       );
-      toast.success("Role updated");
+      toast.success(t("admin.roleUpdated"));
       await refresh();
     } catch (err) {
       toast.error(mapFirebaseError(err));
@@ -98,7 +100,7 @@ function UsersAdmin() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Users</h1>
+        <h1 className="text-2xl font-bold">{t("admin.users")}</h1>
         <p className="text-sm text-muted-foreground">Manage buyers, sellers and admins.</p>
       </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
@@ -128,10 +130,10 @@ function UsersAdmin() {
             onChange={(e) => setRole(e.target.value as "" | UserRole)}
             className="rounded-md border bg-background px-3 py-2 text-sm"
           >
-            <option value="">All roles</option>
-            <option value="customer">Customer</option>
-            <option value="seller">Seller</option>
-            <option value="admin">Admin</option>
+            <option value="">{t("admin.allRoles")}</option>
+            <option value="customer">{t("admin.customer")}</option>
+            <option value="seller">{t("admin.seller")}</option>
+            <option value="admin">{t("admin.adminRole")}</option>
           </select>
         </div>
       </div>
@@ -146,11 +148,11 @@ function UsersAdmin() {
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-left">
               <tr>
-                <th className="px-3 py-2">User</th>
-                <th className="px-3 py-2">Role</th>
-                <th className="px-3 py-2">Status</th>
-                <th className="px-3 py-2">Joined</th>
-                <th className="px-3 py-2 text-right">Actions</th>
+                <th className="px-3 py-2">{t("admin.user")}</th>
+                <th className="px-3 py-2">{t("admin.role")}</th>
+                <th className="px-3 py-2">{t("admin.status")}</th>
+                <th className="px-3 py-2">{t("admin.joined")}</th>
+                <th className="px-3 py-2 text-right">{t("admin.actions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -177,9 +179,9 @@ function UsersAdmin() {
                       onChange={(e) => onRoleChange(r, e.target.value as UserRole)}
                       className="rounded-md border bg-background px-2 py-1 text-xs"
                     >
-                      <option value="customer">Customer</option>
-                      <option value="seller">Seller</option>
-                      <option value="admin">Admin</option>
+                      <option value="customer">{t("admin.customer")}</option>
+                      <option value="seller">{t("admin.seller")}</option>
+                      <option value="admin">{t("admin.adminRole")}</option>
                     </select>
                   </td>
                   <td className="px-3 py-2">

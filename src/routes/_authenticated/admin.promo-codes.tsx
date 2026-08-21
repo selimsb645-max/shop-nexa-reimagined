@@ -4,13 +4,15 @@ import { useAuth } from "@/context/AuthContext";
 import { Spinner } from "@/components/common/Spinner";
 import { adminListPromoCodes, adminCreatePromoCode, adminDisablePromoCode } from "@/lib/promo.functions";
 import type { PromoCode } from "@/types/promo";
+import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/admin/promo-codes")({
   component: AdminPromoCodesPage,
 });
 
 function AdminPromoCodesPage() {
-  const { user } = useAuth();
+
+  const { t } = useI18n();  const { user } = useAuth();
   const [promos, setPromos] = useState<PromoCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -88,8 +90,8 @@ function AdminPromoCodesPage() {
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-[#1a1f3a]">Promo Codes</h1>
-            <p className="text-sm text-slate-500 mt-1">Manage NEXA promo codes</p>
+            <h1 className="text-2xl font-bold text-[#1a1f3a]">{t("admin.promoCodes")}</h1>
+            <p className="text-sm text-slate-500 mt-1">{t("admin.managePromoCodes")}</p>
           </div>
           <button
             onClick={() => setShowCreate(!showCreate)}
@@ -107,31 +109,31 @@ function AdminPromoCodesPage() {
 
         {showCreate && (
           <div className="bg-white rounded-xl border border-slate-200 p-6 mb-6">
-            <h2 className="text-lg font-semibold mb-4">Issue New Promo Code</h2>
+            <h2 className="text-lg font-semibold mb-4">{t("admin.issueNewPromoCode")}</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-medium text-slate-600 mb-1 block">Target User ID</label>
+                <label className="text-xs font-medium text-slate-600 mb-1 block">{t("admin.targetUserId")}</label>
                 <input
                   type="text"
                   value={targetUid}
                   onChange={(e) => setTargetUid(e.target.value)}
-                  placeholder="Firebase UID"
+                  placeholder={t("admin.firebaseUid")}
                   className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#f57224]"
                 />
               </div>
               <div>
-                <label className="text-xs font-medium text-slate-600 mb-1 block">Discount Type</label>
+                <label className="text-xs font-medium text-slate-600 mb-1 block">{t("admin.discountType")}</label>
                 <select
                   value={discountType}
                   onChange={(e) => setDiscountType(e.target.value as "percent" | "fixed")}
                   className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#f57224]"
                 >
                   <option value="percent">Percent (%)</option>
-                  <option value="fixed">Fixed Amount</option>
+                  <option value="fixed">{t("admin.fixedAmount")}</option>
                 </select>
               </div>
               <div>
-                <label className="text-xs font-medium text-slate-600 mb-1 block">Discount Value</label>
+                <label className="text-xs font-medium text-slate-600 mb-1 block">{t("admin.discountValue")}</label>
                 <input
                   type="number"
                   value={discountValue}
@@ -140,7 +142,7 @@ function AdminPromoCodesPage() {
                 />
               </div>
               <div>
-                <label className="text-xs font-medium text-slate-600 mb-1 block">Usage Limit</label>
+                <label className="text-xs font-medium text-slate-600 mb-1 block">{t("admin.usageLimit")}</label>
                 <input
                   type="number"
                   value={usageLimit}
@@ -160,7 +162,7 @@ function AdminPromoCodesPage() {
                 />
               </div>
               <div>
-                <label className="text-xs font-medium text-slate-600 mb-1 block">Min Order Amount</label>
+                <label className="text-xs font-medium text-slate-600 mb-1 block">{t("admin.minOrderAmount")}</label>
                 <input
                   type="number"
                   value={minOrder}
@@ -193,13 +195,13 @@ function AdminPromoCodesPage() {
             <table className="w-full text-sm">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="text-left px-4 py-3 font-semibold text-slate-600">Code</th>
-                  <th className="text-left px-4 py-3 font-semibold text-slate-600">User</th>
-                  <th className="text-left px-4 py-3 font-semibold text-slate-600">Discount</th>
-                  <th className="text-left px-4 py-3 font-semibold text-slate-600">Status</th>
-                  <th className="text-left px-4 py-3 font-semibold text-slate-600">Uses</th>
-                  <th className="text-left px-4 py-3 font-semibold text-slate-600">Expiry</th>
-                  <th className="text-right px-4 py-3 font-semibold text-slate-600">Action</th>
+                  <th className="text-left px-4 py-3 font-semibold text-slate-600">{t("admin.code")}</th>
+                  <th className="text-left px-4 py-3 font-semibold text-slate-600">{t("admin.user")}</th>
+                  <th className="text-left px-4 py-3 font-semibold text-slate-600">{t("admin.discount")}</th>
+                  <th className="text-left px-4 py-3 font-semibold text-slate-600">{t("admin.status")}</th>
+                  <th className="text-left px-4 py-3 font-semibold text-slate-600">{t("admin.uses")}</th>
+                  <th className="text-left px-4 py-3 font-semibold text-slate-600">{t("admin.expiry")}</th>
+                  <th className="text-right px-4 py-3 font-semibold text-slate-600">{t("admin.action")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">

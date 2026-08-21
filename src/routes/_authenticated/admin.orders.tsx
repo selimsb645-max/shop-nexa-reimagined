@@ -5,13 +5,15 @@ import type { AdminOrderRow } from "@/services/firebase/adminOrders";
 import { Spinner } from "@/components/common/Spinner";
 import { formatPrice, formatDateTime } from "@/utils/format";
 import type { OrderStatus } from "@/types/commerce";
+import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/admin/orders")({
   component: OrdersAdmin,
 });
 
 function OrdersAdmin() {
-  const [rows, setRows] = useState<AdminOrderRow[]>([]);
+
+  const { t } = useI18n();  const [rows, setRows] = useState<AdminOrderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<"" | OrderStatus>("");
@@ -44,8 +46,8 @@ function OrdersAdmin() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Orders</h1>
-        <p className="text-sm text-muted-foreground">All customer orders across the marketplace.</p>
+        <h1 className="text-2xl font-bold">{t("admin.orders")}</h1>
+        <p className="text-sm text-muted-foreground">{t("admin.allOrdersDesc")}</p>
       </div>
       <div className="rounded-lg border bg-background p-4">
         <div className="flex flex-wrap gap-3">
@@ -60,13 +62,13 @@ function OrdersAdmin() {
             onChange={(e) => setStatus(e.target.value as "" | OrderStatus)}
             className="rounded-md border bg-background px-3 py-2 text-sm"
           >
-            <option value="">All statuses</option>
-            <option value="pending">Pending</option>
-            <option value="confirmed">Confirmed</option>
-            <option value="processing">Processing</option>
-            <option value="shipped">Shipped</option>
-            <option value="delivered">Delivered</option>
-            <option value="cancelled">Cancelled</option>
+            <option value="">{t("admin.allStatuses")}</option>
+            <option value="pending">{t("admin.pending")}</option>
+            <option value="confirmed">{t("admin.confirmed")}</option>
+            <option value="processing">{t("admin.processing")}</option>
+            <option value="shipped">{t("admin.shipped")}</option>
+            <option value="delivered">{t("admin.delivered")}</option>
+            <option value="cancelled">{t("admin.cancelled")}</option>
           </select>
         </div>
       </div>
@@ -81,13 +83,13 @@ function OrdersAdmin() {
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-left">
               <tr>
-                <th className="px-3 py-2">Order</th>
-                <th className="px-3 py-2">Buyer</th>
-                <th className="px-3 py-2">Items</th>
-                <th className="px-3 py-2">Total</th>
-                <th className="px-3 py-2">Payment</th>
-                <th className="px-3 py-2">Status</th>
-                <th className="px-3 py-2">Placed</th>
+                <th className="px-3 py-2">{t("admin.order")}</th>
+                <th className="px-3 py-2">{t("admin.buyer")}</th>
+                <th className="px-3 py-2">{t("admin.items")}</th>
+                <th className="px-3 py-2">{t("admin.total")}</th>
+                <th className="px-3 py-2">{t("admin.payment")}</th>
+                <th className="px-3 py-2">{t("admin.status")}</th>
+                <th className="px-3 py-2">{t("admin.placed")}</th>
                 <th className="px-3 py-2"></th>
               </tr>
             </thead>

@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { listAllProducts } from "@/services/firebase/products";
 import { firebaseConfigured } from "@/services/firebase/config";
+import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/admin/seo")({
   ssr: false,
@@ -18,7 +19,8 @@ export const Route = createFileRoute("/_authenticated/admin/seo")({
 });
 
 function AdminSEOPage() {
-  const { data: products, isLoading } = useQuery({
+
+  const { t } = useI18n();  const { data: products, isLoading } = useQuery({
     queryKey: ["products", "all"],
     queryFn: listAllProducts,
     enabled: firebaseConfigured,
@@ -57,7 +59,7 @@ function AdminSEOPage() {
         <div className="mb-6 rounded-2xl border bg-background p-6 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-semibold text-muted-foreground">Overall SEO Score</h2>
+              <h2 className="text-sm font-semibold text-muted-foreground">{t("admin.overallSeoScore")}</h2>
               <p className="text-3xl font-bold">{seoScore}/100</p>
             </div>
             <div className={`grid h-16 w-16 place-items-center rounded-full text-2xl font-bold ${
@@ -88,12 +90,12 @@ function AdminSEOPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b bg-muted/50 text-left text-xs font-semibold text-muted-foreground">
-                  <th className="p-3">Product</th>
-                  <th className="p-3">Images</th>
-                  <th className="p-3">Desc Length</th>
-                  <th className="p-3">Tags</th>
-                  <th className="p-3">Slug</th>
-                  <th className="p-3">SEO Score</th>
+                  <th className="p-3">{t("admin.product")}</th>
+                  <th className="p-3">{t("admin.images")}</th>
+                  <th className="p-3">{t("admin.descLength")}</th>
+                  <th className="p-3">{t("admin.tags")}</th>
+                  <th className="p-3">{t("admin.slug")}</th>
+                  <th className="p-3">{t("admin.seoScore")}</th>
                 </tr>
               </thead>
               <tbody>

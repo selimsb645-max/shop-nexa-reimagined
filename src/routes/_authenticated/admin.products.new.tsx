@@ -6,19 +6,21 @@ import { logActivity } from "@/services/firebase/adminLogs";
 import { useAuth } from "@/context/AuthContext";
 import { mapFirebaseError } from "@/utils/errors";
 import { Spinner } from "@/components/common/Spinner";
+import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/admin/products/new")({
   component: NewProductAdmin,
 });
 
 function NewProductAdmin() {
-  const { user } = useAuth();
+
+  const { t } = useI18n();  const { user } = useAuth();
   const navigate = useNavigate();
   if (!user) return <Spinner />;
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Add product</h1>
+        <h1 className="text-2xl font-bold">{t("admin.addProduct")}</h1>
         <p className="text-sm text-muted-foreground">
           Products created by admin are pre-approved.
         </p>
@@ -52,7 +54,7 @@ function NewProductAdmin() {
               status: v.status,
             });
             await logActivity({ uid: user.uid, email: user.email }, "product.create", id);
-            toast.success("Product created");
+            toast.success(t("admin.productCreated"));
             navigate({ to: "/admin/products" });
           } catch (err) {
             toast.error(mapFirebaseError(err));

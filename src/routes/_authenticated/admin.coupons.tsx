@@ -14,13 +14,15 @@ import { Spinner } from "@/components/common/Spinner";
 import { formatPrice, formatDate } from "@/utils/format";
 import { mapFirebaseError } from "@/utils/errors";
 import type { Coupon, CouponType } from "@/types/commerce";
+import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/admin/coupons")({
   component: CouponsAdmin,
 });
 
 function CouponsAdmin() {
-  const { user } = useAuth();
+
+  const { t } = useI18n();  const { user } = useAuth();
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({
@@ -47,7 +49,7 @@ function CouponsAdmin() {
 
   const onCreate = async () => {
     if (!user || !form.code.trim()) {
-      toast.error("Coupon code is required");
+      toast.error(t("admin.couponCodeRequired"));
       return;
     }
     try {
@@ -62,7 +64,7 @@ function CouponsAdmin() {
         usageLimit: form.usageLimit === "" ? null : Number(form.usageLimit),
       });
       await logActivity({ uid: user.uid, email: user.email }, "coupon.create", code);
-      toast.success("Coupon saved");
+      toast.success(t("admin.couponSaved"));
       setForm({
         code: "",
         type: "percent",
@@ -95,7 +97,7 @@ function CouponsAdmin() {
     try {
       await deleteCoupon(c.code);
       await logActivity({ uid: user.uid, email: user.email }, "coupon.delete", c.code);
-      toast.success("Deleted");
+      toast.success(t("admin.deleted"));
       await refresh();
     } catch (err) {
       toast.error(mapFirebaseError(err));
@@ -105,12 +107,12 @@ function CouponsAdmin() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Coupons</h1>
-        <p className="text-sm text-muted-foreground">Promo codes and discounts.</p>
+        <h1 className="text-2xl font-bold">{t("admin.coupons")}</h1>
+        <p className="text-sm text-muted-foreground">{t("admin.promoCodesDesc")}</p>
       </div>
 
       <div className="rounded-lg border bg-background p-4">
-        <h2 className="mb-3 text-sm font-semibold">Create / update coupon</h2>
+        <h2 className="mb-3 text-sm font-semibold">{t("admin.createUpdateCoupon")}</h2>
         <div className="grid gap-3 md:grid-cols-6">
           <input
             placeholder="CODE"
@@ -128,14 +130,14 @@ function CouponsAdmin() {
           </select>
           <input
             type="number"
-            placeholder="Value"
+            placeholder={t("admin.value")}
             value={form.value}
             onChange={(e) => setForm({ ...form, value: Number(e.target.value) })}
             className="rounded-md border bg-background px-3 py-2 text-sm"
           />
           <input
             type="number"
-            placeholder="Min subtotal"
+            placeholder={t("admin.minSubtotal")}
             value={form.minSubtotal}
             onChange={(e) => setForm({ ...form, minSubtotal: Number(e.target.value) })}
             className="rounded-md border bg-background px-3 py-2 text-sm"
@@ -148,7 +150,7 @@ function CouponsAdmin() {
           />
           <input
             type="number"
-            placeholder="Usage limit"
+            placeholder={t("admin.usageLimit")}
             value={form.usageLimit}
             onChange={(e) => setForm({ ...form, usageLimit: e.target.value })}
             className="rounded-md border bg-background px-3 py-2 text-sm"
@@ -183,14 +185,14 @@ function CouponsAdmin() {
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-left">
               <tr>
-                <th className="px-3 py-2">Code</th>
-                <th className="px-3 py-2">Type</th>
-                <th className="px-3 py-2">Value</th>
-                <th className="px-3 py-2">Min subtotal</th>
-                <th className="px-3 py-2">Uses</th>
-                <th className="px-3 py-2">Expires</th>
-                <th className="px-3 py-2">Active</th>
-                <th className="px-3 py-2 text-right">Actions</th>
+                <th className="px-3 py-2">{t("admin.code")}</th>
+                <th className="px-3 py-2">{t("admin.type")}</th>
+                <th className="px-3 py-2">{t("admin.value")}</th>
+                <th className="px-3 py-2">{t("admin.minSubtotal")}</th>
+                <th className="px-3 py-2">{t("admin.uses")}</th>
+                <th className="px-3 py-2">{t("admin.expires")}</th>
+                <th className="px-3 py-2">{t("admin.active")}</th>
+                <th className="px-3 py-2 text-right">{t("admin.actions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y">

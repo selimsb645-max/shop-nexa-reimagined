@@ -14,13 +14,15 @@ import { listAllSellers } from "@/services/firebase/adminSellers";
 import { listAllProductsAdmin } from "@/services/firebase/adminProducts";
 import { Spinner } from "@/components/common/Spinner";
 import { formatPrice, formatDateTime } from "@/utils/format";
+import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   component: AdminDashboard,
 });
 
 function AdminDashboard() {
-  const [loading, setLoading] = useState(true);
+
+  const { t } = useI18n();  const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalSales: 0,
     totalOrders: 0,
@@ -110,7 +112,7 @@ function AdminDashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <h1 className="text-2xl font-bold">{t("admin.dashboard")}</h1>
         <p className="text-sm text-muted-foreground">
           Overview of your ShopNexa marketplace.
         </p>
@@ -133,7 +135,7 @@ function AdminDashboard() {
 
       <div className="rounded-lg border bg-background">
         <div className="flex items-center justify-between border-b px-4 py-3">
-          <h2 className="text-sm font-semibold">Recent Orders</h2>
+          <h2 className="text-sm font-semibold">{t("admin.recentOrders")}</h2>
           <Link to="/admin/orders" className="text-xs text-primary hover:underline">
             View all
           </Link>

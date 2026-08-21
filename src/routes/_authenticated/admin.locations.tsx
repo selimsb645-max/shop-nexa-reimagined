@@ -12,6 +12,7 @@ import {
 import { validateLocationData } from "@/lib/locationValidation";
 import { ServicePageLayout } from "@/components/common/ServicePageLayout";
 import { Database, Search, AlertCircle, CheckCircle2, MapPin, Globe, Building, Layers } from "lucide-react";
+import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/admin/locations")({
   component: AdminLocationsPage,
@@ -35,7 +36,8 @@ const TYPE_LABELS = {
 };
 
 function AdminLocationsPage() {
-  const [search, setSearch] = useState("");
+
+  const { t } = useI18n();  const [search, setSearch] = useState("");
   const [activeType, setActiveType] = useState<string>("divisions");
   const [validationRan, setValidationRan] = useState(false);
 
@@ -74,7 +76,7 @@ function AdminLocationsPage() {
         <div className="bg-white rounded-2xl border-2 border-slate-200 p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-4">
             <Database className="w-5 h-5 text-orange-500" />
-            <h3 className="font-bold text-slate-800">Dataset Summary</h3>
+            <h3 className="font-bold text-slate-800">{t("admin.datasetSummary")}</h3>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {typeKeys.map((key) => {
@@ -100,7 +102,7 @@ function AdminLocationsPage() {
         {/* Validation */}
         <div className="bg-white rounded-2xl border-2 border-slate-200 p-5 shadow-sm">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-bold text-slate-800">Data Validation</h3>
+            <h3 className="font-bold text-slate-800">{t("admin.dataValidation")}</h3>
             <button
               onClick={() => setValidationRan(true)}
               className="px-4 py-2 rounded-xl bg-orange-500 text-white text-sm font-semibold hover:bg-orange-600 transition-colors"
@@ -147,7 +149,7 @@ function AdminLocationsPage() {
         <div className="bg-white rounded-2xl border-2 border-slate-200 p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-4">
             <MapPin className="w-5 h-5 text-orange-500" />
-            <h3 className="font-bold text-slate-800">Browse Locations</h3>
+            <h3 className="font-bold text-slate-800">{t("admin.browseLocations")}</h3>
           </div>
 
           {/* Type Tabs */}

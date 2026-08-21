@@ -13,6 +13,7 @@ import {
 import { listAllProducts } from "@/services/firebase/products";
 import { firebaseConfigured } from "@/services/firebase/config";
 import { formatPrice } from "@/utils/format";
+import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/admin/analytics")({
   ssr: false,
@@ -21,7 +22,8 @@ export const Route = createFileRoute("/_authenticated/admin/analytics")({
 });
 
 function AdminAnalyticsPage() {
-  const { data: products } = useQuery({
+
+  const { t } = useI18n();  const { data: products } = useQuery({
     queryKey: ["products", "all"],
     queryFn: listAllProducts,
     enabled: firebaseConfigured,
@@ -79,7 +81,7 @@ function AdminAnalyticsPage() {
         <div className="grid gap-4 lg:grid-cols-2">
           {/* Top Rated Products */}
           <div className="rounded-2xl border bg-background p-5 shadow-sm">
-            <h2 className="mb-3 text-sm font-semibold">Top Rated Products</h2>
+            <h2 className="mb-3 text-sm font-semibold">{t("admin.topRatedProducts")}</h2>
             {topRated.length === 0 ? (
               <p className="py-8 text-center text-sm text-muted-foreground">No data available</p>
             ) : (
@@ -106,7 +108,7 @@ function AdminAnalyticsPage() {
 
           {/* Most Reviewed Products */}
           <div className="rounded-2xl border bg-background p-5 shadow-sm">
-            <h2 className="mb-3 text-sm font-semibold">Most Reviewed Products</h2>
+            <h2 className="mb-3 text-sm font-semibold">{t("admin.mostReviewedProducts")}</h2>
             {topReviewed.length === 0 ? (
               <p className="py-8 text-center text-sm text-muted-foreground">No data available</p>
             ) : (
@@ -131,7 +133,7 @@ function AdminAnalyticsPage() {
 
         {/* Category Breakdown */}
         <div className="mt-4 rounded-2xl border bg-background p-5 shadow-sm">
-          <h2 className="mb-3 text-sm font-semibold">Products by Category</h2>
+          <h2 className="mb-3 text-sm font-semibold">{t("admin.productsByCategory")}</h2>
           {categories.length === 0 ? (
             <p className="py-8 text-center text-sm text-muted-foreground">No data available</p>
           ) : (

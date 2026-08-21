@@ -17,6 +17,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Spinner } from "@/components/common/Spinner";
 import { mapFirebaseError } from "@/utils/errors";
 import type { Category, Subcategory } from "@/types/commerce";
+import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/admin/categories")({
   component: CategoriesAdmin,
@@ -31,7 +32,8 @@ function slugify(s: string) {
 }
 
 function CategoriesAdmin() {
-  const { user } = useAuth();
+
+  const { t } = useI18n();  const { user } = useAuth();
   const [cats, setCats] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -68,7 +70,7 @@ function CategoriesAdmin() {
       });
       await logActivity({ uid: user.uid, email: user.email }, "category.create", id, newCat.name);
       setNewCat({ name: "", slug: "", image: "", order: 0 });
-      toast.success("Category created");
+      toast.success(t("admin.categoryCreated"));
       await refresh();
     } catch (err) {
       toast.error(mapFirebaseError(err));
@@ -80,7 +82,7 @@ function CategoriesAdmin() {
     try {
       await updateCategory(c.id, patch);
       await logActivity({ uid: user.uid, email: user.email }, "category.update", c.id);
-      toast.success("Category updated");
+      toast.success(t("admin.categoryUpdated"));
       await refresh();
     } catch (err) {
       toast.error(mapFirebaseError(err));
@@ -94,7 +96,7 @@ function CategoriesAdmin() {
     try {
       await deleteCategory(c.id);
       await logActivity({ uid: user.uid, email: user.email }, "category.delete", c.id, c.name);
-      toast.success("Category deleted");
+      toast.success(t("admin.categoryDeleted"));
       await refresh();
     } catch (err) {
       toast.error(mapFirebaseError(err));
@@ -117,7 +119,7 @@ function CategoriesAdmin() {
         `sub: ${newSub.name}`,
       );
       setNewSub({ name: "", slug: "", order: 0 });
-      toast.success("Subcategory added");
+      toast.success(t("admin.subcategoryAdded"));
       await loadSubs(catId);
     } catch (err) {
       toast.error(mapFirebaseError(err));
@@ -133,7 +135,7 @@ function CategoriesAdmin() {
         "category.update",
         `${catId}/${s.id}`,
       );
-      toast.success("Subcategory updated");
+      toast.success(t("admin.subcategoryUpdated"));
       await loadSubs(catId);
     } catch (err) {
       toast.error(mapFirebaseError(err));
@@ -151,7 +153,7 @@ function CategoriesAdmin() {
         `${catId}/${s.id}`,
         s.name,
       );
-      toast.success("Subcategory deleted");
+      toast.success(t("admin.subcategoryDeleted"));
       await loadSubs(catId);
     } catch (err) {
       toast.error(mapFirebaseError(err));
@@ -161,15 +163,15 @@ function CategoriesAdmin() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Categories</h1>
-        <p className="text-sm text-muted-foreground">Manage categories and subcategories.</p>
+        <h1 className="text-2xl font-bold">{t("admin.categories")}</h1>
+        <p className="text-sm text-muted-foreground">{t("admin.manageCategoriesDesc")}</p>
       </div>
 
       <div className="rounded-lg border bg-background p-4">
-        <h2 className="mb-3 text-sm font-semibold">Add category</h2>
+        <h2 className="mb-3 text-sm font-semibold">{t("admin.addCategory")}</h2>
         <div className="grid gap-3 md:grid-cols-5">
           <input
-            placeholder="Name"
+            placeholder={t("admin.name")}
             value={newCat.name}
             onChange={(e) => setNewCat({ ...newCat, name: e.target.value })}
             className="rounded-md border bg-background px-3 py-2 text-sm md:col-span-2"
@@ -189,7 +191,7 @@ function CategoriesAdmin() {
           <div className="flex gap-2">
             <input
               type="number"
-              placeholder="Order"
+              placeholder={t("admin.order")}
               value={newCat.order}
               onChange={(e) => setNewCat({ ...newCat, order: Number(e.target.value) })}
               className="w-20 rounded-md border bg-background px-3 py-2 text-sm"
@@ -257,6 +259,7 @@ interface RowProps {
 }
 
 function CategoryRow(p: RowProps) {
+  const { t } = useI18n();
   const [name, setName] = useState(p.c.name);
   const [slug, setSlug] = useState(p.c.slug);
   const [image, setImage] = useState(p.c.image ?? "");
@@ -283,7 +286,7 @@ function CategoryRow(p: RowProps) {
         <input
           value={image}
           onChange={(e) => setImage(e.target.value)}
-          placeholder="Image URL"
+          placeholder={t("admin.imageUrl")}
           className="flex-1 min-w-[200px] rounded-md border bg-background px-2 py-1 text-sm"
         />
         <input
@@ -320,7 +323,7 @@ function CategoryRow(p: RowProps) {
           ))}
           <div className="mt-3 flex flex-wrap gap-2">
             <input
-              placeholder="New subcategory name"
+              placeholder={t("admin.newSubcategoryName")}
               value={p.newSub.name}
               onChange={(e) => p.setNewSub({ ...p.newSub, name: e.target.value })}
               className="flex-1 min-w-[180px] rounded-md border bg-background px-2 py-1 text-sm"

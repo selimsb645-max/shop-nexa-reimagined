@@ -14,6 +14,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Spinner } from "@/components/common/Spinner";
 import { mapFirebaseError } from "@/utils/errors";
 import type { Banner } from "@/types/admin";
+import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/admin/banners")({
   component: BannersAdmin,
@@ -31,7 +32,8 @@ const emptyForm = {
 };
 
 function BannersAdmin() {
-  const { user } = useAuth();
+
+  const { t } = useI18n();  const { user } = useAuth();
   const [banners, setBanners] = useState<Banner[]>([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(emptyForm);
@@ -55,7 +57,7 @@ function BannersAdmin() {
     try {
       const url = await uploadBannerImage(file);
       setForm((f) => ({ ...f, imageUrl: url }));
-      toast.success("Image uploaded");
+      toast.success(t("admin.imageUploaded"));
     } catch (err) {
       toast.error(mapFirebaseError(err));
     } finally {
@@ -72,7 +74,7 @@ function BannersAdmin() {
       const id = await createBanner({ ...form, order: Number(form.order) });
       await logActivity({ uid: user.uid, email: user.email }, "banner.create", id, form.title);
       setForm(emptyForm);
-      toast.success("Banner created");
+      toast.success(t("admin.bannerCreated"));
       await refresh();
     } catch (err) {
       toast.error(mapFirebaseError(err));
@@ -96,7 +98,7 @@ function BannersAdmin() {
     try {
       await deleteBanner(b.id);
       await logActivity({ uid: user.uid, email: user.email }, "banner.delete", b.id, b.title);
-      toast.success("Deleted");
+      toast.success(t("admin.deleted"));
       await refresh();
     } catch (err) {
       toast.error(mapFirebaseError(err));
@@ -106,27 +108,27 @@ function BannersAdmin() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Banners</h1>
-        <p className="text-sm text-muted-foreground">Promotional banners displayed across the site.</p>
+        <h1 className="text-2xl font-bold">{t("admin.banners")}</h1>
+        <p className="text-sm text-muted-foreground">{t("admin.bannersDesc")}</p>
       </div>
 
       <div className="rounded-lg border bg-background p-4">
-        <h2 className="mb-3 text-sm font-semibold">Add banner</h2>
+        <h2 className="mb-3 text-sm font-semibold">{t("admin.addBanner")}</h2>
         <div className="grid gap-3 md:grid-cols-2">
           <input
-            placeholder="Title"
+            placeholder={t("admin.title")}
             value={form.title}
             onChange={(e) => setForm({ ...form, title: e.target.value })}
             className="rounded-md border bg-background px-3 py-2 text-sm"
           />
           <input
-            placeholder="Subtitle"
+            placeholder={t("admin.subtitle")}
             value={form.subtitle}
             onChange={(e) => setForm({ ...form, subtitle: e.target.value })}
             className="rounded-md border bg-background px-3 py-2 text-sm"
           />
           <input
-            placeholder="CTA label"
+            placeholder={t("admin.ctaLabel")}
             value={form.ctaLabel}
             onChange={(e) => setForm({ ...form, ctaLabel: e.target.value })}
             className="rounded-md border bg-background px-3 py-2 text-sm"
@@ -144,13 +146,13 @@ function BannersAdmin() {
             }
             className="rounded-md border bg-background px-3 py-2 text-sm"
           >
-            <option value="hero">Hero</option>
-            <option value="middle">Middle</option>
-            <option value="footer">Footer</option>
+            <option value="hero">{t("admin.hero")}</option>
+            <option value="middle">{t("admin.middle")}</option>
+            <option value="footer">{t("admin.footer")}</option>
           </select>
           <input
             type="number"
-            placeholder="Order"
+            placeholder={t("admin.order")}
             value={form.order}
             onChange={(e) => setForm({ ...form, order: Number(e.target.value) })}
             className="rounded-md border bg-background px-3 py-2 text-sm"

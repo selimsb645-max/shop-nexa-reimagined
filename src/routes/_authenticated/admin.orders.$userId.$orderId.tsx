@@ -13,6 +13,7 @@ import { Spinner } from "@/components/common/Spinner";
 import { formatPrice, formatDateTime } from "@/utils/format";
 import { mapFirebaseError } from "@/utils/errors";
 import type { Order, OrderStatus } from "@/types/commerce";
+import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/admin/orders/$userId/$orderId")({
   component: OrderDetailAdmin,
@@ -28,7 +29,8 @@ const STATUSES: OrderStatus[] = [
 ];
 
 function OrderDetailAdmin() {
-  const { user } = useAuth();
+
+  const { t } = useI18n();  const { user } = useAuth();
   const { userId, orderId } = useParams({
     from: "/_authenticated/admin/orders/$userId/$orderId",
   });
@@ -64,7 +66,7 @@ function OrderDetailAdmin() {
         orderId,
         `${order.status} -> ${status}`,
       );
-      toast.success("Order updated");
+      toast.success(t("admin.orderUpdated"));
       setNote("");
       await refresh();
     } catch (err) {
@@ -83,7 +85,7 @@ function OrderDetailAdmin() {
       const idToken = await user.getIdToken();
       await cancelOrderAdmin(userId, orderId, reason, idToken);
       await logActivity({ uid: user.uid, email: user.email }, "order.cancel", orderId, reason);
-      toast.success("Order cancelled and seller settlements reversed");
+      toast.success(t("admin.orderCancelledReversed"));
       await refresh();
     } catch (err) {
       toast.error(mapFirebaseError(err));
@@ -124,7 +126,7 @@ function OrderDetailAdmin() {
 
       <div className="grid gap-4 md:grid-cols-3">
         <div className="rounded-lg border bg-background p-4 md:col-span-2">
-          <h2 className="mb-3 text-sm font-semibold">Items</h2>
+          <h2 className="mb-3 text-sm font-semibold">{t("admin.items")}</h2>
           <div className="divide-y">
             {order.items.map((it) => (
               <div key={it.productId} className="flex items-center gap-3 py-2 text-sm">
@@ -141,19 +143,19 @@ function OrderDetailAdmin() {
           </div>
           <div className="mt-3 space-y-1 border-t pt-3 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Subtotal</span>
+              <span className="text-muted-foreground">{t("admin.subtotal")}</span>
               <span>{formatPrice(order.subtotal)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Discount</span>
+              <span className="text-muted-foreground">{t("admin.discount")}</span>
               <span>-{formatPrice(order.discount)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Shipping</span>
+              <span className="text-muted-foreground">{t("admin.shipping")}</span>
               <span>{formatPrice(order.shipping)}</span>
             </div>
             <div className="flex justify-between font-semibold">
-              <span>Total</span>
+              <span>{t("admin.total")}</span>
               <span>{formatPrice(order.total)}</span>
             </div>
           </div>
@@ -189,7 +191,7 @@ function OrderDetailAdmin() {
       </div>
 
       <div className="rounded-lg border bg-background p-4">
-        <h2 className="mb-3 text-sm font-semibold">Update status</h2>
+        <h2 className="mb-3 text-sm font-semibold">{t("admin.updateStatus")}</h2>
         <div className="flex flex-wrap gap-2">
           <select
             value={status}
@@ -233,7 +235,7 @@ function OrderDetailAdmin() {
       </div>
 
       <div className="rounded-lg border bg-background p-4">
-        <h2 className="mb-3 text-sm font-semibold">Tracking</h2>
+        <h2 className="mb-3 text-sm font-semibold">{t("admin.tracking")}</h2>
         <ol className="space-y-2 text-sm">
           {order.tracking.map((t, i) => (
             <li key={i} className="flex items-start gap-3">

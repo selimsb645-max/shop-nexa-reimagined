@@ -8,13 +8,15 @@ import { Spinner } from "@/components/common/Spinner";
 import { formatDate } from "@/utils/format";
 import { mapFirebaseError } from "@/utils/errors";
 import type { SellerProfile, SellerStatus } from "@/types/seller";
+import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/admin/sellers")({
   component: SellersAdmin,
 });
 
 function SellersAdmin() {
-  const { user } = useAuth();
+
+  const { t } = useI18n();  const { user } = useAuth();
   const [sellers, setSellers] = useState<SellerProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
@@ -65,8 +67,8 @@ function SellersAdmin() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Sellers</h1>
-        <p className="text-sm text-muted-foreground">Approve, reject and suspend seller accounts.</p>
+        <h1 className="text-2xl font-bold">{t("admin.sellers")}</h1>
+        <p className="text-sm text-muted-foreground">{t("admin.sellersDesc")}</p>
       </div>
       <div className="rounded-lg border bg-background p-4">
         <div className="flex flex-wrap gap-3">
@@ -81,11 +83,11 @@ function SellersAdmin() {
             onChange={(e) => setFilter(e.target.value as "" | SellerStatus)}
             className="rounded-md border bg-background px-3 py-2 text-sm"
           >
-            <option value="">All statuses</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-            <option value="suspended">Suspended</option>
+            <option value="">{t("admin.allStatuses")}</option>
+            <option value="pending">{t("admin.pending")}</option>
+            <option value="approved">{t("admin.approved")}</option>
+            <option value="rejected">{t("admin.rejected")}</option>
+            <option value="suspended">{t("admin.suspended")}</option>
           </select>
         </div>
       </div>
@@ -100,12 +102,12 @@ function SellersAdmin() {
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-left">
               <tr>
-                <th className="px-3 py-2">Shop</th>
-                <th className="px-3 py-2">Contact</th>
-                <th className="px-3 py-2">Location</th>
-                <th className="px-3 py-2">Status</th>
-                <th className="px-3 py-2">Applied</th>
-                <th className="px-3 py-2 text-right">Actions</th>
+                <th className="px-3 py-2">{t("admin.shop")}</th>
+                <th className="px-3 py-2">{t("admin.contact")}</th>
+                <th className="px-3 py-2">{t("admin.location")}</th>
+                <th className="px-3 py-2">{t("admin.status")}</th>
+                <th className="px-3 py-2">{t("admin.applied")}</th>
+                <th className="px-3 py-2 text-right">{t("admin.actions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y">

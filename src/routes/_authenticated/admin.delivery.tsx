@@ -13,6 +13,7 @@ import {
 import { firebaseConfigured } from "@/services/firebase/config";
 import { formatPrice } from "@/utils/format";
 import type { Order } from "@/types/commerce";
+import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/admin/delivery")({
   ssr: false,
@@ -21,7 +22,8 @@ export const Route = createFileRoute("/_authenticated/admin/delivery")({
 });
 
 function AdminDeliveryDashboardPage() {
-  const { data: orders } = useQuery({
+
+  const { t } = useI18n();  const { data: orders } = useQuery({
     queryKey: ["adminOrders", "all"],
     queryFn: async () => {
       const db = (await import("@/services/firebase/config")).getDb();
@@ -84,7 +86,7 @@ function AdminDeliveryDashboardPage() {
         {/* Active deliveries */}
         <div className="rounded-2xl border bg-background shadow-sm">
           <div className="border-b bg-muted/50 px-4 py-3">
-            <h2 className="text-sm font-semibold">Active Deliveries</h2>
+            <h2 className="text-sm font-semibold">{t("admin.activeDeliveries")}</h2>
           </div>
           {!orders ? (
             <div className="py-20 text-center">

@@ -14,6 +14,7 @@ import { listAllProducts } from "@/services/firebase/products";
 import { firebaseConfigured } from "@/services/firebase/config";
 import { formatPrice } from "@/utils/format";
 import type { Product } from "@/types/commerce";
+import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/admin/inventory")({
   ssr: false,
@@ -22,7 +23,8 @@ export const Route = createFileRoute("/_authenticated/admin/inventory")({
 });
 
 function AdminInventoryPage() {
-  const [filter, setFilter] = useState<"all" | "low" | "out">("all");
+
+  const { t } = useI18n();  const [filter, setFilter] = useState<"all" | "low" | "out">("all");
 
   const { data: products, isLoading } = useQuery({
     queryKey: ["products", "all"],
@@ -89,11 +91,11 @@ function AdminInventoryPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b bg-muted/50 text-left text-xs font-semibold text-muted-foreground">
-                  <th className="p-3">Product</th>
-                  <th className="p-3">Price</th>
-                  <th className="p-3">Stock</th>
-                  <th className="p-3">Status</th>
-                  <th className="p-3">Category</th>
+                  <th className="p-3">{t("admin.product")}</th>
+                  <th className="p-3">{t("admin.price")}</th>
+                  <th className="p-3">{t("admin.stock")}</th>
+                  <th className="p-3">{t("admin.status")}</th>
+                  <th className="p-3">{t("admin.category")}</th>
                 </tr>
               </thead>
               <tbody>

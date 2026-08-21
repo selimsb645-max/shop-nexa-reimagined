@@ -26,6 +26,7 @@ import { listAllWithdrawalRequests } from "@/services/firebase/adminWithdrawals"
 import type { AdminFinanceData } from "@/services/firebase/adminSettlements";
 import { formatPrice } from "@/utils/format";
 import { toast } from "sonner";
+import { useI18n } from "@/i18n";
 import {
   DollarSign,
   TrendingUp,
@@ -45,7 +46,8 @@ export const Route = createFileRoute("/_authenticated/admin/finance")({
 })
 
 function AdminFinancePage() {
-  const { user } = useAuth();
+
+  const { t } = useI18n();  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [overview, setOverview] = useState<AdminFinanceData | null>(null);
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
@@ -63,7 +65,7 @@ function AdminFinancePage() {
       setOverview(finance);
       setWithdrawals(withdrawalList);
     } catch (err) {
-      toast.error("Could not load finance data");
+      toast.error(t("admin.couldNotLoadFinance"));
     } finally {
       setLoading(false);
     }
@@ -79,7 +81,7 @@ function AdminFinancePage() {
     try {
       const idToken = await user.getIdToken();
       await approveWithdrawal({ idToken, sellerId, withdrawalId, txRef });
-      toast.success("Withdrawal approved");
+      toast.success(t("admin.withdrawalApproved"));
       loadData();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not approve withdrawal");
@@ -94,7 +96,7 @@ function AdminFinancePage() {
     try {
       const idToken = await user.getIdToken();
       await rejectWithdrawal({ idToken, sellerId, withdrawalId, note });
-      toast.success("Withdrawal rejected");
+      toast.success(t("admin.withdrawalRejected"));
       loadData();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not reject withdrawal");
@@ -177,7 +179,7 @@ function AdminFinancePage() {
 
         {/* Money Flow Diagram */}
         <div className="rounded-xl border bg-card p-4">
-          <h2 className="text-lg font-semibold mb-3">Money Flow</h2>
+          <h2 className="text-lg font-semibold mb-3">{t("admin.moneyFlow")}</h2>
           <div className="flex flex-wrap items-center gap-2 text-sm">
             <FlowBox label="Customer" color="bg-blue-100 text-blue-700" />
             <FlowArrow />
@@ -198,7 +200,7 @@ function AdminFinancePage() {
         {/* Withdrawal Requests */}
         <div className="rounded-xl border bg-card">
           <div className="border-b px-4 py-3">
-            <h2 className="text-lg font-semibold">Withdrawal Requests</h2>
+            <h2 className="text-lg font-semibold">{t("admin.withdrawalRequests")}</h2>
           </div>
           <div className="divide-y">
             {withdrawals.length === 0 ? (

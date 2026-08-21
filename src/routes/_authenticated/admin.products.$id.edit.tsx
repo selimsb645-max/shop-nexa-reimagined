@@ -12,13 +12,15 @@ import { useAuth } from "@/context/AuthContext";
 import { mapFirebaseError } from "@/utils/errors";
 import { Spinner } from "@/components/common/Spinner";
 import type { Product } from "@/types/commerce";
+import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/admin/products/$id/edit")({
   component: EditProductAdmin,
 });
 
 function EditProductAdmin() {
-  const { user } = useAuth();
+
+  const { t } = useI18n();  const { user } = useAuth();
   const { id } = useParams({ from: "/_authenticated/admin/products/$id/edit" });
   const navigate = useNavigate();
   const [product, setProduct] = useState<Product | null>(null);
@@ -55,7 +57,7 @@ function EditProductAdmin() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Edit product</h1>
+        <h1 className="text-2xl font-bold">{t("admin.editProduct")}</h1>
         <p className="text-sm text-muted-foreground">{product.title}</p>
       </div>
       <ProductForm
@@ -95,7 +97,7 @@ function EditProductAdmin() {
               "product.update",
               product.id,
             );
-            toast.success("Product updated");
+            toast.success(t("admin.productUpdated"));
             navigate({ to: "/admin/products" });
           } catch (err) {
             toast.error(mapFirebaseError(err));

@@ -7,13 +7,15 @@ import { useAuth } from "@/context/AuthContext";
 import { Spinner } from "@/components/common/Spinner";
 import { mapFirebaseError } from "@/utils/errors";
 import type { SiteSettings } from "@/types/admin";
+import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/admin/settings")({
   component: SettingsAdmin,
 });
 
 function SettingsAdmin() {
-  const { user } = useAuth();
+
+  const { t } = useI18n();  const { user } = useAuth();
   const [s, setS] = useState<SiteSettings | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -29,7 +31,7 @@ function SettingsAdmin() {
     try {
       await saveSiteSettings(patch);
       await logActivity({ uid: user.uid, email: user.email }, "settings.update", section);
-      toast.success("Saved");
+      toast.success(t("admin.saved"));
     } catch (err) {
       toast.error(mapFirebaseError(err));
     } finally {
@@ -40,12 +42,12 @@ function SettingsAdmin() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Settings</h1>
-        <p className="text-sm text-muted-foreground">Site-wide configuration.</p>
+        <h1 className="text-2xl font-bold">{t("admin.settings")}</h1>
+        <p className="text-sm text-muted-foreground">{t("admin.siteWideConfig")}</p>
       </div>
 
       <section className="rounded-lg border bg-background p-4 space-y-3">
-        <h2 className="text-sm font-semibold">Website</h2>
+        <h2 className="text-sm font-semibold">{t("admin.website")}</h2>
         <div className="grid gap-3 md:grid-cols-2">
           <Text label="Site name" value={s.siteName} onChange={(v) => setS({ ...s, siteName: v })} />
           <Text label="Currency" value={s.currency} onChange={(v) => setS({ ...s, currency: v })} />
@@ -73,7 +75,7 @@ function SettingsAdmin() {
       </section>
 
       <section className="rounded-lg border bg-background p-4 space-y-3">
-        <h2 className="text-sm font-semibold">Shipping</h2>
+        <h2 className="text-sm font-semibold">{t("admin.shipping")}</h2>
         <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"
@@ -106,7 +108,7 @@ function SettingsAdmin() {
       </section>
 
       <section className="rounded-lg border bg-background p-4 space-y-3">
-        <h2 className="text-sm font-semibold">Cash on Delivery</h2>
+        <h2 className="text-sm font-semibold">{t("admin.cashOnDelivery")}</h2>
         <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"

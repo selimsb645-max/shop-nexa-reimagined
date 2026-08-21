@@ -18,6 +18,7 @@ import { Spinner } from "@/components/common/Spinner";
 import { formatPrice, formatDate } from "@/utils/format";
 import { mapFirebaseError } from "@/utils/errors";
 import type { Product } from "@/types/commerce";
+import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/admin/products")({
   component: ProductsAdmin,
@@ -26,7 +27,8 @@ export const Route = createFileRoute("/_authenticated/admin/products")({
 type Row = Product & { approved: boolean };
 
 function ProductsAdmin() {
-  const { user } = useAuth();
+
+  const { t } = useI18n();  const { user } = useAuth();
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
@@ -154,7 +156,7 @@ function ProductsAdmin() {
     try {
       await deleteProductAdmin(id);
       await logActivity({ uid: user.uid, email: user.email }, "product.delete", id);
-      toast.success("Product deleted");
+      toast.success(t("admin.productDeleted"));
       await refresh();
     } catch (err) {
       toast.error(mapFirebaseError(err));
@@ -165,7 +167,7 @@ function ProductsAdmin() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Products</h1>
+          <h1 className="text-2xl font-bold">{t("admin.products")}</h1>
           <p className="text-sm text-muted-foreground">
             Approve listings, adjust inventory, bulk update prices.
           </p>
@@ -194,19 +196,19 @@ function ProductsAdmin() {
             onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
             className="rounded-md border bg-background px-3 py-2 text-sm"
           >
-            <option value="">All statuses</option>
-            <option value="published">Published</option>
-            <option value="draft">Draft</option>
-            <option value="archived">Archived</option>
+            <option value="">{t("admin.allStatuses")}</option>
+            <option value="published">{t("admin.published")}</option>
+            <option value="draft">{t("admin.draft")}</option>
+            <option value="archived">{t("admin.archived")}</option>
           </select>
           <select
             value={approvalFilter}
             onChange={(e) => setApprovalFilter(e.target.value as typeof approvalFilter)}
             className="rounded-md border bg-background px-3 py-2 text-sm"
           >
-            <option value="">All approvals</option>
-            <option value="approved">Approved</option>
-            <option value="pending">Pending approval</option>
+            <option value="">{t("admin.allApprovals")}</option>
+            <option value="approved">{t("admin.approved")}</option>
+            <option value="pending">{t("admin.pendingApproval")}</option>
           </select>
         </div>
 
@@ -223,12 +225,12 @@ function ProductsAdmin() {
               <option value="price_inc_pct">Increase price by %</option>
               <option value="price_dec_pct">Decrease price by %</option>
               <option value="stock_set">Set stock to…</option>
-              <option value="publish">Publish</option>
-              <option value="draft">Set to Draft</option>
-              <option value="archive">Archive</option>
-              <option value="approve">Approve</option>
-              <option value="unapprove">Revoke approval</option>
-              <option value="delete">Delete</option>
+              <option value="publish">{t("admin.publish")}</option>
+              <option value="draft">{t("admin.setToDraft")}</option>
+              <option value="archive">{t("admin.archive")}</option>
+              <option value="approve">{t("admin.approve")}</option>
+              <option value="unapprove">{t("admin.revokeApproval")}</option>
+              <option value="delete">{t("admin.delete")}</option>
             </select>
             {["price_set", "price_inc_pct", "price_dec_pct", "stock_set"].includes(bulkMode) && (
               <input
@@ -236,7 +238,7 @@ function ProductsAdmin() {
                 min={0}
                 value={bulkValue}
                 onChange={(e) => setBulkValue(e.target.value)}
-                placeholder="Value"
+                placeholder={t("admin.value")}
                 className="w-28 rounded-md border bg-background px-2 py-1.5 text-sm"
               />
             )}
@@ -275,13 +277,13 @@ function ProductsAdmin() {
                     onChange={toggleAll}
                   />
                 </th>
-                <th className="px-3 py-2">Product</th>
-                <th className="px-3 py-2">Price</th>
-                <th className="px-3 py-2">Stock</th>
-                <th className="px-3 py-2">Status</th>
+                <th className="px-3 py-2">{t("admin.product")}</th>
+                <th className="px-3 py-2">{t("admin.price")}</th>
+                <th className="px-3 py-2">{t("admin.stock")}</th>
+                <th className="px-3 py-2">{t("admin.status")}</th>
                 <th className="px-3 py-2">Approval</th>
-                <th className="px-3 py-2">Created</th>
-                <th className="px-3 py-2 text-right">Actions</th>
+                <th className="px-3 py-2">{t("admin.created")}</th>
+                <th className="px-3 py-2 text-right">{t("admin.actions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y">

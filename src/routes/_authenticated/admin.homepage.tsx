@@ -7,13 +7,15 @@ import { useAuth } from "@/context/AuthContext";
 import { Spinner } from "@/components/common/Spinner";
 import { mapFirebaseError } from "@/utils/errors";
 import type { SiteSettings } from "@/types/admin";
+import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/admin/homepage")({
   component: HomepageAdmin,
 });
 
 function HomepageAdmin() {
-  const { user } = useAuth();
+
+  const { t } = useI18n();  const { user } = useAuth();
   const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -39,7 +41,7 @@ function HomepageAdmin() {
         "settings.update",
         "homepage",
       );
-      toast.success("Homepage saved");
+      toast.success(t("admin.homepageSaved"));
     } catch (err) {
       toast.error(mapFirebaseError(err));
     } finally {
@@ -50,8 +52,8 @@ function HomepageAdmin() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Homepage</h1>
-        <p className="text-sm text-muted-foreground">Control hero content and featured sections.</p>
+        <h1 className="text-2xl font-bold">{t("admin.homepage")}</h1>
+        <p className="text-sm text-muted-foreground">{t("admin.homepageDesc")}</p>
       </div>
       <div className="rounded-lg border bg-background p-4 space-y-3">
         <Field

@@ -4,13 +4,15 @@ import { listActivityLogs } from "@/services/firebase/adminLogs";
 import type { ActivityLog } from "@/types/admin";
 import { Spinner } from "@/components/common/Spinner";
 import { formatDateTime } from "@/utils/format";
+import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/admin/logs")({
   component: LogsAdmin,
 });
 
 function LogsAdmin() {
-  const [logs, setLogs] = useState<ActivityLog[]>([]);
+
+  const { t } = useI18n();  const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,7 +28,7 @@ function LogsAdmin() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Activity Logs</h1>
+        <h1 className="text-2xl font-bold">{t("admin.activityLogs")}</h1>
         <p className="text-sm text-muted-foreground">
           Audit trail of all admin actions across the platform.
         </p>
@@ -42,11 +44,11 @@ function LogsAdmin() {
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-left">
               <tr>
-                <th className="px-3 py-2">When</th>
-                <th className="px-3 py-2">Actor</th>
-                <th className="px-3 py-2">Action</th>
-                <th className="px-3 py-2">Target</th>
-                <th className="px-3 py-2">Details</th>
+                <th className="px-3 py-2">{t("admin.when")}</th>
+                <th className="px-3 py-2">{t("admin.actor")}</th>
+                <th className="px-3 py-2">{t("admin.action")}</th>
+                <th className="px-3 py-2">{t("admin.target")}</th>
+                <th className="px-3 py-2">{t("admin.details")}</th>
               </tr>
             </thead>
             <tbody className="divide-y">
