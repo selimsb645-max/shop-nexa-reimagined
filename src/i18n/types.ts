@@ -452,6 +452,21 @@ export interface TranslationKeys {
   "giftCards.recipientEmail": string;
   "giftCards.messageOptional": string;
   "giftCards.processing": string;
+  "messages.recentConversations": string;
+  "messages.total": string;
+  "messages.noTracking": string;
+  "messages.method": string;
+  "messages.status": string;
+  "messages.txnId": string;
+  "messages.createTicket": string;
+  "messages.orderIssue": string;
+  "messages.paymentIssue": string;
+  "messages.deliveryIssue": string;
+  "messages.accountIssue": string;
+  "messages.other": string;
+  "messages.yourTickets": string;
+  "messages.aiAssistant": string;
+  "messages.noMessages": string;
 
   // Notifications
   "notifications.title": string;

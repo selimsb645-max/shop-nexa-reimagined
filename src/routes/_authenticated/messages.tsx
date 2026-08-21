@@ -365,6 +365,7 @@ function InboxDashboard({
   onTabChange: (t: Tab) => void;
   onThreadClick: (id: string) => void;
 }) {
+  const { t } = useI18n();
   const sellerThreads = threads.filter((t) => t.sellerId !== null);
   const openTickets = tickets.filter((t) => t.status === "open" || t.status === "pending");
   const recentNotifs = notifications.slice(0, 5);
@@ -492,7 +493,7 @@ function InboxDashboard({
       {/* Recent threads */}
       {threads.length > 0 && (
         <div>
-          <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Recent Conversations</h3>
+          <h3 className="mb-2 text-sm font-semibold text-muted-foreground">{t("messages.recentConversations")}</h3>
           <div className="space-y-2">
             {threads.slice(0, 5).map((thread) => (
               <button
@@ -636,6 +637,7 @@ function OrderConversationView({
   onBack: () => void;
   onChatWithSeller: (threadId: string) => void;
 }) {
+  const { t } = useI18n();
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
@@ -693,7 +695,7 @@ function OrderConversationView({
           </div>
 
           <div className="mt-4 flex items-center justify-between border-t pt-3">
-            <span className="text-sm font-semibold">Total: </span>
+            <span className="text-sm font-semibold">{t("messages.total")}</span>
             <span className="text-lg font-bold text-primary">{formatPrice(order.total)}</span>
           </div>
         </div>
@@ -706,7 +708,7 @@ function OrderConversationView({
               <Truck className="h-4 w-4 text-primary" /> Shipment Tracking
             </h3>
             {order.tracking.length === 0 ? (
-              <p className="text-xs text-muted-foreground">No tracking updates yet</p>
+              <p className="text-xs text-muted-foreground">{t("messages.noTracking")}</p>
             ) : (
               <div className="space-y-2">
                 {order.tracking.map((event, i) => (
@@ -740,7 +742,7 @@ function OrderConversationView({
               </div>
               {order.payment.transactionId && (
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Txn ID</span>
+                  <span className="text-muted-foreground">{t("messages.txnId")}</span>
                   <span className="font-mono text-[10px]">{order.payment.transactionId}</span>
                 </div>
               )}
@@ -864,6 +866,7 @@ function SupportCenter({
   onTicketClick: (id: string) => void;
   userId: string;
 }) {
+  const { t } = useI18n();
   const [showForm, setShowForm] = useState(false);
   const [subject, setSubject] = useState("");
   const [category, setCategory] = useState<SupportTicket["category"]>("order");
@@ -923,7 +926,7 @@ function SupportCenter({
       {/* Create ticket form */}
       {showForm && (
         <div className="rounded-2xl border bg-background p-5 shadow-sm">
-          <h3 className="mb-3 text-sm font-semibold">Create Support Ticket</h3>
+          <h3 className="mb-3 text-sm font-semibold">{t("messages.createTicket")}</h3>
           <div className="space-y-3">
             <input
               type="text"
@@ -937,11 +940,11 @@ function SupportCenter({
               onChange={(e) => setCategory(e.target.value as SupportTicket["category"])}
               className="w-full rounded-lg border px-3 py-2.5 text-sm outline-none focus:border-primary"
             >
-              <option value="order">Order Issue</option>
-              <option value="payment">Payment Issue</option>
-              <option value="delivery">Delivery Issue</option>
-              <option value="account">Account Issue</option>
-              <option value="other">Other</option>
+              <option value="order">{t("messages.orderIssue")}</option>
+              <option value="payment">{t("messages.paymentIssue")}</option>
+              <option value="delivery">{t("messages.deliveryIssue")}</option>
+              <option value="account">{t("messages.accountIssue")}</option>
+              <option value="other">{t("messages.other")}</option>
             </select>
             <textarea
               value={message}
@@ -968,7 +971,7 @@ function SupportCenter({
 
       {/* Existing tickets */}
       <div>
-        <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Your Tickets</h3>
+        <h3 className="mb-2 text-sm font-semibold text-muted-foreground">{t("messages.yourTickets")}</h3>
         {filtered.length === 0 ? (
           <EmptyState icon={<Headphones className="h-10 w-10" />} title="No support tickets" subtitle="Create a ticket to get help" />
         ) : (
@@ -1008,6 +1011,7 @@ function SupportCenter({
 // ═══════════════════════════════════════════════════════════════
 
 function AIAssistant() {
+  const { t } = useI18n();
   const [messages, setMessages] = useState<{ role: "user" | "ai"; text: string }[]>([
     { role: "ai", text: "Hi! I'm your AI Shopping Assistant. I can help you find products, track orders, suggest coupons, and more. How can I help today?" },
   ]);
@@ -1049,7 +1053,7 @@ function AIAssistant() {
           <Bot className="h-5 w-5" />
         </span>
         <div>
-          <h3 className="text-sm font-semibold">AI Shopping Assistant</h3>
+          <h3 className="text-sm font-semibold">{t("messages.aiAssistant")}</h3>
           <p className="text-[10px] text-green-500">● Online — Always available</p>
         </div>
       </div>
@@ -1546,6 +1550,7 @@ function ChatView({ threadId, onBack, userId }: { threadId: string; onBack: () =
 // ═══════════════════════════════════════════════════════════════
 
 function TicketChatView({ ticketId, onBack, userId }: { ticketId: string; onBack: () => void; userId: string }) {
+  const { t } = useI18n();
   const [draft, setDraft] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
@@ -1634,7 +1639,7 @@ function TicketChatView({ ticketId, onBack, userId }: { ticketId: string; onBack
         ) : !messages || messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center text-center">
             <Headphones className="mb-3 h-12 w-12 text-muted-foreground/30" />
-            <p className="text-sm text-muted-foreground">No messages yet</p>
+            <p className="text-sm text-muted-foreground">{t("messages.noMessages")}</p>
           </div>
         ) : (
           messages.map((msg) => {
