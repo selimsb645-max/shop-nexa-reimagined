@@ -119,7 +119,7 @@ function EditProfilePage() {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">Email</label>
+            <label className="mb-1.5 block text-sm font-medium text-gray-700">{t("editProfile.emailLabel")}</label>
             <input
               value={user.email ?? ""}
               readOnly

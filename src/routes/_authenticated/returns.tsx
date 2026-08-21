@@ -156,7 +156,7 @@ function ReturnsPage() {
               )}
 
               <div>
-                <label className="mb-1 block text-sm font-medium">Reason</label>
+                <label className="mb-1 block text-sm font-medium">{t("returns.reason")}</label>
                 <select
                   value={reason}
                   onChange={(e) => setReason(e.target.value as ReturnReason)}

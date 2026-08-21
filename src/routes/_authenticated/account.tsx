@@ -202,7 +202,7 @@ function AccountPage() {
               className="inline-flex items-center gap-1.5 text-sm font-medium text-white/90 transition hover:text-white"
             >
               <ArrowLeft className="h-4 w-4 shrink-0" strokeWidth={2} />
-              <span className="truncate">Back to Home</span>
+              <span className="truncate">{t("account.backHome")}</span>
             </Link>
             <div className="flex items-center gap-2">
               <Link
@@ -344,8 +344,8 @@ function AccountPage() {
               <Store className="h-6 w-6" strokeWidth={2} />
             </span>
             <div className="min-w-0 flex-1">
-              <h3 className="text-sm font-bold text-gray-900">Become a Seller on Shop Nexa</h3>
-              <p className="truncate text-xs text-gray-500">Start selling your products to thousands of customers</p>
+              <h3 className="text-sm font-bold text-gray-900">{t("account.becomeSeller")}</h3>
+              <p className="truncate text-xs text-gray-500">{t("account.becomeSellerHint")}</p>
             </div>
             <ChevronRight className="h-5 w-5 shrink-0 text-orange-500" strokeWidth={2.5} />
           </Link>

@@ -467,6 +467,13 @@ export interface TranslationKeys {
   "messages.yourTickets": string;
   "messages.aiAssistant": string;
   "messages.noMessages": string;
+  "editProfile.emailLabel": string;
+  "support.howCanWeHelp": string;
+  "support.noTickets": string;
+  "support.faqTitle": string;
+  "account.backHome": string;
+  "account.becomeSeller": string;
+  "account.becomeSellerHint": string;
 
   // Notifications
   "notifications.title": string;

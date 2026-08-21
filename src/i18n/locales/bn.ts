@@ -454,6 +454,13 @@ export const bn: TranslationKeys = {
   "messages.yourTickets": "আপনার টিকেট",
   "messages.aiAssistant": "এআই শপিং অ্যাসিস্ট্যান্ট",
   "messages.noMessages": "কোনো মেসেজ নেই",
+  "editProfile.emailLabel": "ইমেইল",
+  "support.howCanWeHelp": "আমরা কীভাবে সাহায্য করতে পারি?",
+  "support.noTickets": "আপনার কোনো সাপোর্ট টিকেট নেই।",
+  "support.faqTitle": "সাধারণ জিজ্ঞাসা",
+  "account.backHome": "হোমে ফিরুন",
+  "account.becomeSeller": "Shop Nexa-তে সেলার হোন",
+  "account.becomeSellerHint": "আপনার পণ্য হাজার হাজার ক্রেতার কাছে বিক্রি করুন",
 
   // Notifications
   "notifications.title": "নোটিফিকেশন",

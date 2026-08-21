@@ -454,6 +454,13 @@ export const en: TranslationKeys = {
   "messages.yourTickets": "Your Tickets",
   "messages.aiAssistant": "AI Shopping Assistant",
   "messages.noMessages": "No messages yet",
+  "editProfile.emailLabel": "Email",
+  "support.howCanWeHelp": "How can we help?",
+  "support.noTickets": "You have no support tickets.",
+  "support.faqTitle": "Frequently asked questions",
+  "account.backHome": "Back to Home",
+  "account.becomeSeller": "Become a Seller on Shop Nexa",
+  "account.becomeSellerHint": "Start selling your products to thousands of customers",
 
   // Notifications
   "notifications.title": "Notifications",

@@ -135,7 +135,7 @@ function SupportPage() {
             </select>
           </div>
           <div className="sm:col-span-2">
-            <label className="mb-1 block text-sm font-medium text-slate-700">How can we help?</label>
+            <label className="mb-1 block text-sm font-medium text-slate-700">{t("support.howCanWeHelp")}</label>
             <textarea value={message} onChange={e => setMessage(e.target.value)} rows={4} maxLength={1500} className={field} placeholder="Describe your issue..." />
           </div>
           <div className="sm:col-span-2">
@@ -152,7 +152,7 @@ function SupportPage() {
         {tickets.isLoading ? (
           <div className="py-16 text-center"><Loader className="mx-auto h-8 w-8 animate-spin text-slate-300" /></div>
         ) : !tickets.data || tickets.data.length === 0 ? (
-          <div className="p-12 text-center text-sm text-slate-400">You have no support tickets.</div>
+          <div className="p-12 text-center text-sm text-slate-400">{t("support.noTickets")}</div>
         ) : (
           <ul className="divide-y divide-gray-100">
             {tickets.data.map(t => (
@@ -201,7 +201,7 @@ function SupportPage() {
 
       {/* FAQ */}
       <div className="mt-4 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-        <div className="border-b border-gray-100 px-5 py-3.5 font-bold text-slate-800">Frequently asked questions</div>
+        <div className="border-b border-gray-100 px-5 py-3.5 font-bold text-slate-800">{t("support.faqTitle")}</div>
         <div className="divide-y divide-gray-100">
           {FAQS.map(f => (
             <details key={f.q} className="px-5 py-3.5">
