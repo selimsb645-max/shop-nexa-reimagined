@@ -432,13 +432,13 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
                     </div>
                     {form.compareAtPrice && (
                       <div className="flex justify-between">
-                        <span className="text-slate-500">Sale Price:</span>
+                        <span className="text-slate-500">{t("seller.salePrice")}</span>
                         <span className="font-semibold text-slate-700">৳{Number(form.compareAtPrice).toFixed(2)}</span>
                       </div>
                     )}
                     {form.compareAtPrice && Number(form.compareAtPrice) > Number(form.price) && (
                       <div className="flex justify-between">
-                        <span className="text-slate-500">Discount:</span>
+                        <span className="text-slate-500">{t("seller.discountLabel")}</span>
                         <span className="font-semibold text-[#f57224]">
                           ৳{(Number(form.compareAtPrice) - Number(form.price)).toFixed(2)}
                           {" ("}{((1 - Number(form.price) / Number(form.compareAtPrice)) * 100).toFixed(0)}% off{")"}
@@ -517,8 +517,8 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
               ) : (
                 <>
                   <Upload className="w-6 h-6 text-slate-300" />
-                  <span className="text-sm text-slate-500 font-medium">Click to upload</span>
-                  <span className="text-xs text-slate-400">PNG, JPG up to 5MB</span>
+                  <span className="text-sm text-slate-500 font-medium">{t("seller.clickToUpload")}</span>
+                  <span className="text-xs text-slate-400">{t("seller.imageHint")}</span>
                 </>
               )}
             </button>

@@ -439,7 +439,7 @@ function CheckoutPage() {
               className="inline-flex items-center gap-2 bg-[#0f172a] hover:bg-slate-800 text-white font-bold py-3.5 px-8 rounded-xl transition-all shadow-md text-sm"
             >
               <ShoppingBag className="w-4 h-4" />
-              <span>Browse Products</span>
+              <span>{t("checkout.browseProducts")}</span>
             </Link>
           </div>
         </main>
@@ -479,7 +479,7 @@ function CheckoutPage() {
             className="text-xs font-semibold text-slate-500 hover:text-[#f57224] flex items-center gap-1 transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Back to Cart</span>
+            <span>{t("checkout.backToCart")}</span>
           </Link>
         </div>
 
@@ -525,7 +525,7 @@ function CheckoutPage() {
                       <div className="text-lg font-black text-orange-600">
                         ৳{deliveryZoneConfig.charge}
                       </div>
-                      <div className="text-[10px] text-slate-400">Delivery Charge</div>
+                      <div className="text-[10px] text-slate-400">{t("checkout.deliveryCharge")}</div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-slate-500">
@@ -671,7 +671,7 @@ function CheckoutPage() {
                     className="px-4 py-2.5 bg-[#0f172a] hover:bg-slate-800 text-white text-sm font-bold rounded-lg transition-colors disabled:opacity-60 flex items-center gap-1.5"
                   >
                     {couponBusy ? (
-                      <span>Checking...</span>
+                      <span>{t("checkout.checking")}</span>
                     ) : (
                       <>
                         <Tag className="w-3.5 h-3.5" />
@@ -1008,14 +1008,14 @@ function CheckoutPage() {
               {/* Price breakdown */}
               <div className="space-y-2.5 border-t border-slate-100 pt-4 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Products Total</span>
+                  <span className="text-slate-500">{t("checkout.productsTotal")}</span>
                   <span className="font-semibold text-[#0f172a]">
                     {formatPrice(itemsSubtotal)}
                   </span>
                 </div>
                 {couponDiscount > 0 && (
                   <div className="flex justify-between text-emerald-600">
-                    <span>Voucher Discount</span>
+                    <span>{t("checkout.voucherDiscount")}</span>
                     <span className="font-semibold">
                       -{formatPrice(couponDiscount)}
                     </span>
@@ -1023,7 +1023,7 @@ function CheckoutPage() {
                 )}
                 {rewardDiscountValue > 0 && (
                   <div className="flex justify-between text-purple-600">
-                    <span>Reward Points</span>
+                    <span>{t("checkout.rewardPoints")}</span>
                     <span className="font-semibold">
                       -{formatPrice(rewardDiscountValue)}
                     </span>
@@ -1048,7 +1048,7 @@ function CheckoutPage() {
                 </div>
                 {walletUsed > 0 && (
                   <div className="flex justify-between text-[#f57224]">
-                    <span>Wallet Credit</span>
+                    <span>{t("checkout.walletCredit")}</span>
                     <span className="font-semibold">
                       -{formatPrice(walletUsed)}
                     </span>
@@ -1070,7 +1070,7 @@ function CheckoutPage() {
               <div className="mt-4 bg-slate-50 rounded-lg p-3 flex items-center gap-2">
                 <Clock className="w-4 h-4 text-slate-500 flex-shrink-0" />
                 <div>
-                  <p className="text-xs text-slate-500">Estimated Delivery</p>
+                  <p className="text-xs text-slate-500">{t("checkout.estimatedDelivery")}</p>
                   <p className="text-sm font-bold text-[#0f172a]">
                     {estimatedDelivery}
                   </p>
@@ -1086,12 +1086,12 @@ function CheckoutPage() {
               >
                 {placing ? (
                   <>
-                    <span className="animate-pulse">Placing Order...</span>
+                    <span className="animate-pulse">{t("checkout.placingOrder")}</span>
                   </>
                 ) : (
                   <>
                     <Lock className="w-4 h-4" />
-                    <span>Place Order</span>
+                    <span>{t("checkout.placeOrder")}</span>
                   </>
                 )}
               </button>
@@ -1154,11 +1154,11 @@ function CheckoutPage() {
           className="bg-[#f57224] hover:bg-[#e0621f] text-white font-bold text-sm py-3 px-6 rounded-xl flex items-center gap-2 shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {placing ? (
-            <span className="animate-pulse">Placing...</span>
+            <span className="animate-pulse">{t("checkout.placing")}</span>
           ) : (
             <>
               <Lock className="w-4 h-4" />
-              <span>Place Order</span>
+              <span>{t("checkout.placeOrder")}</span>
             </>
           )}
         </button>

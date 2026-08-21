@@ -806,4 +806,25 @@ export interface TranslationKeys {
   // Misc
   "misc.version": string;
   "misc.tagline": string;
+  "admin.manageUsersDesc": string;
+  "checkout.backToCart": string;
+  "checkout.browseProducts": string;
+  "checkout.checking": string;
+  "checkout.deliveryCharge": string;
+  "checkout.estimatedDelivery": string;
+  "checkout.placing": string;
+  "checkout.placingOrder": string;
+  "checkout.productsTotal": string;
+  "checkout.rewardPoints": string;
+  "checkout.voucherDiscount": string;
+  "checkout.walletCredit": string;
+  "order.continueShopping": string;
+  "seller.applicationSubmitted": string;
+  "seller.clickToUpload": string;
+  "seller.discountLabel": string;
+  "seller.imageHint": string;
+  "seller.salePrice": string;
+  "seller.sellerAgreement": string;
+  "seller.sellerRegistration": string;
+  "seller.updateStatus": string;
 }

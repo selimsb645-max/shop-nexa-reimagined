@@ -279,7 +279,7 @@ interface OrderData {
             className="flex-1 flex items-center justify-center gap-2 bg-white border-2 border-slate-200 hover:border-[#f57224] text-[#0f172a] font-bold py-3.5 px-6 rounded-xl transition-all text-sm"
           >
             <ShoppingBag className="w-4 h-4" />
-            <span>Continue Shopping</span>
+            <span>{t("order.continueShopping")}</span>
           </Link>
         </div>
 

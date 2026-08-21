@@ -85,7 +85,7 @@ function SellerRegisterPage() {
             <div className="w-7 h-7 bg-[#f57224] rounded-lg flex items-center justify-center">
               <Store className="w-4 h-4" />
             </div>
-            <span className="text-sm font-bold">Seller Registration</span>
+            <span className="text-sm font-bold">{t("seller.sellerRegistration")}</span>
           </div>
         </div>
       </header>
@@ -221,6 +221,7 @@ function SellerRegisterPage() {
 // Review Pending Screen
 // ====================================================================
 function ReviewPending() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center px-4">
@@ -228,7 +229,7 @@ function ReviewPending() {
         <div className="w-20 h-20 rounded-full bg-amber-50 flex items-center justify-center mx-auto mb-4">
           <Loader className="w-10 h-10 text-amber-500 animate-spin" />
         </div>
-        <h2 className="text-xl font-bold text-[#0f172a]">Application Submitted!</h2>
+        <h2 className="text-xl font-bold text-[#0f172a]">{t("seller.applicationSubmitted")}</h2>
         <p className="mt-3 text-sm text-slate-500">
           Your seller application is now under review. Our team will verify your information and documents. You'll be notified within 24–48 hours.
         </p>
@@ -485,6 +486,7 @@ function BankingForm({ initial, onBack, onSubmit, loading }: {
 function TermsForm({ onBack, onSubmit, loading }: {
   onBack: () => void; onSubmit: () => void; loading: boolean;
 }) {
+  const { t } = useI18n();
   const [agreed, setAgreed] = useState(false);
 
   return (
@@ -492,7 +494,7 @@ function TermsForm({ onBack, onSubmit, loading }: {
       <FormHeader icon={<FileText className="w-5 h-5 text-[#f57224]" />} title="Terms & Conditions" subtitle="Review and accept to submit" />
 
       <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3 text-sm text-slate-600 max-h-64 overflow-y-auto">
-        <p className="font-bold text-[#0f172a]">Seller Agreement</p>
+        <p className="font-bold text-[#0f172a]">{t("seller.sellerAgreement")}</p>
         <p>1. I confirm that all information provided is accurate and truthful.</p>
         <p>2. I agree to Shop Nexa's commission rate (default 8%) on each order.</p>
         <p>3. I will fulfill orders within the promised delivery timeline.</p>

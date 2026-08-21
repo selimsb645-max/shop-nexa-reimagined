@@ -226,9 +226,9 @@ function OrderDetail({ sellerId }: { sellerId: string }) {
           </div>
 
           <div className="rounded-lg border bg-background p-4">
-            <div className="mb-3 text-sm font-semibold">Update status</div>
+            <div className="mb-3 text-sm font-semibold">{t("seller.updateStatus")}</div>
             {/* Quick action buttons */}
-            <label className="mb-2 block text-xs font-medium">Update status</label>
+            <label className="mb-2 block text-xs font-medium">{t("seller.updateStatus")}</label>
             <div className="mb-3 grid grid-cols-2 gap-2">
               <button
                 onClick={() => setNextStatus("processing")}
