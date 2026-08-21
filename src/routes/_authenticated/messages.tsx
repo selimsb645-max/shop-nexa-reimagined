@@ -199,7 +199,7 @@ function CommunicationCenter() {
   }, [threads, activeFilter, searchQuery]);
 
   return (
-    <ServicePageLayout title="Messages" subtitle="Your hub for orders, chats, support & notifications">
+    <ServicePageLayout title={t("messages.titleMessages")} subtitle="Your hub for orders, chats, support & notifications">
         {/* Search bar */}
 
         {/* Search bar */}
@@ -542,6 +542,7 @@ function OrderConversations({
   searchQuery: string;
   onOrderClick: (id: string) => void;
 }) {
+  const { t } = useI18n();
   const filtered = useMemo(() => {
     if (!searchQuery) return orders;
     const q = searchQuery.toLowerCase();
@@ -553,7 +554,7 @@ function OrderConversations({
   }, [orders, searchQuery]);
 
   if (orders.length === 0) {
-    return <EmptyState icon={<Package className="h-12 w-12" />} title="No orders yet" subtitle="Your order conversations will appear here" />;
+    return <EmptyState icon={<Package className="h-12 w-12" />} title={t("messages.titleNoOrders")} subtitle={t("messages.titleOrderConvos")} />;
   }
 
   return (
@@ -795,6 +796,7 @@ function SellerChats({
   searchQuery: string;
   onThreadClick: (id: string) => void;
 }) {
+  const { t } = useI18n();
   const filtered = useMemo(() => {
     if (!searchQuery) return threads;
     const q = searchQuery.toLowerCase();
@@ -807,8 +809,8 @@ function SellerChats({
     return (
       <EmptyState
         icon={<Store className="h-12 w-12" />}
-        title="No seller conversations"
-        subtitle="Chat with sellers about products and orders"
+        title={t("messages.titleNoSellerConvos")}
+        subtitle={t("messages.titleSellerConvos")}
       />
     );
   }
@@ -877,13 +879,13 @@ function SupportCenter({
     mutationFn: () =>
       createTicket(userId, { subject: subject.trim(), category, orderId: null, message: message.trim() }),
     onSuccess: () => {
-      toast.success("Ticket created");
+      toast.success(t("messages.ticketCreated"));
       queryClient.invalidateQueries({ queryKey: ["tickets"] });
       setShowForm(false);
       setSubject("");
       setMessage("");
     },
-    onError: () => toast.error("Failed to create ticket"),
+    onError: () => toast.error(t("messages.ticketCreateFailed")),
   });
 
   const filtered = useMemo(() => {
@@ -932,7 +934,7 @@ function SupportCenter({
               type="text"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              placeholder="Subject"
+              placeholder={t("messages.subjectPlaceholder")}
               className="w-full rounded-lg border px-3 py-2.5 text-sm outline-none focus:border-primary"
             />
             <select
@@ -973,7 +975,7 @@ function SupportCenter({
       <div>
         <h3 className="mb-2 text-sm font-semibold text-muted-foreground">{t("messages.yourTickets")}</h3>
         {filtered.length === 0 ? (
-          <EmptyState icon={<Headphones className="h-10 w-10" />} title="No support tickets" subtitle="Create a ticket to get help" />
+          <EmptyState icon={<Headphones className="h-10 w-10" />} title={t("messages.titleNoTickets")} subtitle={t("messages.titleCreateTicket")} />
         ) : (
           <div className="space-y-2">
             {filtered.map((ticket) => {
@@ -1221,7 +1223,7 @@ function NotificationCenter({
       </div>
 
       {filtered.length === 0 ? (
-        <EmptyState icon={<Bell className="h-12 w-12" />} title="No notifications" subtitle="You're all caught up!" />
+        <EmptyState icon={<Bell className="h-12 w-12" />} title={t("messages.titleNoNotifs")} subtitle="You're all caught up!" />
       ) : (
         <div className="space-y-2">
           {filtered.map((notif) => {
@@ -1342,6 +1344,7 @@ function AnnouncementCenter() {
 // ═══════════════════════════════════════════════════════════════
 
 function ChatView({ threadId, onBack, userId }: { threadId: string; onBack: () => void; userId: string }) {
+  const { t } = useI18n();
   const [draft, setDraft] = useState("");
   const [showEmoji, setShowEmoji] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
@@ -1407,7 +1410,7 @@ function ChatView({ threadId, onBack, userId }: { threadId: string; onBack: () =
       queryClient.invalidateQueries({ queryKey: ["messages", userId, threadId] });
       queryClient.invalidateQueries({ queryKey: ["threads", userId] });
     },
-    onError: () => toast.error("Message could not be sent"),
+    onError: () => toast.error(t("messages.msgSendFailed")),
   });
 
   const handleSend = () => {
@@ -1610,7 +1613,7 @@ function TicketChatView({ ticketId, onBack, userId }: { ticketId: string; onBack
       queryClient.invalidateQueries({ queryKey: ["ticketMessages", userId, ticketId] });
       queryClient.invalidateQueries({ queryKey: ["tickets", userId] });
     },
-    onError: () => toast.error("Failed to send"),
+    onError: () => toast.error(t("messages.sendFailed")),
   });
 
   return (

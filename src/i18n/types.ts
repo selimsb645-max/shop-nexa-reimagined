@@ -493,6 +493,19 @@ export interface TranslationKeys {
   "messages.filterWallet": string;
   "messages.filterRewards": string;
   "messages.filterSystem": string;
+  "messages.ticketCreated": string;
+  "messages.ticketCreateFailed": string;
+  "messages.msgSendFailed": string;
+  "messages.sendFailed": string;
+  "messages.subjectPlaceholder": string;
+  "messages.titleMessages": string;
+  "messages.titleNoOrders": string;
+  "messages.titleOrderConvos": string;
+  "messages.titleNoSellerConvos": string;
+  "messages.titleSellerConvos": string;
+  "messages.titleNoTickets": string;
+  "messages.titleCreateTicket": string;
+  "messages.titleNoNotifs": string;
 
   // Notifications
   "notifications.title": string;
