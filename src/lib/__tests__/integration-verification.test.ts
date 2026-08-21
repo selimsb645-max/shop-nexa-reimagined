@@ -593,18 +593,112 @@ describe("TEST 10: Unauthorized Session Access", () => {
 /* ================================================================ */
 
 describe("TEST 11: Direct Firestore Attack (Rules Audit)", () => {
-  it("should have rules that block client-side order creation", () => {
-    // Read firestore.rules and verify the security model
-    const rules = readFileSync("firestore.rules", "utf-8");
+  const rules = readFileSync("firestore.rules", "utf-8");
 
-    // Orders: client create must be false
-    expect(rules).toContain("allow create: if false");
-    // Verification sessions: client create/update/delete must be false
+  it("should block client-side order creation on buyer orders", () => {
+    // users/{uid}/orders/{orderId} — create must be false
+    expect(rules).toMatch(
+      /users\/\{uid\}[\s\S]*?orders\/\{orderId\}[\s\S]*?allow create: if false/,
+    );
+  });
+
+  it("should block client-side order creation on seller orders", () => {
+    // sellers/{uid}/orders/{orderId} — create must be false
+    expect(rules).toMatch(
+      /sellers\/\{uid\}[\s\S]*?orders\/\{orderId\}[\s\S]*?allow create: if false/,
+    );
+  });
+
+  it("should block all client writes to verification sessions", () => {
     expect(rules).toMatch(/verificationSessions\/\{sessionId\}[\s\S]*?allow create: if false/);
     expect(rules).toMatch(/verificationSessions\/\{sessionId\}[\s\S]*?allow update: if false/);
     expect(rules).toMatch(/verificationSessions\/\{sessionId\}[\s\S]*?allow delete: if false/);
-    // Notification logs: client write must be false
+  });
+
+  it("should block all client writes to notification logs", () => {
     expect(rules).toMatch(/notificationLogs\/\{logId\}[\s\S]*?allow write: if false/);
+  });
+
+  it("should exclude verificationSessions from the catch-all rule", () => {
+    // The catch-all exclusion list must include verificationSessions
+    expect(rules).toContain("'verificationSessions'");
+    // Find the catch-all section and verify exclusion
+    const catchAllIdx = rules.indexOf("match /{sub}/{docId}");
+    expect(catchAllIdx).toBeGreaterThan(0);
+    const catchAllSection = rules.slice(catchAllIdx, catchAllIdx + 500);
+    expect(catchAllSection).toContain("verificationSessions");
+  });
+
+  it("should exclude notificationLogs from the catch-all rule", () => {
+    const catchAllIdx = rules.indexOf("match /{sub}/{docId}");
+    expect(catchAllIdx).toBeGreaterThan(0);
+    const catchAllSection = rules.slice(catchAllIdx, catchAllIdx + 500);
+    expect(catchAllSection).toContain("notificationLogs");
+  });
+
+  it("should allow seller to update courierInfo on buyer orders", () => {
+    // The buyer order update must include courierInfo in the allowed fields
+    expect(rules).toContain("'courierInfo'");
+    // Verify it appears in the buyer orders update rule context
+    const buyerOrderIdx = rules.indexOf("// Orders - buyer read");
+    expect(buyerOrderIdx).toBeGreaterThan(0);
+    const buyerOrderSection = rules.slice(buyerOrderIdx, buyerOrderIdx + 1000);
+    expect(buyerOrderSection).toContain("courierInfo");
+  });
+
+  it("should allow seller to update shipping on seller orders", () => {
+    // The seller order update must include shipping in the allowed fields
+    const sellerOrderIdx = rules.indexOf("// Seller orders - server-created");
+    expect(sellerOrderIdx).toBeGreaterThan(0);
+    const sellerOrderSection = rules.slice(sellerOrderIdx, sellerOrderIdx + 1500);
+    expect(sellerOrderSection).toContain("'shipping'");
+  });
+
+  it("should protect shippingCharge within the shipping field on seller orders", () => {
+    // The rules must check that shippingCharge is not modified
+    expect(rules).toContain("shippingCharge");
+    // Verify the comparison check exists
+    expect(rules).toContain("shipping.shippingCharge");
+  });
+
+  it("should protect all settlement fields on seller orders", () => {
+    const settlementFields = [
+      "settlement",
+      "earnings",
+      "commission",
+      "commissionRate",
+      "discountShare",
+      "shippingShare",
+      "netSubtotal",
+      "subtotal",
+      "paymentStatus",
+      "paymentMethod",
+    ];
+    for (const field of settlementFields) {
+      expect(rules).toContain(field);
+    }
+    // Must have a hasAny check blocking these fields
+    expect(rules).toContain("'paymentMethod'");
+  });
+
+  it("should block all client writes to settlement ledger", () => {
+    expect(rules).toMatch(/settlementTx\/\{txId\}[\s\S]*?allow create, update, delete: if false/);
+  });
+
+  it("should block all client writes to seller wallet ledger", () => {
+    expect(rules).toMatch(
+      /sellers[\s\S]*?walletTx\/\{txId\}[\s\S]*?allow create, update, delete: if false/,
+    );
+  });
+
+  it("should block all client writes to withdrawals", () => {
+    expect(rules).toMatch(
+      /withdrawals\/\{withdrawalId\}[\s\S]*?allow create, update, delete: if false/,
+    );
+  });
+
+  it("should block all client writes to promo codes", () => {
+    expect(rules).toMatch(/promoCodes\/\{code\}[\s\S]*?allow create, update, delete: if false/);
   });
 });
 

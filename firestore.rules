@@ -3,34 +3,36 @@ service cloud.firestore {
   match /databases/{database}/documents {
     function isSignedIn() { return request.auth != null; }
     function isSelf(uid) { return isSignedIn() && request.auth.uid == uid; }
+
     function isAdmin() {
       return isSignedIn()
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
+
     function isApprovedSeller() {
       return isSignedIn()
         && exists(/databases/$(database)/documents/sellers/$(request.auth.uid))
         && get(/databases/$(database)/documents/sellers/$(request.auth.uid)).data.status == 'approved';
     }
-    // True when the caller is the seller assigned to this order (buyer-side copy).
+
     function isOrderSeller() {
       return isApprovedSeller()
         && 'sellerIds' in resource.data
         && request.auth.uid in resource.data.sellerIds;
     }
-    // Restrict an update to only touch an allow-listed set of fields.
+
     function onlyChanges(allowed) {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowed);
     }
 
-    // Bangladesh location master data — read-only for customers, admin-managed
+    // PUBLIC MASTER DATA
+
     match /locations/{locId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // Categories - admin managed
     match /categories/{cat} {
       allow read: if true;
       allow write: if isAdmin();
@@ -39,6 +41,18 @@ service cloud.firestore {
         allow write: if isAdmin();
       }
     }
+
+    match /banners/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /settings/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // PRODUCTS
 
     match /products/{id} {
       allow read: if true;
@@ -68,12 +82,6 @@ service cloud.firestore {
       allow update: if isAdmin();
     }
 
-    // Promo Codes - server-side generated only.
-    // Users can READ only their own promo codes (where userId == auth.uid).
-    // ALL client writes are blocked — generation, mutation, and status
-    // changes happen exclusively through trusted server functions
-    // (service account bypasses these rules).
-    // Admins can read all promo codes but cannot write from client either.
     match /promoCodes/{code} {
       allow read: if isSignedIn() && (
         resource.data.userId == request.auth.uid || isAdmin()
@@ -81,26 +89,14 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
-    // Banners - public read, admin write
-    match /banners/{id} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    // Site settings - public read, admin write
-    match /settings/{id} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    // Activity logs - admin only
     match /activityLogs/{id} {
       allow read: if isAdmin();
       allow create: if isAdmin();
       allow update, delete: if false;
     }
 
-    // Users - role & blocked flag can only be changed by admins
+    // USERS
+
     match /users/{uid} {
       allow read: if isSelf(uid) || isAdmin();
       allow create: if isSelf(uid)
@@ -112,20 +108,15 @@ service cloud.firestore {
           && (!('blocked' in request.resource.data) ? true : request.resource.data.blocked == resource.data.blocked));
       allow delete: if isAdmin();
 
-      // Cart and wishlist - owner-editable
       match /cart/{itemId} {
         allow read, write: if isSelf(uid) || isAdmin();
       }
+
       match /wishlist/{itemId} {
         allow read, write: if isSelf(uid) || isAdmin();
       }
 
-      // Verification sessions — server-created only.
-      // Clients may READ their own sessions to check status, but can NEVER
-      // create, update, or delete them. This prevents:
-      //   - Self-marking as verified
-      //   - Changing verification status
-      //   - Bypassing the verification gate
+      // Verification sessions - server-created only, client read-only
       match /verificationSessions/{sessionId} {
         allow read: if isSelf(uid) || isAdmin();
         allow create: if false;
@@ -133,47 +124,37 @@ service cloud.firestore {
         allow delete: if false;
       }
 
-      // Notification logs — server-created, read-only for owner
+      // Notification logs - server-created, read-only for owner
       match /notificationLogs/{logId} {
         allow read: if isSelf(uid) || isAdmin();
         allow write: if false;
       }
 
-      // Orders - buyer can read only. Orders are written exclusively by the
-      // trusted server-side checkout (service account, which bypasses these
-      // rules) after it recomputes every price, discount, shipping and total
-      // from the real product documents. No client may create, update or
-      // delete an order. Only the assigned seller (status/tracking) or an
-      // admin may progress an existing order.
+      // Orders - buyer read, seller update fulfillment only, no client create
       match /orders/{orderId} {
         allow read: if isSelf(uid) || isAdmin();
         allow create: if false;
         allow update: if isAdmin()
-          || (isOrderSeller() && onlyChanges(['status', 'tracking', 'updatedAt']));
+          || (isOrderSeller()
+            && onlyChanges(['status', 'tracking', 'courierInfo', 'updatedAt']));
         allow delete: if isAdmin();
       }
 
-      // Wallet ledger - server-controlled only. Clients (including the owner)
-      // may never write cashback/refund/topup/spend entries directly; only a
-      // trusted admin/server context can. Owners may only read their own.
       match /walletTx/{txId} {
         allow read: if isSelf(uid) || isAdmin();
         allow write: if isAdmin();
       }
 
-      // Reward points ledger - server-controlled only, same reasoning as wallet.
       match /rewardTx/{txId} {
         allow read: if isSelf(uid) || isAdmin();
         allow write: if isAdmin();
       }
 
-      // Referral records - server-controlled only
       match /referrals/{refId} {
         allow read: if isSelf(uid) || isAdmin();
         allow write: if isAdmin();
       }
 
-      // Customer addresses - owner can CRUD, nobody else
       match /addresses/{addressId} {
         allow read: if isSelf(uid) || isAdmin();
         allow create: if isSelf(uid);
@@ -181,27 +162,29 @@ service cloud.firestore {
         allow delete: if isSelf(uid) || isAdmin();
       }
 
-      // Customer preferences (language, currency, notifications)
       match /prefs/{docId} {
         allow read: if isSelf(uid);
         allow write: if isSelf(uid);
       }
 
-      // Device sessions — only the owner can read or manage their sessions
       match /sessions/{sessionId} {
         allow read, delete: if isSelf(uid);
         allow create: if isSelf(uid);
         allow update: if isSelf(uid);
       }
 
-      // Any other user-owned subcollection remains owner-scoped
+      // Catch-all - CRITICAL: verificationSessions and notificationLogs
+      // excluded to prevent bypassing their allow:if false rules
       match /{sub}/{docId} {
         allow read, write: if (isSelf(uid) || isAdmin())
-          && !(sub in ['orders', 'walletTx', 'rewardTx', 'referrals', 'prefs', 'sessions']);
+          && !(sub in ['orders', 'walletTx', 'rewardTx', 'referrals',
+                       'prefs', 'sessions', 'verificationSessions',
+                       'notificationLogs']);
       }
     }
 
-    // Sellers
+    // SELLERS
+
     match /sellers/{uid} {
       allow read: if isSelf(uid) || isAdmin();
       allow create: if isSelf(uid) && request.resource.data.status == 'draft';
@@ -214,45 +197,39 @@ service cloud.firestore {
           ));
       allow delete: if isAdmin();
 
-      // Seller orders - created by server-side checkout only.
-      // Sellers may update ONLY status/tracking/updatedAt.
-      // Settlement fields are protected — sellers CANNOT modify:
-      //   settlement, earnings, commission, commissionRate, discountShare,
-      //   shippingShare, netSubtotal, subtotal, paymentStatus, paymentMethod
+      // Seller orders - server-created, seller updates fulfillment only
+      // shipping allowed but shippingCharge protected within it
       match /orders/{orderId} {
         allow read: if isSelf(uid) || isAdmin();
         allow create: if false;
         allow update: if isAdmin()
           || (isSelf(uid)
-            && onlyChanges(['status', 'tracking', 'updatedAt'])
+            && onlyChanges(['status', 'tracking', 'shipping', 'updatedAt'])
             && !request.resource.data.diff(resource.data).affectedKeys()
                  .hasAny(['settlement', 'earnings', 'commission', 'commissionRate',
                           'discountShare', 'shippingShare', 'netSubtotal',
-                          'subtotal', 'paymentStatus', 'paymentMethod']));
+                          'subtotal', 'paymentStatus', 'paymentMethod'])
+            && (!('shipping' in request.resource.data.diff(resource.data).affectedKeys())
+                || (resource.data.shipping.shippingCharge
+                    == request.resource.data.shipping.shippingCharge)));
         allow delete: if isAdmin();
       }
 
-      // Settlement ledger — immutable, server-side only.
-      // Sellers can READ their own ledger but can NEVER create/update/delete.
       match /settlementTx/{txId} {
         allow read: if isSelf(uid) || isAdmin();
         allow create, update, delete: if false;
       }
 
-      // Wallet ledger (seller) — server-controlled only.
       match /walletTx/{txId} {
         allow read: if isSelf(uid) || isAdmin();
         allow create, update, delete: if false;
       }
 
-      // Withdrawals — created/updated by server functions only.
-      // Sellers can READ their own withdrawals but cannot mutate.
       match /withdrawals/{withdrawalId} {
         allow read: if isSelf(uid) || isAdmin();
         allow create, update, delete: if false;
       }
 
-      // Notifications
       match /notifications/{nid} {
         allow read: if isSelf(uid) || isAdmin();
         allow create: if isAdmin() || isSelf(uid);
