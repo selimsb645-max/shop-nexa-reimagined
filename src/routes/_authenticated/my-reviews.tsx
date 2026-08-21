@@ -1,9 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Star, Loader, ArrowLeft, Star as StarIcon } from "lucide-react";
-import { SiteHeader } from "@/components/layout/SiteHeader";
-import { SiteFooter } from "@/components/layout/SiteFooter";
-import { WhatsAppFab } from "@/components/layout/SiteChrome";
+import { Star, Loader, Star as StarIcon } from "lucide-react";
+import { ServicePageLayout } from "@/components/common/ServicePageLayout";
 import { useAuth } from "@/context/AuthContext";
 import { listReviews } from "@/services/firebase/reviews";
 import { listAllProducts } from "@/services/firebase/products";
@@ -45,18 +43,7 @@ function MyReviewsPage() {
   const myReviews = reviewsQuery.data ?? [];
 
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
-      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
-        <div className="mb-6 flex items-center gap-3">
-          <Link to="/account" className="text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-          <h1 className="flex items-center gap-2 text-2xl font-bold">
-            <Star className="h-6 w-6 text-primary" />
-            My Reviews
-          </h1>
-        </div>
+    <ServicePageLayout title="My Reviews" subtitle="Reviews you've written">
 
         {isLoading || reviewsQuery.isLoading ? (
           <div className="py-20 text-center">
@@ -121,9 +108,6 @@ function MyReviewsPage() {
             ))}
           </div>
         )}
-      </main>
-      <SiteFooter />
-      <WhatsAppFab />
-    </div>
+    </ServicePageLayout>
   );
 }

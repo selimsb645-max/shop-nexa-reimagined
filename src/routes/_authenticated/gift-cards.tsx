@@ -1,9 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
-  ArrowLeft,
   Gift,
   Plus,
   Loader,
@@ -12,9 +11,7 @@ import {
   Sparkles,
   Clock,
 } from "lucide-react";
-import { SiteHeader } from "@/components/layout/SiteHeader";
-import { SiteFooter } from "@/components/layout/SiteFooter";
-import { WhatsAppFab } from "@/components/layout/SiteChrome";
+import { ServicePageLayout } from "@/components/common/ServicePageLayout";
 import { useAuth } from "@/context/AuthContext";
 import { listUserGiftCards, purchaseGiftCard } from "@/services/firebase/giftCards";
 import { firebaseConfigured } from "@/services/firebase/config";
@@ -67,18 +64,7 @@ function GiftCardsPage() {
   });
 
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
-      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
-        <div className="mb-6 flex items-center gap-3">
-          <Link to="/account" className="text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-          <h1 className="flex items-center gap-2 text-2xl font-bold">
-            <Gift className="h-6 w-6 text-primary" />
-            Gift Cards
-          </h1>
-        </div>
+    <ServicePageLayout title="Gift Cards" subtitle="Buy and manage gift cards">
 
         {/* Buy Gift Card Button */}
         {!showForm && (
@@ -228,9 +214,6 @@ function GiftCardsPage() {
             ))}
           </div>
         )}
-      </main>
-      <SiteFooter />
-      <WhatsAppFab />
-    </div>
+    </ServicePageLayout>
   );
 }

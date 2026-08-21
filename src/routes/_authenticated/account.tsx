@@ -36,6 +36,10 @@ import {
   CreditCard,
   Headphones,
   Info,
+  Star,
+  Crown,
+  ClipboardList,
+  Gift as GiftCardIcon,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useWishlist } from "@/context/WishlistContext";
@@ -365,6 +369,18 @@ function AccountPage() {
             <DarazListRow to="/wishlist" icon={<Heart className="h-5 w-5" />} label="My Wishlist" hint={`${wishlistCount} saved item${wishlistCount === 1 ? "" : "s"}`} badge={wishlistCount} />
             <DarazListRow to="/recently-viewed" icon={<Eye className="h-5 w-5" />} label="Recently Viewed" hint={`${recentIds.length} product${recentIds.length === 1 ? "" : "s"}`} />
             <DarazListRow to="/orders" icon={<Package className="h-5 w-5" />} label="Order History" hint={`${totalOrders} total order${totalOrders === 1 ? "" : "s"}`} />
+            <DarazListRow to="/track-orders" icon={<Truck className="h-5 w-5" />} label="Track Orders" hint="Live delivery tracking" />
+            <DarazListRow to="/my-reviews" icon={<Star className="h-5 w-5" />} label="My Reviews" hint="Products you've reviewed" />
+            <DarazListRow to="/returns" icon={<Undo2 className="h-5 w-5" />} label="Returns & Refunds" hint="Manage return requests" />
+          </div>
+        </DarazCard>
+
+        {/* ===== Membership & Gift Cards ===== */}
+        <DarazCard>
+          <DarazCardHeader title="Membership & Gifts" />
+          <div className="divide-y divide-gray-100">
+            <DarazListRow to="/membership" icon={<Crown className="h-5 w-5" />} label="Nexa Prime" hint="Exclusive rewards & benefits" />
+            <DarazListRow to="/gift-cards" icon={<GiftCardIcon className="h-5 w-5" />} label="Gift Cards" hint="Buy & manage gift cards" />
           </div>
         </DarazCard>
 

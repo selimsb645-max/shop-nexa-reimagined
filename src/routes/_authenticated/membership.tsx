@@ -1,16 +1,13 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
-  ArrowLeft,
   Star,
   Crown,
   Gift,
   Sparkles,
   Check,
 } from "lucide-react";
-import { SiteHeader } from "@/components/layout/SiteHeader";
-import { SiteFooter } from "@/components/layout/SiteFooter";
-import { WhatsAppFab } from "@/components/layout/SiteChrome";
+import { ServicePageLayout } from "@/components/common/ServicePageLayout";
 import { firebaseConfigured } from "@/services/firebase/config";
 import { getRewardPoints } from "@/services/firebase/wallet";
 import { useAuth } from "@/context/AuthContext";
@@ -61,18 +58,7 @@ function MembershipPage() {
   const nextTier = TIERS.find((t) => t.minPoints > currentPoints);
 
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
-      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
-        <div className="mb-6 flex items-center gap-3">
-          <Link to="/account" className="text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-          <h1 className="flex items-center gap-2 text-2xl font-bold">
-            <Crown className="h-6 w-6 text-orange-500" />
-            Nexa Prime Membership
-          </h1>
-        </div>
+    <ServicePageLayout title="Nexa Prime Membership" subtitle="Exclusive rewards & benefits">
 
         {/* Current status */}
         <div className="mb-6 rounded-2xl border bg-gradient-to-br from-primary to-primary/80 p-6 text-primary-foreground shadow-sm">
@@ -164,9 +150,6 @@ function MembershipPage() {
             ))}
           </div>
         </div>
-      </main>
-      <SiteFooter />
-      <WhatsAppFab />
-    </div>
+    </ServicePageLayout>
   );
 }

@@ -1,9 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
-  ArrowLeft,
   Package,
   Undo2,
   Clock,
@@ -12,10 +11,9 @@ import {
   Truck,
   DollarSign,
   Loader,
+  ChevronRight,
 } from "lucide-react";
-import { SiteHeader } from "@/components/layout/SiteHeader";
-import { SiteFooter } from "@/components/layout/SiteFooter";
-import { WhatsAppFab } from "@/components/layout/SiteChrome";
+import { ServicePageLayout } from "@/components/common/ServicePageLayout";
 import { useAuth } from "@/context/AuthContext";
 import { listUserReturns, createReturnRequest, type ReturnReason } from "@/services/firebase/returns";
 import { listOrders } from "@/services/firebase/orders";
@@ -102,18 +100,7 @@ function ReturnsPage() {
   });
 
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
-      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
-        <div className="mb-6 flex items-center gap-3">
-          <Link to="/account" className="text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-          <h1 className="flex items-center gap-2 text-2xl font-bold">
-            <Undo2 className="h-6 w-6 text-primary" />
-            Returns & Refunds
-          </h1>
-        </div>
+    <ServicePageLayout title="Returns & Refunds" subtitle="Manage return requests and refunds">
 
         {/* New Return Request Button */}
         {!showForm && (
@@ -260,9 +247,6 @@ function ReturnsPage() {
             })}
           </div>
         )}
-      </main>
-      <SiteFooter />
-      <WhatsAppFab />
-    </div>
+    </ServicePageLayout>
   );
 }
