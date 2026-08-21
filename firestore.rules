@@ -120,6 +120,25 @@ service cloud.firestore {
         allow read, write: if isSelf(uid) || isAdmin();
       }
 
+      // Verification sessions — server-created only.
+      // Clients may READ their own sessions to check status, but can NEVER
+      // create, update, or delete them. This prevents:
+      //   - Self-marking as verified
+      //   - Changing verification status
+      //   - Bypassing the verification gate
+      match /verificationSessions/{sessionId} {
+        allow read: if isSelf(uid) || isAdmin();
+        allow create: if false;
+        allow update: if false;
+        allow delete: if false;
+      }
+
+      // Notification logs — server-created, read-only for owner
+      match /notificationLogs/{logId} {
+        allow read: if isSelf(uid) || isAdmin();
+        allow write: if false;
+      }
+
       // Orders - buyer can read only. Orders are written exclusively by the
       // trusted server-side checkout (service account, which bypasses these
       // rules) after it recomputes every price, discount, shipping and total

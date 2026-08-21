@@ -67,6 +67,7 @@ export interface CreateOrderInput {
   rewardPoints?: number;
   walletUsed?: number;
   deliveryAddressSnapshot?: DeliveryAddressSnapshot | null;
+  verificationSessionId: string;
 }
 
 
@@ -128,6 +129,7 @@ export async function createOrder(input: CreateOrderInput): Promise<string> {
   const result = await placeOrder({
     data: {
       idToken,
+      verificationSessionId: input.verificationSessionId,
       items: input.items.map((i) => ({
         productId: i.productId,
         quantity: i.quantity,

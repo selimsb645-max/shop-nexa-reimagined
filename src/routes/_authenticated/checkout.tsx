@@ -234,6 +234,8 @@ function CheckoutPage() {
   // ---- Terms ----
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [placing, setPlacing] = useState(false);
+  const [verificationStep, setVerificationStep] = useState(false);
+  const [verificationSessionId, setVerificationSessionId] = useState<string | null>(null);
 
   // ---- Calculations ----
   const itemsSubtotal = useMemo(
@@ -352,7 +354,8 @@ function CheckoutPage() {
 
 
   // ---- Place Order ----
-  const handlePlaceOrder = async () => {
+  // ---- Start verification (replaces direct order placement) ----
+  const handleStartVerification = () => {
     if (!user) {
       toast.error(t("checkout.signInRequired"));
       return;
@@ -369,11 +372,16 @@ function CheckoutPage() {
       toast.error("Please accept the terms to continue");
       return;
     }
-
     if (!deliveryAddressSnapshot) {
       toast.error("Please select a delivery address");
       return;
     }
+    setVerificationStep(true);
+  };
+
+  // ---- Place final order after verification ----
+  const handlePlaceOrder = async (sessionId: string) => {
+    if (!user || !deliveryAddressSnapshot) return;
 
     setPlacing(true);
     try {
@@ -397,12 +405,12 @@ function CheckoutPage() {
         rewardPoints: useRewardPoints ? rewardPointsToUse : 0,
         walletUsed: walletUsed,
         deliveryAddressSnapshot: deliveryAddressSnapshot,
+        verificationSessionId: sessionId,
       });
 
       if (typeof cartContext.clear === "function") {
         await cartContext.clear();
       }
-
 
       toast.success("Order placed successfully!");
       navigate({
@@ -413,10 +421,33 @@ function CheckoutPage() {
       toast.error(
         err instanceof Error ? err.message : "Could not place order"
       );
+      setVerificationStep(false);
+      setVerificationSessionId(null);
     } finally {
       setPlacing(false);
     }
   };
+
+  // ---- Verification Gate ----
+  if (verificationStep && deliveryAddressSnapshot && user) {
+    return (
+      <VerificationGate
+        phoneNumber={deliveryAddressSnapshot.phone}
+        cartItems={cartItems}
+        orderTotal={grandTotal}
+        deliveryLocation={deliveryAddressSnapshot.districtEn || deliveryAddressSnapshot.fullAddress}
+        onVerified={(sessionId) => {
+          setVerificationSessionId(sessionId);
+          handlePlaceOrder(sessionId);
+        }}
+        onBack={() => setVerificationStep(false)}
+        onChangePhone={() => {
+          setVerificationStep(false);
+          toast.info("Please update your delivery address phone number.");
+        }}
+      />
+    );
+  }
 
   // ---- Empty cart redirect ----
   if (cartItems.length === 0) {
@@ -1080,7 +1111,7 @@ function CheckoutPage() {
               {/* Place Order - Desktop */}
               <button
                 type="button"
-                onClick={handlePlaceOrder}
+                onClick={handleStartVerification}
                 disabled={placing || !agreeTerms || !deliveryAddressSnapshot}
                 className="mt-5 w-full bg-[#f57224] hover:bg-[#e0621f] text-white font-bold py-3.5 px-6 rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -1149,7 +1180,7 @@ function CheckoutPage() {
         </div>
         <button
           type="button"
-          onClick={handlePlaceOrder}
+          onClick={handleStartVerification}
           disabled={placing || !agreeTerms || !deliveryAddressSnapshot}
           className="bg-[#f57224] hover:bg-[#e0621f] text-white font-bold text-sm py-3 px-6 rounded-xl flex items-center gap-2 shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
         >
@@ -1295,6 +1326,7 @@ function FormInput({
 
 // ----------------------------------------------------------------------
 // RotatedCcw icon (inline import fallback for trust badges)
+import { VerificationGate } from "@/components/checkout/VerificationGate";
 // ----------------------------------------------------------------------
 function RotateCcw({ className }: { className?: string }) {
   return (
