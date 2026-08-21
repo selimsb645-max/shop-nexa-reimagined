@@ -474,6 +474,8 @@ export interface TranslationKeys {
   "account.backHome": string;
   "account.becomeSeller": string;
   "account.becomeSellerHint": string;
+  "orders.unknownStatus": string;
+  "orders.backToAccount": string;
 
   // Notifications
   "notifications.title": string;

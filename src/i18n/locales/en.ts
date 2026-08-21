@@ -461,6 +461,8 @@ export const en: TranslationKeys = {
   "account.backHome": "Back to Home",
   "account.becomeSeller": "Become a Seller on Shop Nexa",
   "account.becomeSellerHint": "Start selling your products to thousands of customers",
+  "orders.unknownStatus": "Unknown order status",
+  "orders.backToAccount": "Back to Account",
 
   // Notifications
   "notifications.title": "Notifications",

@@ -38,14 +38,17 @@ export const Route = createFileRoute("/_authenticated/orders_/$status")({
   errorComponent: ({ error }) => (
     <div role="alert" className="p-10 text-center text-sm text-gray-600">{error.message}</div>
   ),
-  notFoundComponent: () => (
+  notFoundComponent: () => {
+    const { t } = useI18n();
+    return (
     <div className="p-10 text-center">
-      <h1 className="text-lg font-bold text-gray-800">Unknown order status</h1>
+      <h1 className="text-lg font-bold text-gray-800">{t("orders.unknownStatus")}</h1>
       <Link to="/account" className="mt-3 inline-block text-sm font-semibold text-orange-500 hover:underline">
-        Back to Account
+        {t("orders.backToAccount")}
       </Link>
     </div>
-  ),
+    );
+  },
 });
 
 const TAB_ICON: Record<OrderView, React.ReactNode> = {

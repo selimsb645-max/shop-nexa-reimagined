@@ -461,6 +461,8 @@ export const bn: TranslationKeys = {
   "account.backHome": "হোমে ফিরুন",
   "account.becomeSeller": "Shop Nexa-তে সেলার হোন",
   "account.becomeSellerHint": "আপনার পণ্য হাজার হাজার ক্রেতার কাছে বিক্রি করুন",
+  "orders.unknownStatus": "অজানা অর্ডার স্ট্যাটাস",
+  "orders.backToAccount": "অ্যাকাউন্টে ফিরুন",
 
   // Notifications
   "notifications.title": "নোটিফিকেশন",
