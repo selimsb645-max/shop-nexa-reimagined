@@ -60,15 +60,15 @@ function SupportPage() {
 
   const submitTicket = async () => {
     if (!user) return;
-    if (subject.trim().length < 4) { toast.error("Add a short subject"); return; }
+    if (subject.trim().length < 4) { toast.error(t("support.shortSubject")); return; }
     if (message.trim().length < 10) { toast.error("Describe your issue in at least 10 characters"); return; }
     setBusy(true);
     try {
       const id = await createTicket(user.uid, { subject: subject.trim(), category, orderId: orderId || null, message: message.trim() });
-      toast.success("Support ticket created");
+      toast.success(t("support.ticketCreatedToast"));
       setSubject(""); setMessage(""); setOrderId(""); setCreating(false);
       await tickets.refetch(); setActiveId(id);
-    } catch { toast.error("Could not create the ticket"); }
+    } catch { toast.error(t("support.createTicketFailed")); }
     finally { setBusy(false); }
   };
 
@@ -76,7 +76,7 @@ function SupportPage() {
     if (!user || !activeId || !reply.trim()) return;
     setBusy(true);
     try { await replyToTicket(user.uid, activeId, reply.trim()); setReply(""); await Promise.all([messages.refetch(), tickets.refetch()]); }
-    catch { toast.error("Could not send the reply"); }
+    catch { toast.error(t("support.sendReplyFailed")); }
     finally { setBusy(false); }
   };
 
@@ -118,8 +118,8 @@ function SupportPage() {
             </button>
           </div>
           <div className="sm:col-span-2">
-            <label className="mb-1 block text-sm font-medium text-slate-700">Subject</label>
-            <input value={subject} onChange={e => setSubject(e.target.value)} maxLength={100} className={field} placeholder="Brief description of your issue" />
+            <label className="mb-1 block text-sm font-medium text-slate-700">{t("support.subjectLabel")}</label>
+            <input value={subject} onChange={e => setSubject(e.target.value)} maxLength={100} className={field} placeholder={t("support.briefDescPlaceholder")} />
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">Category</label>
@@ -155,17 +155,17 @@ function SupportPage() {
           <div className="p-12 text-center text-sm text-slate-400">{t("support.noTickets")}</div>
         ) : (
           <ul className="divide-y divide-gray-100">
-            {tickets.data.map(t => (
-              <li key={t.id}>
-                <button onClick={() => setActiveId(t.id === activeId ? null : t.id)} className="flex w-full flex-wrap items-center gap-3 px-5 py-3.5 text-left transition hover:bg-slate-50">
+            {tickets.data.map(ticket => (
+              <li key={ticket.id}>
+                <button onClick={() => setActiveId(ticket.id === activeId ? null : ticket.id)} className="flex w-full flex-wrap items-center gap-3 px-5 py-3.5 text-left transition hover:bg-slate-50">
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-semibold text-slate-700">{t.subject}</div>
-                    <div className="truncate text-xs text-slate-400">{t.lastMessage}</div>
-                    <div className="text-xs text-slate-400">{formatDateTime(t.createdAt)} · {t.category}{t.orderId ? ` · #${t.orderId.slice(0, 8).toUpperCase()}` : ""}</div>
+                    <div className="text-sm font-semibold text-slate-700">{ticket.subject}</div>
+                    <div className="truncate text-xs text-slate-400">{ticket.lastMessage}</div>
+                    <div className="text-xs text-slate-400">{formatDateTime(ticket.createdAt)} · {ticket.category}{ticket.orderId ? ` · #${ticket.orderId.slice(0, 8).toUpperCase()}` : ""}</div>
                   </div>
-                  <span className={`rounded-full px-3 py-1 text-xs font-bold capitalize ${STATUS_STYLE[t.status] ?? STATUS_STYLE.closed}`}>{t.status}</span>
+                  <span className={`rounded-full px-3 py-1 text-xs font-bold capitalize ${STATUS_STYLE[ticket.status] ?? STATUS_STYLE.closed}`}>{ticket.status}</span>
                 </button>
-                {activeId === t.id && (
+                {activeId === ticket.id && (
                   <div className="border-t border-gray-100 bg-slate-50/50 p-4">
                     <div className="max-h-72 space-y-3 overflow-y-auto">
                       {messages.isLoading ? (
@@ -180,13 +180,13 @@ function SupportPage() {
                       )}
                       <div ref={endRef} />
                     </div>
-                    {t.status !== "closed" && (
+                    {ticket.status !== "closed" && (
                       <div className="mt-3 flex items-center gap-2">
-                        <input value={reply} onChange={e => setReply(e.target.value)} placeholder="Add a reply" maxLength={1000} className={field} />
+                        <input value={reply} onChange={e => setReply(e.target.value)} placeholder={t("support.replyPlaceholder")} maxLength={1000} className={field} />
                         <button onClick={() => void sendReply()} disabled={busy || !reply.trim()} aria-label="Send reply" className="rounded-xl bg-[#f57224] p-2.5 text-white shadow-md transition hover:bg-orange-600 active:scale-95 disabled:opacity-50">
                           <Send className="h-4 w-4" />
                         </button>
-                        <button onClick={async () => { if (!user) return; await closeTicket(user.uid, t.id); toast.success("Ticket closed"); await tickets.refetch(); }} className="whitespace-nowrap rounded-xl border border-slate-200 px-3 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-50">
+                        <button onClick={async () => { if (!user) return; await closeTicket(user.uid, ticket.id); toast.success(t("support.ticketClosed")); await tickets.refetch(); }} className="whitespace-nowrap rounded-xl border border-slate-200 px-3 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-50">
                           Close ticket
                         </button>
                       </div>

@@ -23,7 +23,7 @@ function CouponsPage() {
       await navigator.clipboard.writeText(code);
       toast.success(`${code} copied`);
     } catch {
-      toast.error("Could not copy the code");
+      toast.error(t("coupons.couldNotCopy"));
     }
   };
 

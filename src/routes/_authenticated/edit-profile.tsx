@@ -45,7 +45,7 @@ function EditProfilePage() {
       await setDisplayName(user, v.displayName);
       await refreshProfile();
       reset({ displayName: v.displayName });
-      toast.success("Profile updated");
+      toast.success(t("editProfile.profileUpdated"));
       navigate({ to: "/account" });
     } catch (err) {
       toast.error(mapFirebaseError(err));
@@ -60,7 +60,7 @@ function EditProfilePage() {
       const url = await uploadAvatar(user.uid, file);
       await setPhotoURL(user, url);
       await refreshProfile();
-      toast.success("Avatar updated");
+      toast.success(t("editProfile.avatarUpdated"));
     } catch (err) {
       toast.error(mapFirebaseError(err));
     } finally {
@@ -111,7 +111,7 @@ function EditProfilePage() {
             <input
               {...register("displayName")}
               className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
-              placeholder="Your name"
+              placeholder={t("editProfile.namePlaceholder")}
             />
             {errors.displayName && (
               <p className="mt-1 text-xs text-red-500">{errors.displayName.message}</p>

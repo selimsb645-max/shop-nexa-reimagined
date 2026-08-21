@@ -67,7 +67,7 @@ function AddressesPage() {
     mutationFn: (id: string) => deleteStructuredAddress(user!.uid, id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["structured-addresses"] });
-      toast.success("Address deleted");
+      toast.success(t("addresses.addressDeleted"));
     },
   });
 
@@ -75,7 +75,7 @@ function AddressesPage() {
     mutationFn: (id: string) => setDefaultStructuredAddress(user!.uid, id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["structured-addresses"] });
-      toast.success("Default address updated");
+      toast.success(t("addresses.defaultUpdated"));
     },
   });
 

@@ -50,9 +50,9 @@ function ReferralPage() {
   const copy = async (value: string) => {
     try {
       await navigator.clipboard.writeText(value);
-      toast.success("Copied to clipboard");
+      toast.success(t("referral.copiedToClipboard"));
     } catch {
-      toast.error("Could not copy");
+      toast.error(t("referral.couldNotCopy"));
     }
   };
 

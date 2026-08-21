@@ -26,9 +26,9 @@ function WishlistPage() {
     setRemoving(productId);
     try {
       await remove(productId);
-      toast.success("Removed from wishlist");
+      toast.success(t("wishlist.wishRemoved"));
     } catch {
-      toast.error("Could not remove item");
+      toast.error(t("wishlist.couldNotRemove"));
     } finally {
       setRemoving(null);
     }
@@ -65,7 +65,7 @@ function WishlistPage() {
       } as Product,
       1,
     );
-    toast.success("Added to cart");
+    toast.success(t("wishlist.addedToCart"));
   };
 
   return (

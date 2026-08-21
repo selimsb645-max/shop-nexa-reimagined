@@ -40,7 +40,7 @@ function NotificationsPage() {
   const readAll = async () => {
     if (!user) return;
     await markAllNotificationsRead(user.uid);
-    toast.success("All notifications marked as read");
+    toast.success(t("notifications.allMarkedRead"));
     await refetch();
   };
 

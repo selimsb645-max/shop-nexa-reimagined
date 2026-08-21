@@ -149,7 +149,7 @@ function AccountPage() {
       const url = await uploadAvatar(user.uid, file);
       await setPhotoURL(user, url);
       await refreshProfile();
-      toast.success("Avatar updated");
+      toast.success(t("editProfile.avatarUpdated"));
     } catch (err) {
       toast.error(mapFirebaseError(err));
     } finally {
@@ -162,7 +162,7 @@ function AccountPage() {
     setResending(true);
     try {
       await resendVerification(user);
-      toast.success("Verification email sent");
+      toast.success(t("account.verificationEmailSent"));
     } catch (err) {
       toast.error(mapFirebaseError(err));
     } finally {
@@ -172,7 +172,7 @@ function AccountPage() {
 
   const onSignOut = async () => {
     await signOut();
-    toast.success("Signed out");
+    toast.success(t("account.signedOut"));
     navigate({ to: "/" });
   };
 
@@ -276,7 +276,7 @@ function AccountPage() {
             <Link to="/wallet" className="flex flex-col items-center gap-0.5 rounded-xl py-1.5 transition hover:bg-white/10">
               <Wallet className="h-5 w-5" strokeWidth={2} />
               <span className="text-sm font-bold">{formatPrice(balance ?? 0)}</span>
-              <span className="text-[10px] text-white/80">Wallet</span>
+              <span className="text-[10px] text-white/80">{t("account.wallet")}</span>
             </Link>
             <Link to="/rewards" className="flex flex-col items-center gap-0.5 rounded-xl py-1.5 transition hover:bg-white/10">
               <Sparkles className="h-5 w-5" strokeWidth={2} />
@@ -286,7 +286,7 @@ function AccountPage() {
             <Link to="/coupons" className="flex flex-col items-center gap-0.5 rounded-xl py-1.5 transition hover:bg-white/10">
               <TicketPercent className="h-5 w-5" strokeWidth={2} />
               <span className="text-sm font-bold">{coupons?.length ?? 0}</span>
-              <span className="text-[10px] text-white/80">Vouchers</span>
+              <span className="text-[10px] text-white/80">{t("account.vouchers")}</span>
             </Link>
           </div>
         </div>

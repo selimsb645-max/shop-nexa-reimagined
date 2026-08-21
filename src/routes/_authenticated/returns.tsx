@@ -90,7 +90,7 @@ function ReturnsPage() {
       });
     },
     onSuccess: () => {
-      toast.success("Return request submitted");
+      toast.success(t("returns.returnSubmitted"));
       queryClient.invalidateQueries({ queryKey: ["returns"] });
       setShowForm(false);
       setSelectedOrderId("");
@@ -169,7 +169,7 @@ function ReturnsPage() {
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium">Description</label>
+                <label className="mb-1 block text-sm font-medium">{t("returns.descriptionLabel")}</label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}

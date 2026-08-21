@@ -62,7 +62,7 @@ function GiftCardsPage() {
       setMessage("");
       setAmount(1000);
     },
-    onError: () => toast.error("Failed to purchase gift card"),
+    onError: () => toast.error(t("giftCards.purchaseFailed")),
   });
 
   return (
@@ -107,7 +107,7 @@ function GiftCardsPage() {
                     value={amount}
                     onChange={(e) => setAmount(Number(e.target.value))}
                     className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-primary"
-                    placeholder="Custom amount"
+                    placeholder={t("giftCards.customAmountPlaceholder")}
                     min={100}
                   />
                 </div>

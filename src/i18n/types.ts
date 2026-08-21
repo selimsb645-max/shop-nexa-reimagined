@@ -506,6 +506,32 @@ export interface TranslationKeys {
   "messages.titleNoTickets": string;
   "messages.titleCreateTicket": string;
   "messages.titleNoNotifs": string;
+  "wishlist.wishRemoved": string;
+  "wishlist.couldNotRemove": string;
+  "wishlist.addedToCart": string;
+  "returns.returnSubmitted": string;
+  "returns.descriptionLabel": string;
+  "coupons.couldNotCopy": string;
+  "addresses.addressDeleted": string;
+  "addresses.defaultUpdated": string;
+  "referral.copiedToClipboard": string;
+  "referral.couldNotCopy": string;
+  "editProfile.profileUpdated": string;
+  "editProfile.avatarUpdated": string;
+  "editProfile.namePlaceholder": string;
+  "support.shortSubject": string;
+  "support.ticketCreatedToast": string;
+  "support.createTicketFailed": string;
+  "support.sendReplyFailed": string;
+  "support.ticketClosed": string;
+  "support.briefDescPlaceholder": string;
+  "support.replyPlaceholder": string;
+  "support.subjectLabel": string;
+  "giftCards.purchaseFailed": string;
+  "giftCards.customAmountPlaceholder": string;
+  "notifications.allMarkedRead": string;
+  "account.verificationEmailSent": string;
+  "account.signedOut": string;
 
   // Notifications
   "notifications.title": string;
