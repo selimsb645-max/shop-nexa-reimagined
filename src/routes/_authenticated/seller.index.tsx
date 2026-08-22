@@ -129,7 +129,7 @@ function Dashboard({ sellerId, profile }: { sellerId: string; profile: SellerPro
         <KpiCard label="Total Sales" value={formatPrice(totalSales)} icon={<Banknote className="w-4 h-4" />} color="#059669" bgColor="#ecfdf5" />
         <KpiCard label="Wallet Balance" value={formatPrice(walletBalance)} icon={<Wallet className="w-4 h-4" />} color="#f57224" bgColor="#fff7ed" link="/seller/wallet" />
         <KpiCard label="Pending Balance" value={formatPrice(pendingBalance)} icon={<Clock className="w-4 h-4" />} color="#d97706" bgColor="#fffbeb" />
-        <KpiCard label="Withdrawable" value={formatPrice(walletBalance)} icon={<Banknote className="w-4 h-4" />} color="#0f172a" bgColor="#f1f5f9" link="/seller/withdrawals" />
+        <KpiCard label="Withdrawable" value={formatPrice(walletBalance)} icon={<Banknote className="w-4 h-4" />} color="#0f172a" bgColor="#f1f5f9" link="/seller/wallet" />
       </div>
 
       {/* Order Status Breakdown */}

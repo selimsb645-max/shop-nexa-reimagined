@@ -78,8 +78,17 @@ service cloud.firestore {
 
     match /coupons/{code} {
       allow read: if true;
-      allow create, delete: if isAdmin();
-      allow update: if isAdmin();
+      allow create: if isAdmin()
+        || (isApprovedSeller()
+          && request.resource.data.sellerId == request.auth.uid
+          && request.resource.data.uses == 0);
+      allow update: if isAdmin()
+        || (isApprovedSeller()
+          && resource.data.sellerId == request.auth.uid
+          && request.resource.data.sellerId == resource.data.sellerId
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['active', 'updatedAt']));
+      allow delete: if isAdmin()
+        || (isApprovedSeller() && resource.data.sellerId == request.auth.uid);
     }
 
     match /promoCodes/{code} {
