@@ -209,7 +209,28 @@ service cloud.firestore {
             request.resource.data.status == resource.data.status
             || (resource.data.status == 'draft' && request.resource.data.status == 'pending_review')
             || (resource.data.status == 'need_documents' && request.resource.data.status == 'pending_review')
-          ));
+          )
+          // SECURITY: Seller self-updates can ONLY touch seller-editable fields.
+          // System-controlled financial/status fields are protected.
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'shopName', 'shopSlug', 'description', 'logoUrl', 'bannerUrl',
+            'phone', 'addressLine', 'city', 'area', 'country', 'postalCode',
+            'business', 'identity', 'bankInfo',
+            'currentStep', 'updatedAt',
+            'termsAccepted', 'termsAcceptedAt',
+            'submittedAt',
+            'status'
+          ])
+          // Even within allowed fields, financial fields are NEVER writable by seller
+          && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+            'commissionRate', 'totalEarnings', 'availableBalance',
+            'pendingBalance', 'withdrawnTotal', 'verified',
+            'totalProducts', 'totalOrders', 'rating', 'ratingCount',
+            'followers', 'approvedAt', 'rejectionReason',
+            'email', 'uid', 'createdAt',
+            'storeSettings', 'warehouses', 'pickupPoints',
+            'supportedCurrencies', 'internationalShipping', 'crossBorderSeller'
+          ]));
       allow delete: if isAdmin();
 
       // Seller orders - server-created, seller updates fulfillment only

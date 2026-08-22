@@ -71,22 +71,36 @@ function mapSeller(id: string, d: Record<string, unknown>): SellerProfile {
     pendingBalance: Number(r.pendingBalance ?? 0),
     withdrawnTotal: Number(r.withdrawnTotal ?? 0),
     bankInfo: (r.bankInfo as SellerBankInfo) ?? {
-      bankName: null, accountName: null, accountNumber: null,
-      branchName: null, routingNumber: null,
-      mobileBankingType: null, mobileBankingNumber: null,
+      bankName: null,
+      accountName: null,
+      accountNumber: null,
+      branchName: null,
+      routingNumber: null,
+      mobileBankingType: null,
+      mobileBankingNumber: null,
     },
     identity: (r.identity as SellerIdentityInfo) ?? {
-      fullName: null, nidNumber: null, nidFrontUrl: null,
-      nidBackUrl: null, tradeLicenseUrl: null, tradeLicenseNumber: null,
+      fullName: null,
+      nidNumber: null,
+      nidFrontUrl: null,
+      nidBackUrl: null,
+      tradeLicenseUrl: null,
+      tradeLicenseNumber: null,
       verified: false,
     },
     business: (r.business as SellerBusinessInfo) ?? {
-      businessType: null, businessName: null, taxId: null,
-      website: null, socialMediaLinks: [],
+      businessType: null,
+      businessName: null,
+      taxId: null,
+      website: null,
+      socialMediaLinks: [],
     },
     storeSettings: (r.storeSettings as SellerStoreSettings) ?? {
-      autoAcceptOrders: false, announcement: null,
-      responseTimeHours: 24, returnPolicyDays: 7, operatingHours: null,
+      autoAcceptOrders: false,
+      announcement: null,
+      responseTimeHours: 24,
+      returnPolicyDays: 7,
+      operatingHours: null,
     },
     verified: Boolean(r.verified ?? false),
     totalProducts: Number(r.totalProducts ?? 0),
@@ -96,7 +110,9 @@ function mapSeller(id: string, d: Record<string, unknown>): SellerProfile {
     followers: Number(r.followers ?? 0),
     warehouses: Array.isArray(r.warehouses) ? (r.warehouses as WarehouseInfo[]) : [],
     pickupPoints: Array.isArray(r.pickupPoints) ? (r.pickupPoints as PickupPoint[]) : [],
-    supportedCurrencies: Array.isArray(r.supportedCurrencies) ? (r.supportedCurrencies as string[]) : ["BDT"],
+    supportedCurrencies: Array.isArray(r.supportedCurrencies)
+      ? (r.supportedCurrencies as string[])
+      : ["BDT"],
     internationalShipping: Boolean(r.internationalShipping ?? false),
     crossBorderSeller: Boolean(r.crossBorderSeller ?? false),
     createdAt: ts(r.createdAt),
@@ -147,31 +163,52 @@ export async function initSellerDraft(input: SellerApplicationInit): Promise<voi
     pendingBalance: 0,
     withdrawnTotal: 0,
     bankInfo: {
-      bankName: null, accountName: null, accountNumber: null,
-      branchName: null, routingNumber: null,
-      mobileBankingType: null, mobileBankingNumber: null,
+      bankName: null,
+      accountName: null,
+      accountNumber: null,
+      branchName: null,
+      routingNumber: null,
+      mobileBankingType: null,
+      mobileBankingNumber: null,
     },
     identity: {
-      fullName: null, nidNumber: null, nidFrontUrl: null,
-      nidBackUrl: null, tradeLicenseUrl: null, tradeLicenseNumber: null,
+      fullName: null,
+      nidNumber: null,
+      nidFrontUrl: null,
+      nidBackUrl: null,
+      tradeLicenseUrl: null,
+      tradeLicenseNumber: null,
       verified: false,
     },
     business: {
-      businessType: null, businessName: null, taxId: null,
-      website: null, socialMediaLinks: [],
+      businessType: null,
+      businessName: null,
+      taxId: null,
+      website: null,
+      socialMediaLinks: [],
     },
     storeSettings: {
-      autoAcceptOrders: false, announcement: null,
-      responseTimeHours: 24, returnPolicyDays: 7, operatingHours: null,
+      autoAcceptOrders: false,
+      announcement: null,
+      responseTimeHours: 24,
+      returnPolicyDays: 7,
+      operatingHours: null,
     },
     verified: false,
-    totalProducts: 0, totalOrders: 0,
-    rating: 0, ratingCount: 0, followers: 0,
-    warehouses: [], pickupPoints: [],
+    totalProducts: 0,
+    totalOrders: 0,
+    rating: 0,
+    ratingCount: 0,
+    followers: 0,
+    warehouses: [],
+    pickupPoints: [],
     supportedCurrencies: ["BDT"],
-    internationalShipping: false, crossBorderSeller: false,
-    termsAccepted: false, termsAcceptedAt: null,
-    submittedAt: null, approvedAt: null,
+    internationalShipping: false,
+    crossBorderSeller: false,
+    termsAccepted: false,
+    termsAcceptedAt: null,
+    submittedAt: null,
+    approvedAt: null,
     rejectionReason: null,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
@@ -223,7 +260,11 @@ export interface BankingInput {
 }
 
 function slugify(s: string): string {
-  return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 60);
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")
+    .slice(0, 60);
 }
 
 export async function saveStoreInfo(uid: string, input: StoreInfoInput): Promise<void> {
@@ -329,13 +370,51 @@ export async function acceptTerms(uid: string): Promise<void> {
 // Profile Update (Seller can edit only store info, not financial data)
 // ====================================================================
 
+// Fields a seller is allowed to modify on their own profile.
+// System-controlled fields (commission, earnings, status, etc.) are excluded.
+const SELLER_EDITABLE_FIELDS = new Set([
+  "shopName",
+  "shopSlug",
+  "description",
+  "logoUrl",
+  "bannerUrl",
+  "phone",
+  "addressLine",
+  "city",
+  "area",
+  "country",
+  "postalCode",
+  "updatedAt",
+]);
+
 export async function updateSellerProfile(
   uid: string,
-  patch: Partial<Pick<SellerProfile, "shopName" | "description" | "logoUrl" | "bannerUrl" | "phone" | "addressLine" | "city" | "area" | "country" | "postalCode">>,
+  patch: Partial<
+    Pick<
+      SellerProfile,
+      | "shopName"
+      | "description"
+      | "logoUrl"
+      | "bannerUrl"
+      | "phone"
+      | "addressLine"
+      | "city"
+      | "area"
+      | "country"
+      | "postalCode"
+    >
+  >,
 ): Promise<void> {
   const update: Record<string, unknown> = { ...patch, updatedAt: serverTimestamp() };
   if (patch.shopName) {
     update.shopSlug = slugify(patch.shopName) || uid;
+  }
+  // Defense-in-depth: strip any non-editable fields that might slip through.
+  // Firestore rules enforce this server-side, but we also validate here.
+  for (const key of Object.keys(update)) {
+    if (!SELLER_EDITABLE_FIELDS.has(key)) {
+      delete update[key];
+    }
   }
   await updateDoc(doc(getDb(), SELLERS, uid), update);
 }
