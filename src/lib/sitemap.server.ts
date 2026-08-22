@@ -42,8 +42,12 @@ interface SubcategorySitemapData {
 /* Config                                                             */
 /* ------------------------------------------------------------------ */
 
-const SITE_URL =
-  Deno.env.get("SITE_URL") ?? Deno.env.get("VITE_SITE_URL") ?? "https://shop-nexa.lovable.app";
+function getSiteUrl(): string {
+  return (
+    (typeof Deno !== "undefined" && (Deno.env.get("SITE_URL") ?? Deno.env.get("VITE_SITE_URL"))) ||
+    "https://shop-nexa.lovable.app"
+  );
+}
 const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
 
 /* ------------------------------------------------------------------ */
@@ -234,11 +238,11 @@ function urlEntry(u: SitemapUrl): string {
 /** Static public pages that actually exist in the app. */
 function staticPages(): SitemapUrl[] {
   return [
-    { loc: `${SITE_URL}/`, changefreq: "daily", priority: "1.0" },
-    { loc: `${SITE_URL}/shop`, changefreq: "daily", priority: "0.9" },
-    { loc: `${SITE_URL}/flash-sales`, changefreq: "daily", priority: "0.8" },
-    { loc: `${SITE_URL}/compare`, changefreq: "weekly", priority: "0.5" },
-    { loc: `${SITE_URL}/help-center`, changefreq: "monthly", priority: "0.5" },
+    { loc: `${getSiteUrl()}/`, changefreq: "daily", priority: "1.0" },
+    { loc: `${getSiteUrl()}/shop`, changefreq: "daily", priority: "0.9" },
+    { loc: `${getSiteUrl()}/flash-sales`, changefreq: "daily", priority: "0.8" },
+    { loc: `${getSiteUrl()}/compare`, changefreq: "weekly", priority: "0.5" },
+    { loc: `${getSiteUrl()}/help-center`, changefreq: "monthly", priority: "0.5" },
   ];
 }
 
@@ -272,7 +276,7 @@ export async function generateSitemap(): Promise<{ xml: string; count: number }>
     priority = "0.6",
   ) {
     const normalized = loc.replace(/\/+$/, "");
-    const key = normalized === SITE_URL ? `${SITE_URL}/` : normalized;
+    const key = normalized === getSiteUrl() ? `${getSiteUrl()}/` : normalized;
     if (seenUrls.has(key)) return;
     seenUrls.add(key);
     urls.push({ loc, lastmod, changefreq, priority });
@@ -288,7 +292,7 @@ export async function generateSitemap(): Promise<{ xml: string; count: number }>
     const { categories, subcategories } = await fetchCategoriesAndSubs(projectId);
     for (const cat of categories) {
       addUrl(
-        `${SITE_URL}/category/${encodeURIComponent(cat.slug)}`,
+        `${getSiteUrl()}/category/${encodeURIComponent(cat.slug)}`,
         tsToIso(cat.updatedAt ?? cat.createdAt),
         "weekly",
         "0.7",
@@ -296,7 +300,7 @@ export async function generateSitemap(): Promise<{ xml: string; count: number }>
     }
     for (const sub of subcategories) {
       addUrl(
-        `${SITE_URL}/category/${encodeURIComponent(sub.parentSlug)}/${encodeURIComponent(sub.slug)}`,
+        `${getSiteUrl()}/category/${encodeURIComponent(sub.parentSlug)}/${encodeURIComponent(sub.slug)}`,
         undefined,
         "weekly",
         "0.6",
@@ -311,7 +315,7 @@ export async function generateSitemap(): Promise<{ xml: string; count: number }>
     const products = await fetchProducts(projectId);
     for (const p of products) {
       addUrl(
-        `${SITE_URL}/product/${encodeURIComponent(p.slug)}`,
+        `${getSiteUrl()}/product/${encodeURIComponent(p.slug)}`,
         tsToIso(p.updatedAt ?? p.createdAt),
         "weekly",
         "0.8",
