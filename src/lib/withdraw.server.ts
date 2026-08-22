@@ -37,9 +37,7 @@ interface WithdrawResult {
  * - Creates withdrawal doc + pending walletTx entry
  * - All in a single atomic batch
  */
-export async function requestWithdrawalServer(
-  req: WithdrawRequest,
-): Promise<WithdrawResult> {
+export async function requestWithdrawalServer(req: WithdrawRequest): Promise<WithdrawResult> {
   const projectId = getProjectId();
   const token = await getAccessToken();
 
@@ -49,7 +47,7 @@ export async function requestWithdrawalServer(
 
   // Read wallet balance from Firestore ledger
   const walletRes = await fetch(
-    `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${encodeURIComponent(req.uid)}/walletTx:runQuery`,
+    `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/sellers/${encodeURIComponent(req.uid)}/walletTx:runQuery`,
     {
       method: "POST",
       headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
@@ -178,12 +176,7 @@ export async function processWithdrawalServer(input: {
     // Update withdrawal status
     {
       update: {
-        name: docPath(projectId, [
-          "sellers",
-          input.sellerId,
-          "withdrawals",
-          input.withdrawalId,
-        ]),
+        name: docPath(projectId, ["sellers", input.sellerId, "withdrawals", input.withdrawalId]),
         fields: toFsFields({
           status: input.action === "approve" ? "completed" : "rejected",
           processedAt: nowMs,
@@ -201,12 +194,7 @@ export async function processWithdrawalServer(input: {
     // Create a completed walletTx (the pending one stays for audit)
     writes.push({
       update: {
-        name: docPath(projectId, [
-          "sellers",
-          input.sellerId,
-          "walletTx",
-          txId,
-        ]),
+        name: docPath(projectId, ["sellers", input.sellerId, "walletTx", txId]),
         fields: toFsFields({
           type: "withdrawal",
           amount: -amount,
@@ -222,12 +210,7 @@ export async function processWithdrawalServer(input: {
     // Reversal: create a positive walletTx to offset the pending debit
     writes.push({
       update: {
-        name: docPath(projectId, [
-          "sellers",
-          input.sellerId,
-          "walletTx",
-          txId,
-        ]),
+        name: docPath(projectId, ["sellers", input.sellerId, "walletTx", txId]),
         fields: toFsFields({
           type: "adjustment",
           amount: amount,
@@ -244,18 +227,10 @@ export async function processWithdrawalServer(input: {
   // Create admin notification
   writes.push({
     update: {
-      name: docPath(projectId, [
-        "sellers",
-        input.sellerId,
-        "notifications",
-        newDocId(),
-      ]),
+      name: docPath(projectId, ["sellers", input.sellerId, "notifications", newDocId()]),
       fields: toFsFields({
         type: "withdrawal",
-        title:
-          input.action === "approve"
-            ? "Withdrawal approved"
-            : "Withdrawal rejected",
+        title: input.action === "approve" ? "Withdrawal approved" : "Withdrawal rejected",
         message:
           input.action === "approve"
             ? `Your withdrawal of $${amount.toFixed(2)} via ${method} has been processed.`

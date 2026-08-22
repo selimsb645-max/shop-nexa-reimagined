@@ -3,12 +3,7 @@ import { getDb } from "./config";
 import type { Coupon } from "@/types/commerce";
 
 export class CouponError extends Error {
-  code:
-    | "not_found"
-    | "inactive"
-    | "expired"
-    | "min_subtotal"
-    | "usage_limit";
+  code: "not_found" | "inactive" | "expired" | "min_subtotal" | "usage_limit";
   constructor(code: CouponError["code"], msg: string) {
     super(msg);
     this.code = code;
@@ -30,21 +25,20 @@ export async function validateCoupon(code: string, subtotal: number): Promise<Co
   if (c.expiresAt && Date.now() > c.expiresAt)
     throw new CouponError("expired", "This coupon has expired");
   if (c.minSubtotal && subtotal < c.minSubtotal)
-    throw new CouponError(
-      "min_subtotal",
-      `Minimum order of $${c.minSubtotal.toFixed(2)} required`,
-    );
+    throw new CouponError("min_subtotal", `Minimum order of $${c.minSubtotal.toFixed(2)} required`);
   if (c.usageLimit != null && c.uses >= c.usageLimit)
     throw new CouponError("usage_limit", "Coupon usage limit reached");
 
-  const discount =
-    c.type === "percent"
-      ? Math.min(subtotal, subtotal * (c.value / 100))
-      : Math.min(subtotal, c.value);
+  let discount = c.type === "percent" ? subtotal * (c.value / 100) : c.value;
+  // Cap at maxDiscount if specified (percent type only)
+  if (c.maxDiscount != null) {
+    discount = Math.min(discount, c.maxDiscount);
+  }
+  // Cap at subtotal
+  discount = Math.min(subtotal, discount);
   return { coupon: c, discount: Math.round(discount * 100) / 100 };
 }
 
 // Coupon `uses` is incremented only by the trusted server-side checkout, so
 // there is intentionally no client-side increment helper here. `validateCoupon`
 // above is a read-only preview; the server revalidates the coupon at checkout.
-

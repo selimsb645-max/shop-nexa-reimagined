@@ -210,19 +210,39 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
       const uses = Number(c["uses"] ?? 0);
       const type = String(c["type"] ?? "fixed");
       const value = Number(c["value"] ?? 0);
+      const maxDiscount = c["maxDiscount"] == null ? null : Number(c["maxDiscount"]);
+      const couponSellerId = (c["sellerId"] as string | null) ?? null;
+      const couponProductIds = Array.isArray(c["productIds"]) ? (c["productIds"] as string[]) : [];
+
+      // For seller-specific coupons, validate that at least one product
+      // in the cart belongs to that seller. If productIds is specified,
+      // validate that at least one of those products is in the cart.
+      let sellerCouponValid = true;
+      if (couponSellerId) {
+        const sellerHasProductInCart = lines.some((l) => l.sellerId === couponSellerId);
+        if (!sellerHasProductInCart) sellerCouponValid = false;
+
+        // If productIds specified, at least one must be in the cart
+        if (couponProductIds.length > 0) {
+          const hasMatchingProduct = lines.some((l) => couponProductIds.includes(l.productId));
+          if (!hasMatchingProduct) sellerCouponValid = false;
+        }
+      }
+
       const usable =
         active &&
+        sellerCouponValid &&
         (expiresAt == null || expiresAt > nowMs) &&
         subtotal >= minSubtotal &&
         (usageLimit == null || uses < usageLimit) &&
         Number.isFinite(value) &&
         value > 0;
       if (usable) {
-        discount = round2(
-          type === "percent"
-            ? Math.min(subtotal, subtotal * (value / 100))
-            : Math.min(subtotal, value),
-        );
+        const rawDiscount = type === "percent" ? subtotal * (value / 100) : value;
+        // Cap discount at subtotal and at maxDiscount if specified
+        const cappedDiscount =
+          maxDiscount != null ? Math.min(rawDiscount, maxDiscount) : rawDiscount;
+        discount = round2(Math.min(subtotal, cappedDiscount));
         appliedCoupon = couponCode;
         couponUpdateTime = cDoc.updateTime;
       }
