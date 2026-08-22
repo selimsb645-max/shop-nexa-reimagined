@@ -382,25 +382,22 @@ function CountdownBox({ value, label }: { value: number; label: string }) {
   );
 }
 
-/* ========================================================================== Categories Grid ========================================================================== */
+/* ========================================================================== Categories Grid (Shop by Category) ========================================================================== */
 function CategoriesGrid({ categories, isLoading }: { categories: CategoryItem[]; isLoading: boolean }) {
   return (
-    <div className="rounded-xl sm:rounded-2xl bg-white p-3 sm:p-6 shadow-sm border border-slate-100">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h2 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2"><Tag className="h-5 w-5 text-orange-500" />Categories</h2>
-          <p className="text-[11px] sm:text-xs text-slate-500">Explore items by popular categories</p>
-        </div>
-        <Link to="/shop" className="text-[11px] sm:text-xs font-bold text-orange-600 hover:underline flex items-center gap-1">All Categories <ChevronRight className="h-3.5 w-3.5" /></Link>
+    <div className="rounded-xl sm:rounded-2xl bg-white p-3 sm:p-5 shadow-sm border border-slate-200">
+      <div className="flex items-center justify-between mb-3 sm:mb-4">
+        <h2 className="text-base sm:text-lg font-bold text-slate-900">Shop by Category</h2>
+        <Link to="/shop" className="text-xs sm:text-sm font-medium text-blue-600 hover:underline flex items-center gap-1">View All Categories <ChevronRight className="h-3.5 w-3.5" /></Link>
       </div>
-      <div className="-mr-3 flex snap-x snap-mandatory gap-2.5 overflow-x-auto pb-1 pr-3 scrollbar-none sm:mr-0 sm:grid sm:grid-cols-4 sm:gap-4 sm:overflow-visible sm:pr-0 lg:grid-cols-8">
-        {isLoading ? Array.from({ length: 8 }).map((_, i) => (<div key={i} className="h-24 min-w-[78px] snap-start animate-pulse rounded-xl bg-slate-100 p-3 sm:min-w-0 sm:h-28" />))
+      <div className="-mr-3 flex snap-x snap-mandatory gap-2 overflow-x-auto pb-1 pr-3 scrollbar-none sm:mr-0 sm:grid sm:grid-cols-4 sm:gap-3 sm:overflow-visible sm:pr-0 lg:grid-cols-8">
+        {isLoading ? Array.from({ length: 8 }).map((_, i) => (<div key={i} className="h-24 min-w-[92px] snap-start animate-pulse rounded-lg bg-slate-100 sm:min-w-0" />))
         : categories.map((cat) => {
           const IconComp = cat.icon || Smartphone;
           return (
-            <Link key={cat.id} to="/shop" search={{ category: cat.slug }} className="group flex h-24 min-w-[78px] snap-start flex-col items-center justify-center rounded-xl border border-slate-100 bg-white p-2.5 text-center transition-all duration-200 hover:-translate-y-1 hover:border-orange-200 hover:shadow-md sm:h-28 sm:min-w-0 sm:p-3.5">
-              <div className={`grid h-11 w-11 sm:h-14 sm:w-14 place-items-center rounded-full ${cat.bgColor} ${cat.textColor} transition-transform duration-200 group-hover:scale-110`}><IconComp className="h-5 w-5 sm:h-7 sm:w-7" /></div>
-              <span className="mt-2 text-[10px] sm:text-xs font-bold text-slate-800 line-clamp-1 group-hover:text-orange-600">{cat.name}</span>
+            <Link key={cat.id} to="/shop" search={{ category: cat.slug }} className="group flex h-24 min-w-[92px] snap-start flex-col items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white p-2 text-center transition-colors duration-200 hover:border-blue-300 hover:bg-slate-50 sm:min-w-0">
+              <IconComp className={`h-7 w-7 sm:h-8 sm:w-8 ${cat.textColor}`} strokeWidth={1.75} />
+              <span className="text-[11px] sm:text-xs font-semibold text-slate-800 line-clamp-1">{cat.name}</span>
             </Link>
           );
         })}
