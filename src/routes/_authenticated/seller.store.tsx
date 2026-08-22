@@ -12,7 +12,7 @@
  * Store URL: based on existing shopSlug
  */
 
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useRef } from "react";
 import { toast } from "sonner";
 import {
@@ -145,7 +145,12 @@ function StorePage({ profile }: { profile: SellerProfile }) {
           </span>
           <div className="flex-1 min-w-0">
             <div className="text-xs font-medium text-slate-500">Store URL</div>
-            <div className="text-sm font-medium text-[#f57224] truncate">{storeUrl}</div>
+            <Link
+              to={storeUrl as string}
+              className="text-sm font-medium text-[#f57224] truncate hover:underline"
+            >
+              {storeUrl}
+            </Link>
           </div>
         </div>
       </div>
