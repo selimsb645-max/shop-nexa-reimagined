@@ -11,6 +11,8 @@ import {
   BarChart3,
   Tag,
   DollarSign,
+  TrendingUp,
+  Receipt,
   Menu,
   X,
   LogOut,
@@ -42,10 +44,12 @@ export function SellerShell({ children }: Props) {
     { to: "/seller/products", icon: Package, label: "Products" },
     { to: "/seller/orders", icon: ShoppingBag, label: "Orders" },
     { to: "/seller/earnings", icon: DollarSign, label: "Earnings" },
+    { to: "/seller/settlements", icon: Receipt, label: "Settlements" },
     { to: "/seller/wallet", icon: Wallet, label: "Wallet" },
     { to: "/seller/coupons", icon: Tag, label: "Coupons" },
     { to: "/seller/store", icon: Store, label: "Store" },
     { to: "/seller/analytics", icon: BarChart3, label: "Analytics" },
+    { to: "/seller/insights", icon: TrendingUp, label: "Insights" },
     { to: "/seller/notifications", icon: Bell, label: "Notifications" },
     { to: "/seller/settings", icon: Settings, label: "Settings" },
   ];
@@ -62,9 +66,7 @@ export function SellerShell({ children }: Props) {
     return location.pathname.startsWith(to);
   };
 
-  const statusConfig = profile
-    ? SELLER_STATUS_CONFIG[profile.status]
-    : null;
+  const statusConfig = profile ? SELLER_STATUS_CONFIG[profile.status] : null;
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans antialiased flex flex-col">
@@ -110,7 +112,10 @@ export function SellerShell({ children }: Props) {
               )}
               {profile && (
                 <span className="hidden md:block text-xs text-slate-400">
-                  Balance: <span className="text-[#f57224] font-bold">${profile.availableBalance.toFixed(2)}</span>
+                  Balance:{" "}
+                  <span className="text-[#f57224] font-bold">
+                    ${profile.availableBalance.toFixed(2)}
+                  </span>
                 </span>
               )}
               <Link
@@ -188,9 +193,7 @@ export function SellerShell({ children }: Props) {
             key={tab.to}
             to={tab.to}
             className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg transition-colors ${
-              isActive(tab.to, tab.exact)
-                ? "text-[#f57224]"
-                : "text-slate-400"
+              isActive(tab.to, tab.exact) ? "text-[#f57224]" : "text-slate-400"
             }`}
           >
             <tab.icon className="w-5 h-5" />
