@@ -210,9 +210,26 @@ export const markOrderDelivered = createServerFn({ method: "POST" })
 
     const { uid } = await verifyIdToken(data.idToken);
 
-    // Caller must be the seller or an admin
-    // The existing order status update handles permission checks.
-    // This function ONLY handles the settlement side effect.
+    // SECURITY: Verify that the caller's authenticated UID matches the
+    // sellerId in the request. This prevents a seller from triggering
+    // settlement transitions on another seller's orders (IDOR attack).
+    // Admins are allowed to call on behalf of any seller.
+    if (uid !== data.sellerId) {
+      // Check if caller is admin
+      const { getAccessToken, getProjectId } = await import("./firebase-admin.server");
+      const token = await getAccessToken();
+      const projectId = getProjectId();
+      const userRes = await fetch(
+        `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${encodeURIComponent(uid)}`,
+        { headers: { authorization: `Bearer ${token}` } },
+      );
+      if (!userRes.ok) throw new Error("Could not verify permissions.");
+      const userDoc = await userRes.json();
+      const role = userDoc.fields?.role?.stringValue ?? "customer";
+      if (role !== "admin") {
+        throw new Error("You can only mark your own orders as delivered.");
+      }
+    }
 
     const nowMs = Date.now();
     return markOrderDeliveredSettlement({
