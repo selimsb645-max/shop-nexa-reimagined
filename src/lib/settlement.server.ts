@@ -1,10 +1,10 @@
 /**
  * Shop Nexa — Server-Side Settlement Engine
- * 
+ *
  * This module is the SINGLE source of truth for all seller settlement operations.
  * It runs exclusively on the server (via Deno/server functions) and uses the
  * Firebase service account, bypassing client security rules.
- * 
+ *
  * RESPONSIBILITIES:
  * 1. Compute seller-wise settlement breakdown at order placement
  * 2. Transition settlement status when order is delivered (pending → hold)
@@ -12,7 +12,7 @@
  * 4. Reverse earnings on cancellation/refund (any → reversed)
  * 5. Process withdrawal requests and admin approvals
  * 6. Maintain immutable settlementTx ledger
- * 
+ *
  * SECURITY:
  * - Sellers CANNOT call any function here directly.
  * - All functions verify caller permissions (admin or verified seller).
@@ -57,7 +57,7 @@ const WITHDRAWALS = "withdrawals";
 /**
  * Computes the settlement breakdown for a single seller's portion of an order.
  * This is called from checkout.server.ts during placeOrderServer().
- * 
+ *
  * Discount and shipping are distributed pro-rata based on each seller's
  * share of the order subtotal.
  */
@@ -71,14 +71,25 @@ export function computeSellerSettlement(input: {
   commissionRate: number;
   nowMs: number;
 }): SellerSettlementBreakdown {
-  const { sellerId, orderId, sellerSubtotal, orderSubtotal, orderDiscount, orderShipping, commissionRate: rawRate, nowMs } = input;
+  const {
+    sellerId,
+    orderId,
+    sellerSubtotal,
+    orderSubtotal,
+    orderDiscount,
+    orderShipping,
+    commissionRate: rawRate,
+    nowMs,
+  } = input;
 
   // Defense-in-depth: clamp commission rate to [0, 1] to prevent invalid
   // values (negative, >100%, NaN) from producing nonsensical financial results.
   // The checkout server already clamps, but this guards against any other caller.
   const commissionRate = Number.isFinite(rawRate)
     ? Math.min(Math.max(rawRate, 0), 1)
-    : (rawRate === Infinity ? 1 : 0);
+    : rawRate === Infinity
+      ? 1
+      : 0;
 
   // Pro-rata share of discount and shipping
   const sellerRatio = orderSubtotal > 0 ? sellerSubtotal / orderSubtotal : 0;
@@ -124,7 +135,15 @@ export function buildSellerOrderWrite(input: {
   buyerId: string;
   buyerName: string;
   buyerEmail: string | null;
-  items: Array<{ productId: string; slug: string; title: string; image: string; price: number; quantity: number; subtotal: number }>;
+  items: Array<{
+    productId: string;
+    slug: string;
+    title: string;
+    image: string;
+    price: number;
+    quantity: number;
+    subtotal: number;
+  }>;
   settlement: SellerSettlementBreakdown;
   paymentMethod: string;
   paymentStatus: string;
@@ -229,7 +248,7 @@ export function buildSettlementPendingTxWrite(input: {
  * Called when an order status changes to "delivered" (by seller or admin).
  * Updates the seller order's settlement status to "hold" and sets the
  * eligibleSettlementDate = deliveredAt + SETTLEMENT_HOLD_DAYS.
- * 
+ *
  * IDEMPOTENT: If settlement is already "hold" or beyond, does nothing.
  */
 export async function markOrderDeliveredSettlement(input: {
@@ -246,7 +265,7 @@ export async function markOrderDeliveredSettlement(input: {
     { headers: { authorization: `Bearer ${token}` } },
   );
   if (!orderRes.ok) throw new Error("Seller order not found for settlement update.");
-  
+
   const orderDoc = await orderRes.json();
   const orderData = fromFsFields(orderDoc.fields ?? {});
   const settlement = (orderData.settlement ?? {}) as Record<string, unknown>;
@@ -257,7 +276,7 @@ export async function markOrderDeliveredSettlement(input: {
     return { updated: false, eligibleDate: null };
   }
 
-  const eligibleDate = input.deliveredAt + (SETTLEMENT_HOLD_DAYS * 24 * 60 * 60 * 1000);
+  const eligibleDate = input.deliveredAt + SETTLEMENT_HOLD_DAYS * 24 * 60 * 60 * 1000;
   const nowMs = Date.now();
 
   const writes: FsWrite[] = [
@@ -311,9 +330,9 @@ export async function markOrderDeliveredSettlement(input: {
 /**
  * Checks if a seller order's hold period has passed and releases earnings.
  * Creates a walletTx "earning" entry (positive credit) to make funds available.
- * 
+ *
  * IDEMPOTENT: Only transitions from "hold". If already "available" or beyond, skips.
- * 
+ *
  * Can be called:
  * - On-demand when seller views their wallet (lazy release)
  * - By a scheduled job that checks all sellers with hold-period orders
@@ -358,11 +377,7 @@ export async function releaseSettlementIfEligible(input: {
         }),
       },
       updateMask: {
-        fieldPaths: [
-          "settlement.settlementStatus",
-          "settlement.settledAt",
-          "settlement.updatedAt",
-        ],
+        fieldPaths: ["settlement.settlementStatus", "settlement.settledAt", "settlement.updatedAt"],
       },
     },
     // Immutable settlement ledger: earning credited
@@ -438,7 +453,9 @@ export async function batchReleaseSettlements(sellerId: string): Promise<{
 
   if (!res.ok) return { releasedCount: 0, totalReleased: 0 };
 
-  const json = (await res.json()) as Array<{ document?: { name: string; fields?: Record<string, FsValue> } }>;
+  const json = (await res.json()) as Array<{
+    document?: { name: string; fields?: Record<string, FsValue> };
+  }>;
   const nowMs = Date.now();
   let releasedCount = 0;
   let totalReleased = 0;
@@ -520,14 +537,14 @@ export async function batchReleaseSettlements(sellerId: string): Promise<{
 
 /**
  * Reverses a seller's earnings for an order (cancellation/refund).
- * 
+ *
  * BEHAVIOR by current settlement status:
  * - "pending": → "reversed" (no wallet impact, earnings were never credited)
  * - "hold": → "reversed" (no wallet impact, earnings were never credited)
  * - "available": → "reversed" + walletTx debit (earnings were credited, remove them)
  * - "paid": → cannot reverse automatically (payout already made, requires manual handling)
  * - "reversed": idempotent no-op
- * 
+ *
  * IDEMPOTENT: If already reversed, does nothing.
  */
 export async function reverseSellerSettlement(input: {
@@ -560,7 +577,7 @@ export async function reverseSellerSettlement(input: {
   // Cannot auto-reverse if already paid out
   if (currentStatus === "paid") {
     throw new Error(
-      "Cannot auto-reverse: seller earnings already paid out. Manual reconciliation required."
+      "Cannot auto-reverse: seller earnings already paid out. Manual reconciliation required.",
     );
   }
 
@@ -579,7 +596,11 @@ export async function reverseSellerSettlement(input: {
       }),
     },
     updateMask: {
-      fieldPaths: ["settlement.settlementStatus", "settlement.reversalReason", "settlement.updatedAt"],
+      fieldPaths: [
+        "settlement.settlementStatus",
+        "settlement.reversalReason",
+        "settlement.updatedAt",
+      ],
     },
   });
 
@@ -630,7 +651,7 @@ export async function reverseSellerSettlement(input: {
 /**
  * Creates a withdrawal request. Seller's available balance (walletTx ledger)
  * must cover the amount. Creates a pending walletTx debit.
- * 
+ *
  * EXTENDS the existing withdraw.server.ts logic by also:
  * - Linking settlement entries that are being withdrawn
  * - Creating settlementTx payout entries for audit
@@ -707,6 +728,7 @@ export async function requestSettlementWithdrawal(input: {
           processedAt: null,
           paidAt: null,
           txId: null,
+          pendingTxId: txId,
         }),
       },
       currentDocument: { exists: false },
@@ -759,12 +781,12 @@ export async function requestSettlementWithdrawal(input: {
 
 /**
  * Admin approves or rejects a withdrawal request.
- * 
+ *
  * APPROVE: marks withdrawal as completed, creates completed walletTx,
  *          creates settlementTx payout entry.
  * REJECT:  marks withdrawal as rejected, creates reversal walletTx,
  *          creates settlementTx payout_reversal entry.
- * 
+ *
  * IDEMPOTENT: if withdrawal is already processed, throws error.
  */
 export async function processSettlementWithdrawal(input: {
@@ -819,21 +841,40 @@ export async function processSettlementWithdrawal(input: {
   ];
 
   if (input.action === "approve") {
-    // Completed walletTx
-    writes.push({
-      update: {
-        name: docPath(projectId, ["sellers", input.sellerId, WALLET_TX, newDocId()]),
-        fields: toFsFields({
-          type: "withdrawal",
-          amount: -amount,
-          orderId: null,
-          note: `Withdrawal completed #${input.withdrawalId.slice(0, 8)} via ${method}`,
-          status: "completed",
-          createdAt: nowMs,
-        }),
-      },
-      currentDocument: { exists: false },
-    });
+    // UPDATE the pending walletTx to "completed" (not create a new one —
+    // creating a new one would double-debit the seller's balance).
+    const pendingTxId = String(withdrawData.pendingTxId ?? "");
+    if (pendingTxId) {
+      writes.push({
+        update: {
+          name: docPath(projectId, ["sellers", input.sellerId, WALLET_TX, pendingTxId]),
+          fields: toFsFields({
+            status: "completed",
+            note: `Withdrawal completed #${input.withdrawalId.slice(0, 8)} via ${method}`,
+            updatedAt: nowMs,
+          }),
+        },
+        updateMask: {
+          fieldPaths: ["status", "note", "updatedAt"],
+        },
+      });
+    } else {
+      // Fallback: if no pendingTxId (legacy withdrawal), create completed walletTx
+      writes.push({
+        update: {
+          name: docPath(projectId, ["sellers", input.sellerId, WALLET_TX, newDocId()]),
+          fields: toFsFields({
+            type: "withdrawal",
+            amount: -amount,
+            orderId: null,
+            note: `Withdrawal completed #${input.withdrawalId.slice(0, 8)} via ${method}`,
+            status: "completed",
+            createdAt: nowMs,
+          }),
+        },
+        currentDocument: { exists: false },
+      });
+    }
 
     // Settlement ledger: payout completed
     writes.push({
@@ -853,21 +894,41 @@ export async function processSettlementWithdrawal(input: {
       currentDocument: { exists: false },
     });
   } else {
-    // Reversal walletTx (refund the pending debit)
-    writes.push({
-      update: {
-        name: docPath(projectId, ["sellers", input.sellerId, WALLET_TX, newDocId()]),
-        fields: toFsFields({
-          type: "adjustment",
-          amount,
-          orderId: null,
-          note: `Withdrawal rejected #${input.withdrawalId.slice(0, 8)}, funds reversed`,
-          status: "completed",
-          createdAt: nowMs,
-        }),
-      },
-      currentDocument: { exists: false },
-    });
+    // UPDATE the pending walletTx to "rejected" so it no longer reduces
+    // available balance. (Previously created a reversal entry, which worked
+    // but left a stale "pending" entry in the ledger.)
+    const pendingTxId = String(withdrawData.pendingTxId ?? "");
+    if (pendingTxId) {
+      writes.push({
+        update: {
+          name: docPath(projectId, ["sellers", input.sellerId, WALLET_TX, pendingTxId]),
+          fields: toFsFields({
+            status: "rejected",
+            note: `Withdrawal rejected #${input.withdrawalId.slice(0, 8)}`,
+            updatedAt: nowMs,
+          }),
+        },
+        updateMask: {
+          fieldPaths: ["status", "note", "updatedAt"],
+        },
+      });
+    } else {
+      // Fallback: create reversal walletTx for legacy withdrawals
+      writes.push({
+        update: {
+          name: docPath(projectId, ["sellers", input.sellerId, WALLET_TX, newDocId()]),
+          fields: toFsFields({
+            type: "adjustment",
+            amount,
+            orderId: null,
+            note: `Withdrawal rejected #${input.withdrawalId.slice(0, 8)}, funds reversed`,
+            status: "completed",
+            createdAt: nowMs,
+          }),
+        },
+        currentDocument: { exists: false },
+      });
+    }
 
     // Settlement ledger: payout reversal
     writes.push({
@@ -895,9 +956,10 @@ export async function processSettlementWithdrawal(input: {
       fields: toFsFields({
         type: "withdrawal",
         title: input.action === "approve" ? "Withdrawal approved" : "Withdrawal rejected",
-        message: input.action === "approve"
-          ? `Your withdrawal of $${amount.toFixed(2)} via ${method} has been processed.`
-          : `Your withdrawal of $${amount.toFixed(2)} was rejected. ${input.note ?? ""}`,
+        message:
+          input.action === "approve"
+            ? `Your withdrawal of $${amount.toFixed(2)} via ${method} has been processed.`
+            : `Your withdrawal of $${amount.toFixed(2)} was rejected. ${input.note ?? ""}`,
         link: "/seller/settings",
         read: false,
         createdAt: nowMs,
@@ -916,7 +978,10 @@ export async function processSettlementWithdrawal(input: {
 /**
  * Reads a seller's settlement transactions (immutable ledger).
  */
-export async function readSettlementLedger(sellerId: string, max = 100): Promise<SettlementTxEntry[]> {
+export async function readSettlementLedger(
+  sellerId: string,
+  max = 100,
+): Promise<SettlementTxEntry[]> {
   const projectId = getProjectId();
   const token = await getAccessToken();
 
@@ -937,7 +1002,9 @@ export async function readSettlementLedger(sellerId: string, max = 100): Promise
 
   if (!res.ok) return [];
 
-  const json = (await res.json()) as Array<{ document?: { name: string; fields?: Record<string, FsValue> } }>;
+  const json = (await res.json()) as Array<{
+    document?: { name: string; fields?: Record<string, FsValue> };
+  }>;
   return json
     .filter((r) => r.document)
     .map((r) => {
@@ -990,7 +1057,9 @@ export async function readSellerFinancials(sellerId: string): Promise<{
   let pendingEarnings = 0;
 
   if (ordersRes.ok) {
-    const ordersJson = (await ordersRes.json()) as Array<{ document?: { fields?: Record<string, FsValue> } }>;
+    const ordersJson = (await ordersRes.json()) as Array<{
+      document?: { fields?: Record<string, FsValue> };
+    }>;
     for (const row of ordersJson) {
       if (!row.document) continue;
       const data = fromFsFields(row.document.fields ?? {});
@@ -1027,7 +1096,9 @@ export async function readSellerFinancials(sellerId: string): Promise<{
   let totalWithdrawn = 0;
 
   if (walletRes.ok) {
-    const walletJson = (await walletRes.json()) as Array<{ document?: { fields?: Record<string, FsValue> } }>;
+    const walletJson = (await walletRes.json()) as Array<{
+      document?: { fields?: Record<string, FsValue> };
+    }>;
     for (const row of walletJson) {
       if (!row.document) continue;
       const data = fromFsFields(row.document.fields ?? {});
@@ -1073,19 +1144,16 @@ export async function readAdminFinanceOverview(): Promise<{
   const token = await getAccessToken();
 
   // Read all buyer orders via collectionGroup
-  const ordersRes = await fetch(
-    `${baseUrl(projectId)}:runQuery`,
-    {
-      method: "POST",
-      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-      body: JSON.stringify({
-        structuredQuery: {
-          from: [{ collectionId: "orders" }],
-          limit: 500,
-        },
-      }),
-    },
-  );
+  const ordersRes = await fetch(`${baseUrl(projectId)}:runQuery`, {
+    method: "POST",
+    headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+    body: JSON.stringify({
+      structuredQuery: {
+        from: [{ collectionId: "orders" }],
+        limit: 500,
+      },
+    }),
+  });
 
   let totalCustomerPayments = 0;
   let totalPlatformRevenue = 0;
@@ -1094,7 +1162,9 @@ export async function readAdminFinanceOverview(): Promise<{
   let refundedAmount = 0;
 
   if (ordersRes.ok) {
-    const ordersJson = (await ordersRes.json()) as Array<{ document?: { name: string; fields?: Record<string, FsValue> } }>;
+    const ordersJson = (await ordersRes.json()) as Array<{
+      document?: { name: string; fields?: Record<string, FsValue> };
+    }>;
     for (const row of ordersJson) {
       if (!row.document) continue;
       // Only count buyer orders (path contains /users/)
@@ -1105,7 +1175,10 @@ export async function readAdminFinanceOverview(): Promise<{
       const paymentStatus = String((data.payment as Record<string, unknown>)?.status ?? "unpaid");
       const orderStatus = String(data.status ?? "pending");
 
-      if (paymentStatus === "paid" || (paymentStatus === "pending" && orderStatus === "delivered")) {
+      if (
+        paymentStatus === "paid" ||
+        (paymentStatus === "pending" && orderStatus === "delivered")
+      ) {
         totalCustomerPayments += total;
       }
 
@@ -1116,22 +1189,21 @@ export async function readAdminFinanceOverview(): Promise<{
   }
 
   // Read all seller orders via collectionGroup for seller-side metrics
-  const sellerOrdersRes = await fetch(
-    `${baseUrl(projectId)}:runQuery`,
-    {
-      method: "POST",
-      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-      body: JSON.stringify({
-        structuredQuery: {
-          from: [{ collectionId: "orders" }],
-          limit: 1000,
-        },
-      }),
-    },
-  );
+  const sellerOrdersRes = await fetch(`${baseUrl(projectId)}:runQuery`, {
+    method: "POST",
+    headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+    body: JSON.stringify({
+      structuredQuery: {
+        from: [{ collectionId: "orders" }],
+        limit: 1000,
+      },
+    }),
+  });
 
   if (sellerOrdersRes.ok) {
-    const sellerOrdersJson = (await sellerOrdersRes.json()) as Array<{ document?: { name: string; fields?: Record<string, FsValue> } }>;
+    const sellerOrdersJson = (await sellerOrdersRes.json()) as Array<{
+      document?: { name: string; fields?: Record<string, FsValue> };
+    }>;
     for (const row of sellerOrdersJson) {
       if (!row.document) continue;
       // Only seller orders (path contains /sellers/)
@@ -1170,10 +1242,10 @@ export async function readAdminFinanceOverview(): Promise<{
   if (sellersRes.ok) {
     const sellersJson = await sellersRes.json();
     const sellers = (sellersJson.documents ?? []) as Array<{ name: string }>;
-    
+
     for (const sellerDoc of sellers) {
       const sellerId = sellerDoc.name.split("/").pop()!;
-      
+
       // Pending withdrawals for this seller
       const pendingRes = await fetch(
         `${baseUrl(projectId)}/sellers/${encodeURIComponent(sellerId)}/withdrawals:runQuery`,
@@ -1212,7 +1284,9 @@ export async function readAdminFinanceOverview(): Promise<{
         },
       );
       if (walletRes.ok) {
-        const walletJson = (await walletRes.json()) as Array<{ document?: { fields?: Record<string, FsValue> } }>;
+        const walletJson = (await walletRes.json()) as Array<{
+          document?: { fields?: Record<string, FsValue> };
+        }>;
         for (const row of walletJson) {
           if (!row.document) continue;
           const data = fromFsFields(row.document.fields ?? {});
