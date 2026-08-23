@@ -15,9 +15,7 @@ import type { Product } from "@/types/commerce";
 import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/seller/products/")({
-  component: () => (
-    <SellerGate>{(profile) => <ProductsPage sellerId={profile.uid} />}</SellerGate>
-  ),
+  component: () => <SellerGate>{(profile) => <ProductsPage sellerId={profile.uid} />}</SellerGate>,
 });
 
 function ProductsPage({ sellerId }: { sellerId: string }) {
@@ -142,7 +140,7 @@ function ProductsPage({ sellerId }: { sellerId: string }) {
           )}
         </div>
       ) : (
-        <div className="overflow-hidden rounded-lg border bg-background">
+        <div className="overflow-x-auto rounded-lg border bg-background">
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-xs uppercase text-muted-foreground">
               <tr>
@@ -177,11 +175,7 @@ function ProductsPage({ sellerId }: { sellerId: string }) {
                     <td className="px-4 py-3 text-right">
                       <span
                         className={
-                          p.stock === 0
-                            ? "text-destructive"
-                            : p.stock <= 5
-                              ? "text-orange-600"
-                              : ""
+                          p.stock === 0 ? "text-destructive" : p.stock <= 5 ? "text-orange-600" : ""
                         }
                       >
                         {p.stock}

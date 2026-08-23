@@ -195,7 +195,7 @@ function WalletPage({ profile }: { profile: SellerProfile }) {
             </span>
             <span className="text-xs font-medium text-slate-300">Available Balance</span>
           </div>
-          <div className="text-2xl font-bold">{formatPrice(withdrawable)}</div>
+          <div className="text-2xl font-bold break-all">{formatPrice(withdrawable)}</div>
           <p className="text-xs text-slate-400 mt-1">Withdrawable to your account</p>
         </div>
 
@@ -207,7 +207,9 @@ function WalletPage({ profile }: { profile: SellerProfile }) {
             </span>
             <span className="text-xs font-medium text-slate-500">Pending Balance</span>
           </div>
-          <div className="text-2xl font-bold text-[#0f172a]">{formatPrice(pendingBalance)}</div>
+          <div className="text-2xl font-bold text-[#0f172a] break-all">
+            {formatPrice(pendingBalance)}
+          </div>
           <p className="text-xs text-slate-400 mt-1">In hold period</p>
         </div>
 
@@ -219,7 +221,9 @@ function WalletPage({ profile }: { profile: SellerProfile }) {
             </span>
             <span className="text-xs font-medium text-slate-500">Total Earnings</span>
           </div>
-          <div className="text-2xl font-bold text-[#0f172a]">{formatPrice(totalEarnings)}</div>
+          <div className="text-2xl font-bold text-[#0f172a] break-all">
+            {formatPrice(totalEarnings)}
+          </div>
           <p className="text-xs text-slate-400 mt-1">Lifetime earnings</p>
         </div>
       </div>

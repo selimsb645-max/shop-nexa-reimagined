@@ -341,7 +341,7 @@ function StatCard({
         <span className={color}>{icon}</span>
         <span className="text-xs font-medium text-muted-foreground">{label}</span>
       </div>
-      <div className="text-xl font-bold">{value}</div>
+      <div className="text-xl font-bold break-all">{value}</div>
     </div>
   );
 }

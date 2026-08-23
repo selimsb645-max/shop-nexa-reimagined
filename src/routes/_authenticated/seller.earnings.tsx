@@ -258,7 +258,7 @@ function SummaryCard({
         </span>
         <span className="text-xs font-medium text-slate-500">{label}</span>
       </div>
-      <div className="text-lg sm:text-xl font-bold text-[#0f172a]">{value}</div>
+      <div className="text-lg sm:text-xl font-bold text-[#0f172a] break-all">{value}</div>
     </div>
   );
 }

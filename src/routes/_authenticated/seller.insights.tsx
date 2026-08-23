@@ -56,8 +56,8 @@ function SellerInsightsPage({ profile }: { profile: SellerProfile }) {
   const topSellers = [...sellerProducts].sort((a, b) => b.reviewCount - a.reviewCount).slice(0, 5);
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+    <div className="space-y-6">
+      <div>
         <div className="mb-6 flex items-center gap-3">
           <Link to="/seller" className="text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-5 w-5" />
@@ -189,7 +189,7 @@ function SellerInsightsPage({ profile }: { profile: SellerProfile }) {
             </div>
           </div>
         )}
-      </main>
+      </div>
     </div>
   );
 }
@@ -209,7 +209,7 @@ function StatCard({
     <div className="rounded-2xl border bg-background p-4 shadow-sm">
       <div className={`mb-1 ${color}`}>{icon}</div>
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-lg font-bold">{value}</p>
+      <p className="text-lg font-bold break-all">{value}</p>
     </div>
   );
 }

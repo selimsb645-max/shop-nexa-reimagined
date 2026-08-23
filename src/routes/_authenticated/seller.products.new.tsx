@@ -1,9 +1,22 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import {
-  Package, ChevronLeft, Loader, Save, Eye, Bold, Italic,
-  List, ListOrdered, Upload, X, CheckCircle2, AlertCircle, DollarSign,
-  Tag, ImagePlus,
+  Package,
+  ChevronLeft,
+  Loader,
+  Save,
+  Eye,
+  Bold,
+  Italic,
+  List,
+  ListOrdered,
+  Upload,
+  X,
+  CheckCircle2,
+  AlertCircle,
+  DollarSign,
+  Tag,
+  ImagePlus,
 } from "lucide-react";
 import { SellerGate } from "@/components/seller/SellerGate";
 import { createSellerProduct } from "@/services/firebase/sellerProducts";
@@ -16,7 +29,9 @@ import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/seller/products/new")({
   ssr: false,
-  component: () => <SellerGate>{(profile) => <AddProductPage sellerId={profile.uid} />}</SellerGate>,
+  component: () => (
+    <SellerGate>{(profile) => <AddProductPage sellerId={profile.uid} />}</SellerGate>
+  ),
   head: () => ({ meta: [{ title: "Add Product — Shop Nexa Seller" }] }),
 });
 
@@ -43,9 +58,20 @@ interface DraftState {
 }
 
 const EMPTY_DRAFT: DraftState = {
-  title: "", shortDescription: "", description: "", brand: "",
-  categoryId: "", subcategoryId: "", price: "", compareAtPrice: "",
-  costPrice: "", tax: "", stock: "", sku: "", tags: "", images: [],
+  title: "",
+  shortDescription: "",
+  description: "",
+  brand: "",
+  categoryId: "",
+  subcategoryId: "",
+  price: "",
+  compareAtPrice: "",
+  costPrice: "",
+  tax: "",
+  stock: "",
+  sku: "",
+  tags: "",
+  images: [],
 };
 
 // ====================================================================
@@ -79,31 +105,43 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
           richTextRef.current.innerHTML = parsed.description;
         }
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   // Load categories
   useEffect(() => {
     if (!firebaseConfigured) return;
-    listCategories().then(setCategories).catch(() => {});
+    listCategories()
+      .then(setCategories)
+      .catch(() => {});
   }, []);
 
   // Load subcategories when category changes
   useEffect(() => {
-    if (!form.categoryId) { setSubcategories([]); return; }
-    listSubcategories(form.categoryId).then(setSubcategories).catch(() => {});
+    if (!form.categoryId) {
+      setSubcategories([]);
+      return;
+    }
+    listSubcategories(form.categoryId)
+      .then(setSubcategories)
+      .catch(() => {});
   }, [form.categoryId]);
 
   // Auto-save draft to localStorage (debounced)
   useEffect(() => {
     const timer = setTimeout(() => {
-      const hasData = form.title || form.shortDescription || form.description || form.price || images.length > 0;
+      const hasData =
+        form.title || form.shortDescription || form.description || form.price || images.length > 0;
       if (!hasData) return;
       try {
         localStorage.setItem(DRAFT_KEY, JSON.stringify({ ...form, images }));
         setDraftSaved(true);
         setTimeout(() => setDraftSaved(false), 2000);
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }, 3000);
     return () => clearTimeout(timer);
   }, [form, images]);
@@ -112,14 +150,14 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
   const execCmd = (cmd: string, _value?: string) => {
     document.execCommand(cmd, false);
     if (richTextRef.current) {
-      setForm(f => ({ ...f, description: richTextRef.current!.innerHTML }));
+      setForm((f) => ({ ...f, description: richTextRef.current!.innerHTML }));
     }
     richTextRef.current?.focus();
   };
 
   const handleRichTextChange = () => {
     if (richTextRef.current) {
-      setForm(f => ({ ...f, description: richTextRef.current!.innerHTML }));
+      setForm((f) => ({ ...f, description: richTextRef.current!.innerHTML }));
     }
   };
 
@@ -134,8 +172,8 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
         const { url } = await uploadProductImage(sellerId, "new", f);
         uploaded.push(url);
       }
-      setImages(prev => [...prev, ...uploaded]);
-      setForm(f => ({ ...f, images: [...(f.images || []), ...uploaded] }));
+      setImages((prev) => [...prev, ...uploaded]);
+      setForm((f) => ({ ...f, images: [...(f.images || []), ...uploaded] }));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload failed");
     } finally {
@@ -145,8 +183,8 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
   };
 
   const removeImage = (idx: number) => {
-    setImages(prev => prev.filter((_, i) => i !== idx));
-    setForm(f => ({ ...f, images: (f.images || []).filter((_, i) => i !== idx) }));
+    setImages((prev) => prev.filter((_, i) => i !== idx));
+    setForm((f) => ({ ...f, images: (f.images || []).filter((_, i) => i !== idx) }));
   };
 
   // Validation
@@ -156,7 +194,11 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
     else if (form.title.trim().length < 2) e.title = "Name too short";
     if (!form.shortDescription.trim()) e.shortDescription = "Short description is required";
     else if (form.shortDescription.trim().length > 200) e.shortDescription = "Max 200 characters";
-    if (!form.description.trim() || form.description === "<br>" || form.description === "<div><br></div>") {
+    if (
+      !form.description.trim() ||
+      form.description === "<br>" ||
+      form.description === "<div><br></div>"
+    ) {
       e.description = "Full description is required";
     }
     if (!form.categoryId) e.categoryId = "Category is required";
@@ -178,9 +220,13 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
     }
     setSaving(true);
     try {
-      const cat = categories.find(c => c.id === form.categoryId);
-      if (!cat) { toast.error(t("seller.invalidCategory")); setSaving(false); return; }
-      const sub = subcategories.find(s => s.id === form.subcategoryId);
+      const cat = categories.find((c) => c.id === form.categoryId);
+      if (!cat) {
+        toast.error(t("seller.invalidCategory"));
+        setSaving(false);
+        return;
+      }
+      const sub = subcategories.find((s) => s.id === form.subcategoryId);
       const slug = slugify(form.title);
 
       await createSellerProduct(sellerId, {
@@ -229,8 +275,10 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate({ to: "/seller/products" })}
-            className="p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+          <button
+            onClick={() => navigate({ to: "/seller/products" })}
+            className="p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+          >
             <ChevronLeft className="w-5 h-5 text-slate-600" />
           </button>
           <div>
@@ -242,19 +290,31 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
         </div>
         <div className="flex items-center gap-2">
           {form.title && (
-            <button onClick={clearDraft}
-              className="text-xs text-slate-400 hover:text-rose-500 font-medium px-3 py-2 transition-colors">
+            <button
+              onClick={clearDraft}
+              className="text-xs text-slate-400 hover:text-rose-500 font-medium px-3 py-2 transition-colors"
+            >
               Clear Draft
             </button>
           )}
-          <button onClick={() => handleSubmit("draft")} disabled={saving}
-            className="bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold py-2.5 px-4 rounded-xl text-sm transition-colors flex items-center gap-1.5 disabled:opacity-50">
+          <button
+            onClick={() => handleSubmit("draft")}
+            disabled={saving}
+            className="bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold py-2.5 px-4 rounded-xl text-sm transition-colors flex items-center gap-1.5 disabled:opacity-50"
+          >
             {saving ? <Loader className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             Save Draft
           </button>
-          <button onClick={() => handleSubmit("published")} disabled={saving}
-            className="bg-[#f57224] hover:bg-orange-600 text-white font-bold py-2.5 px-4 rounded-xl text-sm transition-colors flex items-center gap-1.5 disabled:opacity-50">
-            {saving ? <Loader className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+          <button
+            onClick={() => handleSubmit("published")}
+            disabled={saving}
+            className="bg-[#f57224] hover:bg-orange-600 text-white font-bold py-2.5 px-4 rounded-xl text-sm transition-colors flex items-center gap-1.5 disabled:opacity-50"
+          >
+            {saving ? (
+              <Loader className="w-4 h-4 animate-spin" />
+            ) : (
+              <CheckCircle2 className="w-4 h-4" />
+            )}
             Publish
           </button>
         </div>
@@ -271,18 +331,24 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
                 <input
                   type="text"
                   value={form.title}
-                  onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+                  onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
                   placeholder="e.g. Wireless Bluetooth Headphones"
                   className="input-field"
                 />
               </FormField>
 
-              <FormField label="Short Description" required error={errors.shortDescription}
-                hint={`${form.shortDescription.length}/200`}>
+              <FormField
+                label="Short Description"
+                required
+                error={errors.shortDescription}
+                hint={`${form.shortDescription.length}/200`}
+              >
                 <input
                   type="text"
                   value={form.shortDescription}
-                  onChange={e => setForm(f => ({ ...f, shortDescription: e.target.value.slice(0, 200) }))}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, shortDescription: e.target.value.slice(0, 200) }))
+                  }
                   placeholder="Brief one-line description shown on product cards"
                   className="input-field"
                 />
@@ -292,10 +358,19 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
                 {/* Rich Text Toolbar */}
                 <div className="flex items-center gap-1 mb-1.5 bg-slate-50 border border-slate-200 rounded-lg p-1">
                   <RteButton onClick={() => execCmd("bold")} icon={<Bold className="w-4 h-4" />} />
-                  <RteButton onClick={() => execCmd("italic")} icon={<Italic className="w-4 h-4" />} />
+                  <RteButton
+                    onClick={() => execCmd("italic")}
+                    icon={<Italic className="w-4 h-4" />}
+                  />
                   <div className="w-px h-5 bg-slate-200 mx-1" />
-                  <RteButton onClick={() => execCmd("insertUnorderedList")} icon={<List className="w-4 h-4" />} />
-                  <RteButton onClick={() => execCmd("insertOrderedList")} icon={<ListOrdered className="w-4 h-4" />} />
+                  <RteButton
+                    onClick={() => execCmd("insertUnorderedList")}
+                    icon={<List className="w-4 h-4" />}
+                  />
+                  <RteButton
+                    onClick={() => execCmd("insertOrderedList")}
+                    icon={<ListOrdered className="w-4 h-4" />}
+                  />
                   <div className="w-px h-5 bg-slate-200 mx-1" />
                   <RteButton onClick={() => execCmd("formatBlock", "<h3>")} label="H3" />
                   <RteButton onClick={() => execCmd("formatBlock", "<p>")} label="P" />
@@ -316,7 +391,7 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
                   <input
                     type="text"
                     value={form.brand}
-                    onChange={e => setForm(f => ({ ...f, brand: e.target.value }))}
+                    onChange={(e) => setForm((f) => ({ ...f, brand: e.target.value }))}
                     placeholder="e.g. Sony"
                     className="input-field"
                   />
@@ -325,12 +400,16 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
                 <FormField label="Category" required error={errors.categoryId}>
                   <select
                     value={form.categoryId}
-                    onChange={e => setForm(f => ({ ...f, categoryId: e.target.value, subcategoryId: "" }))}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, categoryId: e.target.value, subcategoryId: "" }))
+                    }
                     className="input-field"
                   >
                     <option value="">{t("seller.selectCategory")}</option>
-                    {categories.map(c => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
                     ))}
                   </select>
                 </FormField>
@@ -338,13 +417,15 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
                 <FormField label="Sub Category">
                   <select
                     value={form.subcategoryId}
-                    onChange={e => setForm(f => ({ ...f, subcategoryId: e.target.value }))}
+                    onChange={(e) => setForm((f) => ({ ...f, subcategoryId: e.target.value }))}
                     className="input-field"
                     disabled={!form.categoryId}
                   >
                     <option value="">{t("seller.none")}</option>
-                    {subcategories.map(s => (
-                      <option key={s.id} value={s.id}>{s.name}</option>
+                    {subcategories.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
                     ))}
                   </select>
                 </FormField>
@@ -358,11 +439,13 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
               <div className="grid grid-cols-2 gap-3">
                 <FormField label="Regular Price" required error={errors.price}>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">৳</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
+                      ৳
+                    </span>
                     <input
                       type="number"
                       value={form.price}
-                      onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
+                      onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
                       placeholder="0.00"
                       className="input-field pl-8"
                       min="0"
@@ -371,14 +454,19 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
                   </div>
                 </FormField>
 
-                <FormField label="Sale Price" error={errors.compareAtPrice}
-                  hint="Optional — shown as discounted">
+                <FormField
+                  label="Sale Price"
+                  error={errors.compareAtPrice}
+                  hint="Optional — shown as discounted"
+                >
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">৳</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
+                      ৳
+                    </span>
                     <input
                       type="number"
                       value={form.compareAtPrice}
-                      onChange={e => setForm(f => ({ ...f, compareAtPrice: e.target.value }))}
+                      onChange={(e) => setForm((f) => ({ ...f, compareAtPrice: e.target.value }))}
                       placeholder="0.00"
                       className="input-field pl-8"
                       min="0"
@@ -391,11 +479,13 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
               <div className="grid grid-cols-2 gap-3">
                 <FormField label="Cost Price" hint="Visible only to you & admin">
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">৳</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
+                      ৳
+                    </span>
                     <input
                       type="number"
                       value={form.costPrice}
-                      onChange={e => setForm(f => ({ ...f, costPrice: e.target.value }))}
+                      onChange={(e) => setForm((f) => ({ ...f, costPrice: e.target.value }))}
                       placeholder="0.00"
                       className="input-field pl-8"
                       min="0"
@@ -406,11 +496,13 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
 
                 <FormField label="Tax (%)" hint="0-100">
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">%</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
+                      %
+                    </span>
                     <input
                       type="number"
                       value={form.tax}
-                      onChange={e => setForm(f => ({ ...f, tax: e.target.value }))}
+                      onChange={(e) => setForm((f) => ({ ...f, tax: e.target.value }))}
                       placeholder="0"
                       className="input-field pl-8"
                       min="0"
@@ -424,16 +516,22 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
               {/* Price Summary */}
               {form.price && (
                 <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
-                  <p className="text-xs font-bold text-slate-600 mb-2">{t("seller.priceSummary")}</p>
+                  <p className="text-xs font-bold text-slate-600 mb-2">
+                    {t("seller.priceSummary")}
+                  </p>
                   <div className="space-y-1 text-xs">
                     <div className="flex justify-between">
                       <span className="text-slate-500">{t("seller.regularPrice")}</span>
-                      <span className="font-semibold text-slate-700">৳{Number(form.price || 0).toFixed(2)}</span>
+                      <span className="font-semibold text-slate-700">
+                        ৳{Number(form.price || 0).toFixed(2)}
+                      </span>
                     </div>
                     {form.compareAtPrice && (
                       <div className="flex justify-between">
                         <span className="text-slate-500">{t("seller.salePrice")}</span>
-                        <span className="font-semibold text-slate-700">৳{Number(form.compareAtPrice).toFixed(2)}</span>
+                        <span className="font-semibold text-slate-700">
+                          ৳{Number(form.compareAtPrice).toFixed(2)}
+                        </span>
                       </div>
                     )}
                     {form.compareAtPrice && Number(form.compareAtPrice) > Number(form.price) && (
@@ -441,7 +539,11 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
                         <span className="text-slate-500">{t("seller.discountLabel")}</span>
                         <span className="font-semibold text-[#f57224]">
                           ৳{(Number(form.compareAtPrice) - Number(form.price)).toFixed(2)}
-                          {" ("}{((1 - Number(form.price) / Number(form.compareAtPrice)) * 100).toFixed(0)}% off{")"}
+                          {" ("}
+                          {((1 - Number(form.price) / Number(form.compareAtPrice)) * 100).toFixed(
+                            0,
+                          )}
+                          % off{")"}
                         </span>
                       </div>
                     )}
@@ -449,7 +551,7 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
                       <div className="flex justify-between">
                         <span className="text-slate-500">Tax ({form.tax}%):</span>
                         <span className="font-semibold text-slate-700">
-                          ৳{(Number(form.price || 0) * Number(form.tax) / 100).toFixed(2)}
+                          ৳{((Number(form.price || 0) * Number(form.tax)) / 100).toFixed(2)}
                         </span>
                       </div>
                     )}
@@ -466,7 +568,7 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
                 <input
                   type="number"
                   value={form.stock}
-                  onChange={e => setForm(f => ({ ...f, stock: e.target.value }))}
+                  onChange={(e) => setForm((f) => ({ ...f, stock: e.target.value }))}
                   placeholder="0"
                   className="input-field"
                   min="0"
@@ -476,7 +578,7 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
                 <input
                   type="text"
                   value={form.sku}
-                  onChange={e => setForm(f => ({ ...f, sku: e.target.value }))}
+                  onChange={(e) => setForm((f) => ({ ...f, sku: e.target.value }))}
                   placeholder="e.g. WBH-001"
                   className="input-field"
                 />
@@ -486,7 +588,7 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
               <input
                 type="text"
                 value={form.tags}
-                onChange={e => setForm(f => ({ ...f, tags: e.target.value }))}
+                onChange={(e) => setForm((f) => ({ ...f, tags: e.target.value }))}
                 placeholder="electronics, audio, wireless"
                 className="input-field"
               />
@@ -517,7 +619,9 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
               ) : (
                 <>
                   <Upload className="w-6 h-6 text-slate-300" />
-                  <span className="text-sm text-slate-500 font-medium">{t("seller.clickToUpload")}</span>
+                  <span className="text-sm text-slate-500 font-medium">
+                    {t("seller.clickToUpload")}
+                  </span>
                   <span className="text-xs text-slate-400">{t("seller.imageHint")}</span>
                 </>
               )}
@@ -525,11 +629,14 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
             {images.length > 0 && (
               <div className="grid grid-cols-3 gap-2 mt-3">
                 {images.map((url, i) => (
-                  <div key={i} className="relative group aspect-square rounded-lg overflow-hidden border border-slate-200">
+                  <div
+                    key={i}
+                    className="relative group aspect-square rounded-lg overflow-hidden border border-slate-200"
+                  >
                     <img src={url} alt="" className="w-full h-full object-cover" />
                     <button
                       onClick={() => removeImage(i)}
-                      className="absolute top-1 right-1 w-6 h-6 bg-rose-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute top-1 right-1 w-6 h-6 bg-rose-500 text-white rounded-full flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -588,11 +695,21 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
 // ====================================================================
 // Shared Components
 // ====================================================================
-function Section({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
+function Section({
+  title,
+  icon,
+  children,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
       <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-100">
-        <div className="w-7 h-7 rounded-lg bg-orange-50 flex items-center justify-center">{icon}</div>
+        <div className="w-7 h-7 rounded-lg bg-orange-50 flex items-center justify-center">
+          {icon}
+        </div>
         <h3 className="text-sm font-bold text-[#0f172a]">{title}</h3>
       </div>
       <div className="p-4">{children}</div>
@@ -600,27 +717,47 @@ function Section({ title, icon, children }: { title: string; icon: React.ReactNo
   );
 }
 
-function FormField({ label, required, error, hint, children }: {
-  label: string; required?: boolean; error?: string; hint?: string; children: React.ReactNode;
+function FormField({
+  label,
+  required,
+  error,
+  hint,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  error?: string;
+  hint?: string;
+  children: React.ReactNode;
 }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-1">
         <label className="text-sm font-medium text-slate-700">
-          {label}{required && <span className="text-[#f57224] ml-0.5">*</span>}
+          {label}
+          {required && <span className="text-[#f57224] ml-0.5">*</span>}
         </label>
         {hint && <span className="text-[10px] text-slate-400">{hint}</span>}
       </div>
       {children}
-      {error && <p className="text-xs text-rose-500 mt-1 flex items-center gap-1">
-        <AlertCircle className="w-3 h-3" />{error}
-      </p>}
+      {error && (
+        <p className="text-xs text-rose-500 mt-1 flex items-center gap-1">
+          <AlertCircle className="w-3 h-3" />
+          {error}
+        </p>
+      )}
     </div>
   );
 }
 
-function RteButton({ onClick, icon, label }: {
-  onClick: () => void; icon?: React.ReactNode; label?: string;
+function RteButton({
+  onClick,
+  icon,
+  label,
+}: {
+  onClick: () => void;
+  icon?: React.ReactNode;
+  label?: string;
 }) {
   return (
     <button
@@ -637,9 +774,17 @@ function RteButton({ onClick, icon, label }: {
 // Helpers
 // ====================================================================
 function slugify(s: string): string {
-  return s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 80);
+  return s
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")
+    .slice(0, 80);
 }
 
 function parseCsv(s: string): string[] {
-  return s.split(",").map(t => t.trim()).filter(Boolean);
+  return s
+    .split(",")
+    .map((t) => t.trim())
+    .filter(Boolean);
 }
