@@ -296,3 +296,62 @@ export const getSellerFinancials = createServerFn({ method: "POST" })
 
     return { ...financials, recentTransactions: ledger };
   });
+
+// ====================================================================
+// 8. ADMIN COMMISSION RATE UPDATE (admin action)
+// ====================================================================
+
+const updateCommissionSchema = z.object({
+  idToken: z.string().min(10),
+  sellerId: z.string().min(1).max(200),
+  newRate: z.number().min(0).max(1),
+});
+
+export const updateSellerCommissionRate = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => updateCommissionSchema.parse(data))
+  .handler(async ({ data }) => {
+    const { verifyIdToken, getAccessToken, getProjectId } = await import("./firebase-admin.server");
+
+    const { uid } = await verifyIdToken(data.idToken);
+
+    // Verify caller is admin
+    const token = await getAccessToken();
+    const projectId = getProjectId();
+    const userRes = await fetch(
+      `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${encodeURIComponent(uid)}`,
+      { headers: { authorization: `Bearer ${token}` } },
+    );
+    if (!userRes.ok) throw new Error("Could not verify admin permissions.");
+    const userDoc = await userRes.json();
+    const role = userDoc.fields?.role?.stringValue ?? "customer";
+    if (role !== "admin") throw new Error("Only admins can update commission rates.");
+
+    const { updateSellerCommissionRate: updateRate } = await import("./admin-commission.server");
+
+    const result = await updateRate(data.sellerId, data.newRate);
+
+    return { success: true, storedRate: result.storedRate };
+  });
+
+// ====================================================================
+// 9. READ SELLER COMMISSION RATE (admin or self)
+// ====================================================================
+
+const readCommissionSchema = z.object({
+  idToken: z.string().min(10),
+  sellerId: z.string().min(1).max(200),
+});
+
+export const getSellerCommissionRate = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => readCommissionSchema.parse(data))
+  .handler(async ({ data }) => {
+    const { verifyIdToken } = await import("./firebase-admin.server");
+
+    const { uid } = await verifyIdToken(data.idToken);
+
+    const { readSellerCommissionRate: readRate } = await import("./admin-commission.server");
+
+    const rate = await readRate(data.sellerId);
+
+    return { rate };
+  });

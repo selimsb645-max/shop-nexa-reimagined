@@ -9,7 +9,17 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { getDb } from "./config";
-import type { SellerProfile, SellerStatus, RegistrationStep, SellerBankInfo, SellerIdentityInfo, SellerBusinessInfo, SellerStoreSettings, WarehouseInfo, PickupPoint } from "@/types/seller";
+import type {
+  SellerProfile,
+  SellerStatus,
+  RegistrationStep,
+  SellerBankInfo,
+  SellerIdentityInfo,
+  SellerBusinessInfo,
+  SellerStoreSettings,
+  WarehouseInfo,
+  PickupPoint,
+} from "@/types/seller";
 
 const SELLERS = "sellers";
 
@@ -43,22 +53,36 @@ function mapSeller(id: string, d: Record<string, unknown>): SellerProfile {
     pendingBalance: Number(d.pendingBalance ?? 0),
     withdrawnTotal: Number(d.withdrawnTotal ?? 0),
     bankInfo: (d.bankInfo as SellerBankInfo) ?? {
-      bankName: null, accountName: null, accountNumber: null,
-      branchName: null, routingNumber: null,
-      mobileBankingType: null, mobileBankingNumber: null,
+      bankName: null,
+      accountName: null,
+      accountNumber: null,
+      branchName: null,
+      routingNumber: null,
+      mobileBankingType: null,
+      mobileBankingNumber: null,
     },
     identity: (d.identity as SellerIdentityInfo) ?? {
-      fullName: null, nidNumber: null, nidFrontUrl: null,
-      nidBackUrl: null, tradeLicenseUrl: null, tradeLicenseNumber: null,
+      fullName: null,
+      nidNumber: null,
+      nidFrontUrl: null,
+      nidBackUrl: null,
+      tradeLicenseUrl: null,
+      tradeLicenseNumber: null,
       verified: false,
     },
     business: (d.business as SellerBusinessInfo) ?? {
-      businessType: null, businessName: null, taxId: null,
-      website: null, socialMediaLinks: [],
+      businessType: null,
+      businessName: null,
+      taxId: null,
+      website: null,
+      socialMediaLinks: [],
     },
     storeSettings: (d.storeSettings as SellerStoreSettings) ?? {
-      autoAcceptOrders: false, announcement: null,
-      responseTimeHours: 24, returnPolicyDays: 7, operatingHours: null,
+      autoAcceptOrders: false,
+      announcement: null,
+      responseTimeHours: 24,
+      returnPolicyDays: 7,
+      operatingHours: null,
     },
     verified: Boolean(d.verified),
     totalProducts: Number(d.totalProducts ?? 0),
@@ -68,20 +92,19 @@ function mapSeller(id: string, d: Record<string, unknown>): SellerProfile {
     followers: Number(d.followers ?? 0),
     warehouses: Array.isArray(d.warehouses) ? (d.warehouses as WarehouseInfo[]) : [],
     pickupPoints: Array.isArray(d.pickupPoints) ? (d.pickupPoints as PickupPoint[]) : [],
-    supportedCurrencies: Array.isArray(d.supportedCurrencies) ? (d.supportedCurrencies as string[]) : ["BDT"],
+    supportedCurrencies: Array.isArray(d.supportedCurrencies)
+      ? (d.supportedCurrencies as string[])
+      : ["BDT"],
     internationalShipping: Boolean(d.internationalShipping),
     crossBorderSeller: Boolean(d.crossBorderSeller),
-    createdAt:
-      typeof created === "number" ? created : created?.toMillis?.() ?? Date.now(),
+    createdAt: typeof created === "number" ? created : (created?.toMillis?.() ?? Date.now()),
     updatedAt:
-      typeof updatedRaw === "number" ? updatedRaw : updatedRaw?.toMillis?.() ?? Date.now(),
+      typeof updatedRaw === "number" ? updatedRaw : (updatedRaw?.toMillis?.() ?? Date.now()),
   };
 }
 
 export async function listAllSellers(): Promise<SellerProfile[]> {
-  const snap = await getDocs(
-    query(collection(getDb(), SELLERS), orderBy("createdAt", "desc")),
-  );
+  const snap = await getDocs(query(collection(getDb(), SELLERS), orderBy("createdAt", "desc")));
   return snap.docs.map((s) => mapSeller(s.id, s.data()));
 }
 
@@ -118,4 +141,46 @@ export async function setSellerStatus(
     read: false,
     createdAt: serverTimestamp(),
   });
+}
+
+// ====================================================================
+// Commission Rate Management
+// ====================================================================
+
+import { updateSellerCommissionRate, getSellerCommissionRate } from "@/lib/settlement.functions";
+
+/**
+ * Admin updates a seller's commission rate.
+ * Server verifies admin permissions and clamps the rate to [0, 1].
+ * Existing settlements are NOT affected — only new orders use the updated rate.
+ */
+export async function setSellerCommissionRate(input: {
+  idToken: string;
+  sellerId: string;
+  newRate: number; // e.g. 0.15 = 15%
+}): Promise<{ storedRate: number }> {
+  const result = await updateSellerCommissionRate({
+    data: {
+      idToken: input.idToken,
+      sellerId: input.sellerId,
+      newRate: input.newRate,
+    },
+  });
+  return { storedRate: result.storedRate };
+}
+
+/**
+ * Read a seller's current commission rate (admin or self).
+ */
+export async function fetchSellerCommissionRate(input: {
+  idToken: string;
+  sellerId: string;
+}): Promise<number> {
+  const result = await getSellerCommissionRate({
+    data: {
+      idToken: input.idToken,
+      sellerId: input.sellerId,
+    },
+  });
+  return result.rate;
 }
