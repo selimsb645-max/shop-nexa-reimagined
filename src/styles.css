@@ -239,3 +239,9 @@
   }
 }
 
+
+
+/* Safe area padding for mobile bottom navigation (iPhone X+ notch/home indicator) */
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}

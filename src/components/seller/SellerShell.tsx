@@ -192,7 +192,7 @@ export function SellerShell({ children }: Props) {
           <Link
             key={tab.to}
             to={tab.to}
-            className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg transition-colors ${
+            className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-colors ${
               isActive(tab.to, tab.exact) ? "text-[#f57224]" : "text-slate-400"
             }`}
           >
@@ -202,7 +202,13 @@ export function SellerShell({ children }: Props) {
         ))}
         <button
           onClick={() => setMobileMenuOpen(true)}
-          className="flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-slate-400"
+          className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-colors ${
+            !["/seller", "/seller/products", "/seller/orders", "/seller/wallet"].some((r) =>
+              isActive(r, r === "/seller"),
+            )
+              ? "text-[#f57224]"
+              : "text-slate-400"
+          }`}
         >
           <Menu className="w-5 h-5" />
           <span className="text-[10px] font-medium">More</span>
