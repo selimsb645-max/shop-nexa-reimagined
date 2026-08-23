@@ -114,6 +114,56 @@ function queryCollection(parentPath: string, collectionId: string): StoredDoc[] 
 }
 
 /** Apply a Firestore structured query filter to a document */
+
+/**
+ * Set a nested field value using a dotted path (e.g., "settlement.status").
+ * Mutates the target object in place.
+ */
+function setNestedField(
+  target: Record<string, unknown>,
+  dottedPath: string,
+  encodedValue: Record<string, unknown>,
+): void {
+  const parts = dottedPath.split(".");
+  let current = target;
+  for (let i = 0; i < parts.length - 1; i++) {
+    const key = parts[i];
+    if (!current[key] || typeof current[key] !== "object") {
+      current[key] = { mapValue: { fields: {} } };
+    }
+    const mv = current[key] as { mapValue: { fields: Record<string, unknown> } };
+    if (!mv.mapValue || !mv.mapValue.fields) {
+      mv.mapValue = { fields: {} };
+    }
+    current = mv.mapValue.fields;
+  }
+  current[parts[parts.length - 1]] = encodedValue;
+}
+
+/**
+ * Get a nested field value using a dotted path from Firestore-encoded fields.
+ */
+function getNestedField(fields: Record<string, unknown>, dottedPath: string): unknown {
+  const parts = dottedPath.split(".");
+  let current: unknown = fields;
+  for (const part of parts) {
+    if (!current || typeof current !== "object") return undefined;
+    const curr = current as Record<string, unknown>;
+    if (part in curr) {
+      current = curr[part];
+    } else {
+      // Try nested mapValue
+      const mv = curr[part] as { mapValue?: { fields?: Record<string, unknown> } } | undefined;
+      if (mv?.mapValue?.fields) {
+        current = mv.mapValue.fields;
+      } else {
+        return undefined;
+      }
+    }
+  }
+  return current;
+}
+
 function matchesFilter(
   docFields: Record<string, unknown>,
   filter: Record<string, unknown>,
@@ -130,8 +180,15 @@ function matchesFilter(
       value: Record<string, unknown>;
     };
     // docFields are in Firestore encoded format — decode first
-    const fieldRaw = docFields[ff.field.fieldPath] as Record<string, unknown> | undefined;
-    const fieldValue = fieldRaw ? decodeValue(fieldRaw) : undefined;
+    // Support nested field paths (e.g., "settlement.settlementStatus")
+    const fieldPath = ff.field.fieldPath;
+    let fieldRaw: unknown;
+    if (fieldPath.includes(".")) {
+      fieldRaw = getNestedField(docFields, fieldPath);
+    } else {
+      fieldRaw = docFields[fieldPath];
+    }
+    const fieldValue = fieldRaw ? decodeValue(fieldRaw as Record<string, unknown>) : undefined;
     const filterValue = decodeValue(ff.value);
     switch (ff.op) {
       case "EQUAL":
@@ -304,10 +361,18 @@ export function createFirestoreEmulator(port = 8080): Promise<Server> {
           const parentPath = runQueryMatch ? runQueryMatch[1] : "";
 
           // If no parent in URL, query top-level collection
-          const prefix = parentPath ? `${parentPath}/` : "";
+          // Handle case where parentPath already ends with the collectionId
+          // (e.g., /sellers/{uid}/walletTx:runQuery with from: walletTx)
+          let prefix: string;
+          if (parentPath && parentPath.endsWith("/" + collectionId)) {
+            // Parent path already includes the collection — use it directly
+            prefix = parentPath + "/";
+          } else {
+            prefix = parentPath ? `${parentPath}/${collectionId}/` : `${collectionId}/`;
+          }
           const results: StoredDoc[] = [];
           for (const [path, doc] of store.entries()) {
-            if (path.startsWith(prefix + collectionId + "/")) {
+            if (path.startsWith(prefix)) {
               if (!structuredQuery.where || matchesFilter(doc.fields, structuredQuery.where)) {
                 results.push(doc);
               }
@@ -389,12 +454,37 @@ export function createFirestoreEmulator(port = 8080): Promise<Server> {
               }
 
               if (existing) {
-                store.set(path, {
-                  name: updateOp.name,
-                  fields: { ...existing.fields, ...updateOp.fields },
-                  createTime: existing.createTime,
-                  updateTime: now,
-                });
+                // Check for updateMask — if present, apply only the specified
+                // field paths (supports dotted/nested paths)
+                const updateMask = (write as Record<string, unknown>).updateMask as
+                  { fieldPaths?: string[] } | undefined;
+                if (updateMask?.fieldPaths && updateMask.fieldPaths.length > 0) {
+                  // Apply only masked fields (nested-aware)
+                  const newFields = { ...existing.fields };
+                  for (const fieldPath of updateMask.fieldPaths) {
+                    if (fieldPath in updateOp.fields) {
+                      const fieldVal = updateOp.fields[fieldPath] as Record<string, unknown>;
+                      if (fieldPath.includes(".")) {
+                        setNestedField(newFields, fieldPath, fieldVal);
+                      } else {
+                        newFields[fieldPath] = updateOp.fields[fieldPath];
+                      }
+                    }
+                  }
+                  store.set(path, {
+                    name: updateOp.name,
+                    fields: newFields,
+                    createTime: existing.createTime,
+                    updateTime: now,
+                  });
+                } else {
+                  store.set(path, {
+                    name: updateOp.name,
+                    fields: { ...existing.fields, ...updateOp.fields },
+                    createTime: existing.createTime,
+                    updateTime: now,
+                  });
+                }
               } else {
                 store.set(path, {
                   name: updateOp.name,

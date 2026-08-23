@@ -1241,6 +1241,10 @@ export async function readAdminFinanceOverview(): Promise<{
 // ====================================================================
 
 function baseUrl(projectId: string): string {
+  const emulatorHost = Deno.env.get("FIRESTORE_EMULATOR_HOST");
+  if (emulatorHost) {
+    return `http://${emulatorHost}/v1/projects/${projectId}/databases/(default)/documents`;
+  }
   return `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents`;
 }
 
