@@ -507,8 +507,13 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
   const sellerCommissionRates = new Map<string, number>();
   for (const sid of sellerIds) {
     const sDoc = sellerDocs.get(docPath(projectId, ["sellers", sid]));
-    const rate = sDoc?.exists ? Number(sDoc.data["commissionRate"] ?? 0.08) : 0.08;
-    sellerCommissionRates.set(sid, Number.isFinite(rate) ? rate : 0.08);
+    // Read commission rate from Firestore (server-authoritative).
+    // Clamp to [0, 1] to guard against invalid values (negative, >100%, NaN).
+    const rawRate = sDoc?.exists ? Number(sDoc.data["commissionRate"] ?? 0.08) : 0.08;
+    const rate = Number.isFinite(rawRate)
+      ? Math.min(Math.max(rawRate, 0), 1)
+      : 0.08;
+    sellerCommissionRates.set(sid, rate);
   }
 
   // ====================================================================

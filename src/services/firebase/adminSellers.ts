@@ -37,7 +37,7 @@ function mapSeller(id: string, d: Record<string, unknown>): SellerProfile {
     termsAcceptedAt: (d.termsAcceptedAt as number | null) ?? null,
     submittedAt: (d.submittedAt as number | null) ?? null,
     approvedAt: (d.approvedAt as number | null) ?? null,
-    commissionRate: Number(d.commissionRate ?? 10),
+    commissionRate: Number(d.commissionRate ?? 0.08),
     totalEarnings: Number(d.totalEarnings ?? 0),
     availableBalance: Number(d.availableBalance ?? 0),
     pendingBalance: Number(d.pendingBalance ?? 0),

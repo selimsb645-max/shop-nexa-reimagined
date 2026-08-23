@@ -71,7 +71,14 @@ export function computeSellerSettlement(input: {
   commissionRate: number;
   nowMs: number;
 }): SellerSettlementBreakdown {
-  const { sellerId, orderId, sellerSubtotal, orderSubtotal, orderDiscount, orderShipping, commissionRate, nowMs } = input;
+  const { sellerId, orderId, sellerSubtotal, orderSubtotal, orderDiscount, orderShipping, commissionRate: rawRate, nowMs } = input;
+
+  // Defense-in-depth: clamp commission rate to [0, 1] to prevent invalid
+  // values (negative, >100%, NaN) from producing nonsensical financial results.
+  // The checkout server already clamps, but this guards against any other caller.
+  const commissionRate = Number.isFinite(rawRate)
+    ? Math.min(Math.max(rawRate, 0), 1)
+    : (rawRate === Infinity ? 1 : 0);
 
   // Pro-rata share of discount and shipping
   const sellerRatio = orderSubtotal > 0 ? sellerSubtotal / orderSubtotal : 0;
