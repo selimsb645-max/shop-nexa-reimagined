@@ -188,13 +188,19 @@ service cloud.firestore {
         allow update: if isSelf(uid);
       }
 
+      // AI request logs - server-created only, no client access
+      match /aiRequests/{reqId} {
+        allow read: if isAdmin();
+        allow write: if false;
+      }
+
       // Catch-all - CRITICAL: verificationSessions and notificationLogs
       // excluded to prevent bypassing their allow:if false rules
       match /{sub}/{docId} {
         allow read, write: if (isSelf(uid) || isAdmin())
           && !(sub in ['orders', 'walletTx', 'rewardTx', 'referrals',
                        'prefs', 'sessions', 'verificationSessions',
-                       'notificationLogs', 'emailLogs']);
+                       'notificationLogs', 'emailLogs', 'aiRequests']);
       }
     }
 

@@ -71,6 +71,7 @@ import {
   subscribeCustomerConversations,
   findConversationByThreadId,
 } from "@/services/firebase/sellerConversations";
+import { sendAIMessage } from "@/services/firebase/aiAssistant";
 
 type TicketMessage = { id: string; body: string; from: "support" | "customer"; createdAt: number };
 import type { CustomerNotification, NotificationType } from "@/types/customer";
@@ -1152,6 +1153,7 @@ function SupportCenter({
 
 function AIAssistant() {
   const { t } = useI18n();
+  const { user } = useAuth();
   const [messages, setMessages] = useState<{ role: "user" | "ai"; text: string }[]>([
     { role: "ai", text: t("messages.aiWelcome") },
   ]);
@@ -1170,19 +1172,33 @@ function AIAssistant() {
     { icon: <Zap className="h-4 w-4" />, label: "Flash sales" },
   ];
 
-  const handleSend = () => {
-    if (!input.trim() || loading) return;
+  const handleSend = async () => {
+    if (!input.trim() || loading || !user) return;
     const userMsg = input.trim();
     setMessages((prev) => [...prev, { role: "user", text: userMsg }]);
     setInput("");
     setLoading(true);
 
-    // Simple AI response logic (connect to backend in production)
-    const aiResponse = generateAIResponse(userMsg, t);
-    setTimeout(() => {
-      setMessages((prev) => [...prev, { role: "ai", text: aiResponse }]);
+    try {
+      // Build conversation history for context (map "ai" → "assistant" for the API)
+      const history = messages
+        .filter((m) => m.text)
+        .map((m) => ({
+          role: m.role === "ai" ? "assistant" as const : "user" as const,
+          content: m.text,
+        }));
+
+      const idToken = await user.getIdToken();
+      const result = await sendAIMessage(idToken, userMsg, history);
+      setMessages((prev) => [...prev, { role: "ai", text: result.reply }]);
+    } catch (err) {
+      const errMsg = err instanceof Error && err.message
+        ? err.message
+        : "Something went wrong. Please try again.";
+      setMessages((prev) => [...prev, { role: "ai", text: errMsg }]);
+    } finally {
       setLoading(false);
-    }, 800);
+    }
   };
 
   return (
@@ -1258,26 +1274,6 @@ function AIAssistant() {
       </div>
     </div>
   );
-}
-
-function generateAIResponse(query: string, t: (key: any) => string): string {
-  const q = query.toLowerCase();
-  if (q.includes("track") || q.includes("order")) {
-    return t("messages.aiTrackOrder");
-  }
-  if (q.includes("coupon") || q.includes("discount")) {
-    return t("messages.aiCoupon");
-  }
-  if (q.includes("flash") || q.includes("sale")) {
-    return t("messages.aiFlashSale");
-  }
-  if (q.includes("return") || q.includes("refund")) {
-    return t("messages.aiReturn");
-  }
-  if (q.includes("product") || q.includes("find") || q.includes("search")) {
-    return t("messages.aiProduct");
-  }
-  return t("messages.aiDefault");
 }
 
 // ═══════════════════════════════════════════════════════════════
