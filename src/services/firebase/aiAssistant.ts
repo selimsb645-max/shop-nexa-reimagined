@@ -11,9 +11,11 @@ import type { ChatMessage } from "@/lib/ai-assistant.server";
 
 export type { ChatMessage };
 
+export type AISource = "ai" | "fallback" | "error";
+
 export interface AIChatResult {
   reply: string;
-  source: "ai" | "fallback";
+  source: AISource;
 }
 
 /**
@@ -33,6 +35,6 @@ export async function sendAIMessage(
   });
   return {
     reply: result.reply,
-    source: result.source as "ai" | "fallback",
+    source: result.source as AISource,
   };
 }

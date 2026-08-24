@@ -1,32 +1,29 @@
 /**
- * Server-side AI Assistant provider abstraction.
+ * Server-side AI Assistant — Provider-Agnostic Architecture
  *
- * This module implements a provider factory pattern (same as email.server.ts)
- * so the AI backend can be configured via environment variables without
- * touching UI or function code.
+ * Supports three provider types, selected via AI_PROVIDER env var:
+ *
+ *   "local"  → Self-hosted/local inference (Ollama, llama.cpp, etc.)
+ *   "openai" → OpenAI Chat Completions API (or any OpenAI-compatible cloud API)
+ *   "mock"   → Deterministic responses (development/testing only)
+ *
+ * Provider priority (no silent fallback in production):
+ *   - AI_PROVIDER selects the primary provider
+ *   - AI_FALLBACK_PROVIDER selects what happens on failure
+ *   - AI_FALLBACK_PROVIDER=none → user gets an error message, never fake AI
+ *   - AI_FALLBACK_PROVIDER=mock → only for development, gets mock responses
+ *   - Default: AI_FALLBACK_PROVIDER=none (safe — never silently fake it)
  *
  * SECURITY:
- *   - API keys are read from Deno.env and NEVER sent to the client.
- *   - All provider errors are sanitized before returning to the user.
- *   - Rate limiting is enforced per-user via Firestore.
- *   - Input is validated and size-limited.
- *   - Timeouts prevent hanging requests.
+ *   - API keys read from Deno.env, NEVER sent to client
+ *   - All provider errors sanitized before returning to user
+ *   - Rate limiting enforced per-user via Firestore
+ *   - Input validated and size-limited
+ *   - Timeouts prevent hanging requests
+ *   - Unknown provider = error (no silent fallback to mock)
  *
- * Providers:
- *   - "openai"   → OpenAI Chat Completions API (or any OpenAI-compatible API)
- *   - "mock"     → Deterministic responses for testing/fallback (default)
- *
- * Env vars (all server-side only, never exposed to client):
- *   AI_PROVIDER            → "openai" | "mock" (default: "mock")
- *   AI_API_KEY             → Provider API key (never exposed to client)
- *   AI_API_BASE_URL        → Optional custom base URL
- *   AI_MODEL               → Model name (default: "gpt-4o-mini")
- *   AI_SYSTEM_PROMPT       → Optional custom system prompt
- *   AI_MAX_TOKENS          → Max response tokens (default: 500)
- *   AI_TEMPERATURE         → Response creativity (default: 0.7)
- *   AI_TIMEOUT_MS          → Request timeout (default: 15000)
- *   AI_RATE_LIMIT_PER_HOUR → Max requests per user per hour (default: 20)
- *   AI_MAX_HISTORY         → Max conversation turns sent to provider (default: 10)
+ * No vendor lock-in: adding a new provider = implement AIProvider + add
+ * one case in the factory. UI and business logic never change.
  */
 
 // ═══════════════════════════════════════════════════════════════
@@ -38,13 +35,16 @@ export interface ChatMessage {
   content: string;
 }
 
+export type AISource = "ai" | "fallback" | "error";
+
 export interface AIResponse {
   reply: string;
-  /** Whether the response came from a real AI provider or a fallback */
-  source: "ai" | "fallback";
+  /** Where the response came from */
+  source: AISource;
 }
 
 export interface AIProvider {
+  /** Unique provider identifier */
   name: string;
   /** Send messages to the AI and get a response. Throws on failure. */
   chat(messages: ChatMessage[], systemPrompt: string): Promise<string>;
@@ -74,10 +74,18 @@ function envFloat(key: string, def: number): number {
 }
 
 export interface AIConfig {
+  /** Primary provider: "local" | "openai" | "mock" */
   provider: string;
+  /** Fallback on failure: "none" | "mock" (default: "none") */
+  fallbackProvider: string;
+  // Local provider config
+  localBaseUrl: string;
+  localModel: string;
+  // OpenAI provider config
   apiKey: string | undefined;
-  baseUrl: string;
+  apiBaseUrl: string;
   model: string;
+  // Shared config
   systemPrompt: string;
   maxTokens: number;
   temperature: number;
@@ -85,6 +93,10 @@ export interface AIConfig {
   rateLimitPerHour: number;
   maxHistory: number;
 }
+
+/** Valid provider names */
+export const VALID_PROVIDERS = ["local", "openai", "mock"] as const;
+export const VALID_FALLBACKS = ["none", "mock"] as const;
 
 const DEFAULT_SYSTEM_PROMPT =
   "You are the ShopNexa AI Shopping Assistant. You help customers with product searches, " +
@@ -96,9 +108,15 @@ const DEFAULT_SYSTEM_PROMPT =
 function getConfig(): AIConfig {
   return {
     provider: env("AI_PROVIDER") ?? "mock",
+    fallbackProvider: env("AI_FALLBACK_PROVIDER") ?? "none",
+    // Local provider
+    localBaseUrl: env("AI_LOCAL_BASE_URL") ?? "http://localhost:11434/v1",
+    localModel: env("AI_LOCAL_MODEL") ?? "",
+    // OpenAI provider
     apiKey: env("AI_API_KEY"),
-    baseUrl: env("AI_API_BASE_URL") ?? "https://api.openai.com/v1",
+    apiBaseUrl: env("AI_API_BASE_URL") ?? "https://api.openai.com/v1",
     model: env("AI_MODEL") ?? "gpt-4o-mini",
+    // Shared
     systemPrompt: env("AI_SYSTEM_PROMPT") ?? DEFAULT_SYSTEM_PROMPT,
     maxTokens: envInt("AI_MAX_TOKENS", 500),
     temperature: envFloat("AI_TEMPERATURE", 0.7),
@@ -109,10 +127,143 @@ function getConfig(): AIConfig {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// SHARED: OpenAI-compatible HTTP call
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Shared chat completion call for any OpenAI-compatible endpoint.
+ * Used by both OpenAIProvider and LocalAIProvider.
+ * Differentiates auth: OpenAI sends Bearer token, local may not need auth.
+ */
+async function openAICompatibleChat(
+  messages: ChatMessage[],
+  systemPrompt: string,
+  baseUrl: string,
+  model: string,
+  maxTokens: number,
+  temperature: number,
+  timeoutMs: number,
+  apiKey: string | undefined,
+): Promise<string> {
+  const body = {
+    model,
+    messages: [
+      { role: "system", content: systemPrompt },
+      ...messages.map((m) => ({ role: m.role, content: m.content })),
+    ],
+    max_tokens: maxTokens,
+    temperature,
+  };
+
+  const headers: Record<string, string> = {
+    "content-type": "application/json",
+  };
+  if (apiKey) {
+    headers.authorization = `Bearer ${apiKey}`;
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const res = await fetch(`${baseUrl}/chat/completions`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      if (res.status === 401) {
+        throw new Error("AI service authentication failed.");
+      }
+      if (res.status === 429) {
+        throw new Error("AI service is busy. Please try again in a moment.");
+      }
+      if (res.status === 404) {
+        throw new Error("AI model not found. Check model configuration.");
+      }
+      if (res.status >= 500) {
+        throw new Error("AI service is temporarily unavailable.");
+      }
+      throw new Error("AI request failed.");
+    }
+
+    const json = (await res.json()) as {
+      choices?: Array<{ message?: { content?: string } }>;
+    };
+    const content = json.choices?.[0]?.message?.content;
+    if (!content || !content.trim()) {
+      throw new Error("AI returned an empty response.");
+    }
+    return content.trim();
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "AbortError") {
+      throw new Error("AI request timed out. Please try again.");
+    }
+    // Re-throw already-sanitized errors
+    if (err instanceof Error && err.message.startsWith("AI ")) {
+      throw err;
+    }
+    // Network errors (connection refused, DNS failure, etc.)
+    throw new Error("Could not reach AI service. Please try again.");
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
 // PROVIDERS
 // ═══════════════════════════════════════════════════════════════
 
-/** OpenAI-compatible provider (works with OpenAI, Azure OpenAI, etc.) */
+/**
+ * Local AI Provider — connects to any OpenAI-compatible local inference server.
+ * Works with Ollama (http://localhost:11434/v1), llama.cpp server, vLLM, etc.
+ *
+ * Configuration:
+ *   AI_LOCAL_BASE_URL → base URL of the local server (default: http://localhost:11434/v1)
+ *   AI_LOCAL_MODEL     → model name to use (required, e.g. "llama3", "qwen2.5")
+ *
+ * Auth is optional — local servers typically don't require an API key,
+ * but if AI_API_KEY is set, it will be sent as Bearer token.
+ */
+export class LocalAIProvider implements AIProvider {
+  name = "local";
+
+  constructor(
+    private baseUrl: string,
+    private model: string,
+    private maxTokens: number,
+    private temperature: number,
+    private timeoutMs: number,
+    private apiKey: string | undefined,
+  ) {}
+
+  async chat(messages: ChatMessage[], systemPrompt: string): Promise<string> {
+    if (!this.model) {
+      throw new Error("AI local model not configured. Set AI_LOCAL_MODEL.");
+    }
+    return openAICompatibleChat(
+      messages,
+      systemPrompt,
+      this.baseUrl,
+      this.model,
+      this.maxTokens,
+      this.temperature,
+      this.timeoutMs,
+      this.apiKey,
+    );
+  }
+}
+
+/**
+ * OpenAI Provider — connects to OpenAI API or any OpenAI-compatible cloud API.
+ *
+ * Configuration:
+ *   AI_API_KEY      → API key (required)
+ *   AI_API_BASE_URL → base URL (default: https://api.openai.com/v1)
+ *   AI_MODEL        → model name (default: gpt-4o-mini)
+ */
 export class OpenAIProvider implements AIProvider {
   name = "openai";
 
@@ -126,69 +277,23 @@ export class OpenAIProvider implements AIProvider {
   ) {}
 
   async chat(messages: ChatMessage[], systemPrompt: string): Promise<string> {
-    const body = {
-      model: this.model,
-      messages: [
-        { role: "system", content: systemPrompt },
-        ...messages.map((m) => ({
-          role: m.role,
-          content: m.content,
-        })),
-      ],
-      max_tokens: this.maxTokens,
-      temperature: this.temperature,
-    };
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
-
-    try {
-      const res = await fetch(`${this.baseUrl}/chat/completions`, {
-        method: "POST",
-        headers: {
-          authorization: `Bearer ${this.apiKey}`,
-          "content-type": "application/json",
-        },
-        body: JSON.stringify(body),
-        signal: controller.signal,
-      });
-
-      if (!res.ok) {
-        if (res.status === 401) {
-          throw new Error("AI service authentication failed.");
-        }
-        if (res.status === 429) {
-          throw new Error("AI service is busy. Please try again in a moment.");
-        }
-        if (res.status >= 500) {
-          throw new Error("AI service is temporarily unavailable.");
-        }
-        throw new Error("AI request failed.");
-      }
-
-      const json = (await res.json()) as {
-        choices?: Array<{ message?: { content?: string } }>;
-      };
-      const content = json.choices?.[0]?.message?.content;
-      if (!content || !content.trim()) {
-        throw new Error("AI returned an empty response.");
-      }
-      return content.trim();
-    } catch (err) {
-      if (err instanceof DOMException && err.name === "AbortError") {
-        throw new Error("AI request timed out. Please try again.");
-      }
-      if (err instanceof Error && err.message.startsWith("AI ")) {
-        throw err;
-      }
-      throw new Error("Could not reach AI service. Please try again.");
-    } finally {
-      clearTimeout(timeout);
-    }
+    return openAICompatibleChat(
+      messages,
+      systemPrompt,
+      this.baseUrl,
+      this.model,
+      this.maxTokens,
+      this.temperature,
+      this.timeoutMs,
+      this.apiKey,
+    );
   }
 }
 
-/** Mock provider — deterministic responses for testing and fallback */
+/**
+ * Mock Provider — deterministic responses for development and testing only.
+ * NEVER used as silent fallback in production (AI_FALLBACK_PROVIDER=none is default).
+ */
 export class MockAIProvider implements AIProvider {
   name = "mock";
 
@@ -227,34 +332,79 @@ export class MockAIProvider implements AIProvider {
 let _provider: AIProvider | null = null;
 let _providerName = "";
 
+/**
+ * Create a provider instance from config.
+ * Throws on unknown provider — no silent fallback to mock.
+ */
+function createProvider(config: AIConfig): AIProvider {
+  switch (config.provider) {
+    case "local": {
+      if (!config.localModel) {
+        throw new Error(
+          "AI_PROVIDER=local requires AI_LOCAL_MODEL to be set.",
+        );
+      }
+      return new LocalAIProvider(
+        config.localBaseUrl,
+        config.localModel,
+        config.maxTokens,
+        config.temperature,
+        config.timeoutMs,
+        config.apiKey, // optional auth for local servers
+      );
+    }
+    case "openai": {
+      if (!config.apiKey) {
+        throw new Error(
+          "AI_PROVIDER=openai requires AI_API_KEY to be set.",
+        );
+      }
+      return new OpenAIProvider(
+        config.apiKey,
+        config.apiBaseUrl,
+        config.model,
+        config.maxTokens,
+        config.temperature,
+        config.timeoutMs,
+      );
+    }
+    case "mock":
+      return new MockAIProvider();
+    default:
+      throw new Error(
+        `Unknown AI_PROVIDER: "${config.provider}". ` +
+        `Valid options: ${VALID_PROVIDERS.join(", ")}.`,
+      );
+  }
+}
+
+/**
+ * Get the current provider instance (cached).
+ * Throws on configuration errors (unknown provider, missing required config).
+ */
 function getProvider(): AIProvider {
   const config = getConfig();
 
   if (_provider && _providerName === config.provider) return _provider;
 
-  switch (config.provider) {
-    case "openai":
-      if (!config.apiKey) {
-        _provider = new MockAIProvider();
-      } else {
-        _provider = new OpenAIProvider(
-          config.apiKey,
-          config.baseUrl,
-          config.model,
-          config.maxTokens,
-          config.temperature,
-          config.timeoutMs,
-        );
-      }
-      break;
-    case "mock":
-    default:
-      _provider = new MockAIProvider();
-      break;
-  }
-
+  _provider = createProvider(config);
   _providerName = config.provider;
   return _provider;
+}
+
+/**
+ * Get the configured fallback provider.
+ * Returns null if AI_FALLBACK_PROVIDER=none (the default — no fake AI in production).
+ */
+function getFallbackProvider(): AIProvider | null {
+  const config = getConfig();
+  switch (config.fallbackProvider) {
+    case "mock":
+      return new MockAIProvider();
+    case "none":
+    default:
+      return null;
+  }
 }
 
 /** Reset provider cache — used in tests */
@@ -285,35 +435,36 @@ export async function checkAIRateLimit(
     const projectId = getProjectId();
     const since = Date.now() - 60 * 60 * 1000;
 
-    // Use Firestore REST API runQuery (same pattern as verification.server.ts)
     const fsBase = env("FIRESTORE_EMULATOR_HOST")
       ? `${env("FIRESTORE_EMULATOR_HOST")}/v1/projects/${projectId}`
       : `https://firestore.googleapis.com/v1/projects/${projectId}`;
 
     const parentPath = `users/${uid}`;
-    const res = await fetch(`${fsBase}/databases/(default)/documents/${parentPath}/aiRequests:runQuery`, {
-      method: "POST",
-      headers: {
-        authorization: `Bearer ${await getAccessToken()}`,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        structuredQuery: {
-          from: [{ collectionId: "aiRequests" }],
-          where: {
-            fieldFilter: {
-              field: { fieldPath: "createdAt" },
-              op: "GREATER_THAN",
-              value: { timestampValue: new Date(since).toISOString() },
-            },
-          },
-          limit: config.rateLimitPerHour + 1,
+    const res = await fetch(
+      `${fsBase}/databases/(default)/documents/${parentPath}/aiRequests:runQuery`,
+      {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${await getAccessToken()}`,
+          "content-type": "application/json",
         },
-      }),
-    });
+        body: JSON.stringify({
+          structuredQuery: {
+            from: [{ collectionId: "aiRequests" }],
+            where: {
+              fieldFilter: {
+                field: { fieldPath: "createdAt" },
+                op: "GREATER_THAN",
+                value: { timestampValue: new Date(since).toISOString() },
+              },
+            },
+            limit: config.rateLimitPerHour + 1,
+          },
+        }),
+      },
+    );
 
     if (!res.ok) {
-      // If query fails, fail open (allow request)
       return { allowed: true, remaining: config.rateLimitPerHour };
     }
 
@@ -324,14 +475,11 @@ export async function checkAIRateLimit(
       remaining: Math.max(0, config.rateLimitPerHour - count),
     };
   } catch {
-    // Fail open — don't block users if rate limiting infrastructure fails
     return { allowed: true, remaining: config.rateLimitPerHour };
   }
 }
 
-export async function recordAIRequest(
-  uid: string,
-): Promise<void> {
+export async function recordAIRequest(uid: string): Promise<void> {
   if (env("FIRESTORE_EMULATOR_HOST") || env("SKIP_RATE_LIMIT")) return;
 
   try {
@@ -391,7 +539,11 @@ export function validateAIInput(
 // MAIN ENTRY POINT
 // ═══════════════════════════════════════════════════════════════
 
-const FALLBACK_MESSAGE =
+/**
+ * User-facing error message when the AI provider fails and no fallback is configured.
+ * This is shown to the user — it's honest, not a fake AI response.
+ */
+const PROVIDER_ERROR_MESSAGE =
   "I'm having trouble connecting right now. Please try again in a moment, " +
   "or browse the Orders, Shop, and Coupons sections while I recover.";
 
@@ -414,7 +566,7 @@ export async function chatWithAI(
     throw new Error("You've sent too many messages. Please try again in an hour.");
   }
 
-  // 3. Truncate history
+  // 3. Truncate history to configured max
   const trimmedHistory = history.slice(-config.maxHistory);
 
   // 4. Build messages
@@ -423,27 +575,32 @@ export async function chatWithAI(
     { role: "user", content: message },
   ];
 
-  // 5. Call provider
+  // 5. Get provider (throws on misconfiguration — no silent fallback)
   const provider = getProvider();
 
   try {
     const reply = await provider.chat(messages, config.systemPrompt);
     void recordAIRequest(uid);
     return { reply, source: provider.name === "mock" ? "fallback" : "ai" };
-  } catch (err) {
-    // 6. Graceful fallback
-    if (provider.name !== "mock") {
+  } catch (providerErr) {
+    // 6. Check if a fallback provider is configured
+    const fallback = getFallbackProvider();
+
+    if (fallback) {
+      // Development mode: AI_FALLBACK_PROVIDER=mock
       try {
-        const mock = new MockAIProvider();
-        const reply = await mock.chat(messages, config.systemPrompt);
+        const reply = await fallback.chat(messages, config.systemPrompt);
         return { reply, source: "fallback" };
       } catch {
-        // fall through to static fallback
+        // Even fallback failed — return honest error
+        return { reply: PROVIDER_ERROR_MESSAGE, source: "error" };
       }
     }
 
-    return { reply: FALLBACK_MESSAGE, source: "fallback" };
+    // Production mode: AI_FALLBACK_PROVIDER=none (default)
+    // Return an honest error message, NOT a fake AI response
+    return { reply: PROVIDER_ERROR_MESSAGE, source: "error" };
   }
 }
 
-export { getConfig, getProvider };
+export { getConfig, getProvider, createProvider, getFallbackProvider };
