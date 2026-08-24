@@ -57,16 +57,16 @@ import {
 import {
   listTickets,
   createTicket,
-  listTicketMessages,
   replyToTicket,
 } from "@/services/firebase/support";
 import { listOrders } from "@/services/firebase/orders";
+import { seedInbox } from "@/services/firebase/seedInbox";
 import { formatPrice, formatDate } from "@/utils/format";
 import type { MessageThread, ChatMessage } from "@/types/customer";
 
 type TicketMessage = { id: string; body: string; from: "support" | "customer"; createdAt: number };
 import type { CustomerNotification, NotificationType } from "@/types/customer";
-import type { SupportTicket } from "@/types/customer";
+import type { SupportTicket, TicketStatus } from "@/types/customer";
 import type { Order } from "@/types/commerce";
 
 export const Route = createFileRoute("/_authenticated/messages")({
@@ -135,6 +135,103 @@ function CommunicationCenter() {
     enabled: !!user && firebaseConfigured,
   });
 
+  // Realtime threads subscription (replaces 30s polling for live updates)
+  const [realtimeThreads, setRealtimeThreads] = useState<MessageThread[]>([]);
+  useEffect(() => {
+    if (!user?.uid || !firebaseConfigured) return;
+    const unsub = onSnapshot(
+      query(collection(getDb(), "users", user.uid, "threads"), orderBy("lastAt", "desc"), limit(50)),
+      (snap) => {
+        const mapped = snap.docs.map((d) => {
+          const data = d.data() as Record<string, unknown>;
+          return {
+            id: d.id,
+            subject: String(data.subject ?? "Conversation"),
+            participant: String(data.participant ?? "Shop Nexa Support"),
+            sellerId: (data.sellerId as string | null) ?? null,
+            lastMessage: String(data.lastMessage ?? ""),
+            lastAt: typeof data.lastAt === "number"
+              ? data.lastAt
+              : (data.lastAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? 0,
+            unread: Number(data.unread ?? 0),
+            createdAt: typeof data.createdAt === "number"
+              ? data.createdAt
+              : (data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? 0,
+          } as MessageThread;
+        });
+        setRealtimeThreads(mapped);
+      },
+      () => undefined,
+    );
+    return () => unsub();
+  }, [user?.uid]);
+
+  // Realtime notifications subscription
+  const [realtimeNotifs, setRealtimeNotifs] = useState<CustomerNotification[]>([]);
+  useEffect(() => {
+    if (!user?.uid || !firebaseConfigured) return;
+    const unsub = onSnapshot(
+      query(collection(getDb(), "users", user.uid, "notifications"), orderBy("createdAt", "desc"), limit(60)),
+      (snap) => {
+        const mapped = snap.docs.map((d) => {
+          const data = d.data() as Record<string, unknown>;
+          return {
+            id: d.id,
+            type: (data.type as NotificationType) ?? "system",
+            title: String(data.title ?? ""),
+            message: String(data.message ?? ""),
+            link: (data.link as string | null) ?? null,
+            read: Boolean(data.read),
+            createdAt: typeof data.createdAt === "number"
+              ? data.createdAt
+              : (data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? 0,
+          } as CustomerNotification;
+        });
+        setRealtimeNotifs(mapped);
+      },
+      () => undefined,
+    );
+    return () => unsub();
+  }, [user?.uid]);
+
+  // Realtime tickets subscription
+  const [realtimeTickets, setRealtimeTickets] = useState<SupportTicket[]>([]);
+  useEffect(() => {
+    if (!user?.uid || !firebaseConfigured) return;
+    const unsub = onSnapshot(
+      query(collection(getDb(), "users", user.uid, "tickets"), orderBy("createdAt", "desc"), limit(100)),
+      (snap) => {
+        const mapped = snap.docs.map((d) => {
+          const data = d.data() as Record<string, unknown>;
+          return {
+            id: d.id,
+            subject: String(data.subject ?? ""),
+            category: (data.category as SupportTicket["category"]) ?? "other",
+            orderId: (data.orderId as string | null) ?? null,
+            status: (data.status as TicketStatus) ?? "open",
+            lastMessage: String(data.lastMessage ?? ""),
+            createdAt: typeof data.createdAt === "number"
+              ? data.createdAt
+              : (data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? 0,
+            updatedAt: typeof data.updatedAt === "number"
+              ? data.updatedAt
+              : (data.updatedAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? 0,
+          } as SupportTicket;
+        });
+        setRealtimeTickets(mapped);
+      },
+      () => undefined,
+    );
+    return () => unsub();
+  }, [user?.uid]);
+
+  // Seed inbox with demo data for new users
+  useEffect(() => {
+    if (user?.uid && firebaseConfigured) {
+      seedInbox(user.uid).catch(() => undefined);
+    }
+  }, [user?.uid]);
+
   // If a thread is active, show the chat view
   if (activeThreadId) {
     return (
@@ -174,9 +271,9 @@ function CommunicationCenter() {
     }
   }
 
-  const threads = threadsQuery.data ?? [];
-  const notifications = notificationsQuery.data ?? [];
-  const tickets = ticketsQuery.data ?? [];
+  const threads = realtimeThreads.length > 0 ? realtimeThreads : (threadsQuery.data ?? []);
+  const notifications = realtimeNotifs.length > 0 ? realtimeNotifs : (notificationsQuery.data ?? []);
+  const tickets = realtimeTickets.length > 0 ? realtimeTickets : (ticketsQuery.data ?? []);
   const orders = ordersQuery.data ?? [];
 
   // Filter threads
