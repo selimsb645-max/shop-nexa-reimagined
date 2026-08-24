@@ -230,6 +230,7 @@ export async function getActiveAnnouncements(): Promise<Announcement[]> {
  */
 export function subscribeActiveAnnouncements(
   cb: (announcements: Announcement[]) => void,
+  onError?: (error: Error) => void,
 ): Unsubscribe {
   const now = Date.now();
   return onSnapshot(
@@ -248,6 +249,10 @@ export function subscribeActiveAnnouncements(
           return true;
         });
       cb(active);
+    },
+    (error: Error) => {
+      console.warn("[announcements] snapshot error:", error);
+      onError?.(error);
     },
   );
 }

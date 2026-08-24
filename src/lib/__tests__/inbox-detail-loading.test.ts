@@ -34,7 +34,7 @@ describe("Inbox Conversation Detail — Hooks Violation Fix", () => {
   // Test 1: Clicking support conversation opens detail page (no crash)
   it("useMemo for filteredThreads is called BEFORE any conditional early return", () => {
     const useMemoLine = lineOf("const filteredThreads = useMemo(()");
-    const firstReturnLine = lineOf("if (activeThreadId) {");
+    const firstReturnLine = lineOf("if (activeThreadId && user?.uid)");
     expect(useMemoLine).toBeGreaterThan(0);
     expect(firstReturnLine).toBeGreaterThan(0);
     expect(useMemoLine).toBeLessThan(firstReturnLine);
@@ -42,13 +42,13 @@ describe("Inbox Conversation Detail — Hooks Violation Fix", () => {
 
   it("derived variables (threads, notifications, tickets, orders) are computed before early returns", () => {
     const threadsLine = lineOf("const threads = dedupeThreads(realtimeThreads.length");
-    const firstReturnLine = lineOf("if (activeThreadId) {");
+    const firstReturnLine = lineOf("if (activeThreadId && user?.uid)");
     expect(threadsLine).toBeGreaterThan(0);
     expect(threadsLine).toBeLessThan(firstReturnLine);
   });
 
   it("no hooks are called after the first conditional return in CommunicationCenter", () => {
-    const firstReturnLine = lineOf("if (activeThreadId) {");
+    const firstReturnLine = lineOf("if (activeThreadId && user?.uid)");
     // Find the main return statement that renders the full page
     const mainReturnLine = lineOf("ServicePageLayout title={t(");
     // Between firstReturnLine and mainReturnLine, there should be no
@@ -66,7 +66,7 @@ describe("Inbox Conversation Detail — Hooks Violation Fix", () => {
   // Test 2: Correct conversation ID reaches route
   it("ChatView receives threadId prop from activeThreadId state", () => {
     const chatViewBlock = SOURCE.match(
-      /if \(activeThreadId\) \{[\s\S]*?<ChatView[\s\S]*?threadId=\{activeThreadId\}/,
+      /if \(activeThreadId && user\?\.uid\) \{[\s\S]*?<ChatView[\s\S]*?threadId=\{activeThreadId\}/,
     );
     expect(chatViewBlock).toBeTruthy();
   });
@@ -152,11 +152,9 @@ describe("Inbox Conversation Detail — Hooks Violation Fix", () => {
   it("ChatView is rendered as a child component (not a separate route)", () => {
     // ChatView is a function component in the same file, rendered conditionally
     expect(SOURCE).toContain("function ChatView(");
-    // It's returned from the parent when activeThreadId is set
-    const chatViewReturn = SOURCE.match(
-      /if \(activeThreadId\) \{\s*return\s*\(\s*<ChatView/,
-    );
-    expect(chatViewReturn).toBeTruthy();
+    // It's returned from the parent when activeThreadId is set (wrapped in ChatBoundary)
+    expect(SOURCE).toContain("<ChatBoundary>");
+    expect(SOURCE).toContain("<ChatView");
   });
 });
 

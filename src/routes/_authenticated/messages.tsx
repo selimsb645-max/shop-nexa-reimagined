@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo, Component, type ReactNode } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -85,6 +85,7 @@ import type { Order } from "@/types/commerce";
 export const Route = createFileRoute("/_authenticated/messages")({
   ssr: false,
   component: CommunicationCenter,
+  errorComponent: MessagesRouteError,
   head: () => ({
     meta: [
       { title: "Communication Center — ShopNexa" },
@@ -92,6 +93,82 @@ export const Route = createFileRoute("/_authenticated/messages")({
     ],
   }),
 });
+
+/**
+ * Route-level error boundary for the messages page.
+ * Catches crashes from ChatView, TicketChatView, etc. so that a single
+ * conversation failing to load doesn't take down the entire page with
+ * the generic root "This page didn't load" error.
+ */
+function MessagesRouteError({ error, reset }: { error: Error; reset: () => void }) {
+  console.error("[messages] route error:", error);
+  return (
+    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4">
+      <div className="text-center">
+        <h2 className="text-lg font-semibold">Something went wrong</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {error.message || "Failed to load this conversation."}
+        </p>
+      </div>
+      <div className="flex gap-2">
+        <button
+          onClick={() => reset()}
+          className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+        >
+          Try again
+        </button>
+        <Link
+          to="/messages"
+          className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-muted"
+          onClick={() => reset()}
+        >
+          Back to inbox
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Wraps a component in an error boundary so individual chat views
+ * don't crash the entire messages page.
+ */
+class ChatBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  state: { hasError: boolean; error: Error | null } = { hasError: false, error: null };
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error) {
+    console.error("[messages] chat boundary caught:", error);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex h-full flex-col items-center justify-center gap-4 p-4">
+          <div className="text-center">
+            <h2 className="text-lg font-semibold">This conversation could not load</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {this.state.error?.message || "An unexpected error occurred."}
+            </p>
+          </div>
+          <button
+            onClick={() => this.setState({ hasError: false, error: null })}
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          >
+            Retry
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 type Tab = "inbox" | "orders" | "sellers" | "support" | "ai" | "notifications" | "announcements";
 type FilterType = "all" | "unread" | "orders" | "support" | "sellers" | "archived";
@@ -273,25 +350,37 @@ function CommunicationCenter() {
     return result;
   }, [threads, activeFilter, searchQuery]);
 
+  // Guard: if user is null (auth transition), reset active states
+  // to avoid crashing on user!.uid below.
+  if (!user?.uid && (activeThreadId || activeTicketId || activeOrderId)) {
+    setActiveThreadId(null);
+    setActiveTicketId(null);
+    setActiveOrderId(null);
+  }
+
   // If a thread is active, show the chat view
-  if (activeThreadId) {
+  if (activeThreadId && user?.uid) {
     return (
-      <ChatView
-        threadId={activeThreadId}
-        onBack={() => setActiveThreadId(null)}
-        userId={user!.uid}
-      />
+      <ChatBoundary>
+        <ChatView
+          threadId={activeThreadId}
+          onBack={() => setActiveThreadId(null)}
+          userId={user.uid}
+        />
+      </ChatBoundary>
     );
   }
 
   // If a ticket is active, show ticket chat
-  if (activeTicketId) {
+  if (activeTicketId && user?.uid) {
     return (
-      <TicketChatView
-        ticketId={activeTicketId}
-        onBack={() => setActiveTicketId(null)}
-        userId={user!.uid}
-      />
+      <ChatBoundary>
+        <TicketChatView
+          ticketId={activeTicketId}
+          onBack={() => setActiveTicketId(null)}
+          userId={user.uid}
+        />
+      </ChatBoundary>
     );
   }
 
@@ -300,14 +389,16 @@ function CommunicationCenter() {
     const order = ordersQuery.data?.find((o) => o.id === activeOrderId);
     if (order) {
       return (
-        <OrderConversationView
-          order={order}
-          onBack={() => setActiveOrderId(null)}
-          onChatWithSeller={(threadId) => {
-            setActiveOrderId(null);
-            setActiveThreadId(threadId);
-          }}
-        />
+        <ChatBoundary>
+          <OrderConversationView
+            order={order}
+            onBack={() => setActiveOrderId(null)}
+            onChatWithSeller={(threadId) => {
+              setActiveOrderId(null);
+              setActiveThreadId(threadId);
+            }}
+          />
+        </ChatBoundary>
       );
     }
   }
@@ -1422,11 +1513,26 @@ function AnnouncementCenter() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Real-time listener for published, active announcements
-    const unsub = subscribeActiveAnnouncements((items) => {
-      setAnnouncements(items);
+    if (!firebaseConfigured) {
       setLoading(false);
-    });
+      return;
+    }
+    // Real-time listener for published, active announcements
+    let unsub: () => void = () => {};
+    try {
+      unsub = subscribeActiveAnnouncements(
+        (items) => {
+          setAnnouncements(items);
+          setLoading(false);
+        },
+        () => {
+          // On error (e.g. missing Firestore index), stop loading
+          setLoading(false);
+        },
+      );
+    } catch {
+      setLoading(false);
+    }
     return () => unsub();
   }, []);
 
