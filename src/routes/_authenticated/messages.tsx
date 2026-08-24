@@ -50,7 +50,7 @@ import {
   createThread,
   sendMessage,
   markThreadRead,
-  countUnreadMessages,
+  dedupeThreads,
 } from "@/services/firebase/messages";
 import {
   listNotifications,
@@ -130,12 +130,6 @@ function CommunicationCenter() {
     enabled: !!user && firebaseConfigured,
   });
 
-  const unreadMsgQuery = useQuery({
-    queryKey: ["messages", "unread", user?.uid],
-    queryFn: () => countUnreadMessages(user!.uid),
-    enabled: !!user && firebaseConfigured,
-  });
-
   const ticketsQuery = useQuery({
     queryKey: ["tickets", user?.uid],
     queryFn: () => listTickets(user!.uid),
@@ -172,7 +166,7 @@ function CommunicationCenter() {
               : (data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? 0,
           } as MessageThread;
         });
-        setRealtimeThreads(mapped);
+        setRealtimeThreads(dedupeThreads(mapped));
       },
       () => undefined,
     );
@@ -249,10 +243,16 @@ function CommunicationCenter() {
   // hooks (useMemo) are always called in the same order on every render.
   // Placing a hook after a conditional return violates the Rules of Hooks
   // and causes React to crash with "This page didn't load".
-  const threads = realtimeThreads.length > 0 ? realtimeThreads : (threadsQuery.data ?? []);
+  // dedupeThreads collapses any conceptual duplicate conversations (e.g.
+  // two "Shop Nexa Support" welcome threads) so the list, the recent
+  // conversations preview, and the unread badge all agree on one entry.
+  const threads = dedupeThreads(realtimeThreads.length > 0 ? realtimeThreads : (threadsQuery.data ?? []));
   const notifications = realtimeNotifs.length > 0 ? realtimeNotifs : (notificationsQuery.data ?? []);
   const tickets = realtimeTickets.length > 0 ? realtimeTickets : (ticketsQuery.data ?? []);
   const orders = ordersQuery.data ?? [];
+  // Derived from the already-deduped threads list — avoids double-counting
+  // duplicate threads the way the separate countUnreadMessages() query could.
+  const unreadMsg = threads.reduce((sum, t) => sum + t.unread, 0);
 
   // Filter threads — useMemo MUST be called unconditionally (before early returns)
   const filteredThreads = useMemo(() => {
@@ -337,7 +337,7 @@ function CommunicationCenter() {
         </div>
 
         {/* Tab navigation */}
-        <TabBar activeTab={activeTab} onChange={setActiveTab} unreadNotif={unreadNotifQuery.data ?? 0} unreadMsg={unreadMsgQuery.data ?? 0} ticketCount={tickets.length} />
+        <TabBar activeTab={activeTab} onChange={setActiveTab} unreadNotif={unreadNotifQuery.data ?? 0} unreadMsg={unreadMsg} ticketCount={tickets.length} />
 
         {/* Content area */}
         <div className="mt-4">
@@ -347,7 +347,7 @@ function CommunicationCenter() {
               notifications={notifications}
               tickets={tickets}
               orders={orders}
-              unreadMsg={unreadMsgQuery.data ?? 0}
+              unreadMsg={unreadMsg}
               unreadNotif={unreadNotifQuery.data ?? 0}
               onTabChange={setActiveTab}
               onThreadClick={setActiveThreadId}

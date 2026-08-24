@@ -41,7 +41,7 @@ describe("Inbox Conversation Detail — Hooks Violation Fix", () => {
   });
 
   it("derived variables (threads, notifications, tickets, orders) are computed before early returns", () => {
-    const threadsLine = lineOf("const threads = realtimeThreads.length");
+    const threadsLine = lineOf("const threads = dedupeThreads(realtimeThreads.length");
     const firstReturnLine = lineOf("if (activeThreadId) {");
     expect(threadsLine).toBeGreaterThan(0);
     expect(threadsLine).toBeLessThan(firstReturnLine);
@@ -163,3 +163,118 @@ describe("Inbox Conversation Detail — Hooks Violation Fix", () => {
 function sourceIndexOfChatView(): number {
   return SOURCE.indexOf("function ChatView(");
 }
+
+describe("Duplicate 'Shop Nexa Support' Conversations — dedupeThreads()", () => {
+  // Import dynamically inside tests to keep this file dependency-light at the top.
+
+  it("collapses two identical general-support threads into one", async () => {
+    const { dedupeThreads } = await import("@/services/firebase/messages");
+    const dup = [
+      {
+        id: "thread-a",
+        subject: "Welcome to ShopNexa!",
+        participant: "Shop Nexa Support",
+        sellerId: null,
+        lastMessage: "Hi! Welcome to ShopNexa...",
+        lastAt: 1000,
+        unread: 1,
+        createdAt: 1000,
+      },
+      {
+        id: "thread-b",
+        subject: "Welcome to ShopNexa!",
+        participant: "Shop Nexa Support",
+        sellerId: null,
+        lastMessage: "Hi! Welcome to ShopNexa...",
+        lastAt: 2000,
+        unread: 1,
+        createdAt: 2000,
+      },
+    ];
+    const result = dedupeThreads(dup);
+    expect(result).toHaveLength(1);
+  });
+
+  it("does NOT sum unread counts across duplicates — takes max instead", async () => {
+    const { dedupeThreads } = await import("@/services/firebase/messages");
+    const dup = [
+      { id: "a", subject: "s", participant: "Shop Nexa Support", sellerId: null, lastMessage: "m", lastAt: 1000, unread: 1, createdAt: 1000 },
+      { id: "b", subject: "s", participant: "Shop Nexa Support", sellerId: null, lastMessage: "m", lastAt: 2000, unread: 1, createdAt: 2000 },
+    ];
+    const result = dedupeThreads(dup);
+    expect(result[0].unread).toBe(1); // NOT 2
+  });
+
+  it("keeps the most recently active thread's content when collapsing", async () => {
+    const { dedupeThreads } = await import("@/services/firebase/messages");
+    const dup = [
+      { id: "old", subject: "s", participant: "Shop Nexa Support", sellerId: null, lastMessage: "old msg", lastAt: 1000, unread: 0, createdAt: 1000 },
+      { id: "new", subject: "s", participant: "Shop Nexa Support", sellerId: null, lastMessage: "new msg", lastAt: 5000, unread: 1, createdAt: 5000 },
+    ];
+    const result = dedupeThreads(dup);
+    expect(result).toHaveLength(1);
+    expect(result[0].lastMessage).toBe("new msg");
+  });
+
+  it("does NOT merge distinct seller threads (different sellerId)", async () => {
+    const { dedupeThreads } = await import("@/services/firebase/messages");
+    const distinct = [
+      { id: "a", subject: "s", participant: "Seller A", sellerId: "seller-1", lastMessage: "m", lastAt: 1000, unread: 0, createdAt: 1000 },
+      { id: "b", subject: "s", participant: "Seller B", sellerId: "seller-2", lastMessage: "m", lastAt: 2000, unread: 0, createdAt: 2000 },
+    ];
+    const result = dedupeThreads(distinct);
+    expect(result).toHaveLength(2);
+  });
+
+  it("merges duplicate threads with the SAME sellerId (one thread per seller)", async () => {
+    const { dedupeThreads } = await import("@/services/firebase/messages");
+    const dup = [
+      { id: "a", subject: "s", participant: "Seller A", sellerId: "seller-1", lastMessage: "m1", lastAt: 1000, unread: 1, createdAt: 1000 },
+      { id: "b", subject: "s", participant: "Seller A", sellerId: "seller-1", lastMessage: "m2", lastAt: 3000, unread: 1, createdAt: 3000 },
+    ];
+    const result = dedupeThreads(dup);
+    expect(result).toHaveLength(1);
+    expect(result[0].unread).toBe(1);
+  });
+
+  it("sorts deduped results by most recent activity (lastAt desc)", async () => {
+    const { dedupeThreads } = await import("@/services/firebase/messages");
+    const threads = [
+      { id: "a", subject: "s", participant: "Support A", sellerId: null, lastMessage: "m", lastAt: 1000, unread: 0, createdAt: 1000 },
+      { id: "b", subject: "s", participant: "Seller X", sellerId: "seller-x", lastMessage: "m", lastAt: 5000, unread: 0, createdAt: 5000 },
+    ];
+    const result = dedupeThreads(threads);
+    expect(result[0].id).toBe("b");
+  });
+
+  it("countUnreadMessages() dedupes before summing (source-of-truth fix for the '2' badge bug)", async () => {
+    const messagesSource = require("fs").readFileSync("src/services/firebase/messages.ts", "utf-8");
+    expect(messagesSource).toContain("dedupeThreads(threads).reduce");
+  });
+
+  it("listThreads() returns deduped threads", async () => {
+    const messagesSource = require("fs").readFileSync("src/services/firebase/messages.ts", "utf-8");
+    const listThreadsFn = messagesSource.match(/export async function listThreads[\s\S]*?\n\}/);
+    expect(listThreadsFn).toBeTruthy();
+    expect(listThreadsFn![0]).toContain("dedupeThreads(");
+  });
+
+  it("realtime onSnapshot threads listener applies dedupeThreads before setState", () => {
+    const source = require("fs").readFileSync("src/routes/_authenticated/messages.tsx", "utf-8");
+    expect(source).toContain("setRealtimeThreads(dedupeThreads(mapped));");
+  });
+
+  it("unreadMsg badge is derived from the deduped threads list, not a separate duplicate-prone query", () => {
+    const source = require("fs").readFileSync("src/routes/_authenticated/messages.tsx", "utf-8");
+    expect(source).toContain("const unreadMsg = threads.reduce((sum, t) => sum + t.unread, 0);");
+    // The old separate polling query that could double-count duplicates is gone
+    expect(source).not.toContain("unreadMsgQuery");
+  });
+
+  it("'Recent Conversations' list in InboxDashboard receives already-deduped threads", () => {
+    const source = require("fs").readFileSync("src/routes/_authenticated/messages.tsx", "utf-8");
+    // threads passed into InboxDashboard come from the deduped `threads` const
+    const passesThreads = source.match(/<InboxDashboard[\s\S]*?threads=\{threads\}/);
+    expect(passesThreads).toBeTruthy();
+  });
+});

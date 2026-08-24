@@ -45,9 +45,43 @@ function mapMessage(id: string, d: Record<string, unknown>): ChatMessage {
   };
 }
 
+/**
+ * Collapses conceptual duplicate threads (e.g. two "Shop Nexa Support"
+ * welcome threads created by a past race condition, or repeated threads
+ * with the same seller) into a single entry.
+ *
+ * Grouping key:
+ *  - seller threads: `seller:${sellerId}` — a customer should only ever
+ *    have ONE ongoing thread with a given seller.
+ *  - general support threads: `support:${participant}` — a customer
+ *    should only ever have ONE ongoing general support thread.
+ *
+ * This is defense-in-depth: it runs on every read so the UI is correct
+ * even if stale duplicate documents still exist in Firestore (e.g. before
+ * a self-heal/cleanup pass has run for a given user). Within a duplicate
+ * group we keep the most recently active thread's identity/content, but
+ * take the MAX unread count across the group (never sum) so the unread
+ * badge reflects one conceptual conversation, not N duplicate copies.
+ */
+export function dedupeThreads(threads: MessageThread[]): MessageThread[] {
+  const groups = new Map<string, MessageThread>();
+  for (const t of threads) {
+    const key = t.sellerId ? `seller:${t.sellerId}` : `support:${t.participant}`;
+    const existing = groups.get(key);
+    if (!existing) {
+      groups.set(key, t);
+      continue;
+    }
+    const newer = t.lastAt >= existing.lastAt ? t : existing;
+    const older = newer === t ? existing : t;
+    groups.set(key, { ...newer, unread: Math.max(newer.unread, older.unread) });
+  }
+  return Array.from(groups.values()).sort((a, b) => b.lastAt - a.lastAt);
+}
+
 export async function listThreads(uid: string): Promise<MessageThread[]> {
   const snap = await getDocs(query(threadsCol(uid), orderBy("lastAt", "desc"), limit(50)));
-  return snap.docs.map((d) => mapThread(d.id, d.data() as Record<string, unknown>));
+  return dedupeThreads(snap.docs.map((d) => mapThread(d.id, d.data() as Record<string, unknown>)));
 }
 
 export async function listMessages(uid: string, threadId: string): Promise<ChatMessage[]> {
@@ -95,7 +129,10 @@ export async function markThreadRead(uid: string, threadId: string): Promise<voi
 
 export async function countUnreadMessages(uid: string): Promise<number> {
   const snap = await getDocs(query(threadsCol(uid), where("unread", ">", 0), limit(50)));
-  return snap.docs.reduce((s, d) => s + Number((d.data() as { unread?: number }).unread ?? 0), 0);
+  const threads = snap.docs.map((d) => mapThread(d.id, d.data() as Record<string, unknown>));
+  // Dedupe first so two duplicate "Shop Nexa Support" threads (each unread=1)
+  // count as ONE unread conversation, not two.
+  return dedupeThreads(threads).reduce((s, t) => s + t.unread, 0);
 }
 
 export async function deleteThread(uid: string, threadId: string): Promise<void> {
