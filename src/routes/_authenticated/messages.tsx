@@ -245,6 +245,34 @@ function CommunicationCenter() {
     }
   }, [user?.uid]);
 
+  // Derived data — must be computed BEFORE any early returns so that
+  // hooks (useMemo) are always called in the same order on every render.
+  // Placing a hook after a conditional return violates the Rules of Hooks
+  // and causes React to crash with "This page didn't load".
+  const threads = realtimeThreads.length > 0 ? realtimeThreads : (threadsQuery.data ?? []);
+  const notifications = realtimeNotifs.length > 0 ? realtimeNotifs : (notificationsQuery.data ?? []);
+  const tickets = realtimeTickets.length > 0 ? realtimeTickets : (ticketsQuery.data ?? []);
+  const orders = ordersQuery.data ?? [];
+
+  // Filter threads — useMemo MUST be called unconditionally (before early returns)
+  const filteredThreads = useMemo(() => {
+    let result = threads;
+    if (activeFilter === "unread") result = result.filter((t) => t.unread > 0);
+    if (activeFilter === "orders") result = result.filter((t) => t.subject.toLowerCase().includes("order"));
+    if (activeFilter === "support") result = result.filter((t) => t.participant.includes("Support"));
+    if (activeFilter === "sellers") result = result.filter((t) => t.sellerId !== null);
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        (t) =>
+          t.subject.toLowerCase().includes(q) ||
+          t.participant.toLowerCase().includes(q) ||
+          t.lastMessage.toLowerCase().includes(q),
+      );
+    }
+    return result;
+  }, [threads, activeFilter, searchQuery]);
+
   // If a thread is active, show the chat view
   if (activeThreadId) {
     return (
@@ -283,30 +311,6 @@ function CommunicationCenter() {
       );
     }
   }
-
-  const threads = realtimeThreads.length > 0 ? realtimeThreads : (threadsQuery.data ?? []);
-  const notifications = realtimeNotifs.length > 0 ? realtimeNotifs : (notificationsQuery.data ?? []);
-  const tickets = realtimeTickets.length > 0 ? realtimeTickets : (ticketsQuery.data ?? []);
-  const orders = ordersQuery.data ?? [];
-
-  // Filter threads
-  const filteredThreads = useMemo(() => {
-    let result = threads;
-    if (activeFilter === "unread") result = result.filter((t) => t.unread > 0);
-    if (activeFilter === "orders") result = result.filter((t) => t.subject.toLowerCase().includes("order"));
-    if (activeFilter === "support") result = result.filter((t) => t.participant.includes("Support"));
-    if (activeFilter === "sellers") result = result.filter((t) => t.sellerId !== null);
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(
-        (t) =>
-          t.subject.toLowerCase().includes(q) ||
-          t.participant.toLowerCase().includes(q) ||
-          t.lastMessage.toLowerCase().includes(q),
-      );
-    }
-    return result;
-  }, [threads, activeFilter, searchQuery]);
 
   return (
     <ServicePageLayout title={t("messages.titleMessages")} subtitle="Your hub for orders, chats, support & notifications">
