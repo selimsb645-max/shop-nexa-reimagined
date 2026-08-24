@@ -33,11 +33,15 @@ import {
   Loader,
   Pin,
   ChevronRight,
+  Heart,
 } from "lucide-react";
 import { ServicePageLayout } from "@/components/common/ServicePageLayout";
 import { useAuth } from "@/context/AuthContext";
 import { useI18n } from "@/i18n/I18nContext";
 import { firebaseConfigured } from "@/services/firebase/config";
+import { subscribeActiveAnnouncements } from "@/services/firebase/adminAnnouncements";
+import type { Announcement } from "@/types/admin";
+import { Spinner } from "@/components/common/Spinner";
 import { onSnapshot, collection, query, where, orderBy, limit } from "firebase/firestore";
 import { getDb } from "@/services/firebase/config";
 import {
@@ -1397,72 +1401,70 @@ function NotificationCenter({
 // ANNOUNCEMENT CENTER
 // ═══════════════════════════════════════════════════════════════
 
+// Icon mapping from string names to components
+const ANNOUNCEMENT_ICONS: Record<string, React.ReactNode> = {
+  Zap: <Zap className="h-8 w-8" />,
+  Store: <Store className="h-8 w-8" />,
+  Sparkles: <Sparkles className="h-8 w-8" />,
+  Gift: <Gift className="h-8 w-8" />,
+  AlertCircle: <AlertCircle className="h-8 w-8" />,
+  Megaphone: <Megaphone className="h-8 w-8" />,
+  Star: <Star className="h-8 w-8" />,
+  Heart: <Heart className="h-8 w-8" />,
+};
+
 function AnnouncementCenter() {
-  const announcements = [
-    {
-      title: "Mega Flash Sale",
-      desc: "Up to 70% off on electronics, fashion & more!",
-      gradient: "from-orange-500 to-red-500",
-      icon: <Zap className="h-8 w-8" />,
-      cta: "Shop Now",
-      link: "/flash-sales",
-    },
-    {
-      title: "New Seller Programs",
-      desc: "Join Shop Nexa as a seller and reach millions of customers",
-      gradient: "from-blue-500 to-indigo-600",
-      icon: <Store className="h-8 w-8" />,
-      cta: "Become a Seller",
-      link: "/seller/register",
-    },
-    {
-      title: "Nexa Prime Membership",
-      desc: "Free shipping, exclusive deals & 3x reward points",
-      gradient: "from-purple-500 to-pink-600",
-      icon: <Sparkles className="h-8 w-8" />,
-      cta: "Join Now",
-      link: "/membership",
-    },
-    {
-      title: "Gift Cards Available",
-      desc: "Perfect gifts for any occasion — starting from ৳500",
-      gradient: "from-green-500 to-teal-600",
-      icon: <Gift className="h-8 w-8" />,
-      cta: "Buy Gift Card",
-      link: "/gift-cards",
-    },
-    {
-      title: "System Maintenance",
-      desc: "Scheduled maintenance on Aug 10, 2:00 AM - 4:00 AM BST",
-      gradient: "from-gray-600 to-gray-800",
-      icon: <AlertCircle className="h-8 w-8" />,
-      cta: null,
-      link: null,
-    },
-  ];
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Real-time listener for published, active announcements
+    const unsub = subscribeActiveAnnouncements((items) => {
+      setAnnouncements(items);
+      setLoading(false);
+    });
+    return () => unsub();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+        <Spinner /> Loading announcements…
+      </div>
+    );
+  }
+
+  if (announcements.length === 0) {
+    return (
+      <div className="rounded-2xl border bg-background p-8 text-center text-sm text-muted-foreground">
+        <Megaphone className="mx-auto mb-2 h-8 w-8 opacity-40" />
+        No active announcements right now. Check back soon!
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3">
-      {announcements.map((ann, i) => (
+      {announcements.map((ann) => (
         <div
-          key={i}
+          key={ann.id}
           className={`relative overflow-hidden rounded-2xl bg-gradient-to-r ${ann.gradient} p-5 text-white shadow-lg`}
         >
           <div className="absolute -right-4 -top-4 h-20 w-20 rounded-full bg-white/10" />
           <div className="absolute -bottom-6 -left-6 h-24 w-24 rounded-full bg-white/5" />
           <div className="relative z-10 flex items-center gap-4">
             <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-white/15 backdrop-blur">
-              {ann.icon}
+              {ANNOUNCEMENT_ICONS[ann.icon] ?? <Megaphone className="h-8 w-8" />}
             </span>
             <div className="min-w-0 flex-1">
               <h3 className="text-base font-bold">{ann.title}</h3>
-              <p className="mt-0.5 text-sm opacity-90">{ann.desc}</p>
-              {ann.cta && ann.link && (
+              <p className="mt-0.5 text-sm opacity-90">{ann.message}</p>
+              {ann.ctaLabel && ann.ctaLink && (
                 <Link
-                  to={ann.link}
+                  to={ann.ctaLink}
                   className="mt-2 inline-flex items-center gap-1 rounded-full bg-white/20 px-3 py-1 text-xs font-semibold backdrop-blur transition hover:bg-white/30"
                 >
-                  {ann.cta} <ChevronRight className="h-3 w-3" />
+                  {ann.ctaLabel} <ChevronRight className="h-3 w-3" />
                 </Link>
               )}
             </div>
