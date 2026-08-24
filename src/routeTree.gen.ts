@@ -74,6 +74,7 @@ import { Route as AuthenticatedSellerAnalyticsRouteImport } from './routes/_auth
 import { Route as AuthenticatedSellerCouponsRouteImport } from './routes/_authenticated/seller.coupons'
 import { Route as AuthenticatedSellerEarningsRouteImport } from './routes/_authenticated/seller.earnings'
 import { Route as AuthenticatedSellerInsightsRouteImport } from './routes/_authenticated/seller.insights'
+import { Route as AuthenticatedSellerMessagesRouteImport } from './routes/_authenticated/seller.messages'
 import { Route as AuthenticatedSellerNotificationsRouteImport } from './routes/_authenticated/seller.notifications'
 import { Route as AuthenticatedSellerOrdersRouteImport } from './routes/_authenticated/seller.orders'
 import { Route as AuthenticatedSellerProductsRouteImport } from './routes/_authenticated/seller.products'
@@ -442,6 +443,12 @@ const AuthenticatedSellerInsightsRoute =
     path: '/insights',
     getParentRoute: () => AuthenticatedSellerRoute,
   } as any)
+const AuthenticatedSellerMessagesRoute =
+  AuthenticatedSellerMessagesRouteImport.update({
+    id: '/messages',
+    path: '/messages',
+    getParentRoute: () => AuthenticatedSellerRoute,
+  } as any)
 const AuthenticatedSellerNotificationsRoute =
   AuthenticatedSellerNotificationsRouteImport.update({
     id: '/notifications',
@@ -602,6 +609,7 @@ export interface FileRoutesByFullPath {
   '/seller/coupons': typeof AuthenticatedSellerCouponsRoute
   '/seller/earnings': typeof AuthenticatedSellerEarningsRoute
   '/seller/insights': typeof AuthenticatedSellerInsightsRoute
+  '/seller/messages': typeof AuthenticatedSellerMessagesRoute
   '/seller/notifications': typeof AuthenticatedSellerNotificationsRoute
   '/seller/orders': typeof AuthenticatedSellerOrdersRouteWithChildren
   '/seller/products': typeof AuthenticatedSellerProductsRouteWithChildren
@@ -682,6 +690,7 @@ export interface FileRoutesByTo {
   '/seller/coupons': typeof AuthenticatedSellerCouponsRoute
   '/seller/earnings': typeof AuthenticatedSellerEarningsRoute
   '/seller/insights': typeof AuthenticatedSellerInsightsRoute
+  '/seller/messages': typeof AuthenticatedSellerMessagesRoute
   '/seller/notifications': typeof AuthenticatedSellerNotificationsRoute
   '/seller/register': typeof AuthenticatedSellerRegisterRoute
   '/seller/settings': typeof AuthenticatedSellerSettingsRoute
@@ -764,6 +773,7 @@ export interface FileRoutesById {
   '/_authenticated/seller/coupons': typeof AuthenticatedSellerCouponsRoute
   '/_authenticated/seller/earnings': typeof AuthenticatedSellerEarningsRoute
   '/_authenticated/seller/insights': typeof AuthenticatedSellerInsightsRoute
+  '/_authenticated/seller/messages': typeof AuthenticatedSellerMessagesRoute
   '/_authenticated/seller/notifications': typeof AuthenticatedSellerNotificationsRoute
   '/_authenticated/seller/orders': typeof AuthenticatedSellerOrdersRouteWithChildren
   '/_authenticated/seller/products': typeof AuthenticatedSellerProductsRouteWithChildren
@@ -848,6 +858,7 @@ export interface FileRouteTypes {
     | '/seller/coupons'
     | '/seller/earnings'
     | '/seller/insights'
+    | '/seller/messages'
     | '/seller/notifications'
     | '/seller/orders'
     | '/seller/products'
@@ -928,6 +939,7 @@ export interface FileRouteTypes {
     | '/seller/coupons'
     | '/seller/earnings'
     | '/seller/insights'
+    | '/seller/messages'
     | '/seller/notifications'
     | '/seller/register'
     | '/seller/settings'
@@ -1009,6 +1021,7 @@ export interface FileRouteTypes {
     | '/_authenticated/seller/coupons'
     | '/_authenticated/seller/earnings'
     | '/_authenticated/seller/insights'
+    | '/_authenticated/seller/messages'
     | '/_authenticated/seller/notifications'
     | '/_authenticated/seller/orders'
     | '/_authenticated/seller/products'
@@ -1504,6 +1517,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSellerInsightsRouteImport
       parentRoute: typeof AuthenticatedSellerRoute
     }
+    '/_authenticated/seller/messages': {
+      id: '/_authenticated/seller/messages'
+      path: '/messages'
+      fullPath: '/seller/messages'
+      preLoaderRoute: typeof AuthenticatedSellerMessagesRouteImport
+      parentRoute: typeof AuthenticatedSellerRoute
+    }
     '/_authenticated/seller/notifications': {
       id: '/_authenticated/seller/notifications'
       path: '/notifications'
@@ -1738,6 +1758,7 @@ interface AuthenticatedSellerRouteChildren {
   AuthenticatedSellerCouponsRoute: typeof AuthenticatedSellerCouponsRoute
   AuthenticatedSellerEarningsRoute: typeof AuthenticatedSellerEarningsRoute
   AuthenticatedSellerInsightsRoute: typeof AuthenticatedSellerInsightsRoute
+  AuthenticatedSellerMessagesRoute: typeof AuthenticatedSellerMessagesRoute
   AuthenticatedSellerNotificationsRoute: typeof AuthenticatedSellerNotificationsRoute
   AuthenticatedSellerOrdersRoute: typeof AuthenticatedSellerOrdersRouteWithChildren
   AuthenticatedSellerProductsRoute: typeof AuthenticatedSellerProductsRouteWithChildren
@@ -1754,6 +1775,7 @@ const AuthenticatedSellerRouteChildren: AuthenticatedSellerRouteChildren = {
   AuthenticatedSellerCouponsRoute: AuthenticatedSellerCouponsRoute,
   AuthenticatedSellerEarningsRoute: AuthenticatedSellerEarningsRoute,
   AuthenticatedSellerInsightsRoute: AuthenticatedSellerInsightsRoute,
+  AuthenticatedSellerMessagesRoute: AuthenticatedSellerMessagesRoute,
   AuthenticatedSellerNotificationsRoute: AuthenticatedSellerNotificationsRoute,
   AuthenticatedSellerOrdersRoute: AuthenticatedSellerOrdersRouteWithChildren,
   AuthenticatedSellerProductsRoute:

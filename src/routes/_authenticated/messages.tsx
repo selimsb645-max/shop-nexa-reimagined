@@ -62,7 +62,15 @@ import {
 import { listOrders } from "@/services/firebase/orders";
 import { seedInbox } from "@/services/firebase/seedInbox";
 import { formatPrice, formatDate } from "@/utils/format";
-import type { MessageThread, ChatMessage } from "@/types/customer";
+import type { MessageThread, ChatMessage, SellerConversation, ConversationMessage } from "@/types/customer";
+import { getProductById } from "@/services/firebase/products";
+import {
+  createSellerConversation,
+  subscribeConversationMessages,
+  customerSendMessage,
+  subscribeCustomerConversations,
+  findConversationByThreadId,
+} from "@/services/firebase/sellerConversations";
 
 type TicketMessage = { id: string; body: string; from: "support" | "customer"; createdAt: number };
 import type { CustomerNotification, NotificationType } from "@/types/customer";
@@ -755,12 +763,45 @@ function OrderConversationView({
       onChatWithSeller(orderThread.id);
       return;
     }
+
+    // Look up the product's sellerId from the first item
+    let sellerId: string | null = null;
+    let sellerShopName = "Seller";
+    if (order.items.length > 0) {
+      try {
+        const product = await getProductById(order.items[0].productId);
+        if (product?.sellerId) {
+          sellerId = product.sellerId;
+        }
+      } catch { /* ignore — product may not be found */ }
+    }
+
+    // Create the personal thread (existing system)
     const threadId = await createThread(user!.uid, {
       subject: `Order #${order.id.slice(0, 8)}`,
-      participant: "Shop Nexa Support",
+      participant: sellerId ? sellerShopName : "Shop Nexa Support",
+      sellerId: sellerId,
       firstMessage: `I have a question about order #${order.id.slice(0, 8)}`,
     });
     await queryClient.invalidateQueries({ queryKey: ["threads"] });
+
+    // Also create a shared conversation (for seller inbox)
+    if (sellerId && user) {
+      try {
+        const idToken = await user.getIdToken();
+        await createSellerConversation({
+          idToken,
+          sellerId,
+          subject: `Order #${order.id.slice(0, 8)}`,
+          firstMessage: `I have a question about order #${order.id.slice(0, 8)}`,
+          threadId,
+          sellerShopName,
+        });
+      } catch (err) {
+        console.warn("Failed to create seller conversation:", err);
+      }
+    }
+
     onChatWithSeller(threadId);
   };
 
@@ -1501,7 +1542,22 @@ function ChatView({ threadId, onBack, userId }: { threadId: string; onBack: () =
   const activeThread = thread.data?.find((t) => t.id === threadId);
 
   const sendMutation = useMutation({
-    mutationFn: () => sendMessage(userId, threadId, draft.trim()),
+    mutationFn: async () => {
+      // Send via existing personal thread (backward compat)
+      await sendMessage(userId, threadId, draft.trim());
+
+      // If this is a seller thread, also sync to shared conversation
+      if (activeThread?.sellerId) {
+        try {
+          const conv = await findConversationByThreadId(userId, threadId);
+          if (conv) {
+            await customerSendMessage(conv.id, userId, draft.trim(), threadId);
+          }
+        } catch (err) {
+          console.warn("Failed to sync message to conversation:", err);
+        }
+      }
+    },
     onSuccess: () => {
       setDraft("");
       queryClient.invalidateQueries({ queryKey: ["messages", userId, threadId] });

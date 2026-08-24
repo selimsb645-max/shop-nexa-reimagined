@@ -198,6 +198,50 @@ service cloud.firestore {
       }
     }
 
+    // CONVERSATIONS — shared collection for customer-seller messaging
+    // Both participants (customer and seller) can read/write their own conversations
+    match /conversations/{convId} {
+      allow read: if isSignedIn()
+        && (
+          resource.data.customerId == request.auth.uid
+          || resource.data.sellerId == request.auth.uid
+          || isAdmin()
+        );
+      allow create: if isSignedIn()
+        && request.resource.data.customerId == request.auth.uid
+        && 'sellerId' in request.resource.data
+        && 'customerId' in request.resource.data
+        && 'lastMessage' in request.resource.data;
+      allow update: if isSignedIn()
+        && (
+          resource.data.customerId == request.auth.uid
+          || resource.data.sellerId == request.auth.uid
+          || isAdmin()
+        )
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'lastMessage', 'lastAt', 'customerUnread', 'sellerUnread'
+        ]);
+      allow delete: if isAdmin();
+
+      match /messages/{msgId} {
+        allow read: if isSignedIn()
+          && (
+            get(/databases/$(database)/documents/conversations/$(convId)).data.customerId == request.auth.uid
+            || get(/databases/$(database)/documents/conversations/$(convId)).data.sellerId == request.auth.uid
+            || isAdmin()
+          );
+        allow create: if isSignedIn()
+          && request.resource.data.from in ['customer', 'seller']
+          && request.resource.data.senderId == request.auth.uid
+          && (
+            get(/databases/$(database)/documents/conversations/$(convId)).data.customerId == request.auth.uid
+            || get(/databases/$(database)/documents/conversations/$(convId)).data.sellerId == request.auth.uid
+          );
+        allow update: if isAdmin();
+        allow delete: if isAdmin();
+      }
+    }
+
     // SELLERS
 
     match /sellers/{uid} {

@@ -11,6 +11,7 @@ import {
   BarChart3,
   Tag,
   DollarSign,
+  MessageSquare,
   TrendingUp,
   Receipt,
   Menu,
@@ -43,6 +44,7 @@ export function SellerShell({ children }: Props) {
     { to: "/seller", icon: LayoutDashboard, label: "Dashboard", exact: true },
     { to: "/seller/products", icon: Package, label: "Products" },
     { to: "/seller/orders", icon: ShoppingBag, label: "Orders" },
+    { to: "/seller/messages", icon: MessageSquare, label: "Messages" },
     { to: "/seller/earnings", icon: DollarSign, label: "Earnings" },
     { to: "/seller/settlements", icon: Receipt, label: "Settlements" },
     { to: "/seller/wallet", icon: Wallet, label: "Wallet" },
@@ -58,6 +60,7 @@ export function SellerShell({ children }: Props) {
     { to: "/seller", icon: LayoutDashboard, label: "Home", exact: true },
     { to: "/seller/products", icon: Package, label: "Products" },
     { to: "/seller/orders", icon: ShoppingBag, label: "Orders" },
+    { to: "/seller/messages", icon: MessageSquare, label: "Messages" },
     { to: "/seller/wallet", icon: Wallet, label: "Wallet" },
   ];
 
