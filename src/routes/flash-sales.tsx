@@ -17,9 +17,9 @@ import {
   ArrowLeft,
   Flame as FlameIcon,
 } from "lucide-react";
+import { BackButton } from "@/components/common/BackButton";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
-import { WhatsAppFab } from "@/components/layout/SiteChrome";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { ProductCard, ProductCardSkeleton } from "@/components/product/ProductCard";
 import { listProducts } from "@/services/firebase/products";
@@ -200,6 +200,9 @@ export function FlashSalesPage() {
       <SiteHeader />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 space-y-6">
+        <div className="mb-3">
+          <BackButton fallbackTo="/shop" label="Back" className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-200 active:scale-95" />
+        </div>
         {/* Breadcrumb Navigation */}
         <div className="flex items-center justify-between">
           <nav className="flex items-center gap-2 text-xs sm:text-sm text-slate-500">
@@ -504,8 +507,7 @@ export function FlashSalesPage() {
 
       {/* Footer and Mobile Nav */}
       <SiteFooter />
-      <WhatsAppFab />
-      <MobileBottomNav />
+<MobileBottomNav />
     </div>
   );
 }

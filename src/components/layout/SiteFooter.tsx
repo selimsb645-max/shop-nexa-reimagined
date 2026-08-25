@@ -268,22 +268,14 @@ export function SiteFooter() {
             </p>
 
             <ul className="space-y-2.5 text-xs text-slate-700">
-              <li className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-[#f97316] shrink-0" />
-                <a
-                  href="tel:+8801324997271"
-                  className="hover:text-[#f97316] font-medium transition-colors"
-                >
-                  +880 1324 997 271
-                </a>
-              </li>
+
               <li className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-[#f97316] shrink-0" />
                 <a
-                  href="mailto:support@shopnexa.com"
+                  href="mailto:help.shopnexa@gmail.com"
                   className="hover:text-[#f97316] font-medium transition-colors"
                 >
-                  support@shopnexa.com
+                  help.shopnexa@gmail.com
                 </a>
               </li>
               <li className="flex items-start gap-2">
@@ -292,17 +284,7 @@ export function SiteFooter() {
               </li>
             </ul>
 
-            {/* Direct Contact Links */}
-            <div className="mt-4 pt-3 border-t border-slate-200 flex flex-wrap gap-2">
-              <a
-                href="https://wa.me/8801324997271"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg font-medium transition-colors shadow-sm"
-              >
-                <span>WhatsApp Support</span>
-              </a>
-            </div>
+
           </div>
         </div>
       </div>

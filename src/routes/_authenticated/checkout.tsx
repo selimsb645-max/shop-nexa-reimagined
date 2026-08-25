@@ -26,9 +26,9 @@ import {
   Trash2,
   AlertCircle,
 } from "lucide-react";
+import { BackButton } from "@/components/common/BackButton";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
-import { WhatsAppFab } from "@/components/layout/SiteChrome";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
@@ -475,8 +475,7 @@ function CheckoutPage() {
           </div>
         </main>
         <SiteFooter />
-        <WhatsAppFab />
-        <MobileBottomNav />
+<MobileBottomNav />
       </div>
     );
   }
@@ -486,6 +485,9 @@ function CheckoutPage() {
       <SiteHeader />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-4 md:px-6 py-4 md:py-6 pb-32 lg:pb-8">
+        <div className="mb-3">
+          <BackButton fallbackTo="/cart" label="Back" className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-200 active:scale-95" />
+        </div>
         {/* Breadcrumb */}
         <nav className="mb-4 text-xs sm:text-sm text-slate-500 flex items-center gap-1.5">
           <Link to="/" className="hover:text-[#f57224] transition-colors">
@@ -1196,8 +1198,7 @@ function CheckoutPage() {
       </div>
 
       <SiteFooter />
-      <WhatsAppFab />
-      <MobileBottomNav />
+<MobileBottomNav />
     </div>
   );
 }

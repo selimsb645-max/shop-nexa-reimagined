@@ -401,7 +401,7 @@ function AccountPage() {
           <div className="divide-y divide-gray-100">
             <DarazListRow to="/support" icon={<Headphones className="h-5 w-5" />} label={t("account.customerService")} hint={t("account.customerServiceHint")} />
             <DarazListRow to="/support" icon={<BookOpen className="h-5 w-5" />} label={t("account.helpCenter")} hint={t("account.helpCenterHint")} />
-            <DarazExternalRow href="https://wa.me/8801324997271" icon={<Phone className="h-5 w-5" />} label={t("account.contactUs")} hint={t("account.contactUsHint")} />
+            <DarazExternalRow href="mailto:help.shopnexa@gmail.com" icon={<Mail className="h-5 w-5" />} label={t("account.contactUs")} hint="help.shopnexa@gmail.com" />
           </div>
         </DarazCard>
 

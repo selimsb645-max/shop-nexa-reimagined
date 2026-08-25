@@ -4,7 +4,7 @@
  * Mirrors the My Orders design language:
  *   - Orange gradient header with back arrow, title, subtitle
  *   - max-w-5xl content area
- *   - SiteFooter + WhatsAppFab + MobileBottomNav
+ *   - SiteFooter + MobileBottomNav
  *
  * Usage:
  *   <ServicePageLayout title="My Wallet" subtitle="Balance & transactions">
@@ -20,7 +20,6 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { SiteFooter } from "@/components/layout/SiteFooter";
-import { WhatsAppFab } from "@/components/layout/SiteChrome";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 
 export function ServicePageLayout({
@@ -67,8 +66,7 @@ export function ServicePageLayout({
       </main>
 
       <SiteFooter />
-      <WhatsAppFab />
-      <MobileBottomNav />
+<MobileBottomNav />
     </div>
   );
 }

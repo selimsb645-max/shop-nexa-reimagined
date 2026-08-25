@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { LifeBuoy, Phone, Plus, Send, MessageSquare, Loader, X } from "lucide-react";
+import { LifeBuoy, Mail, Plus, Send, MessageSquare, Loader, X } from "lucide-react";
 import { toast } from "sonner";
 import { ServicePageLayout } from "@/components/common/ServicePageLayout";
 import { useAuth } from "@/context/AuthContext";
@@ -84,10 +84,10 @@ function SupportPage() {
     <ServicePageLayout title={t("support.title")} subtitle={t("support.subtitle")}>
       {/* Quick contact cards */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <a href="https://wa.me/8801324997271" target="_blank" rel="noreferrer" className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:border-orange-200 hover:shadow-md">
-          <Phone className="h-5 w-5 text-[#f57224]" />
-          <div className="mt-2 font-bold text-slate-800">{t("support.whatsapp")}</div>
-          <p className="text-sm text-slate-500">01324997271 · 9am–9pm</p>
+        <a href="mailto:help.shopnexa@gmail.com" className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:border-orange-200 hover:shadow-md">
+          <Mail className="h-5 w-5 text-[#f57224]" />
+          <div className="mt-2 font-bold text-slate-800">Email Support</div>
+          <p className="text-sm text-slate-500">help.shopnexa@gmail.com</p>
         </a>
         <Link to="/messages" className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:border-orange-200 hover:shadow-md">
           <MessageSquare className="h-5 w-5 text-[#f57224]" />

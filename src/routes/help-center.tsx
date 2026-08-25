@@ -9,9 +9,9 @@ import {
   ChevronRight,
   HelpCircle,
 } from "lucide-react";
+import { BackButton } from "@/components/common/BackButton";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
-import { WhatsAppFab } from "@/components/layout/SiteChrome";
 
 export const Route = createFileRoute("/help-center")({
   ssr: false,
@@ -69,6 +69,9 @@ function HelpCenterPage() {
     <div className="min-h-screen bg-background">
       <SiteHeader />
       <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
+        <div className="mb-4">
+          <BackButton fallbackTo="/" label="Back" className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-200 active:scale-95" />
+        </div>
         <div className="mb-6 flex items-center gap-3">
           <Link to="/" className="text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-5 w-5" />
@@ -94,21 +97,7 @@ function HelpCenterPage() {
             </div>
             <ChevronRight className="h-5 w-5 text-muted-foreground" />
           </Link>
-          <a
-            href="https://wa.me/8801324997271"
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-3 rounded-2xl border bg-background p-4 shadow-sm transition hover:border-primary/40 hover:shadow-md"
-          >
-            <span className="grid h-12 w-12 place-items-center rounded-xl bg-green-100 text-green-600">
-              <Phone className="h-6 w-6" />
-            </span>
-            <div className="min-w-0 flex-1">
-              <h3 className="text-sm font-semibold">WhatsApp Us</h3>
-              <p className="text-xs text-muted-foreground">01324997271</p>
-            </div>
-            <ChevronRight className="h-5 w-5 text-muted-foreground" />
-          </a>
+
         </div>
 
         {/* Help categories */}
@@ -157,7 +146,6 @@ function HelpCenterPage() {
         </div>
       </main>
       <SiteFooter />
-      <WhatsAppFab />
-    </div>
+</div>
   );
 }

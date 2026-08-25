@@ -1,9 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { MapPin, Store, PackageX, Loader, Star, ChevronRight } from "lucide-react";
+import { BackButton } from "@/components/common/BackButton";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
-import { WhatsAppFab } from "@/components/layout/SiteChrome";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { ProductCard } from "@/components/product/ProductCard";
 import { listAllProducts } from "@/services/firebase/products";
@@ -160,6 +160,11 @@ function StorePage() {
     <>
       <SiteHeader />
 
+      {/* Back navigation */}
+      <div className="max-w-7xl mx-auto px-4 pt-4">
+        <BackButton fallbackTo="/shop" label="Back" className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-200 active:scale-95" />
+      </div>
+
       {/* Store Banner / Header */}
       <div className="relative">
         {/* Banner background */}
@@ -269,9 +274,7 @@ function StorePage() {
           </>
         )}
       </div>
-
-      <WhatsAppFab />
-      <SiteFooter />
+<SiteFooter />
       <MobileBottomNav />
     </>
   );

@@ -26,9 +26,9 @@ import {
   BadgePercent,
   HelpCircle,
 } from "lucide-react";
+import { BackButton } from "@/components/common/BackButton";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
-import { WhatsAppFab } from "@/components/layout/SiteChrome";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { formatPrice } from "@/utils/format";
 import { toast } from "sonner";
@@ -519,6 +519,9 @@ export default function CartPage() {
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-4 md:px-6 py-4 md:py-8">
+        <div className="mb-3">
+          <BackButton fallbackTo="/" label="Back" className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-200 active:scale-95" />
+        </div>
         {/* Breadcrumb Navigation */}
         <nav aria-label="Breadcrumb" className="mb-4 text-xs sm:text-sm text-slate-500 flex items-center gap-1.5">
           <Link to="/" className="hover:text-[#f57224] transition-colors">
@@ -1227,8 +1230,7 @@ export default function CartPage() {
       <SiteFooter />
 
       {/* Floating WhatsApp Fab & Mobile Bottom Navigation */}
-      <WhatsAppFab />
-      <MobileBottomNav />
+<MobileBottomNav />
     </div>
   );
 }

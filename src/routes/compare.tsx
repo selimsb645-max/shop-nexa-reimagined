@@ -2,9 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, GitCompare, X, Check } from "lucide-react";
+import { BackButton } from "@/components/common/BackButton";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
-import { WhatsAppFab } from "@/components/layout/SiteChrome";
 import { getProductForComparison, type ComparedProduct } from "@/services/firebase/productComparison";
 import { listAllProducts } from "@/services/firebase/products";
 import { firebaseConfigured } from "@/services/firebase/config";
@@ -61,6 +61,9 @@ function ComparePage() {
     <div className="min-h-screen bg-background">
       <SiteHeader />
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+        <div className="mb-3">
+          <BackButton fallbackTo="/shop" label="Back" className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-200 active:scale-95" />
+        </div>
         <div className="mb-6 flex items-center gap-3">
           <Link to="/" className="text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-5 w-5" />
@@ -164,8 +167,7 @@ function ComparePage() {
         </div>
       </main>
       <SiteFooter />
-      <WhatsAppFab />
-    </div>
+</div>
   );
 }
 

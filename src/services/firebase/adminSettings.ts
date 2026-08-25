@@ -21,7 +21,7 @@ const BANNERS = "banners";
 
 export const DEFAULT_SETTINGS: SiteSettings = {
   siteName: "ShopNexa",
-  supportEmail: "support@shopnexa.app",
+  supportEmail: "help.shopnexa@gmail.com",
   supportPhone: "+1 234 567 8900",
   whatsappNumber: "01324997271",
   facebookUrl: "https://www.facebook.com/profile.php?id=61592089432837",

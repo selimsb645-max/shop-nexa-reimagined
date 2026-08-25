@@ -27,7 +27,6 @@ import {
 } from "lucide-react";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
-import { WhatsAppFab } from "@/components/layout/SiteChrome";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { ProductCard } from "@/components/product/ProductCard";
 import { listCategories } from "@/services/firebase/categories";
@@ -210,8 +209,7 @@ function HomePage() {
       </main>
 
       <SiteFooter />
-      <WhatsAppFab />
-      <MobileBottomNav />
+<MobileBottomNav />
     </div>
   );
 }

@@ -27,9 +27,9 @@ import {
   Send,
 } from "lucide-react";
 
+import { BackButton } from "@/components/common/BackButton";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
-import { WhatsAppFab } from "@/components/layout/SiteChrome";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { ProductCard } from "@/components/product/ProductCard";
 import { useAuth } from "@/context/AuthContext";
@@ -416,8 +416,7 @@ export function ProductDetailPage() {
           </div>
         </main>
         <SiteFooter />
-        <WhatsAppFab />
-        <MobileBottomNav />
+<MobileBottomNav />
       </div>
     );
   }
@@ -435,6 +434,11 @@ export function ProductDetailPage() {
       <SiteHeader />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-4 md:py-6 pb-24 md:pb-12">
+        {/* BACK BUTTON */}
+        <div className="mb-3">
+          <BackButton fallbackTo="/shop" label="Back" className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-200 active:scale-95" />
+        </div>
+
         {/* BREADCRUMB */}
         <nav className="flex items-center text-xs md:text-sm text-slate-500 mb-4 overflow-x-auto whitespace-nowrap">
           <Link to="/" className="hover:text-[#f97316] transition">
@@ -1164,8 +1168,7 @@ export function ProductDetailPage() {
       </main>
 
       <SiteFooter />
-      <WhatsAppFab />
-      <MobileBottomNav />
+<MobileBottomNav />
     </div>
   );
 }

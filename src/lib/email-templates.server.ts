@@ -70,7 +70,7 @@ export function EmailFooter(): string {
     Shop Nexa \u2014 Your trusted marketplace
   </p>
   <p style="margin:0 0 12px 0; font-size:12px; color:#94a3b8; text-align:center;">
-    Need help? Visit our <a href="${siteUrl}/help-center" style="color:#f97316; text-decoration:none;">Help Center</a> or contact support@shopnexa.app
+    Need help? Visit our <a href="${siteUrl}/help-center" style="color:#f97316; text-decoration:none;">Help Center</a> or contact help.shopnexa@gmail.com
   </p>
   <p style="margin:0; font-size:11px; color:#cbd5e1; text-align:center;">
     \u00A9 ${new Date().getFullYear()} Shop Nexa. All rights reserved.<br>

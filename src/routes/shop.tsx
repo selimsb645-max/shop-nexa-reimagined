@@ -15,9 +15,9 @@ import {
   RotateCcw,
   PackageX,
 } from "lucide-react";
+import { BackButton } from "@/components/common/BackButton";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
-import { WhatsAppFab } from "@/components/layout/SiteChrome";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { ProductCard } from "@/components/product/ProductCard";
 import { listCategories } from "@/services/firebase/categories";
@@ -557,6 +557,9 @@ function ShopPage() {
 
       {/* Main Container */}
       <main className="max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 flex-1">
+        <div className="mb-3">
+          <BackButton fallbackTo="/" label="Back" className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-200 active:scale-95" />
+        </div>
         {/* Mobile Filter Toggle & Quick Bar */}
         <div className="lg:hidden mb-3 bg-white rounded-lg p-3 border border-slate-200 shadow-sm flex items-center justify-between gap-2">
           <button
@@ -1380,8 +1383,7 @@ function ShopPage() {
       )}
 
       {/* Floating Elements & Footers */}
-      <WhatsAppFab />
-      <SiteFooter />
+<SiteFooter />
       <MobileBottomNav />
     </div>
   );

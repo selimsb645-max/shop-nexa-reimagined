@@ -14,9 +14,9 @@ import {
   Sparkles,
   Gift,
 } from "lucide-react";
+import { BackButton } from "@/components/common/BackButton";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
-import { WhatsAppFab } from "@/components/layout/SiteChrome";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { useAuth } from "@/context/AuthContext";
 import { getOrder } from "@/services/firebase/orders";
@@ -103,6 +103,9 @@ interface OrderData {
       <SiteHeader />
 
       <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-6 sm:py-10 pb-32 lg:pb-10">
+        <div className="mb-4">
+          <BackButton fallbackTo="/orders" label="Back" className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-200 active:scale-95" />
+        </div>
         {/* Success Hero */}
         <div className="flex flex-col items-center text-center mb-8">
           <div className="relative mb-4">
@@ -295,8 +298,7 @@ interface OrderData {
       </main>
 
       <SiteFooter />
-      <WhatsAppFab />
-      <MobileBottomNav />
+<MobileBottomNav />
     </div>
   );
 }
