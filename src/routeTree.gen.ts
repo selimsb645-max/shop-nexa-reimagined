@@ -11,16 +11,21 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as CartRouteImport } from './routes/cart'
 import { Route as CompareRouteImport } from './routes/compare'
+import { Route as ContactRouteImport } from './routes/contact'
 import { Route as FlashSalesRouteImport } from './routes/flash-sales'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as HelpCenterRouteImport } from './routes/help-center'
+import { Route as HowToBuyRouteImport } from './routes/how-to-buy'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ShopRouteImport } from './routes/shop'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedAddressesRouteImport } from './routes/_authenticated/addresses'
@@ -103,6 +108,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CartRoute = CartRouteImport.update({
   id: '/cart',
   path: '/cart',
@@ -111,6 +121,11 @@ const CartRoute = CartRouteImport.update({
 const CompareRoute = CompareRouteImport.update({
   id: '/compare',
   path: '/compare',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FlashSalesRoute = FlashSalesRouteImport.update({
@@ -128,9 +143,19 @@ const HelpCenterRoute = HelpCenterRouteImport.update({
   path: '/help-center',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HowToBuyRoute = HowToBuyRouteImport.update({
+  id: '/how-to-buy',
+  path: '/how-to-buy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RegisterRoute = RegisterRouteImport.update({
@@ -151,6 +176,11 @@ const ShopRoute = ShopRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const VerifyEmailRoute = VerifyEmailRouteImport.update({
@@ -562,16 +592,21 @@ const AuthenticatedSellerProductsIdEditRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/cart': typeof CartRoute
   '/compare': typeof CompareRoute
+  '/contact': typeof ContactRoute
   '/flash-sales': typeof FlashSalesRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/help-center': typeof HelpCenterRoute
+  '/how-to-buy': typeof HowToBuyRoute
   '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/shop': typeof ShopRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/verify-email': typeof VerifyEmailRoute
   '/account': typeof AuthenticatedAccountRoute
   '/addresses': typeof AuthenticatedAddressesRoute
@@ -647,16 +682,21 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/cart': typeof CartRoute
   '/compare': typeof CompareRoute
+  '/contact': typeof ContactRoute
   '/flash-sales': typeof FlashSalesRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/help-center': typeof HelpCenterRoute
+  '/how-to-buy': typeof HowToBuyRoute
   '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/shop': typeof ShopRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/verify-email': typeof VerifyEmailRoute
   '/account': typeof AuthenticatedAccountRoute
   '/addresses': typeof AuthenticatedAddressesRoute
@@ -730,16 +770,21 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/about': typeof AboutRoute
   '/cart': typeof CartRoute
   '/compare': typeof CompareRoute
+  '/contact': typeof ContactRoute
   '/flash-sales': typeof FlashSalesRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/help-center': typeof HelpCenterRoute
+  '/how-to-buy': typeof HowToBuyRoute
   '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/shop': typeof ShopRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/verify-email': typeof VerifyEmailRoute
   '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/addresses': typeof AuthenticatedAddressesRoute
@@ -817,16 +862,21 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/about'
     | '/cart'
     | '/compare'
+    | '/contact'
     | '/flash-sales'
     | '/forgot-password'
     | '/help-center'
+    | '/how-to-buy'
     | '/login'
+    | '/privacy'
     | '/register'
     | '/reset-password'
     | '/shop'
     | '/sitemap.xml'
+    | '/terms'
     | '/verify-email'
     | '/account'
     | '/addresses'
@@ -902,16 +952,21 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/about'
     | '/cart'
     | '/compare'
+    | '/contact'
     | '/flash-sales'
     | '/forgot-password'
     | '/help-center'
+    | '/how-to-buy'
     | '/login'
+    | '/privacy'
     | '/register'
     | '/reset-password'
     | '/shop'
     | '/sitemap.xml'
+    | '/terms'
     | '/verify-email'
     | '/account'
     | '/addresses'
@@ -984,16 +1039,21 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/about'
     | '/cart'
     | '/compare'
+    | '/contact'
     | '/flash-sales'
     | '/forgot-password'
     | '/help-center'
+    | '/how-to-buy'
     | '/login'
+    | '/privacy'
     | '/register'
     | '/reset-password'
     | '/shop'
     | '/sitemap.xml'
+    | '/terms'
     | '/verify-email'
     | '/_authenticated/account'
     | '/_authenticated/addresses'
@@ -1071,16 +1131,21 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AboutRoute: typeof AboutRoute
   CartRoute: typeof CartRoute
   CompareRoute: typeof CompareRoute
+  ContactRoute: typeof ContactRoute
   FlashSalesRoute: typeof FlashSalesRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   HelpCenterRoute: typeof HelpCenterRoute
+  HowToBuyRoute: typeof HowToBuyRoute
   LoginRoute: typeof LoginRoute
+  PrivacyRoute: typeof PrivacyRoute
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ShopRoute: typeof ShopRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  TermsRoute: typeof TermsRoute
   VerifyEmailRoute: typeof VerifyEmailRoute
   ProductSlugRoute: typeof ProductSlugRoute
   StoreSlugRoute: typeof StoreSlugRoute
@@ -1102,6 +1167,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/cart': {
       id: '/cart'
       path: '/cart'
@@ -1114,6 +1186,13 @@ declare module '@tanstack/react-router' {
       path: '/compare'
       fullPath: '/compare'
       preLoaderRoute: typeof CompareRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/flash-sales': {
@@ -1137,11 +1216,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HelpCenterRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/how-to-buy': {
+      id: '/how-to-buy'
+      path: '/how-to-buy'
+      fullPath: '/how-to-buy'
+      preLoaderRoute: typeof HowToBuyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/register': {
@@ -1170,6 +1263,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/verify-email': {
@@ -1901,16 +2001,21 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AboutRoute: AboutRoute,
   CartRoute: CartRoute,
   CompareRoute: CompareRoute,
+  ContactRoute: ContactRoute,
   FlashSalesRoute: FlashSalesRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   HelpCenterRoute: HelpCenterRoute,
+  HowToBuyRoute: HowToBuyRoute,
   LoginRoute: LoginRoute,
+  PrivacyRoute: PrivacyRoute,
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ShopRoute: ShopRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  TermsRoute: TermsRoute,
   VerifyEmailRoute: VerifyEmailRoute,
   ProductSlugRoute: ProductSlugRoute,
   StoreSlugRoute: StoreSlugRoute,
