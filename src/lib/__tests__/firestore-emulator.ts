@@ -2,7 +2,7 @@
  * Lightweight Firestore REST API-compatible server for integration testing.
  *
  * This implements just enough of the Firestore REST API to support
- * the verification and order operations used in Shop Nexa:
+ * the verification and order operations used in AVENTA SHOP:
  * - Document GET (read)
  * - Document PATCH (create/update, with optional preconditions)
  * - Document DELETE

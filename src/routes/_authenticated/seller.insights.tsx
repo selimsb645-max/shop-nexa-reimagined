@@ -1,5 +1,5 @@
 /**
- * Shop Nexa — Seller Insights
+ * AVENTA SHOP — Seller Insights
  *
  * Route: /seller/insights
  * Protected by SellerGate — only authenticated, approved sellers can access.
@@ -30,7 +30,7 @@ import { useI18n } from "@/i18n";
 export const Route = createFileRoute("/_authenticated/seller/insights")({
   ssr: false,
   component: () => <SellerGate>{(profile) => <SellerInsightsPage profile={profile} />}</SellerGate>,
-  head: () => ({ meta: [{ title: "Seller Insights — ShopNexa" }] }),
+  head: () => ({ meta: [{ title: "Seller Insights — AVENTA SHOP" }] }),
 });
 
 function SellerInsightsPage({ profile }: { profile: SellerProfile }) {

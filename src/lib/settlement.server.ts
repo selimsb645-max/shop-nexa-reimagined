@@ -1,5 +1,5 @@
 /**
- * Shop Nexa — Server-Side Settlement Engine
+ * AVENTA SHOP — Server-Side Settlement Engine
  *
  * This module is the SINGLE source of truth for all seller settlement operations.
  * It runs exclusively on the server (via Deno/server functions) and uses the

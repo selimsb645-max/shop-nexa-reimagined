@@ -1,5 +1,5 @@
 /**
- * Pocket Storefront design: ShopNexa's blue-and-orange desktop merchandising is
+ * Pocket Storefront design: AVENTA SHOP's blue-and-orange desktop merchandising is
  * reflowed for thumb-friendly discovery, readable mobile cards, and swipeable rails.
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -39,11 +39,11 @@ export const Route = createFileRoute("/")({
   component: HomePage,
   head: () => ({
     meta: [
-      { title: "Shop Nexa — Online Shopping Marketplace" },
+      { title: "AVENTA SHOP — Online Shopping Marketplace" },
       {
         name: "description",
         content:
-          "Discover amazing deals, electronics, fashion, and home essentials on Shop Nexa. Fast delivery and secure payments.",
+          "Discover amazing deals, electronics, fashion, and home essentials on AVENTA SHOP. Fast delivery and secure payments.",
       },
     ],
   }),
@@ -447,7 +447,7 @@ function PromotionalBanner() {
       <div className="absolute right-1/3 -top-10 h-32 w-32 sm:h-40 sm:w-40 rounded-full bg-blue-500/20 blur-2xl pointer-events-none" />
       <div className="relative z-10 flex flex-col justify-between gap-4 sm:gap-6 md:flex-row md:items-center">
         <div className="max-w-[62%] sm:max-w-xl">
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-[#1455c6]/15 bg-white/80 px-2.5 py-0.5 text-[10px] font-bold text-[#1455c6] sm:px-3 sm:py-1 sm:text-xs"><Sparkles className="h-3 w-3 text-[#ff7a00] sm:h-3.5 sm:w-3.5" />Shop Nexa App Exclusive</div>
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-[#1455c6]/15 bg-white/80 px-2.5 py-0.5 text-[10px] font-bold text-[#1455c6] sm:px-3 sm:py-1 sm:text-xs"><Sparkles className="h-3 w-3 text-[#ff7a00] sm:h-3.5 sm:w-3.5" />AVENTA SHOP App Exclusive</div>
           <h2 className="mt-2 text-xl font-black leading-snug tracking-tight text-slate-950 sm:mt-3 sm:text-3xl">Get Extra 15% OFF + Free Shipping</h2>
           <p className="mt-1.5 text-[11px] text-slate-700 sm:mt-2 sm:text-sm">Use promo code <span className="font-mono font-bold text-[#ff7a00]">NEXA15</span> at checkout on your first order.</p>
         </div>

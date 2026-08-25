@@ -26,7 +26,7 @@ function mapThread(id: string, d: Record<string, unknown>): MessageThread {
   return {
     id,
     subject: String(d.subject ?? "Conversation"),
-    participant: String(d.participant ?? "Shop Nexa Support"),
+    participant: String(d.participant ?? "AVENTA SHOP Support"),
     sellerId: (d.sellerId as string | null) ?? null,
     lastMessage: String(d.lastMessage ?? ""),
     lastAt: toMs(d.lastAt),
@@ -46,7 +46,7 @@ function mapMessage(id: string, d: Record<string, unknown>): ChatMessage {
 }
 
 /**
- * Collapses conceptual duplicate threads (e.g. two "Shop Nexa Support"
+ * Collapses conceptual duplicate threads (e.g. two "AVENTA SHOP Support"
  * welcome threads created by a past race condition, or repeated threads
  * with the same seller) into a single entry.
  *
@@ -98,7 +98,7 @@ export async function createThread(
   const ref = doc(threadsCol(uid));
   await setDoc(ref, {
     subject: input.subject,
-    participant: input.participant ?? "Shop Nexa Support",
+    participant: input.participant ?? "AVENTA SHOP Support",
     sellerId: input.sellerId ?? null,
     lastMessage: input.firstMessage,
     lastAt: serverTimestamp(),
@@ -130,7 +130,7 @@ export async function markThreadRead(uid: string, threadId: string): Promise<voi
 export async function countUnreadMessages(uid: string): Promise<number> {
   const snap = await getDocs(query(threadsCol(uid), where("unread", ">", 0), limit(50)));
   const threads = snap.docs.map((d) => mapThread(d.id, d.data() as Record<string, unknown>));
-  // Dedupe first so two duplicate "Shop Nexa Support" threads (each unread=1)
+  // Dedupe first so two duplicate "AVENTA SHOP Support" threads (each unread=1)
   // count as ONE unread conversation, not two.
   return dedupeThreads(threads).reduce((s, t) => s + t.unread, 0);
 }

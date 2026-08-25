@@ -19,7 +19,7 @@ import { useI18n } from "@/i18n";
 export const Route = createFileRoute("/_authenticated/admin/inventory")({
   ssr: false,
   component: AdminInventoryPage,
-  head: () => ({ meta: [{ title: "Inventory Management — ShopNexa Admin" }] }),
+  head: () => ({ meta: [{ title: "Inventory Management — AVENTA SHOP Admin" }] }),
 });
 
 function AdminInventoryPage() {

@@ -1,5 +1,5 @@
 // ====================================================================
-// Shop Nexa Seller Types — Phase 2B Extended
+// AVENTA SHOP Seller Types — Phase 2B Extended
 // ====================================================================
 
 /**
@@ -353,7 +353,7 @@ export const COURIER_CONFIG: Record<
   redx: { label: "RedX", color: "#e63946", website: "https://redx.com.bd" },
   paperfly: { label: "Paperfly", color: "#2a9d8f", website: "https://paperfly.com.bd" },
   sundarban: { label: "Sundarban", color: "#f4a261", website: "https://sundarbanltd.com" },
-  shopnexa_logistics: { label: "Shop Nexa Logistics", color: "#f57224", website: "" },
+  shopnexa_logistics: { label: "AVENTA SHOP Logistics", color: "#f57224", website: "" },
   other: { label: "Other", color: "#6b7280", website: "" },
 };
 

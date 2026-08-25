@@ -127,7 +127,7 @@ function ProductsPage({ sellerId }: { sellerId: string }) {
           </h2>
           <p className="mt-1 max-w-md text-sm text-muted-foreground">
             {products?.length === 0
-              ? "Add your first product to start selling on ShopNexa."
+              ? "Add your first product to start selling on AVENTA SHOP."
               : "Try clearing your search or status filter."}
           </p>
           {products?.length === 0 && (

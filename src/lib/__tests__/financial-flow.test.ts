@@ -1,5 +1,5 @@
 /**
- * Shop Nexa — Seller Financial Data Flow Verification
+ * AVENTA SHOP — Seller Financial Data Flow Verification
  *
  * Tests the complete chain: Order → Earnings → Wallet → Settlement
  * Verifies amount consistency, idempotency, and seller isolation across

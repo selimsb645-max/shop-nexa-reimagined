@@ -1,8 +1,8 @@
 /**
- * Shop Nexa — Admin Finance Panel Route
+ * AVENTA SHOP — Admin Finance Panel Route
  * 
  * Route: /admin/finance
- * Shows the complete financial overview for Shop Nexa:
+ * Shows the complete financial overview for AVENTA SHOP:
  * - Total Customer Payments
  * - Total Platform Revenue (commission)
  * - Total Seller Sales
@@ -42,7 +42,7 @@ import {
 export const Route = createFileRoute("/_authenticated/admin/finance")({
   ssr: false,
   component: AdminFinancePage,
-  head: () => ({ meta: [{ title: "Finance — Shop Nexa Admin" }] }),
+  head: () => ({ meta: [{ title: "Finance — AVENTA SHOP Admin" }] }),
 })
 
 function AdminFinancePage() {
@@ -183,7 +183,7 @@ function AdminFinancePage() {
           <div className="flex flex-wrap items-center gap-2 text-sm">
             <FlowBox label="Customer" color="bg-blue-100 text-blue-700" />
             <FlowArrow />
-            <FlowBox label="Shop Nexa Gateway" color="bg-primary/10 text-primary" />
+            <FlowBox label="AVENTA SHOP Gateway" color="bg-primary/10 text-primary" />
             <FlowArrow />
             <FlowBox label="Order Paid" color="bg-green-100 text-green-700" />
             <FlowArrow />

@@ -16,10 +16,10 @@ export const Route = createFileRoute("/reset-password")({
   component: ResetPasswordPage,
   head: () => ({
     meta: [
-      { title: "Reset Password — ShopNexa" },
+      { title: "Reset Password — AVENTA SHOP" },
       {
         name: "description",
-        content: "Set a new password for your ShopNexa account.",
+        content: "Set a new password for your AVENTA SHOP account.",
       },
       { name: "robots", content: "noindex" },
     ],

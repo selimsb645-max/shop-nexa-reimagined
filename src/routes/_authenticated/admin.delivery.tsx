@@ -18,7 +18,7 @@ import { useI18n } from "@/i18n";
 export const Route = createFileRoute("/_authenticated/admin/delivery")({
   ssr: false,
   component: AdminDeliveryDashboardPage,
-  head: () => ({ meta: [{ title: "Delivery Dashboard — ShopNexa Admin" }] }),
+  head: () => ({ meta: [{ title: "Delivery Dashboard — AVENTA SHOP Admin" }] }),
 });
 
 function AdminDeliveryDashboardPage() {

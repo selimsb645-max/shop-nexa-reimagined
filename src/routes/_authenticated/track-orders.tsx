@@ -16,7 +16,7 @@ import type { Order } from "@/types/commerce";
 export const Route = createFileRoute("/_authenticated/track-orders")({
   ssr: false,
   component: TrackOrdersPage,
-  head: () => ({ meta: [{ title: "Track Orders — ShopNexa" }] }),
+  head: () => ({ meta: [{ title: "Track Orders — AVENTA SHOP" }] }),
 });
 
 function TrackOrdersPage() {

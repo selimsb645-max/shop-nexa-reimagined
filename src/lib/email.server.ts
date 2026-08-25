@@ -1,5 +1,5 @@
 /**
- * Transactional Email Service for Shop Nexa
+ * Transactional Email Service for AVENTA SHOP
  *
  * Provider abstraction: Mock, Resend, SendGrid.
  * Centralized sendTransactionalEmail() — no direct provider calls from app code.
@@ -58,7 +58,7 @@ class ResendEmailProvider implements EmailProvider {
       const res = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({ from: `Shop Nexa <${fromEmail}>`, to, subject, html }),
+        body: JSON.stringify({ from: `AVENTA SHOP <${fromEmail}>`, to, subject, html }),
       });
       if (!res.ok) {
         const text = await res.text().catch(() => "");
@@ -85,7 +85,7 @@ class SendGridEmailProvider implements EmailProvider {
         headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
         body: JSON.stringify({
           personalizations: [{ to: [{ email: to }] }],
-          from: { email: fromEmail, name: "Shop Nexa" },
+          from: { email: fromEmail, name: "AVENTA SHOP" },
           subject,
           content: [{ type: "text/html", value: html }],
         }),

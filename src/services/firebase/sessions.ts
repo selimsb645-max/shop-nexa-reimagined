@@ -1,5 +1,5 @@
 /**
- * Session Management Service for Shop Nexa.
+ * Session Management Service for AVENTA SHOP.
  *
  * Tracks real user login sessions in Firestore. Each session records:
  * - Device/browser/OS info (parsed from userAgent)

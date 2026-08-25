@@ -88,7 +88,7 @@ export const Route = createFileRoute("/_authenticated/messages")({
   errorComponent: MessagesRouteError,
   head: () => ({
     meta: [
-      { title: "Communication Center — ShopNexa" },
+      { title: "Communication Center — AVENTA SHOP" },
       { name: "description", content: "Your communication hub for orders, chats, support, and notifications." },
     ],
   }),
@@ -231,7 +231,7 @@ function CommunicationCenter() {
           return {
             id: d.id,
             subject: String(data.subject ?? "Conversation"),
-            participant: String(data.participant ?? "Shop Nexa Support"),
+            participant: String(data.participant ?? "AVENTA SHOP Support"),
             sellerId: (data.sellerId as string | null) ?? null,
             lastMessage: String(data.lastMessage ?? ""),
             lastAt: typeof data.lastAt === "number"
@@ -321,7 +321,7 @@ function CommunicationCenter() {
   // Placing a hook after a conditional return violates the Rules of Hooks
   // and causes React to crash with "This page didn't load".
   // dedupeThreads collapses any conceptual duplicate conversations (e.g.
-  // two "Shop Nexa Support" welcome threads) so the list, the recent
+  // two "AVENTA SHOP Support" welcome threads) so the list, the recent
   // conversations preview, and the unread badge all agree on one entry.
   const threads = dedupeThreads(realtimeThreads.length > 0 ? realtimeThreads : (threadsQuery.data ?? []));
   const notifications = realtimeNotifs.length > 0 ? realtimeNotifs : (notificationsQuery.data ?? []);
@@ -879,7 +879,7 @@ function OrderConversationView({
     // Create the personal thread (existing system)
     const threadId = await createThread(user!.uid, {
       subject: `Order #${order.id.slice(0, 8)}`,
-      participant: sellerId ? sellerShopName : "Shop Nexa Support",
+      participant: sellerId ? sellerShopName : "AVENTA SHOP Support",
       sellerId: sellerId,
       firstMessage: `I have a question about order #${order.id.slice(0, 8)}`,
     });

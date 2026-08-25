@@ -91,8 +91,8 @@ export function SellerShell({ children }: Props) {
                 </div>
                 <div className="hidden sm:block leading-tight">
                   <span className="text-sm font-bold">
-                    <span className="text-white">Shop</span>
-                    <span className="text-[#f57224]">Nexa</span>
+                    <span className="text-white">AVENTA</span>
+                    <span className="text-[#f57224]">SHOP</span>
                     <span className="text-slate-400 ml-1">Seller</span>
                   </span>
                   {profile?.shopName && (

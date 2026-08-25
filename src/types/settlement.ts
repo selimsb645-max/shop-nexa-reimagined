@@ -1,5 +1,5 @@
 /**
- * Shop Nexa — Settlement Architecture Types
+ * AVENTA SHOP — Settlement Architecture Types
  * 
  * Defines the seller-wise settlement breakdown for every order.
  * These types power the Payment → Seller Settlement → Withdrawal flow.

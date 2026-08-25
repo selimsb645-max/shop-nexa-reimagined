@@ -18,7 +18,7 @@ import { useI18n } from "@/i18n";
 export const Route = createFileRoute("/_authenticated/admin/analytics")({
   ssr: false,
   component: AdminAnalyticsPage,
-  head: () => ({ meta: [{ title: "Performance Analytics — ShopNexa Admin" }] }),
+  head: () => ({ meta: [{ title: "Performance Analytics — AVENTA SHOP Admin" }] }),
 });
 
 function AdminAnalyticsPage() {

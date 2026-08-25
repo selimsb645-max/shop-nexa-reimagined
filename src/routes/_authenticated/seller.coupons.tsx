@@ -1,5 +1,5 @@
 /**
- * Shop Nexa — Seller Coupons
+ * AVENTA SHOP — Seller Coupons
  *
  * Route: /seller/coupons
  * Reuses existing infrastructure:
@@ -41,7 +41,7 @@ import type { SellerProfile } from "@/types/seller";
 export const Route = createFileRoute("/_authenticated/seller/coupons")({
   ssr: false,
   component: () => <SellerGate>{(profile) => <CouponsPage profile={profile} />}</SellerGate>,
-  head: () => ({ meta: [{ title: "Coupons — Shop Nexa Seller" }] }),
+  head: () => ({ meta: [{ title: "Coupons — AVENTA SHOP Seller" }] }),
 });
 
 interface CouponFormState {

@@ -14,10 +14,10 @@ export const Route = createFileRoute("/_authenticated/recently-viewed")({
   component: RecentlyViewedPage,
   head: () => ({
     meta: [
-      { title: "Recently Viewed — Shop Nexa" },
-      { name: "description", content: "Products you recently viewed on Shop Nexa." },
-      { property: "og:title", content: "Recently Viewed — Shop Nexa" },
-      { property: "og:description", content: "Products you recently viewed on Shop Nexa." },
+      { title: "Recently Viewed — AVENTA SHOP" },
+      { name: "description", content: "Products you recently viewed on AVENTA SHOP." },
+      { property: "og:title", content: "Recently Viewed — AVENTA SHOP" },
+      { property: "og:description", content: "Products you recently viewed on AVENTA SHOP." },
       { name: "robots", content: "noindex" },
     ],
   }),

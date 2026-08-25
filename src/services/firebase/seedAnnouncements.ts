@@ -26,7 +26,7 @@ export const DEFAULT_ANNOUNCEMENTS: AnnouncementInput[] = [
   },
   {
     title: "New Seller Programs",
-    message: "Join Shop Nexa as a seller and reach millions of customers",
+    message: "Join AVENTA SHOP as a seller and reach millions of customers",
     type: "info",
     priority: "normal",
     gradient: "from-blue-500 to-indigo-600",
@@ -39,7 +39,7 @@ export const DEFAULT_ANNOUNCEMENTS: AnnouncementInput[] = [
     order: 1,
   },
   {
-    title: "Nexa Prime Membership",
+    title: "AVENTA Prime Membership",
     message: "Free shipping, exclusive deals & 3x reward points",
     type: "promo",
     priority: "normal",

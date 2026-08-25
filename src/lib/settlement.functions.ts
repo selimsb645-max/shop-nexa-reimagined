@@ -1,5 +1,5 @@
 /**
- * Shop Nexa — Settlement Server Functions
+ * AVENTA SHOP — Settlement Server Functions
  *
  * These are TanStack Start server functions that bridge the client to the
  * settlement server module. Each function:

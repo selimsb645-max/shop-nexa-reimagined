@@ -21,7 +21,7 @@ import { formatPrice } from "@/utils/format";
 export const Route = createFileRoute("/_authenticated/gift-cards")({
   ssr: false,
   component: GiftCardsPage,
-  head: () => ({ meta: [{ title: "Gift Cards — ShopNexa" }] }),
+  head: () => ({ meta: [{ title: "Gift Cards — AVENTA SHOP" }] }),
 });
 
 const PRESET_AMOUNTS = [500, 1000, 2000, 5000, 10000, 20000];

@@ -11,10 +11,10 @@ import {
 } from "firebase/firestore";
 import { getDb } from "./config";
 
-const WELCOME_SUBJECT = "Welcome to ShopNexa!";
-const WELCOME_PARTICIPANT = "Shop Nexa Support";
+const WELCOME_SUBJECT = "Welcome to AVENTA SHOP!";
+const WELCOME_PARTICIPANT = "AVENTA SHOP Support";
 const WELCOME_MESSAGE =
-  "Hi! Welcome to ShopNexa. We're here to help with anything you need. Feel free to ask questions about orders, products, or your account.";
+  "Hi! Welcome to AVENTA SHOP. We're here to help with anything you need. Feel free to ask questions about orders, products, or your account.";
 
 function toMillis(value: unknown): number {
   if (typeof value === "number") return value;
@@ -86,7 +86,7 @@ export async function seedInbox(uid: string): Promise<void> {
 
     tx.set(notifRef, {
       type: "system",
-      title: "Welcome to ShopNexa! 🎉",
+      title: "Welcome to AVENTA SHOP! 🎉",
       message: "Your account is ready. Start exploring thousands of products from local sellers.",
       link: null,
       read: false,

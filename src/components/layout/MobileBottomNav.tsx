@@ -1,6 +1,6 @@
 /**
  * Pocket Storefront design: a visible, safe-area-aware mobile navigation keeps
- * ShopNexa's five primary destinations within thumb reach without covering content.
+ * AVENTA SHOP's five primary destinations within thumb reach without covering content.
  */
 import { Link } from "@tanstack/react-router";
 import { Home, LayoutGrid, MessageCircle, ShoppingCart, User } from "lucide-react";

@@ -26,7 +26,7 @@ export const Route = createFileRoute("/_authenticated/returns")({
   ssr: false,
   component: ReturnsPage,
   head: () => ({
-    meta: [{ title: "Returns & Refunds — ShopNexa" }],
+    meta: [{ title: "Returns & Refunds — AVENTA SHOP" }],
   }),
 });
 

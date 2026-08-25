@@ -1,5 +1,5 @@
 /**
- * Shop Nexa — Public Store Server Function
+ * AVENTA SHOP — Public Store Server Function
  *
  * Fetches ONLY public seller/store information for the customer-facing
  * /store/{slug} route. Uses the Firebase service account (admin SDK) to

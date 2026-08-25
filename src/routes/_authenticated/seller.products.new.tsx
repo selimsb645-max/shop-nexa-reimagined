@@ -32,7 +32,7 @@ export const Route = createFileRoute("/_authenticated/seller/products/new")({
   component: () => (
     <SellerGate>{(profile) => <AddProductPage sellerId={profile.uid} />}</SellerGate>
   ),
-  head: () => ({ meta: [{ title: "Add Product — Shop Nexa Seller" }] }),
+  head: () => ({ meta: [{ title: "Add Product — AVENTA SHOP Seller" }] }),
 });
 
 // ====================================================================

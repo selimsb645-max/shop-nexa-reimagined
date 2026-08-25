@@ -104,7 +104,7 @@ export default function CartPage() {
       return rawContextItems.map((item, index: number) => ({
         id: String(item.productId || `item-${index}`),
         productId: String(item.productId || `prod-${index}`),
-        title: item.title || "Shop Nexa Product",
+        title: item.title || "AVENTA SHOP Product",
         price: Number(item.price || 0),
         originalPrice: undefined,
         image:
@@ -161,7 +161,7 @@ export default function CartPage() {
             const profile = await getSellerProfile(sid);
             if (profile) {
               results[sid] = {
-                shopName: profile.shopName || "Shop Nexa",
+                shopName: profile.shopName || "AVENTA SHOP",
                 verified: profile.status === "approved",
               };
             }
@@ -185,7 +185,7 @@ export default function CartPage() {
       const sellerInfo = sellerId ? sellerProfiles[sellerId] : null;
       return {
         ...item,
-        seller: sellerInfo?.shopName || (sellerId ? "Shop Nexa" : "Shop Nexa"),
+        seller: sellerInfo?.shopName || (sellerId ? "AVENTA SHOP" : "AVENTA SHOP"),
         sellerRating: product?.rating,
         originalPrice: item.originalPrice || (product?.compareAtPrice ? Number(product.compareAtPrice) : undefined),
         stock: item.stock || product?.stock || 0,
@@ -199,7 +199,7 @@ export default function CartPage() {
   const enrichedSellerGroups = useMemo(() => {
     const groups: { [key: string]: CartItemType[] } = {};
     enrichedItems.forEach((item) => {
-      const sellerName = item.seller || "Shop Nexa";
+      const sellerName = item.seller || "AVENTA SHOP";
       if (!groups[sellerName]) groups[sellerName] = [];
       groups[sellerName].push(item);
     });
@@ -243,7 +243,7 @@ export default function CartPage() {
   const _sellerGroups = useMemo(() => {
     const groups: { [key: string]: CartItemType[] } = {};
     items.forEach((item) => {
-      const sellerName = item.seller || "Shop Nexa";
+      const sellerName = item.seller || "AVENTA SHOP";
       if (!groups[sellerName]) {
         groups[sellerName] = [];
       }
@@ -675,7 +675,7 @@ export default function CartPage() {
 
                       <div className="flex items-center gap-1 text-xs text-emerald-700 font-medium">
                         <Truck className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">Fulfilled by Shop Nexa</span>
+                        <span className="hidden sm:inline">Fulfilled by AVENTA SHOP</span>
                       </div>
                     </div>
 
@@ -865,7 +865,7 @@ export default function CartPage() {
                 </Link>
 
                 <p className="text-xs text-slate-500 hidden sm:block">
-                  Need help? Contact Shop Nexa 24/7 Support
+                  Need help? Contact AVENTA SHOP 24/7 Support
                 </p>
               </div>
             </div>

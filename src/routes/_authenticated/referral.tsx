@@ -60,8 +60,8 @@ function ReferralPage() {
     if (typeof navigator !== "undefined" && "share" in navigator) {
       try {
         await (navigator as Navigator & { share: (d: ShareData) => Promise<void> }).share({
-          title: "Shop Nexa",
-          text: `Shop with my Shop Nexa code ${code} and get ${REFERRAL_WELCOME_POINTS} bonus points.`,
+          title: "AVENTA SHOP",
+          text: `Shop with my AVENTA SHOP code ${code} and get ${REFERRAL_WELCOME_POINTS} bonus points.`,
           url: link,
         });
         return;

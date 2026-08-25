@@ -7,10 +7,10 @@ export const Route = createFileRoute("/login")({
   component: LoginPage,
   head: () => ({
     meta: [
-      { title: "Sign In — ShopNexa" },
-      { name: "description", content: "Sign in to your ShopNexa account to track orders, save wishlists and checkout faster." },
-      { property: "og:title", content: "Sign In — ShopNexa" },
-      { property: "og:description", content: "Sign in to your ShopNexa account." },
+      { title: "Sign In — AVENTA SHOP" },
+      { name: "description", content: "Sign in to your AVENTA SHOP account to track orders, save wishlists and checkout faster." },
+      { property: "og:title", content: "Sign In — AVENTA SHOP" },
+      { property: "og:description", content: "Sign in to your AVENTA SHOP account." },
       { property: "og:url", content: "https://shop-nexa.lovable.app/login" },
       { name: "robots", content: "noindex" },
     ],
@@ -26,7 +26,7 @@ function LoginPage() {
   return (
     <AuthLayout
       title="Welcome back"
-      subtitle="Sign in to your ShopNexa account"
+      subtitle="Sign in to your AVENTA SHOP account"
       footer={
         <>
           Don't have an account?{" "}

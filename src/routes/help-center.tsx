@@ -18,9 +18,9 @@ export const Route = createFileRoute("/help-center")({
   component: HelpCenterPage,
   head: () => ({
     meta: [
-      { title: "Help Center — ShopNexa" },
-      { name: "description", content: "Answers about ShopNexa shipping, returns, payments, orders and account support." },
-      { property: "og:title", content: "Help Center — ShopNexa" },
+      { title: "Help Center — AVENTA SHOP" },
+      { name: "description", content: "Answers about AVENTA SHOP shipping, returns, payments, orders and account support." },
+      { property: "og:title", content: "Help Center — AVENTA SHOP" },
       { property: "og:description", content: "Shipping, returns, payments and account support answers." },
       { property: "og:url", content: "https://shop-nexa.lovable.app/help-center" },
     ],

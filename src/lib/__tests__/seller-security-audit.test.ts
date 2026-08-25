@@ -1,5 +1,5 @@
 /**
- * Shop Nexa — Seller Security Audit Tests
+ * AVENTA SHOP — Seller Security Audit Tests
  *
  * Verifies cross-seller data isolation, IDOR protection, and financial
  * authorization across all seller modules through:

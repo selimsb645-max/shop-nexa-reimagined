@@ -66,7 +66,7 @@ type EnrichedCartItem = {
 export const Route = createFileRoute("/_authenticated/checkout")({
   ssr: false,
   component: CheckoutPage,
-  head: () => ({ meta: [{ title: "Checkout — Shop Nexa" }] }),
+  head: () => ({ meta: [{ title: "Checkout — AVENTA SHOP" }] }),
 });
 
 
@@ -129,7 +129,7 @@ function CheckoutPage() {
             const profile = await getSellerProfile(sid);
             if (profile) {
               results[sid] = {
-                shopName: profile.shopName || "Shop Nexa",
+                shopName: profile.shopName || "AVENTA SHOP",
                 verified: profile.status === "approved",
               };
             }
@@ -160,7 +160,7 @@ function CheckoutPage() {
         quantity: Number(item.quantity || 1),
         stock: item.stock || product?.stock || 0,
         originalPrice: product?.compareAtPrice ? Number(product.compareAtPrice) : undefined,
-        sellerName: sellerInfo?.shopName || "Shop Nexa",
+        sellerName: sellerInfo?.shopName || "AVENTA SHOP",
         sellerVerified: sellerInfo?.verified ?? false,
       } satisfies EnrichedCartItem;
     });
@@ -864,7 +864,7 @@ function CheckoutPage() {
             <CheckoutSection
               number={6}
               icon={<Wallet className="w-4 h-4" />}
-              title="Shop Nexa Wallet"
+              title="AVENTA SHOP Wallet"
             >
               {walletBalance > 0 ? (
                 <div className="flex items-center justify-between">
@@ -973,7 +973,7 @@ function CheckoutPage() {
                   className="mt-0.5 w-5 h-5 accent-[#f57224] rounded border-slate-300"
                 />
                 <span className="text-xs text-slate-600 leading-relaxed">
-                  I agree to Shop Nexa's{" "}
+                  I agree to AVENTA SHOP's{" "}
                   <span className="text-[#f57224] font-semibold">
                     Terms & Conditions
                   </span>

@@ -70,7 +70,7 @@ export function RegisterForm() {
       const authUser = await waitForAuthUser();
       // Auto-generate welcome promo code for new Google users (non-blocking)
       await tryGenerateWelcomePromo(authUser);
-      toast.success("Welcome to ShopNexa! Check My Promo Codes for your welcome discount.");
+      toast.success("Welcome to AVENTA SHOP! Check My Promo Codes for your welcome discount.");
       navigate({ to: "/", replace: true });
     } catch (err) {
       toast.error(mapFirebaseError(err));

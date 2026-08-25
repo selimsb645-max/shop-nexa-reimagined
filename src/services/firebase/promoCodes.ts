@@ -1,5 +1,5 @@
 /**
- * Shop Nexa — Promo Code Client Service
+ * AVENTA SHOP — Promo Code Client Service
  *
  * Read-only client-side service for fetching the current user's promo codes.
  * Promo code generation, validation, and mutation are handled exclusively by

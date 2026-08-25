@@ -217,7 +217,7 @@ export function ProductDetailPage() {
     toast.success(
       isWishlisted
         ? "Removed from wishlist"
-        : "Added to your Shop Nexa wishlist!"
+        : "Added to your AVENTA SHOP wishlist!"
     );
   };
 
@@ -285,7 +285,7 @@ export function ProductDetailPage() {
 
   const handleShareWhatsApp = () => {
     const url = encodeURIComponent(globalThis.location.href);
-    const text = encodeURIComponent(`Check out ${product?.title} on Shop Nexa! `);
+    const text = encodeURIComponent(`Check out ${product?.title} on AVENTA SHOP! `);
     globalThis.open(`https://api.whatsapp.com/send?text=${text}${url}`, "_blank");
   };
 
@@ -309,7 +309,7 @@ export function ProductDetailPage() {
       await upsertReview({
         productId: product?.id ?? "",
         userId: user?.uid ?? "",
-        userName: user?.displayName || user?.email?.split("@")[0] || "Verified Nexa Buyer",
+        userName: user?.displayName || user?.email?.split("@")[0] || "Verified AVENTA Buyer",
         userPhoto: user?.photoURL || null,
         rating: newRating,
         title: newTitle || "Verified Purchase Review",
@@ -398,7 +398,7 @@ export function ProductDetailPage() {
           </div>
           <h1 className="text-2xl font-bold text-[#1a1f3a] mb-2">Product Not Found</h1>
           <p className="text-slate-500 max-w-md mb-6">
-            The product you are looking for might have been removed, renamed, or is temporarily unavailable on Shop Nexa.
+            The product you are looking for might have been removed, renamed, or is temporarily unavailable on AVENTA SHOP.
           </p>
           <div className="flex gap-4">
             <Link
@@ -423,7 +423,7 @@ export function ProductDetailPage() {
 
   // Seller Details Safe Defaults
   const sellerInfo = (product as ProductWithExtras).seller || {
-    name: (product as ProductWithExtras).brand || "Shop Nexa Verified Seller",
+    name: (product as ProductWithExtras).brand || "AVENTA SHOP Verified Seller",
     rating: 96,
     responseTime: "< 1 Hour",
     shipOnTime: 99,
@@ -588,7 +588,7 @@ export function ProductDetailPage() {
                 {/* Brand / Store Tag */}
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-xs font-semibold uppercase tracking-wider text-[#f97316] bg-orange-50 px-2.5 py-0.5 rounded-full border border-orange-100">
-                    {(product as ProductWithExtras).brand || "Shop Nexa Exclusive"}
+                    {(product as ProductWithExtras).brand || "AVENTA SHOP Exclusive"}
                   </span>
                   {(product as ProductWithExtras).inStock !== false && (
                     <span className="text-xs text-emerald-600 font-medium flex items-center gap-1">
@@ -916,7 +916,7 @@ export function ProductDetailPage() {
               <table className="w-full text-left text-sm border-collapse">
                 <tbody>
                   {(product.specifications || [
-                    { name: "Brand", value: (product as ProductWithExtras).brand || "Shop Nexa" },
+                    { name: "Brand", value: (product as ProductWithExtras).brand || "AVENTA SHOP" },
                     { name: "SKU", value: product.id },
                     { name: "Category", value: product.categorySlug || "General" },
                     { name: "In Stock", value: (product as ProductWithExtras).inStock ? "Yes" : "No" },

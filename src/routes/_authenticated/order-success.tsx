@@ -27,7 +27,7 @@ import { useI18n } from "@/i18n";
 export const Route = createFileRoute("/_authenticated/order-success")({
   ssr: false,
   component: OrderSuccessPage,
-  head: () => ({ meta: [{ title: "Order Confirmed — Shop Nexa" }] }),
+  head: () => ({ meta: [{ title: "Order Confirmed — AVENTA SHOP" }] }),
   validateSearch: (s: Record<string, unknown>): { orderId?: string } => ({
     orderId: typeof s.orderId === "string" ? s.orderId : undefined,
   }),
@@ -120,7 +120,7 @@ interface OrderData {
             Order Placed Successfully!
           </h1>
           <p className="mt-2 text-sm text-slate-500 max-w-md">
-            Thank you for shopping with Shop Nexa. Your order is being processed
+            Thank you for shopping with AVENTA SHOP. Your order is being processed
             and will be delivered soon.
           </p>
         </div>
@@ -291,7 +291,7 @@ interface OrderData {
           <MapPin className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
           <p>
             Your order will be delivered to your registered address. For any
-            changes, contact Shop Nexa Support within 1 hour of placing the
+            changes, contact AVENTA SHOP Support within 1 hour of placing the
             order.
           </p>
         </div>

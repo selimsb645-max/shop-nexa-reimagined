@@ -20,7 +20,7 @@ const SITE_DOC = "site";
 const BANNERS = "banners";
 
 export const DEFAULT_SETTINGS: SiteSettings = {
-  siteName: "ShopNexa",
+  siteName: "AVENTA SHOP",
   supportEmail: "help.shopnexa@gmail.com",
   supportPhone: "+1 234 567 8900",
   whatsappNumber: "01324997271",

@@ -16,8 +16,8 @@ export const Route = createFileRoute("/store/$slug")({
   component: StorePage,
   head: () => ({
     meta: [
-      { title: "Store — Shop Nexa" },
-      { name: "description", content: "Browse products from this Shop Nexa seller store." },
+      { title: "Store — AVENTA SHOP" },
+      { name: "description", content: "Browse products from this AVENTA SHOP seller store." },
     ],
   }),
 });
@@ -69,14 +69,14 @@ function StorePage() {
   // Update SEO dynamically when store loads
   useEffect(() => {
     if (!store) return;
-    document.title = `${store.shopName} — Shop Nexa Store`;
+    document.title = `${store.shopName} — AVENTA SHOP Store`;
     const metaDesc = document.querySelector('meta[name="description"]');
     if (metaDesc) {
       metaDesc.setAttribute(
         "content",
         store.description
           ? `${store.description.slice(0, 155)}`
-          : `Browse products from ${store.shopName} on Shop Nexa.`,
+          : `Browse products from ${store.shopName} on AVENTA SHOP.`,
       );
     }
   }, [store]);
@@ -137,7 +137,7 @@ function StorePage() {
             </div>
             <h1 className="text-xl font-bold text-slate-800">Store not found</h1>
             <p className="mt-2 text-sm text-slate-500">
-              This store doesn't exist or is no longer available on Shop Nexa.
+              This store doesn't exist or is no longer available on AVENTA SHOP.
             </p>
             <Link
               to="/shop"

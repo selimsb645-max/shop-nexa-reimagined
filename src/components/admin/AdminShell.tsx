@@ -40,8 +40,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
             </div>
             <div className="flex flex-col leading-tight">
               <span className="text-sm font-semibold">
-                <span className="text-primary">Shop</span>
-                <span className="text-accent">Nexa</span>{" "}
+                <span className="text-primary">AVENTA</span>
+                <span className="text-accent">SHOP</span>{" "}
                 <span className="text-muted-foreground">Admin</span>
               </span>
               <span className="text-xs text-muted-foreground">Super Admin Panel</span>

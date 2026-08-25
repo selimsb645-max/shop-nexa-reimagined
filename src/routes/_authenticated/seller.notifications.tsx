@@ -14,7 +14,7 @@ import {
 export const Route = createFileRoute("/_authenticated/seller/notifications")({
   ssr: false,
   component: NotificationCenter,
-  head: () => ({ meta: [{ title: "Notifications — Shop Nexa Seller" }] }),
+  head: () => ({ meta: [{ title: "Notifications — AVENTA SHOP Seller" }] }),
 });
 
 const FILTER_TABS: { key: SellerNotificationType | "all"; label: string }[] = [

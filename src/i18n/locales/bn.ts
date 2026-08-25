@@ -418,7 +418,7 @@ export const bn: TranslationKeys = {
   "admin.withdrawalApproved": "উইথড্র অনুমোদিত",
   "admin.withdrawalRejected": "উইথড্র প্রত্যাখ্যাত",
   "admin.withdrawalRequests": "উইথড্র রিকোয়েস্ট",
-  "promoCodes.welcome": "Shop Nexa-এ স্বাগতম!",
+  "promoCodes.welcome": "AVENTA SHOP-এ স্বাগতম!",
   "support.category": "ক্যাটাগরি",
   "support.none": "নেই",
   "account.referEarn": "রেফার করে আয় করুন",
@@ -501,14 +501,14 @@ export const bn: TranslationKeys = {
   "settings.smsOrderUpdates": "SMS অর্ডার আপডেট",
   "settings.smsOrderUpdatesHint": "আপনার ফোনে ডেলিভারি এলার্ট",
   "settings.pushNotifications": "ইন-অ্যাপ নোটিফিকেশন",
-  "settings.pushNotificationsHint": "Shop Nexa-তে এলার্ট দেখান",
+  "settings.pushNotificationsHint": "AVENTA SHOP-তে এলার্ট দেখান",
   "settings.savePreferences": "প্রিফারেন্স সেভ করুন",
   "settings.saved": "সেটিংস সেভ হয়েছে",
   "settings.saveError": "সেটিংস সেভ করা যায়নি",
   "settings.legal": "লিগ্যাল",
   "settings.termsConditions": "শর্তাবলী",
   "settings.privacyPolicy": "প্রাইভেসি পলিসি",
-  "settings.aboutShopNexa": "Shop Nexa সম্পর্কে",
+  "settings.aboutShopNexa": "AVENTA SHOP সম্পর্কে",
   "settings.aboutHint": "স্মার্ট শপিং, উন্নত জীবন",
 
   // Device info
@@ -676,7 +676,7 @@ export const bn: TranslationKeys = {
   "support.noTickets": "আপনার কোনো সাপোর্ট টিকেট নেই।",
   "support.faqTitle": "সাধারণ জিজ্ঞাসা",
   "account.backHome": "হোমে ফিরুন",
-  "account.becomeSeller": "Shop Nexa-তে সেলার হোন",
+  "account.becomeSeller": "AVENTA SHOP-তে সেলার হোন",
   "account.becomeSellerHint": "আপনার পণ্য হাজার হাজার ক্রেতার কাছে বিক্রি করুন",
   "orders.unknownStatus": "অজানা অর্ডার স্ট্যাটাস",
   "orders.backToAccount": "অ্যাকাউন্টে ফিরুন",
@@ -792,7 +792,7 @@ export const bn: TranslationKeys = {
 
   // Misc
   "misc.version": "ভার্সন 1.0.0",
-  "misc.tagline": "Shop Nexa — স্মার্ট শপিং, উন্নত জীবন",
+  "misc.tagline": "AVENTA SHOP — স্মার্ট শপিং, উন্নত জীবন",
   "admin.manageUsersDesc": "ক্রেতা, সেলার এবং অ্যাডমিন ম্যানেজ করুন।",
   "checkout.backToCart": "কার্টে ফিরুন",
   "checkout.browseProducts": "পণ্য ব্রাউজ করুন",

@@ -1,5 +1,5 @@
 /**
- * Shop Nexa — Seller Wallet
+ * AVENTA SHOP — Seller Wallet
  *
  * Route: /seller/wallet
  * Reuses existing infrastructure:
@@ -49,7 +49,7 @@ import {
 export const Route = createFileRoute("/_authenticated/seller/wallet")({
   ssr: false,
   component: () => <SellerGate>{(profile) => <WalletPage profile={profile} />}</SellerGate>,
-  head: () => ({ meta: [{ title: "Wallet — Shop Nexa Seller" }] }),
+  head: () => ({ meta: [{ title: "Wallet — AVENTA SHOP Seller" }] }),
 });
 
 const TX_TYPE_CONFIG: Record<

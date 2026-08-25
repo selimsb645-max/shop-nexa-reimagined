@@ -79,7 +79,7 @@ function PromoCodesPage() {
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-[#1a1f3a]">My Promo Codes</h1>
           <p className="text-sm text-slate-500 mt-1">
-            Your exclusive Shop Nexa promo codes and discounts.
+            Your exclusive AVENTA SHOP promo codes and discounts.
           </p>
         </div>
 
@@ -195,7 +195,7 @@ function PromoCodesPage() {
                         {promo.campaignType === "welcome" && "Welcome bonus promo"}
                         {promo.campaignType === "first_order" && "First order reward"}
                         {promo.campaignType === "campaign" && "Campaign promo"}
-                        {promo.campaignType === "admin_issued" && "Issued by Shop Nexa"}
+                        {promo.campaignType === "admin_issued" && "Issued by AVENTA SHOP"}
                       </p>
                     </div>
                   </div>

@@ -540,7 +540,7 @@ describe("Announcement Seed Data / Migration", () => {
     const seed = fs.readFileSync("src/services/firebase/seedAnnouncements.ts", "utf-8");
     expect(seed).toContain("Mega Flash Sale");
     expect(seed).toContain("New Seller Programs");
-    expect(seed).toContain("Nexa Prime Membership");
+    expect(seed).toContain("AVENTA Prime Membership");
     expect(seed).toContain("Gift Cards Available");
     expect(seed).toContain("System Maintenance");
   });

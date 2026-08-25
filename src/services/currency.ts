@@ -1,5 +1,5 @@
 /**
- * Centralized Currency Service for Shop Nexa.
+ * Centralized Currency Service for AVENTA SHOP.
  *
  * - Base currency: BDT (Bangladeshi Taka) — all product prices stored in BDT.
  * - Supports real-time conversion to USD via free exchange rate API.

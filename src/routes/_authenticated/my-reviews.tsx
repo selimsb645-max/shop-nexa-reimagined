@@ -13,7 +13,7 @@ import type { Review } from "@/types/commerce";
 export const Route = createFileRoute("/_authenticated/my-reviews")({
   ssr: false,
   component: MyReviewsPage,
-  head: () => ({ meta: [{ title: "My Reviews — ShopNexa" }] }),
+  head: () => ({ meta: [{ title: "My Reviews — AVENTA SHOP" }] }),
 });
 
 function MyReviewsPage() {

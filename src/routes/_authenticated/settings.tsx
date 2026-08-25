@@ -349,7 +349,7 @@ function SettingsPage() {
             <DarazLinkRow to="/wishlist" icon={<Heart className="h-5 w-5" />} label={t("account.myWishlist")} hint="Saved products" />
             <DarazLinkRow to="/orders" icon={<Package className="h-5 w-5" />} label={t("account.myOrders")} hint="Track & manage orders" />
             {profile?.role !== "seller" && (
-              <DarazLinkRow to="/seller.register" icon={<Store className="h-5 w-5" />} label="Become a Seller" hint="Start selling on Shop Nexa" highlight />
+              <DarazLinkRow to="/seller.register" icon={<Store className="h-5 w-5" />} label="Become a Seller" hint="Start selling on AVENTA SHOP" highlight />
             )}
           </div>
         </DarazCard>

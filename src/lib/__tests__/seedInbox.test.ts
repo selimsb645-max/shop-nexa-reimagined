@@ -1,7 +1,7 @@
 /**
  * seedInbox Race-Condition Fix Tests
  *
- * Bug: the customer inbox showed two duplicate "Shop Nexa Support" welcome
+ * Bug: the customer inbox showed two duplicate "AVENTA SHOP Support" welcome
  * conversations. Root cause: seedInbox() checked "does any thread exist?"
  * then created a new auto-ID thread — a classic check-then-act race. If the
  * effect ran twice before the first write settled (remount, double effect,
@@ -59,16 +59,16 @@ describe("seedInbox — race condition fix", () => {
   });
 
   it("welcome content constants are unchanged (no visual/behavioral regression)", () => {
-    expect(SOURCE).toContain('const WELCOME_SUBJECT = "Welcome to ShopNexa!"');
-    expect(SOURCE).toContain('const WELCOME_PARTICIPANT = "Shop Nexa Support"');
+    expect(SOURCE).toContain('const WELCOME_SUBJECT = "Welcome to AVENTA SHOP!"');
+    expect(SOURCE).toContain('const WELCOME_PARTICIPANT = "AVENTA SHOP Support"');
     expect(SOURCE).toContain(
-      "Hi! Welcome to ShopNexa. We're here to help with anything you need. Feel free to ask questions about orders, products, or your account.",
+      "Hi! Welcome to AVENTA SHOP. We're here to help with anything you need. Feel free to ask questions about orders, products, or your account.",
     );
   });
 
   it("notification content (bonus points, promo code) is preserved", () => {
     expect(SOURCE).toContain("100 Bonus Points");
     expect(SOURCE).toContain("WELCOME10");
-    expect(SOURCE).toContain("Welcome to ShopNexa! 🎉");
+    expect(SOURCE).toContain("Welcome to AVENTA SHOP! 🎉");
   });
 });

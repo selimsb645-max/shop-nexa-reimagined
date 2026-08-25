@@ -1,5 +1,5 @@
 /**
- * Shop Nexa — Client-side Seller Settlement Service
+ * AVENTA SHOP — Client-side Seller Settlement Service
  * 
  * Read-only access to seller settlement data via server functions.
  * Sellers can READ their settlement data but CANNOT mutate it.

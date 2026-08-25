@@ -7,10 +7,10 @@ export const Route = createFileRoute("/forgot-password")({
   component: ForgotPage,
   head: () => ({
     meta: [
-      { title: "Reset Password — ShopNexa" },
-      { name: "description", content: "Reset your ShopNexa account password with a secure email link." },
-      { property: "og:title", content: "Reset Password — ShopNexa" },
-      { property: "og:description", content: "Reset your ShopNexa account password." },
+      { title: "Reset Password — AVENTA SHOP" },
+      { name: "description", content: "Reset your AVENTA SHOP account password with a secure email link." },
+      { property: "og:title", content: "Reset Password — AVENTA SHOP" },
+      { property: "og:description", content: "Reset your AVENTA SHOP account password." },
       { property: "og:url", content: "https://shop-nexa.lovable.app/forgot-password" },
       { name: "robots", content: "noindex" },
     ],

@@ -1,5 +1,5 @@
 /**
- * Shop Nexa — Centralized Delivery Zone Configuration
+ * AVENTA SHOP — Centralized Delivery Zone Configuration
  *
  * Three delivery zones for Bangladesh:
  *   INSIDE_DHAKA   → ৳60  (Dhaka City Corporation / Metro)

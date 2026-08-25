@@ -9,5 +9,5 @@ export const Route = createFileRoute("/_authenticated/seller/messages")({
       {(profile) => <SellerMessagesPage profile={profile} />}
     </SellerGate>
   ),
-  head: () => ({ meta: [{ title: "Messages — Shop Nexa Seller" }] }),
+  head: () => ({ meta: [{ title: "Messages — AVENTA SHOP Seller" }] }),
 });

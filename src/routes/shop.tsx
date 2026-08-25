@@ -91,11 +91,11 @@ export const Route = createFileRoute("/shop")({
   component: ShopPage,
   head: () => ({
     meta: [
-      { title: "Shop & Categories — Shop Nexa" },
+      { title: "Shop & Categories — AVENTA SHOP" },
       {
         name: "description",
         content:
-          "Browse thousands of products, top brands, and exclusive discounts on Shop Nexa.",
+          "Browse thousands of products, top brands, and exclusive discounts on AVENTA SHOP.",
       },
     ],
   }),

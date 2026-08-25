@@ -1,5 +1,5 @@
 /**
- * Shop Nexa — Promo Code Test Suite
+ * AVENTA SHOP — Promo Code Test Suite
  *
  * Tests for the NEXA promo code generation system.
  * Run with: npx vitest run src/lib/__tests__/promo.test.ts

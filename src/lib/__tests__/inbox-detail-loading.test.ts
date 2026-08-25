@@ -1,7 +1,7 @@
 /**
  * Inbox Conversation Detail — Loading Fix Tests
  *
- * Bug: clicking a conversation (e.g. "Shop Nexa Support") in the inbox
+ * Bug: clicking a conversation (e.g. "AVENTA SHOP Support") in the inbox
  * crashed with "This page didn't load — Something went wrong on our end."
  *
  * Root cause: Rules of Hooks violation in CommunicationCenter component.
@@ -162,7 +162,7 @@ function sourceIndexOfChatView(): number {
   return SOURCE.indexOf("function ChatView(");
 }
 
-describe("Duplicate 'Shop Nexa Support' Conversations — dedupeThreads()", () => {
+describe("Duplicate 'AVENTA SHOP Support' Conversations — dedupeThreads()", () => {
   // Import dynamically inside tests to keep this file dependency-light at the top.
 
   it("collapses two identical general-support threads into one", async () => {
@@ -170,20 +170,20 @@ describe("Duplicate 'Shop Nexa Support' Conversations — dedupeThreads()", () =
     const dup = [
       {
         id: "thread-a",
-        subject: "Welcome to ShopNexa!",
-        participant: "Shop Nexa Support",
+        subject: "Welcome to AVENTA SHOP!",
+        participant: "AVENTA SHOP Support",
         sellerId: null,
-        lastMessage: "Hi! Welcome to ShopNexa...",
+        lastMessage: "Hi! Welcome to AVENTA SHOP...",
         lastAt: 1000,
         unread: 1,
         createdAt: 1000,
       },
       {
         id: "thread-b",
-        subject: "Welcome to ShopNexa!",
-        participant: "Shop Nexa Support",
+        subject: "Welcome to AVENTA SHOP!",
+        participant: "AVENTA SHOP Support",
         sellerId: null,
-        lastMessage: "Hi! Welcome to ShopNexa...",
+        lastMessage: "Hi! Welcome to AVENTA SHOP...",
         lastAt: 2000,
         unread: 1,
         createdAt: 2000,
@@ -196,8 +196,8 @@ describe("Duplicate 'Shop Nexa Support' Conversations — dedupeThreads()", () =
   it("does NOT sum unread counts across duplicates — takes max instead", async () => {
     const { dedupeThreads } = await import("@/services/firebase/messages");
     const dup = [
-      { id: "a", subject: "s", participant: "Shop Nexa Support", sellerId: null, lastMessage: "m", lastAt: 1000, unread: 1, createdAt: 1000 },
-      { id: "b", subject: "s", participant: "Shop Nexa Support", sellerId: null, lastMessage: "m", lastAt: 2000, unread: 1, createdAt: 2000 },
+      { id: "a", subject: "s", participant: "AVENTA SHOP Support", sellerId: null, lastMessage: "m", lastAt: 1000, unread: 1, createdAt: 1000 },
+      { id: "b", subject: "s", participant: "AVENTA SHOP Support", sellerId: null, lastMessage: "m", lastAt: 2000, unread: 1, createdAt: 2000 },
     ];
     const result = dedupeThreads(dup);
     expect(result[0].unread).toBe(1); // NOT 2
@@ -206,8 +206,8 @@ describe("Duplicate 'Shop Nexa Support' Conversations — dedupeThreads()", () =
   it("keeps the most recently active thread's content when collapsing", async () => {
     const { dedupeThreads } = await import("@/services/firebase/messages");
     const dup = [
-      { id: "old", subject: "s", participant: "Shop Nexa Support", sellerId: null, lastMessage: "old msg", lastAt: 1000, unread: 0, createdAt: 1000 },
-      { id: "new", subject: "s", participant: "Shop Nexa Support", sellerId: null, lastMessage: "new msg", lastAt: 5000, unread: 1, createdAt: 5000 },
+      { id: "old", subject: "s", participant: "AVENTA SHOP Support", sellerId: null, lastMessage: "old msg", lastAt: 1000, unread: 0, createdAt: 1000 },
+      { id: "new", subject: "s", participant: "AVENTA SHOP Support", sellerId: null, lastMessage: "new msg", lastAt: 5000, unread: 1, createdAt: 5000 },
     ];
     const result = dedupeThreads(dup);
     expect(result).toHaveLength(1);

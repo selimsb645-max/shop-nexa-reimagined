@@ -1,5 +1,5 @@
 /**
- * Shop Nexa — Admin: List All Withdrawal Requests
+ * AVENTA SHOP — Admin: List All Withdrawal Requests
  * 
  * Reads ALL withdrawal requests across ALL sellers using the Firebase client SDK.
  * This is used by the admin finance panel to show pending withdrawals.

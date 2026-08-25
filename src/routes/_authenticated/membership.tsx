@@ -16,7 +16,7 @@ import { useI18n } from "@/i18n/I18nContext";
 export const Route = createFileRoute("/_authenticated/membership")({
   ssr: false,
   component: MembershipPage,
-  head: () => ({ meta: [{ title: "Nexa Prime Membership — ShopNexa" }] }),
+  head: () => ({ meta: [{ title: "AVENTA Prime Membership — AVENTA SHOP" }] }),
 });
 
 const TIERS = [

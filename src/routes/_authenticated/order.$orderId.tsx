@@ -28,7 +28,7 @@ import type { Order, OrderStatus } from "@/types/commerce";
 export const Route = createFileRoute("/_authenticated/order/$orderId")({
   ssr: false,
   component: OrderDetailPage,
-  head: () => ({ meta: [{ title: "Order Details — Shop Nexa" }] }),
+  head: () => ({ meta: [{ title: "Order Details — AVENTA SHOP" }] }),
 });
 
 const FLOW: { key: OrderStatus | "out_for_delivery"; labelKey: string; descKey: string; icon: typeof Package }[] = [

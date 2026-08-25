@@ -40,8 +40,8 @@ export function AppShell({ children }: { children: ReactNode }) {
               <ShoppingCart className="h-5 w-5" />
             </div>
             <span className="text-xl font-bold">
-              <span className="text-primary">Shop</span>
-              <span className="text-accent">Nexa</span>
+              <span className="text-primary">AVENTA</span>
+              <span className="text-accent">SHOP</span>
             </span>
           </Link>
           <div className="ml-auto flex items-center gap-3 text-sm">

@@ -1,5 +1,5 @@
 /**
- * Shop Nexa — Seller Settlement Dashboard Route
+ * AVENTA SHOP — Seller Settlement Dashboard Route
  *
  * Route: /seller/settlements
  * Shows the seller's complete financial picture:
@@ -47,7 +47,7 @@ export const Route = createFileRoute("/_authenticated/seller/settlements")({
   component: () => (
     <SellerGate>{(profile) => <SellerSettlementsPage profile={profile} />}</SellerGate>
   ),
-  head: () => ({ meta: [{ title: "Settlements — Shop Nexa Seller" }] }),
+  head: () => ({ meta: [{ title: "Settlements — AVENTA SHOP Seller" }] }),
 });
 
 function SellerSettlementsPage({

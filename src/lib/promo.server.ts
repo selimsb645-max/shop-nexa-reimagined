@@ -1,5 +1,5 @@
 /**
- * Shop Nexa — Promo Code Server Module
+ * AVENTA SHOP — Promo Code Server Module
  *
  * Runs ONLY inside server function handlers. Uses the Firebase service account
  * to talk to the Firestore REST API, bypassing security rules. All promo code

@@ -1,5 +1,5 @@
 /**
- * Shop Nexa — Promo Code Types
+ * AVENTA SHOP — Promo Code Types
  *
  * Shared types for the promo code system. Used by both client and server.
  */

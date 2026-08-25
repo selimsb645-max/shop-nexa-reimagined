@@ -31,10 +31,10 @@ export const Route = createFileRoute("/flash-sales")({
   component: FlashSalesPage,
   head: () => ({
     meta: [
-      { title: "Flash Sales — Shop Nexa" },
+      { title: "Flash Sales — AVENTA SHOP" },
       {
         name: "description",
-        content: "Shop Nexa Flash Sales: Unbeatable mega discounts on top items! Limited quantities, hurry before stock runs out.",
+        content: "AVENTA SHOP Flash Sales: Unbeatable mega discounts on top items! Limited quantities, hurry before stock runs out.",
       },
     ],
   }),
@@ -255,7 +255,7 @@ export function FlashSalesPage() {
                     Flash Sales
                   </h1>
                   <p className="text-xs sm:text-sm text-orange-100 font-medium mt-0.5">
-                    Exclusive Shop Nexa Mega Deals • Up to 80% OFF
+                    Exclusive AVENTA SHOP Mega Deals • Up to 80% OFF
                   </p>
                 </div>
               </div>

@@ -1,5 +1,5 @@
 /**
- * Shop Nexa — Admin Commission Rate Management
+ * AVENTA SHOP — Admin Commission Rate Management
  *
  * Server-side function for admins to update a seller's commission rate.
  *

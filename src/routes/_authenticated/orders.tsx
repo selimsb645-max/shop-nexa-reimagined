@@ -19,7 +19,7 @@ import { firebaseConfigured } from "@/services/firebase/config";
 export const Route = createFileRoute("/_authenticated/orders")({
   ssr: false,
   component: OrdersPage,
-  head: () => ({ meta: [{ title: "My Orders — Shop Nexa" }] }),
+  head: () => ({ meta: [{ title: "My Orders — AVENTA SHOP" }] }),
 });
 
 const STATUS_CONFIG: Record<

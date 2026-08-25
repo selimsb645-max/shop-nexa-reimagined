@@ -1,5 +1,5 @@
 /**
- * Pocket Storefront design: compact ShopNexa mobile utility, search, and drawer
+ * Pocket Storefront design: compact AVENTA SHOP mobile utility, search, and drawer
  * preserve desktop information hierarchy while prioritizing one-handed shopping.
  */
 import { useState } from "react";
@@ -113,7 +113,7 @@ export function SiteHeader() {
       <div className="bg-[#1455c6] px-3 py-1.5 text-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between text-[10px] font-semibold sm:px-4 sm:text-xs">
           <span className="flex items-center gap-1.5"><ShoppingCart className="h-3 w-3" />Free delivery on orders over $50</span>
-          <span className="hidden sm:inline">Welcome to ShopNexa</span>
+          <span className="hidden sm:inline">Welcome to AVENTA SHOP</span>
           <span className="hidden sm:inline">Track Order&nbsp;&nbsp;·&nbsp;&nbsp;Help &amp; Support</span>
         </div>
       </div>
@@ -127,10 +127,10 @@ export function SiteHeader() {
             </div>
             <div className="flex items-baseline">
               <span className="text-[#1455c6] font-extrabold text-xl sm:text-2xl tracking-tight">
-                Shop
+                AVENTA
               </span>
               <span className="text-[#f57224] font-extrabold text-xl sm:text-2xl tracking-tight">
-                Nexa
+                SHOP
               </span>
             </div>
           </Link>
@@ -145,7 +145,7 @@ export function SiteHeader() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search in Shop Nexa"
+                placeholder="Search in AVENTA SHOP"
                 className="w-full pl-4 pr-24 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#f57224]/30 focus:border-[#f57224] focus:bg-white transition-all text-slate-800 placeholder-slate-400"
               />
               <button
@@ -289,7 +289,7 @@ export function SiteHeader() {
                   ) : (
                     <div className="p-3">
                       <p className="text-xs text-slate-600 mb-2.5 text-center">
-                        Welcome to Shop Nexa!
+                        Welcome to AVENTA SHOP!
                       </p>
                       <Link
                         to="/login"
@@ -450,7 +450,7 @@ export function SiteHeader() {
       {isMobileMenuOpen && (
         <div className="space-y-4 border-b border-slate-200 bg-white px-4 py-4 shadow-lg md:hidden">
           <div className="flex items-center justify-between rounded-xl bg-blue-50 px-3 py-2.5">
-            <div className="flex items-center gap-2 text-xs font-semibold text-[#1455c6]"><User className="h-4 w-4" />{user ? user.displayName || "My Account" : "Hello, sign in to ShopNexa"}</div>
+            <div className="flex items-center gap-2 text-xs font-semibold text-[#1455c6]"><User className="h-4 w-4" />{user ? user.displayName || "My Account" : "Hello, sign in to AVENTA SHOP"}</div>
             <Link to={user ? "/account" : "/login"} onClick={() => setIsMobileMenuOpen(false)} className="rounded-lg bg-[#1455c6] px-3 py-1.5 text-[10px] font-bold text-white">{user ? "Account" : "Sign In"}</Link>
           </div>
           <div className="font-bold text-xs uppercase tracking-wider text-slate-400 border-b pb-1">

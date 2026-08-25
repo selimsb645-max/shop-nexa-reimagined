@@ -15,7 +15,7 @@ import { useI18n } from "@/i18n";
 export const Route = createFileRoute("/_authenticated/admin/seo")({
   ssr: false,
   component: AdminSEOPage,
-  head: () => ({ meta: [{ title: "SEO Management — ShopNexa Admin" }] }),
+  head: () => ({ meta: [{ title: "SEO Management — AVENTA SHOP Admin" }] }),
 });
 
 function AdminSEOPage() {

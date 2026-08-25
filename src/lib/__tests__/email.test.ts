@@ -1,5 +1,5 @@
 /**
- * Tests for Shop Nexa Transactional Email Service
+ * Tests for AVENTA SHOP Transactional Email Service
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
@@ -60,7 +60,7 @@ const mockWithdrawal: WithdrawalEmailData = {
 describe("Order Emails", () => {
   it("TEST 1: Order confirmation email (ORDER_CREATED)", () => {
     const result = renderEmailTemplate("ORDER_CREATED", { order: mockOrder });
-    expect(result.subject).toContain("Shop Nexa");
+    expect(result.subject).toContain("AVENTA SHOP");
     expect(result.subject).toContain("order_ab");
     expect(result.subject).toContain("Confirmed");
     expect(result.html).toContain("Order Confirmed!");
@@ -88,7 +88,7 @@ describe("Order Emails", () => {
     const result = renderEmailTemplate("ORDER_DELIVERED", { order: mockOrder });
     expect(result.subject).toContain("Delivered");
     expect(result.html).toContain("delivered");
-    expect(result.html).toContain("Thank you for shopping with Shop Nexa");
+    expect(result.html).toContain("Thank you for shopping with AVENTA SHOP");
   });
 
   it("TEST 4: Order cancelled email (ORDER_CANCELLED)", () => {
@@ -497,9 +497,9 @@ describe("Email HTML Quality", () => {
     expect(result.html).not.toContain("<iframe");
   });
 
-  it("should include Shop Nexa branding", () => {
+  it("should include AVENTA SHOP branding", () => {
     const result = renderEmailTemplate("ORDER_CREATED", { order: mockOrder });
-    expect(result.html).toContain("Shop Nexa");
+    expect(result.html).toContain("AVENTA SHOP");
     expect(result.html).toContain("#f97316");
   });
 

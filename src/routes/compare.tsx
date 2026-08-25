@@ -16,10 +16,10 @@ export const Route = createFileRoute("/compare")({
   component: ComparePage,
   head: () => ({
     meta: [
-      { title: "Compare Products — ShopNexa" },
-      { name: "description", content: "Compare products side by side on ShopNexa." },
-      { property: "og:title", content: "Compare Products — ShopNexa" },
-      { property: "og:description", content: "Compare products side by side on ShopNexa." },
+      { title: "Compare Products — AVENTA SHOP" },
+      { name: "description", content: "Compare products side by side on AVENTA SHOP." },
+      { property: "og:title", content: "Compare Products — AVENTA SHOP" },
+      { property: "og:description", content: "Compare products side by side on AVENTA SHOP." },
       { property: "og:url", content: "https://shop-nexa.lovable.app/compare" },
     ],
     links: [{ rel: "canonical", href: "https://shop-nexa.lovable.app/compare" }],

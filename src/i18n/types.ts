@@ -1,5 +1,5 @@
 /**
- * Supported languages for Shop Nexa.
+ * Supported languages for AVENTA SHOP.
  * To add a new language, add it here and create a translation file in /src/i18n/locales/.
  */
 export type Locale = "en" | "bn";

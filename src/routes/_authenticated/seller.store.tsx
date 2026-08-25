@@ -1,5 +1,5 @@
 /**
- * Shop Nexa — Seller Store Page
+ * AVENTA SHOP — Seller Store Page
  *
  * Route: /seller/store
  * Reuses existing infrastructure:
@@ -39,7 +39,7 @@ import { useI18n } from "@/i18n";
 export const Route = createFileRoute("/_authenticated/seller/store")({
   ssr: false,
   component: () => <SellerGate>{(profile) => <StorePage profile={profile} />}</SellerGate>,
-  head: () => ({ meta: [{ title: "Store — Shop Nexa Seller" }] }),
+  head: () => ({ meta: [{ title: "Store — AVENTA SHOP Seller" }] }),
 });
 
 function StorePage({ profile }: { profile: SellerProfile }) {

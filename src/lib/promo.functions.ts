@@ -1,5 +1,5 @@
 /**
- * Shop Nexa — Promo Code Server Functions
+ * AVENTA SHOP — Promo Code Server Functions
  *
  * TanStack Start server functions that bridge the client to the promo server
  * module. Each function:

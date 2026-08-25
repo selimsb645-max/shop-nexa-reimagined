@@ -13,10 +13,10 @@ export const Route = createFileRoute("/verify-email")({
   component: VerifyPage,
   head: () => ({
     meta: [
-      { title: "Verify Your Email — ShopNexa" },
-      { name: "description", content: "Confirm your email address to activate your ShopNexa account." },
-      { property: "og:title", content: "Verify Your Email — ShopNexa" },
-      { property: "og:description", content: "Confirm your email address to activate your ShopNexa account." },
+      { title: "Verify Your Email — AVENTA SHOP" },
+      { name: "description", content: "Confirm your email address to activate your AVENTA SHOP account." },
+      { property: "og:title", content: "Verify Your Email — AVENTA SHOP" },
+      { property: "og:description", content: "Confirm your email address to activate your AVENTA SHOP account." },
       { property: "og:url", content: "https://shop-nexa.lovable.app/verify-email" },
       { name: "robots", content: "noindex" },
     ],

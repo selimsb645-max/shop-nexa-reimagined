@@ -76,10 +76,10 @@ export function SiteFooter() {
             </ul>
           </div>
 
-          {/* Column 2: Shop Nexa */}
+          {/* Column 2: AVENTA SHOP */}
           <div>
             <h3 className="text-base font-bold text-[#0f172a] uppercase tracking-wider mb-4 border-b-2 border-[#f97316] pb-1 inline-block">
-              Shop Nexa
+              AVENTA SHOP
             </h3>
             <ul className="space-y-2.5 text-sm">
               <li>
@@ -103,7 +103,7 @@ export function SiteFooter() {
                   to="/blog"
                   className="text-slate-600 hover:text-[#f97316] transition-colors duration-200"
                 >
-                  Shop Nexa Blog
+                  AVENTA SHOP Blog
                 </Link>
               </li>
               <li>
@@ -135,7 +135,7 @@ export function SiteFooter() {
                   to="/mart"
                   className="text-slate-600 hover:text-[#f97316] transition-colors duration-200"
                 >
-                  Shop Nexa Mart
+                  AVENTA SHOP Mart
                 </Link>
               </li>
             </ul>
@@ -156,7 +156,7 @@ export function SiteFooter() {
                     Happy Shopping
                   </p>
                   <p className="text-sm font-bold text-slate-800">
-                    Download Shop Nexa App
+                    Download AVENTA SHOP App
                   </p>
                 </div>
               </div>
@@ -344,7 +344,7 @@ export function SiteFooter() {
               <div className="inline-flex items-center gap-2 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700 text-xs text-slate-300">
                 <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0" />
                 <div className="text-left leading-tight">
-                  <p className="font-semibold text-slate-100">Verified by Shop Nexa</p>
+                  <p className="font-semibold text-slate-100">Verified by AVENTA SHOP</p>
                   <p className="text-[10px] text-slate-400">256-Bit SSL Secured Checkout</p>
                 </div>
               </div>
@@ -360,7 +360,7 @@ export function SiteFooter() {
                   href="https://www.facebook.com/profile.php?id=61592089432837"
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label="Shop Nexa Facebook Page"
+                  aria-label="AVENTA SHOP Facebook Page"
                   className="w-9 h-9 bg-slate-800 hover:bg-[#f97316] text-slate-300 hover:text-white rounded-full flex items-center justify-center transition-all duration-200 border border-slate-700"
                 >
                   <Facebook className="w-4 h-4" />
@@ -368,7 +368,7 @@ export function SiteFooter() {
                 <a
                   href="#"
                   onClick={(e) => e.preventDefault()}
-                  aria-label="Shop Nexa YouTube"
+                  aria-label="AVENTA SHOP YouTube"
                   className="w-9 h-9 bg-slate-800 hover:bg-[#f97316] text-slate-300 hover:text-white rounded-full flex items-center justify-center transition-all duration-200 border border-slate-700"
                 >
                   <Youtube className="w-4 h-4" />
@@ -376,7 +376,7 @@ export function SiteFooter() {
                 <a
                   href="#"
                   onClick={(e) => e.preventDefault()}
-                  aria-label="Shop Nexa Instagram"
+                  aria-label="AVENTA SHOP Instagram"
                   className="w-9 h-9 bg-slate-800 hover:bg-[#f97316] text-slate-300 hover:text-white rounded-full flex items-center justify-center transition-all duration-200 border border-slate-700"
                 >
                   <Instagram className="w-4 h-4" />
@@ -384,7 +384,7 @@ export function SiteFooter() {
                 <a
                   href="#"
                   onClick={(e) => e.preventDefault()}
-                  aria-label="Shop Nexa Twitter"
+                  aria-label="AVENTA SHOP Twitter"
                   className="w-9 h-9 bg-slate-800 hover:bg-[#f97316] text-slate-300 hover:text-white rounded-full flex items-center justify-center transition-all duration-200 border border-slate-700"
                 >
                   <Twitter className="w-4 h-4" />
@@ -395,7 +395,7 @@ export function SiteFooter() {
 
           {/* Copyright Row */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-xs text-slate-400 pt-2">
-            <p>© 2026 Shop Nexa. All Rights Reserved.</p>
+            <p>© 2026 AVENTA SHOP. All Rights Reserved.</p>
           </div>
         </div>
       </div>

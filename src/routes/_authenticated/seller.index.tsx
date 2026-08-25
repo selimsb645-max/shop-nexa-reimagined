@@ -20,7 +20,7 @@ import { useI18n } from "@/i18n";
 export const Route = createFileRoute("/_authenticated/seller/")({
   ssr: false,
   component: () => <SellerGate>{(profile) => <Dashboard sellerId={profile.uid} profile={profile} />}</SellerGate>,
-  head: () => ({ meta: [{ title: "Seller Dashboard — Shop Nexa" }] }),
+  head: () => ({ meta: [{ title: "Seller Dashboard — AVENTA SHOP" }] }),
 });
 
 function Dashboard({ sellerId, profile }: { sellerId: string; profile: SellerProfile }) {

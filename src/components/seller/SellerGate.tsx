@@ -47,7 +47,7 @@ export function SellerGate({ children }: Props) {
           <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
             <Lock className="w-8 h-8 text-slate-400" />
           </div>
-          <h2 className="text-lg font-bold text-[#0f172a]">Become a Seller on Shop Nexa</h2>
+          <h2 className="text-lg font-bold text-[#0f172a]">Become a Seller on AVENTA SHOP</h2>
           <p className="mt-2 max-w-sm text-sm text-slate-500">
             Register your shop to start listing products, managing orders, and growing your business.
           </p>
@@ -163,7 +163,7 @@ export function SellerGate({ children }: Props) {
           </div>
           <h2 className="text-lg font-bold text-[#0f172a]">Account Suspended</h2>
           <p className="mt-2 max-w-sm text-sm text-slate-500">
-            Your seller account has been suspended. Please contact Shop Nexa support to resolve this.
+            Your seller account has been suspended. Please contact AVENTA SHOP support to resolve this.
           </p>
         </div>
       </SellerShell>

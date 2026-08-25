@@ -1,5 +1,5 @@
 /**
- * Shop Nexa — Seller Earnings Dashboard
+ * AVENTA SHOP — Seller Earnings Dashboard
  *
  * Route: /seller/earnings
  * Reuses existing Settlements infrastructure:
@@ -37,7 +37,7 @@ import type { SellerProfile } from "@/types/seller";
 export const Route = createFileRoute("/_authenticated/seller/earnings")({
   ssr: false,
   component: () => <SellerGate>{(profile) => <EarningsPage profile={profile} />}</SellerGate>,
-  head: () => ({ meta: [{ title: "Earnings — Shop Nexa Seller" }] }),
+  head: () => ({ meta: [{ title: "Earnings — AVENTA SHOP Seller" }] }),
 });
 
 function EarningsPage({ profile }: { profile: SellerProfile }) {

@@ -114,7 +114,7 @@ function AdminDashboard() {
       <div>
         <h1 className="text-2xl font-bold">{t("admin.dashboard")}</h1>
         <p className="text-sm text-muted-foreground">
-          Overview of your ShopNexa marketplace.
+          Overview of your AVENTA SHOP marketplace.
         </p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

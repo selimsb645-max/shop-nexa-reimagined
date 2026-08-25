@@ -20,7 +20,7 @@ import { useI18n } from "@/i18n";
 export const Route = createFileRoute("/_authenticated/seller/register")({
   ssr: false,
   component: SellerRegisterPage,
-  head: () => ({ meta: [{ title: "Seller Registration — Shop Nexa" }] }),
+  head: () => ({ meta: [{ title: "Seller Registration — AVENTA SHOP" }] }),
 });
 
 function SellerRegisterPage() {
@@ -496,14 +496,14 @@ function TermsForm({ onBack, onSubmit, loading }: {
       <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3 text-sm text-slate-600 max-h-64 overflow-y-auto">
         <p className="font-bold text-[#0f172a]">{t("seller.sellerAgreement")}</p>
         <p>1. I confirm that all information provided is accurate and truthful.</p>
-        <p>2. I agree to Shop Nexa's commission rate (default 8%) on each order.</p>
+        <p>2. I agree to AVENTA SHOP's commission rate (default 8%) on each order.</p>
         <p>3. I will fulfill orders within the promised delivery timeline.</p>
-        <p>4. I understand that Shop Nexa may suspend my account for policy violations.</p>
+        <p>4. I understand that AVENTA SHOP may suspend my account for policy violations.</p>
         <p>5. I agree to maintain product quality and handle customer returns as per policy.</p>
         <p>6. I understand that earnings are credited to my wallet only after order delivery.</p>
         <p>7. I agree to the minimum withdrawal amount and processing times.</p>
         <p>8. I will not list prohibited, counterfeit, or illegal products.</p>
-        <p>9. I understand that Shop Nexa reserves the right to modify terms with notice.</p>
+        <p>9. I understand that AVENTA SHOP reserves the right to modify terms with notice.</p>
         <p>10. I agree to data processing as per the privacy policy.</p>
       </div>
 
@@ -511,7 +511,7 @@ function TermsForm({ onBack, onSubmit, loading }: {
         <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)}
           className="mt-0.5 w-5 h-5 rounded accent-[#f57224]" />
         <span className="text-sm text-slate-600">
-          I have read and agree to the Shop Nexa Seller Terms & Conditions, Privacy Policy, and Commission Structure.
+          I have read and agree to the AVENTA SHOP Seller Terms & Conditions, Privacy Policy, and Commission Structure.
         </span>
       </label>
 
