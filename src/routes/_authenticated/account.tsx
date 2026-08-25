@@ -18,6 +18,7 @@ import {
   MessageCircle,
   BookOpen,
   Phone,
+  Mail,
   ChevronRight,
   Clock3,
   Loader,
