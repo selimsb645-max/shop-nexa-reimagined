@@ -92,8 +92,8 @@ export function SiteHeader() {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate({
-        to: "/products",
-        search: { search: searchQuery.trim() },
+        to: "/shop",
+        search: { q: searchQuery.trim() },
       } as Record<string, unknown>);
     }
   };
@@ -374,7 +374,7 @@ export function SiteHeader() {
                   return (
                     <Link
                       key={typeof cat === "object" ? cat.id || idx : idx}
-                      to="/products"
+                      to="/shop"
                       search={{ category: catSlug } as Record<string, string>}
                       onClick={() => setIsCategoryOpen(false)}
                       className="flex items-center justify-between px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 hover:text-[#f57224] transition-colors"
@@ -399,7 +399,7 @@ export function SiteHeader() {
             </Link>
 
             <Link
-              to="/products"
+              to="/shop"
               search={{ sort: "bestsellers" } as Record<string, string>}
               className="flex items-center gap-1.5 hover:text-[#f57224] transition-colors"
             >
@@ -408,7 +408,7 @@ export function SiteHeader() {
             </Link>
 
             <Link
-              to="/products"
+              to="/shop"
               search={{ sort: "newest" } as Record<string, string>}
               className="flex items-center gap-1.5 hover:text-[#f57224] transition-colors"
             >
@@ -417,8 +417,7 @@ export function SiteHeader() {
             </Link>
 
             <Link
-              to="/products"
-              search={{ deals: "true" } as Record<string, string>}
+              to="/flash-sales"
               className="flex items-center gap-1.5 hover:text-[#f57224] transition-colors"
             >
               <Tag className="w-4 h-4 text-emerald-500" />
@@ -459,7 +458,7 @@ export function SiteHeader() {
               return (
                 <Link
                   key={typeof cat === "object" ? cat.id || idx : idx}
-                  to="/products"
+                  to="/shop"
                   search={{ category: catSlug } as Record<string, string>}
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="rounded-lg bg-slate-50 px-2 py-2 text-center text-xs text-slate-700 transition-colors hover:bg-blue-50 hover:text-[#1455c6] truncate"
@@ -482,7 +481,7 @@ export function SiteHeader() {
               <Flame className="w-4 h-4 text-[#f57224]" /> Flash Sale
             </Link>
             <Link
-              to="/products"
+              to="/shop"
               search={{ sort: "bestsellers" } as Record<string, string>}
               onClick={() => setIsMobileMenuOpen(false)}
               className="flex items-center gap-2 text-slate-700 py-1"
@@ -490,7 +489,7 @@ export function SiteHeader() {
               <Award className="w-4 h-4 text-amber-500" /> Best Sellers
             </Link>
             <Link
-              to="/products"
+              to="/shop"
               search={{ sort: "newest" } as Record<string, string>}
               onClick={() => setIsMobileMenuOpen(false)}
               className="flex items-center gap-2 text-slate-700 py-1"
@@ -498,8 +497,7 @@ export function SiteHeader() {
               <Sparkles className="w-4 h-4 text-purple-500" /> New Arrivals
             </Link>
             <Link
-              to="/products"
-              search={{ deals: "true" } as Record<string, string>}
+              to="/flash-sales"
               onClick={() => setIsMobileMenuOpen(false)}
               className="flex items-center gap-2 text-slate-700 py-1"
             >
