@@ -145,7 +145,7 @@ function OrderDetail({ sellerId }: { sellerId: string }) {
               {order.items.map((it) => (
                 <div key={it.productId} className="flex items-center gap-3 p-4">
                   <img
-                    src={it.image || "/placeholder.svg"}
+                    src={it.image || "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5jcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMzAwIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YzZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzljYTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg=="}
                     alt=""
                     className="h-14 w-14 rounded-md object-cover"
                   />
