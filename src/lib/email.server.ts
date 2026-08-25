@@ -38,9 +38,7 @@ export interface EmailProvider {
 class MockEmailProvider implements EmailProvider {
   name = "mock";
   async send(to: string, subject: string, html: string) {
-    if (typeof console !== "undefined") {
     if (import.meta.env?.DEV) console.log("[MOCK EMAIL] sent (dev only)");
-    }
     return { success: true, providerId: `mock_${Date.now()}` };
   }
 }

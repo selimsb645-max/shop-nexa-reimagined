@@ -204,9 +204,6 @@ export async function sendOrderNotification(
     message: templates[event](payload as NotificationPayload),
   };
 
-  // Log security event (no sensitive data)
-  }
-
   const provider = getNotificationProvider();
   try {
     return await provider.send(fullPayload);
