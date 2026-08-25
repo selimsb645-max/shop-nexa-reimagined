@@ -219,15 +219,15 @@ function SellerSettlementsPage({
               <div>
                 <label className="text-sm font-medium">{t("seller.payoutMethod")}</label>
                 <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {[
-                    { id: "bkash", label: "bKash", icon: Smartphone },
-                    { id: "nagad", label: "Nagad", icon: Smartphone },
-                    { id: "rocket", label: "Rocket", icon: Smartphone },
-                    { id: "bank", label: "Bank", icon: Landmark },
-                  ].map((m) => (
+                  {([
+                    { id: "bkash" as const, label: "bKash", icon: Smartphone },
+                    { id: "nagad" as const, label: "Nagad", icon: Smartphone },
+                    { id: "rocket" as const, label: "Rocket", icon: Smartphone },
+                    { id: "bank" as const, label: "Bank", icon: Landmark },
+                  ] as const).map((m) => (
                     <button
                       key={m.id}
-                      onClick={() => setWithdrawMethod(m.id as any)}
+                      onClick={() => setWithdrawMethod(m.id)}
                       className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
                         withdrawMethod === m.id
                           ? "border-primary bg-primary/10 text-primary"

@@ -212,7 +212,7 @@ export function ProductDetailPage() {
   const handleToggleWishlist = () => {
     if (!product) return;
     if (typeof wishlistContext?.toggle === "function") {
-      wishlistContext.toggle(product as any);
+      wishlistContext.toggle(product as Product);
     }
     toast.success(
       isWishlisted
@@ -235,7 +235,7 @@ export function ProductDetailPage() {
       };
 
       if (typeof cartContext?.add === "function") {
-        cartContext.add(product as any, quantity);
+        cartContext.add(product as Product, quantity);
       }
 
       toast.success(

@@ -404,9 +404,27 @@ export default function CartPage() {
       wishlistContext.toggle({
         id: item.productId || item.id,
         title: item.title,
+        slug: item.slug || '',
+        shortDescription: '',
+        description: '',
+        brand: null,
         price: item.price,
+        compareAtPrice: null,
+        costPrice: null,
+        tax: 0,
         images: [item.image],
-      } as any);
+        categoryId: '',
+        categorySlug: '',
+        subcategoryId: null,
+        subcategorySlug: null,
+        stock: item.stock || 0,
+        rating: 0,
+        reviewCount: 0,
+        tags: [],
+        featured: false,
+        createdAt: item.addedAt || Date.now(),
+        updatedAt: Date.now(),
+      } as Product);
     }
 
     handleRemoveItem(item.id);
@@ -428,9 +446,27 @@ export default function CartPage() {
         wishlistContext.toggle({
           id: item.productId || item.id,
           title: item.title,
+          slug: item.slug || '',
+          shortDescription: '',
+          description: '',
+          brand: null,
           price: item.price,
+          compareAtPrice: null,
+          costPrice: null,
+          tax: 0,
           images: [item.image],
-        } as any);
+          categoryId: '',
+          categorySlug: '',
+          subcategoryId: null,
+          subcategorySlug: null,
+          stock: item.stock || 0,
+          rating: 0,
+          reviewCount: 0,
+          tags: [],
+          featured: false,
+          createdAt: item.addedAt || Date.now(),
+          updatedAt: Date.now(),
+        } as Product);
       }
     });
 

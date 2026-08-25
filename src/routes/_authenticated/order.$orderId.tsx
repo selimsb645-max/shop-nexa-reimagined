@@ -31,7 +31,7 @@ export const Route = createFileRoute("/_authenticated/order/$orderId")({
   head: () => ({ meta: [{ title: "Order Details — AVENTA SHOP" }] }),
 });
 
-const FLOW: { key: OrderStatus | "out_for_delivery"; labelKey: string; descKey: string; icon: typeof Package }[] = [
+const FLOW: { key: OrderStatus | "out_for_delivery"; labelKey: keyof TranslationKeys; descKey: keyof TranslationKeys; icon: typeof Package }[] = [
   { key: "confirmed", labelKey: "orders.orderConfirmed", descKey: "orders.orderConfirmedDesc", icon: CheckCircle2 },
   { key: "processing", labelKey: "orders.packed", descKey: "orders.packedDesc", icon: PackageCheck },
   { key: "shipped", labelKey: "orders.shipped", descKey: "orders.shippedDesc", icon: Truck },
@@ -179,11 +179,11 @@ function OrderDetailPage() {
                           done ? "text-[#0f172a]" : "text-slate-400"
                         }`}
                       >
-                        {t(step.labelKey as any)}
+                        {t(step.labelKey)}
                       </p>
                       {isActive && (
                         <p className="text-xs text-[#f57224] font-medium mt-0.5">
-                          {t(step.descKey as any)}
+                          {t(step.descKey)}
                         </p>
                       )}
                     </div>

@@ -24,7 +24,7 @@ export const Route = createFileRoute("/_authenticated/orders")({
 
 const STATUS_CONFIG: Record<
   string,
-  { labelKey: string; color: string; icon: typeof Package }
+  { labelKey: keyof TranslationKeys; color: string; icon: typeof Package }
 > = {
   pending: { labelKey: "orders.pending", color: "bg-amber-100 text-amber-700", icon: Clock },
   confirmed: { labelKey: "account.confirmed", color: "bg-blue-100 text-blue-700", icon: CheckCircle2 },
@@ -100,7 +100,7 @@ function OrdersPage() {
                     className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold ${statusCfg.color}`}
                   >
                     <StatusIcon className="w-3 h-3" />
-                    {t(statusCfg.labelKey as any)}
+                    {t(statusCfg.labelKey)}
                   </span>
                 </div>
 
