@@ -34,13 +34,9 @@ export function AdminShell({ children }: { children: ReactNode }) {
       <header className="border-b bg-background">
         <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-4">
           <Link to="/" className="flex items-center gap-2">
-            <img src="/brand/aventa-logo.png" alt="AVENTA SHOP Admin" className="h-9 w-9 rounded-lg object-cover" />
+            <img src="/brand/aventa-shop-logo.png" alt="AVENTA SHOP Admin" className="h-8 w-auto object-contain" />
             <div className="flex flex-col leading-tight">
-              <span className="text-sm font-semibold">
-                <span className="text-primary">AVENTA</span>
-                <span className="text-accent">SHOP</span>{" "}
-                <span className="text-muted-foreground">Admin</span>
-              </span>
+              <span className="text-sm font-semibold text-muted-foreground">Admin</span>
               <span className="text-xs text-muted-foreground">Super Admin Panel</span>
             </div>
           </Link>

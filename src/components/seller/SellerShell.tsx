@@ -86,13 +86,11 @@ export function SellerShell({ children }: Props) {
                 {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
               <Link to="/" className="flex items-center gap-2">
-                <img src="/brand/aventa-logo.png" alt="AVENTA SHOP Seller" className="w-8 h-8 rounded-lg object-cover" />
+                <div className="bg-white rounded-lg px-2 py-1">
+                  <img src="/brand/aventa-shop-logo.png" alt="AVENTA SHOP Seller" className="h-5 w-auto object-contain" />
+                </div>
                 <div className="hidden sm:block leading-tight">
-                  <span className="text-sm font-bold">
-                    <span className="text-white">AVENTA</span>
-                    <span className="text-[#f57224]">SHOP</span>
-                    <span className="text-slate-400 ml-1">Seller</span>
-                  </span>
+                  <span className="text-sm font-bold text-slate-400">Seller</span>
                   {profile?.shopName && (
                     <p className="text-[11px] text-slate-400">{profile.shopName}</p>
                   )}

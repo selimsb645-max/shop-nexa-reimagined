@@ -35,11 +35,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <header className="border-b bg-background">
         <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-4">
           <Link to="/" className="flex items-center gap-2">
-            <img src="/brand/aventa-logo.png" alt="AVENTA SHOP" className="h-9 w-9 rounded-lg object-cover" />
-            <span className="text-xl font-bold">
-              <span className="text-primary">AVENTA</span>
-              <span className="text-accent">SHOP</span>
-            </span>
+            <img src="/brand/aventa-shop-logo.png" alt="AVENTA SHOP" className="h-9 w-auto object-contain" />
           </Link>
           <div className="ml-auto flex items-center gap-3 text-sm">
             <span className="hidden text-muted-foreground md:inline">
