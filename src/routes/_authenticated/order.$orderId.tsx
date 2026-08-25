@@ -399,6 +399,16 @@ function OrderDetailPage() {
                     {order.shipping === 0 ? "FREE" : formatPrice(order.shipping)}
                   </span>
                 </div>
+                {!!order.tax && order.tax > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">
+                      {order.taxLabel || "Tax"}
+                    </span>
+                    <span className="font-semibold text-[#0f172a]">
+                      +{formatPrice(order.tax)}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between border-t border-slate-200 pt-3 mt-2">
                   <span className="text-base font-bold text-[#0f172a]">
                     Grand Total

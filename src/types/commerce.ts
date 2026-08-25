@@ -143,6 +143,9 @@ export interface Order {
   subtotal: number;
   discount: number;
   shipping: number;
+  tax: number;
+  taxRate: number;
+  taxLabel: string;
   total: number;
   couponCode: string | null;
   status: OrderStatus;

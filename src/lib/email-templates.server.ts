@@ -177,6 +177,8 @@ export interface OrderEmailData {
   items: Array<{ name: string; quantity: number; price: number; image?: string }>;
   subtotal: number;
   discount: number;
+  tax: number;
+  taxLabel: string;
   deliveryFee: number;
   grandTotal: number;
   deliveryAddress: {
@@ -218,6 +220,9 @@ export function orderCreatedEmail(data: OrderEmailData): { subject: string; html
           { label: "Subtotal", value: formatPrice(data.subtotal) },
           ...(data.discount > 0
             ? [{ label: "Discount", value: `-${formatPrice(data.discount)}` }]
+            : []),
+          ...(data.tax > 0
+            ? [{ label: data.taxLabel || "Tax", value: `+${formatPrice(data.tax)}` }]
             : []),
           { label: "Delivery Fee", value: formatPrice(data.deliveryFee) },
         ],

@@ -16,6 +16,15 @@ export interface SiteSettings {
     maxOrder: number;
     note: string;
   };
+  tax: {
+    enabled: boolean;
+    /** Global tax rate (percentage 0-100). Applied to subtotal after discounts. */
+    rate: number;
+    /** Tax label shown to customers (e.g. "VAT", "Tax", "GST") */
+    label: string;
+    /** Whether per-product tax overrides the global rate */
+    perProductOverride: boolean;
+  };
   homepage: {
     heroHeadline: string;
     heroSubheadline: string;

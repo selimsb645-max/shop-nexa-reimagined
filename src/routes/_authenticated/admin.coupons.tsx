@@ -15,6 +15,7 @@ import { formatPrice, formatDate } from "@/utils/format";
 import { mapFirebaseError } from "@/utils/errors";
 import type { Coupon, CouponType } from "@/types/commerce";
 import { useI18n } from "@/i18n";
+import { runCouponExpirySweep } from "@/lib/coupon-expiry.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/coupons")({
   component: CouponsAdmin,
@@ -46,6 +47,25 @@ function CouponsAdmin() {
   useEffect(() => {
     void refresh();
   }, []);
+
+  const [sweeping, setSweeping] = useState(false);
+  const runSweep = async () => {
+    if (!user) return;
+    setSweeping(true);
+    try {
+      const result = await runCouponExpirySweep({ data: { idToken: await user.getIdToken() } });
+      if (result.deactivated > 0) {
+        toast.success(`${result.deactivated} expired coupon(s) deactivated.`);
+        await refresh();
+      } else {
+        toast.success("No expired coupons found.");
+      }
+    } catch (err) {
+      toast.error(mapFirebaseError(err));
+    } finally {
+      setSweeping(false);
+    }
+  };
 
   const onCreate = async () => {
     if (!user || !form.code.trim()) {
@@ -106,9 +126,18 @@ function CouponsAdmin() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">{t("admin.coupons")}</h1>
-        <p className="text-sm text-muted-foreground">{t("admin.promoCodesDesc")}</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">{t("admin.coupons")}</h1>
+          <p className="text-sm text-muted-foreground">{t("admin.promoCodesDesc")}</p>
+        </div>
+        <button
+          onClick={runSweep}
+          disabled={sweeping}
+          className="rounded-md bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:bg-amber-600 disabled:opacity-50 whitespace-nowrap"
+        >
+          {sweeping ? "Sweeping..." : "Expire Expired"}
+        </button>
       </div>
 
       <div className="rounded-lg border bg-background p-4">

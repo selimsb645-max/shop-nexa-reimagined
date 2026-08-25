@@ -36,6 +36,7 @@ import { formatPrice } from "@/utils/format";
 import { firebaseConfigured } from "@/services/firebase/config";
 import { getProductById } from "@/services/firebase/products";
 import { getSellerProfile } from "@/services/firebase/sellers";
+import { getSiteSettings } from "@/services/firebase/adminSettings";
 import {
   listStructuredAddresses,
   saveStructuredAddress,
@@ -62,6 +63,10 @@ type EnrichedCartItem = {
   sellerName: string;
   sellerVerified: boolean;
 };
+
+function round2(n: number): number {
+  return Math.round(n * 100) / 100;
+}
 
 export const Route = createFileRoute("/_authenticated/checkout")({
   ssr: false,
@@ -226,6 +231,13 @@ function CheckoutPage() {
   });
   const [useWallet, setUseWallet] = useState(false);
 
+  // ---- Site Settings (tax config) ----
+  const { data: siteSettings } = useQuery({
+    queryKey: ["site-settings"],
+    queryFn: () => getSiteSettings(),
+    staleTime: 60_000,
+  });
+
   // ---- Payment Method ----
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
     "cash_on_delivery"
@@ -258,9 +270,40 @@ function CheckoutPage() {
     return deliveryZoneInfo?.charge ?? 0;
   }, [enrichedItems.length, deliveryAddressSnapshot, deliveryZoneInfo]);
 
-  const maxWalletUse = Math.max(0, afterReward + deliveryCharge - 0);
+  // Tax/VAT: computed client-side as preview (server is authoritative)
+  const taxConfig = siteSettings?.tax;
+  const taxEnabled = taxConfig?.enabled ?? false;
+  const taxLabel = taxConfig?.label ?? "VAT";
+  const globalTaxRate = taxConfig?.rate ?? 0;
+  const perProductOverride = taxConfig?.perProductOverride ?? true;
+
+  const estimatedTax = useMemo(() => {
+    if (!taxEnabled) return 0;
+    if (perProductOverride) {
+      // Per-product tax: use each product's tax rate if set, else global
+      let taxSum = 0;
+      for (const item of enrichedItems) {
+        const productTaxRate = Number(
+          productDetails[item.id]?.tax ?? 0
+        );
+        const effectiveRate =
+          productTaxRate > 0
+            ? Math.min(Math.max(productTaxRate, 0), 100)
+            : Math.min(Math.max(globalTaxRate, 0), 100);
+        const lineAfterDiscount = round2(
+          (item.price * item.quantity) * (afterReward / Math.max(itemsSubtotal, 0.01))
+        );
+        taxSum += (lineAfterDiscount * effectiveRate) / 100;
+      }
+      return Math.round(taxSum * 100) / 100;
+    }
+    // Flat global tax on post-discount subtotal
+    return Math.round((afterReward * Math.min(Math.max(globalTaxRate, 0), 100)) / 100) / 100;
+  }, [taxEnabled, perProductOverride, globalTaxRate, enrichedItems, productDetails, afterReward, itemsSubtotal]);
+
+  const maxWalletUse = Math.max(0, afterReward + deliveryCharge + estimatedTax - 0);
   const walletUsed = useWallet ? Math.min(walletBalance, maxWalletUse) : 0;
-  const afterWallet = Math.max(0, afterReward + deliveryCharge - walletUsed);
+  const afterWallet = Math.max(0, afterReward + deliveryCharge + estimatedTax - walletUsed);
 
   const grandTotal = afterWallet;
 
@@ -1079,6 +1122,16 @@ function CheckoutPage() {
                     {deliveryCharge === 0 ? "FREE" : formatPrice(deliveryCharge)}
                   </span>
                 </div>
+                {estimatedTax > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">
+                      {taxLabel}
+                    </span>
+                    <span className="font-semibold text-[#0f172a]">
+                      +{formatPrice(estimatedTax)}
+                    </span>
+                  </div>
+                )}
                 {walletUsed > 0 && (
                   <div className="flex justify-between text-[#f57224]">
                     <span>{t("checkout.walletCredit")}</span>

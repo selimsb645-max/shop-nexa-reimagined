@@ -31,6 +31,7 @@ import {
   DELIVERY_ZONES,
   type DeliveryZoneId,
 } from "@/data/bd-locations/deliveryZones";
+import { deactivateExpiredCoupons } from "./coupon-expiry.functions";
 
 const POINTS_PER_CURRENCY_REDEEM = 100;
 const MAX_LINE_ITEMS = 100;
@@ -92,9 +93,13 @@ export interface PlaceOrderRequest {
 
 export interface PlaceOrderResult {
   orderId: string;
+  items: Array<{ productId: string; slug: string; title: string; image: string; price: number; quantity: number; subtotal: number }>;
   subtotal: number;
   discount: number;
   promoDiscount: number;
+  tax: number;
+  taxRate: number;
+  taxLabel: string;
   shipping: number;
   deliveryZone: string;
   deliveryZoneLabel: string;
@@ -114,6 +119,15 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
   const projectId = getProjectId();
 
   if (!req.items.length) throw new Error("Your cart is empty.");
+
+  // ── COUPON AUTO-EXPIRY SWEEP ──
+  // Deactivate any expired coupons before validating, so expired coupons
+  // are guaranteed to be rejected (defense-in-depth with the expiresAt check below).
+  try {
+    await deactivateExpiredCoupons();
+  } catch {
+    // Non-blocking — the expiresAt timestamp check below is the primary guard
+  }
   if (req.items.length > MAX_LINE_ITEMS) {
     throw new Error(`An order can contain at most ${MAX_LINE_ITEMS} different products.`);
   }
@@ -296,6 +310,55 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
     label: deliveryZoneLabel,
   } = computeDeliveryChargeServer(req.deliveryAddressSnapshot);
   const shipping = deliveryCharge;
+
+  // ── TAX / VAT COMPUTATION (server-side, authoritative) ──
+  // Reads the global tax config from site settings. If perProductOverride
+  // is enabled AND a product has its own tax rate, that rate is used for
+  // that product's portion of the subtotal. Otherwise the global rate applies.
+  let tax = 0;
+  let taxRate = 0;
+  let taxLabel = "VAT";
+  try {
+    const settingsDocPath = docPath(projectId, ["settings", "site"]);
+    const settingsDocs = await batchGetDocs(projectId, [settingsDocPath]);
+    const sDoc = settingsDocs.get(settingsDocPath);
+    if (sDoc?.exists) {
+      const sd = sDoc.data;
+      const taxConfig = sd["tax"] as
+        | { enabled?: boolean; rate?: number; label?: string; perProductOverride?: boolean }
+        | undefined;
+      if (taxConfig?.enabled) {
+        taxLabel = String(taxConfig.label ?? "VAT");
+        const globalRate = Number(taxConfig.rate ?? 0);
+        if (taxConfig.perProductOverride) {
+          // Per-product tax: compute tax per line item based on its tax rate
+          // (falls back to global rate if product tax is 0 or not set)
+          let taxSum = 0;
+          for (const l of lines) {
+            const productTaxRate = Number(
+              (docs.get(docPath(projectId, ["products", l.productId]))?.data ?? {})["tax"] ?? 0,
+            );
+            const effectiveRate =
+              Number.isFinite(productTaxRate) && productTaxRate > 0
+                ? Math.min(Math.max(productTaxRate, 0), 100)
+                : Math.min(Math.max(globalRate, 0), 100);
+            // Tax applies to this line's post-discount share
+            const lineAfterDiscount =
+              round2(l.subtotal * (subAfterDiscount / subtotal));
+            taxSum += round2((lineAfterDiscount * effectiveRate) / 100);
+          }
+          tax = round2(taxSum);
+          taxRate = globalRate; // Store global rate as reference
+        } else {
+          // Flat global tax on post-discount subtotal
+          taxRate = Math.min(Math.max(globalRate, 0), 100);
+          tax = round2((subAfterDiscount * taxRate) / 100);
+        }
+      }
+    }
+  } catch {
+    // Tax settings not available — tax remains 0 (safe default)
+  }
   // Reward points deduction (server-side verified)
   let rewardDiscount = 0;
   if (req.rewardPoints > 0) {
@@ -365,7 +428,7 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
     }
   }
 
-  const totalBeforeRewardWallet = round2(subAfterDiscount + shipping);
+  const totalBeforeRewardWallet = round2(subAfterDiscount + shipping + tax);
   const rewardWalletDeduction = round2(
     Math.min(rewardDiscount + walletUsed, totalBeforeRewardWallet),
   );
@@ -407,6 +470,9 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
         subtotal,
         discount,
         shipping,
+        tax,
+        taxRate,
+        taxLabel,
         deliveryZone,
         deliveryZoneLabel,
         deliveryCharge,
@@ -617,9 +683,13 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
 
   return {
     orderId,
+    items: orderItems,
     subtotal,
     discount,
     promoDiscount,
+    tax,
+    taxRate,
+    taxLabel,
     shipping,
     deliveryZone,
     deliveryZoneLabel,

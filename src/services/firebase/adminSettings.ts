@@ -33,6 +33,12 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     maxOrder: 5000,
     note: "Cash on Delivery available for orders within our service areas.",
   },
+  tax: {
+    enabled: false,
+    rate: 0,
+    label: "VAT",
+    perProductOverride: true,
+  },
   homepage: {
     heroHeadline: "Shop Smarter. Live Better.",
     heroSubheadline:
@@ -53,6 +59,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     ...d,
     shipping: { ...DEFAULT_SETTINGS.shipping, ...(d.shipping ?? {}) },
     cod: { ...DEFAULT_SETTINGS.cod, ...(d.cod ?? {}) },
+    tax: { ...DEFAULT_SETTINGS.tax, ...(d.tax ?? {}) },
     homepage: { ...DEFAULT_SETTINGS.homepage, ...(d.homepage ?? {}) },
     updatedAt: typeof d.updatedAt === "number" ? d.updatedAt : Date.now(),
   };
