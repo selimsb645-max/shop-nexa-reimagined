@@ -122,9 +122,7 @@ export function SiteHeader() {
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 md:gap-8">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
-            <div className="rounded-xl bg-[#1455c6] p-1.5 text-white shadow-sm transition-colors group-hover:bg-[#0f459f] sm:p-2">
-              <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6 text-[#f57224]" />
-            </div>
+            <img src="/brand/aventa-logo.png" alt="AVENTA SHOP" className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg object-cover shadow-sm transition-transform group-hover:scale-105" />
             <div className="flex items-baseline">
               <span className="text-[#1455c6] font-extrabold text-xl sm:text-2xl tracking-tight">
                 AVENTA

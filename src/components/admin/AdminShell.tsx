@@ -12,7 +12,6 @@ import {
   Settings,
   Activity,
   LogOut,
-  Shield,
   Home,
 MapPin,
   Megaphone,} from "lucide-react";
@@ -35,9 +34,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
       <header className="border-b bg-background">
         <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-4">
           <Link to="/" className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <Shield className="h-5 w-5" />
-            </div>
+            <img src="/brand/aventa-logo.png" alt="AVENTA SHOP Admin" className="h-9 w-9 rounded-lg object-cover" />
             <div className="flex flex-col leading-tight">
               <span className="text-sm font-semibold">
                 <span className="text-primary">AVENTA</span>

@@ -86,9 +86,7 @@ export function SellerShell({ children }: Props) {
                 {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
               <Link to="/" className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-[#f57224] rounded-lg flex items-center justify-center">
-                  <Store className="w-5 h-5 text-white" />
-                </div>
+                <img src="/brand/aventa-logo.png" alt="AVENTA SHOP Seller" className="w-8 h-8 rounded-lg object-cover" />
                 <div className="hidden sm:block leading-tight">
                   <span className="text-sm font-bold">
                     <span className="text-white">AVENTA</span>
