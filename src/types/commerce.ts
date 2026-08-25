@@ -147,6 +147,7 @@ export interface Order {
   taxRate: number;
   taxLabel: string;
   total: number;
+  platformFee: number;
   couponCode: string | null;
   status: OrderStatus;
   payment: PaymentInfo;

@@ -25,6 +25,14 @@ export interface SiteSettings {
     /** Whether per-product tax overrides the global rate */
     perProductOverride: boolean;
   };
+  commission: {
+    /** Default platform commission rate (percentage 0-100) for new sellers */
+    defaultRate: number;
+    /** Minimum withdrawal amount in currency units */
+    minWithdrawalAmount: number;
+    /** Settlement hold period in days after delivery */
+    holdPeriodDays: number;
+  };
   homepage: {
     heroHeadline: string;
     heroSubheadline: string;

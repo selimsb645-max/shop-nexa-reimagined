@@ -181,6 +181,38 @@ function SettingsAdmin() {
           Save tax settings
         </button>
       </section>
+
+      <section className="rounded-lg border bg-background p-4 space-y-3">
+        <h2 className="text-sm font-semibold">Commission / Platform Fee</h2>
+        <p className="text-xs text-muted-foreground">
+          Configure the default platform commission rate applied to new sellers.
+          Individual seller rates can be overridden from the seller management page.
+        </p>
+        <div className="grid gap-3 md:grid-cols-3">
+          <Num
+            label="Default commission rate (%)"
+            value={s.commission.defaultRate}
+            onChange={(v) => setS({ ...s, commission: { ...s.commission, defaultRate: Math.min(Math.max(v, 0), 100) } })}
+          />
+          <Num
+            label="Min withdrawal amount"
+            value={s.commission.minWithdrawalAmount}
+            onChange={(v) => setS({ ...s, commission: { ...s.commission, minWithdrawalAmount: Math.max(v, 0) } })}
+          />
+          <Num
+            label="Settlement hold period (days)"
+            value={s.commission.holdPeriodDays}
+            onChange={(v) => setS({ ...s, commission: { ...s.commission, holdPeriodDays: Math.max(v, 0) } })}
+          />
+        </div>
+        <button
+          onClick={() => save("commission", { commission: s.commission })}
+          disabled={saving}
+          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+        >
+          Save commission settings
+        </button>
+      </section>
     </div>
   );
 }

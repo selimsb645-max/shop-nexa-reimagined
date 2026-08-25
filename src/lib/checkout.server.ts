@@ -91,6 +91,14 @@ export interface PlaceOrderRequest {
   cartHash?: string | null;
 }
 
+export interface SellerEarningsBreakdown {
+  sellerId: string;
+  sellerSubtotal: number;
+  commissionRate: number;
+  commissionAmount: number;
+  sellerNetEarnings: number;
+}
+
 export interface PlaceOrderResult {
   orderId: string;
   items: Array<{ productId: string; slug: string; title: string; image: string; price: number; quantity: number; subtotal: number }>;
@@ -107,6 +115,8 @@ export interface PlaceOrderResult {
   rewardDiscount: number;
   walletUsed: number;
   total: number;
+  platformFee: number;
+  sellerEarnings: SellerEarningsBreakdown[];
   couponCode: string | null;
   promoCode: string | null;
 }
@@ -318,12 +328,14 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
   let tax = 0;
   let taxRate = 0;
   let taxLabel = "VAT";
+  let siteSettingsData: Record<string, unknown> = {};
   try {
     const settingsDocPath = docPath(projectId, ["settings", "site"]);
     const settingsDocs = await batchGetDocs(projectId, [settingsDocPath]);
     const sDoc = settingsDocs.get(settingsDocPath);
     if (sDoc?.exists) {
       const sd = sDoc.data;
+      siteSettingsData = sd as Record<string, unknown>;
       const taxConfig = sd["tax"] as
         | { enabled?: boolean; rate?: number; label?: string; perProductOverride?: boolean }
         | undefined;
@@ -455,6 +467,33 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
 
   const paymentStatus = req.paymentMethod === "cash_on_delivery" ? "pending" : "unpaid";
 
+  // ── READ SELLER COMMISSION RATES (before writes, so platform fee is known) ──
+  const sellerDocPaths = sellerIds.map((sid) => docPath(projectId, ["sellers", sid]));
+  const sellerDocs =
+    sellerDocPaths.length > 0 ? await batchGetDocs(projectId, sellerDocPaths) : new Map();
+  const sellerCommissionRates = new Map<string, number>();
+  for (const sid of sellerIds) {
+    const sDoc = sellerDocs.get(docPath(projectId, ["sellers", sid]));
+    const sData = sDoc?.exists ? sDoc.data : {};
+    const commissionConfig = siteSettingsData["commission"] as
+      | { defaultRate?: number }
+      | undefined;
+    const globalDefault = (commissionConfig?.defaultRate ?? 8) / 100;
+    const rawRate = Number(sData["commissionRate"] ?? globalDefault);
+    const rate = Number.isFinite(rawRate)
+      ? Math.min(Math.max(rawRate, 0), 1)
+      : Math.min(Math.max(globalDefault, 0), 1);
+    sellerCommissionRates.set(sid, rate);
+  }
+
+  // ── COMPUTE PLATFORM FEE (preliminary, refined later in settlement loop) ──
+  let platformFeeTotal = 0;
+  for (const [sid, sItems] of itemsBySeller.entries()) {
+    const sSub = round2(sItems.reduce((s, it) => s + it.subtotal, 0));
+    const cRate = sellerCommissionRates.get(sid) ?? 0.08;
+    platformFeeTotal = round2(platformFeeTotal + sSub * cRate);
+  }
+
   const writes: FsWrite[] = [];
 
   // Buyer order document.
@@ -479,6 +518,7 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
         rewardDiscount,
         walletUsed,
         total,
+        platformFee: platformFeeTotal,
         couponCode: appliedCoupon,
         promoCode: appliedPromo,
         promoDiscount: promoDiscount,
@@ -566,22 +606,6 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
     writes.push({ delete: docPath(projectId, ["users", req.uid, "cart", l.productId]) });
   }
 
-  // Read seller commission rates from Firestore.
-  const sellerDocPaths = sellerIds.map((sid) => docPath(projectId, ["sellers", sid]));
-  const sellerDocs =
-    sellerDocPaths.length > 0 ? await batchGetDocs(projectId, sellerDocPaths) : new Map();
-  const sellerCommissionRates = new Map<string, number>();
-  for (const sid of sellerIds) {
-    const sDoc = sellerDocs.get(docPath(projectId, ["sellers", sid]));
-    // Read commission rate from Firestore (server-authoritative).
-    // Clamp to [0, 1] to guard against invalid values (negative, >100%, NaN).
-    const rawRate = sDoc?.exists ? Number(sDoc.data["commissionRate"] ?? 0.08) : 0.08;
-    const rate = Number.isFinite(rawRate)
-      ? Math.min(Math.max(rawRate, 0), 1)
-      : 0.08;
-    sellerCommissionRates.set(sid, rate);
-  }
-
   // ====================================================================
   // SETTLEMENT-ENABLED SELLER MIRRORS + NOTIFICATIONS
   // Each seller gets:
@@ -589,6 +613,10 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
   // 2. Immutable settlementTx ledger entry (pending)
   // 3. Notification
   // ====================================================================
+  // Reset platformFeeTotal — recompute with precise pro-rata settlement values
+  platformFeeTotal = 0;
+  const sellerEarningsBreakdown: SellerEarningsBreakdown[] = [];
+
   for (const [sid, sItems] of itemsBySeller.entries()) {
     const sellerSubtotal = round2(sItems.reduce((s, it) => s + it.subtotal, 0));
     const commissionRate = sellerCommissionRates.get(sid) ?? 0.08;
@@ -601,8 +629,19 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
       orderSubtotal: subtotal,
       orderDiscount: discount,
       orderShipping: shipping,
+      orderTax: tax,
       commissionRate,
       nowMs,
+    });
+
+    // Refine platform fee total with precise pro-rata settlement
+    platformFeeTotal = round2(platformFeeTotal + settlement.commissionAmount);
+    sellerEarningsBreakdown.push({
+      sellerId: sid,
+      sellerSubtotal: settlement.sellerSubtotal,
+      commissionRate: settlement.commissionRate,
+      commissionAmount: settlement.commissionAmount,
+      sellerNetEarnings: settlement.sellerNetEarnings,
     });
 
     // Seller order mirror WITH settlement data
@@ -697,6 +736,8 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
     rewardDiscount,
     walletUsed,
     total,
+    platformFee: platformFeeTotal,
+    sellerEarnings: sellerEarningsBreakdown,
     couponCode: appliedCoupon,
     promoCode: appliedPromo,
   };

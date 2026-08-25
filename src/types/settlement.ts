@@ -44,7 +44,8 @@ export interface SellerSettlementBreakdown {
   sellerSubtotal: number;        // Sum of this seller's item subtotals
   sellerDiscountShare: number;    // Pro-rata share of order-level discount
   sellerShippingShare: number;    // Pro-rata share of shipping
-  sellerNetSubtotal: number;      // subtotal - discountShare + shippingShare
+  sellerTaxShare: number;          // Pro-rata share of order tax
+  sellerNetSubtotal: number;      // subtotal - discountShare + shippingShare + taxShare
   commissionRate: number;         // From seller profile (e.g. 0.08 = 8%)
   commissionAmount: number;      // commissionRate * sellerSubtotal
   sellerNetEarnings: number;      // sellerNetSubtotal - commissionAmount

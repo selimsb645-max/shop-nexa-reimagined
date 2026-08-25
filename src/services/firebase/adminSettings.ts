@@ -39,6 +39,11 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     label: "VAT",
     perProductOverride: true,
   },
+  commission: {
+    defaultRate: 8,
+    minWithdrawalAmount: 1000,
+    holdPeriodDays: 7,
+  },
   homepage: {
     heroHeadline: "Shop Smarter. Live Better.",
     heroSubheadline:

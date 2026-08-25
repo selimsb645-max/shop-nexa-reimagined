@@ -154,6 +154,7 @@ describe("computeSellerSettlement — Order → Earnings", () => {
       orderSubtotal: 1000,
       orderDiscount: 100,
       orderShipping: 50,
+      orderTax: 0,
       commissionRate: 0.08,
       nowMs: 1700000000000,
     });
@@ -184,6 +185,7 @@ describe("computeSellerSettlement — Order → Earnings", () => {
       orderSubtotal: 1000,
       orderDiscount: 200,
       orderShipping: 100,
+      orderTax: 0,
       commissionRate: 0.08,
       nowMs: 1700000000000,
     });
@@ -203,6 +205,7 @@ describe("computeSellerSettlement — Order → Earnings", () => {
       orderSubtotal: 1000,
       orderDiscount: 200,
       orderShipping: 100,
+      orderTax: 0,
       commissionRate: 0.1,
       nowMs: 1700000000000,
     });
@@ -226,6 +229,7 @@ describe("computeSellerSettlement — Order → Earnings", () => {
       orderSubtotal: 500,
       orderDiscount: 0,
       orderShipping: 0,
+      orderTax: 0,
       commissionRate: 0.08,
       nowMs: 1700000000000,
     });
@@ -247,6 +251,7 @@ describe("computeSellerSettlement — Order → Earnings", () => {
       orderSubtotal: 1000,
       orderDiscount: 0,
       orderShipping: 0,
+      orderTax: 0,
       commissionRate: 0.05,
       nowMs: 1700000000000,
     });
@@ -258,6 +263,7 @@ describe("computeSellerSettlement — Order → Earnings", () => {
       orderSubtotal: 1000,
       orderDiscount: 0,
       orderShipping: 0,
+      orderTax: 0,
       commissionRate: 0.15,
       nowMs: 1700000000000,
     });
@@ -278,6 +284,7 @@ describe("computeSellerSettlement — Order → Earnings", () => {
       orderSubtotal: 0,
       orderDiscount: 0,
       orderShipping: 0,
+      orderTax: 0,
       commissionRate: 0.08,
       nowMs: 1700000000000,
     });

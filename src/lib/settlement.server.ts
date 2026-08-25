@@ -68,6 +68,7 @@ export function computeSellerSettlement(input: {
   orderSubtotal: number;
   orderDiscount: number;
   orderShipping: number;
+  orderTax: number;
   commissionRate: number;
   nowMs: number;
 }): SellerSettlementBreakdown {
@@ -78,6 +79,7 @@ export function computeSellerSettlement(input: {
     orderSubtotal,
     orderDiscount,
     orderShipping,
+    orderTax,
     commissionRate: rawRate,
     nowMs,
   } = input;
@@ -95,8 +97,9 @@ export function computeSellerSettlement(input: {
   const sellerRatio = orderSubtotal > 0 ? sellerSubtotal / orderSubtotal : 0;
   const sellerDiscountShare = round2(orderDiscount * sellerRatio);
   const sellerShippingShare = round2(orderShipping * sellerRatio);
+  const sellerTaxShare = round2(orderTax * sellerRatio);
 
-  const sellerNetSubtotal = round2(sellerSubtotal - sellerDiscountShare + sellerShippingShare);
+  const sellerNetSubtotal = round2(sellerSubtotal - sellerDiscountShare + sellerShippingShare + sellerTaxShare);
   const commissionAmount = round2(sellerSubtotal * commissionRate);
   const sellerNetEarnings = round2(sellerNetSubtotal - commissionAmount);
 
@@ -106,6 +109,7 @@ export function computeSellerSettlement(input: {
     sellerSubtotal,
     sellerDiscountShare,
     sellerShippingShare,
+    sellerTaxShare,
     sellerNetSubtotal,
     commissionRate,
     commissionAmount,
@@ -165,6 +169,7 @@ export function buildSellerOrderWrite(input: {
         subtotal: s.sellerSubtotal,
         discountShare: s.sellerDiscountShare,
         shippingShare: s.sellerShippingShare,
+        taxShare: s.sellerTaxShare,
         netSubtotal: s.sellerNetSubtotal,
         commissionRate: s.commissionRate,
         commission: s.commissionAmount,
@@ -189,6 +194,7 @@ export function buildSellerOrderWrite(input: {
           sellerSubtotal: s.sellerSubtotal,
           sellerDiscountShare: s.sellerDiscountShare,
           sellerShippingShare: s.sellerShippingShare,
+          sellerTaxShare: s.sellerTaxShare,
           sellerNetSubtotal: s.sellerNetSubtotal,
           commissionRate: s.commissionRate,
           commissionAmount: s.commissionAmount,
@@ -276,7 +282,24 @@ export async function markOrderDeliveredSettlement(input: {
     return { updated: false, eligibleDate: null };
   }
 
-  const eligibleDate = input.deliveredAt + SETTLEMENT_HOLD_DAYS * 24 * 60 * 60 * 1000;
+  // Read configurable hold period from site settings (fallback to default)
+  let holdDays = SETTLEMENT_HOLD_DAYS;
+  try {
+    const settingsDocPath = docPath(projectId, ["settings", "site"]);
+    const settingsDocs = await batchGetDocs(projectId, [settingsDocPath]);
+    const sDoc = settingsDocs.get(settingsDocPath);
+    if (sDoc?.exists) {
+      const commissionConfig = (sDoc.data as Record<string, unknown>)["commission"] as
+        | { holdPeriodDays?: number }
+        | undefined;
+      if (commissionConfig?.holdPeriodDays && commissionConfig.holdPeriodDays > 0) {
+        holdDays = commissionConfig.holdPeriodDays;
+      }
+    }
+  } catch {
+    // Use default
+  }
+  const eligibleDate = input.deliveredAt + holdDays * 24 * 60 * 60 * 1000;
   const nowMs = Date.now();
 
   const writes: FsWrite[] = [
@@ -310,7 +333,7 @@ export async function markOrderDeliveredSettlement(input: {
           amount: 0,
           sellerEarnings: Number(settlement.sellerNetEarnings ?? 0),
           settlementStatus: "hold" as SettlementStatus,
-          note: `Order delivered. Earnings in ${SETTLEMENT_HOLD_DAYS}-day hold period. Eligible: ${new Date(eligibleDate).toISOString()}`,
+          note: `Order delivered. Earnings in ${holdDays}-day hold period. Eligible: ${new Date(eligibleDate).toISOString()}`,
           createdBy: "system",
           createdAt: nowMs,
         }),
