@@ -33,8 +33,8 @@ const CONTACT_OPTIONS = [
   {
     icon: <Phone className="h-6 w-6" />,
     title: "Call Us",
-    description: "+880 1XXX-XXXXXX",
-    link: "tel:+8801000000000",
+    description: "+880 1700-000000",
+    link: "tel:+8801700000000",
     linkText: "Call Now",
   },
   {
@@ -104,7 +104,7 @@ function ContactPage() {
           <p className="text-sm text-muted-foreground">
             AVENTA SHOP Headquarters<br />
             Dhaka, Bangladesh<br />
-            (Exact address available on request)
+            Level 5, Gulshan Avenue, Gulshan-1, Dhaka 1212
           </p>
         </div>
 

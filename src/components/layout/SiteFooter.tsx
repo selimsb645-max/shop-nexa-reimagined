@@ -43,7 +43,7 @@ export function SiteFooter() {
               </li>
               <li>
                 <Link
-                  to="/returns"
+                  to="/returns-policy"
                   className="text-slate-600 hover:text-[#f97316] transition-colors duration-200"
                 >
                   Returns &amp; Refunds
@@ -67,7 +67,7 @@ export function SiteFooter() {
               </li>
               <li>
                 <Link
-                  to="/track-orders"
+                  to="/track-orders-info"
                   className="text-slate-600 hover:text-[#f97316] transition-colors duration-200"
                 >
                   Track Order
@@ -116,7 +116,7 @@ export function SiteFooter() {
               </li>
               <li>
                 <Link
-                  to="/seller"
+                  to="/seller/register"
                   className="text-slate-600 hover:text-[#f97316] transition-colors duration-200"
                 >
                   Become a Seller

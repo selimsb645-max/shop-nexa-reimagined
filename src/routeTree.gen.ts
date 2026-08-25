@@ -12,20 +12,26 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as AffiliateRouteImport } from './routes/affiliate'
+import { Route as BlogRouteImport } from './routes/blog'
 import { Route as CartRouteImport } from './routes/cart'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as DigitalPaymentsRouteImport } from './routes/digital-payments'
 import { Route as FlashSalesRouteImport } from './routes/flash-sales'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as HelpCenterRouteImport } from './routes/help-center'
 import { Route as HowToBuyRouteImport } from './routes/how-to-buy'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as MartRouteImport } from './routes/mart'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as ReturnsPolicyRouteImport } from './routes/returns-policy'
 import { Route as ShopRouteImport } from './routes/shop'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as TrackOrdersInfoRouteImport } from './routes/track-orders-info'
 import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedAddressesRouteImport } from './routes/_authenticated/addresses'
@@ -113,6 +119,16 @@ const AboutRoute = AboutRouteImport.update({
   path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AffiliateRoute = AffiliateRouteImport.update({
+  id: '/affiliate',
+  path: '/affiliate',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogRoute = BlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CartRoute = CartRouteImport.update({
   id: '/cart',
   path: '/cart',
@@ -126,6 +142,11 @@ const CompareRoute = CompareRouteImport.update({
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DigitalPaymentsRoute = DigitalPaymentsRouteImport.update({
+  id: '/digital-payments',
+  path: '/digital-payments',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FlashSalesRoute = FlashSalesRouteImport.update({
@@ -153,6 +174,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MartRoute = MartRouteImport.update({
+  id: '/mart',
+  path: '/mart',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
@@ -168,6 +194,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReturnsPolicyRoute = ReturnsPolicyRouteImport.update({
+  id: '/returns-policy',
+  path: '/returns-policy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ShopRoute = ShopRouteImport.update({
   id: '/shop',
   path: '/shop',
@@ -181,6 +212,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrackOrdersInfoRoute = TrackOrdersInfoRouteImport.update({
+  id: '/track-orders-info',
+  path: '/track-orders-info',
   getParentRoute: () => rootRouteImport,
 } as any)
 const VerifyEmailRoute = VerifyEmailRouteImport.update({
@@ -593,20 +629,26 @@ const AuthenticatedSellerProductsIdEditRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/affiliate': typeof AffiliateRoute
+  '/blog': typeof BlogRoute
   '/cart': typeof CartRoute
   '/compare': typeof CompareRoute
   '/contact': typeof ContactRoute
+  '/digital-payments': typeof DigitalPaymentsRoute
   '/flash-sales': typeof FlashSalesRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/help-center': typeof HelpCenterRoute
   '/how-to-buy': typeof HowToBuyRoute
   '/login': typeof LoginRoute
+  '/mart': typeof MartRoute
   '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/returns-policy': typeof ReturnsPolicyRoute
   '/shop': typeof ShopRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
+  '/track-orders-info': typeof TrackOrdersInfoRoute
   '/verify-email': typeof VerifyEmailRoute
   '/account': typeof AuthenticatedAccountRoute
   '/addresses': typeof AuthenticatedAddressesRoute
@@ -683,20 +725,26 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/affiliate': typeof AffiliateRoute
+  '/blog': typeof BlogRoute
   '/cart': typeof CartRoute
   '/compare': typeof CompareRoute
   '/contact': typeof ContactRoute
+  '/digital-payments': typeof DigitalPaymentsRoute
   '/flash-sales': typeof FlashSalesRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/help-center': typeof HelpCenterRoute
   '/how-to-buy': typeof HowToBuyRoute
   '/login': typeof LoginRoute
+  '/mart': typeof MartRoute
   '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/returns-policy': typeof ReturnsPolicyRoute
   '/shop': typeof ShopRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
+  '/track-orders-info': typeof TrackOrdersInfoRoute
   '/verify-email': typeof VerifyEmailRoute
   '/account': typeof AuthenticatedAccountRoute
   '/addresses': typeof AuthenticatedAddressesRoute
@@ -771,20 +819,26 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/about': typeof AboutRoute
+  '/affiliate': typeof AffiliateRoute
+  '/blog': typeof BlogRoute
   '/cart': typeof CartRoute
   '/compare': typeof CompareRoute
   '/contact': typeof ContactRoute
+  '/digital-payments': typeof DigitalPaymentsRoute
   '/flash-sales': typeof FlashSalesRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/help-center': typeof HelpCenterRoute
   '/how-to-buy': typeof HowToBuyRoute
   '/login': typeof LoginRoute
+  '/mart': typeof MartRoute
   '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/returns-policy': typeof ReturnsPolicyRoute
   '/shop': typeof ShopRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
+  '/track-orders-info': typeof TrackOrdersInfoRoute
   '/verify-email': typeof VerifyEmailRoute
   '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/addresses': typeof AuthenticatedAddressesRoute
@@ -863,20 +917,26 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/about'
+    | '/affiliate'
+    | '/blog'
     | '/cart'
     | '/compare'
     | '/contact'
+    | '/digital-payments'
     | '/flash-sales'
     | '/forgot-password'
     | '/help-center'
     | '/how-to-buy'
     | '/login'
+    | '/mart'
     | '/privacy'
     | '/register'
     | '/reset-password'
+    | '/returns-policy'
     | '/shop'
     | '/sitemap.xml'
     | '/terms'
+    | '/track-orders-info'
     | '/verify-email'
     | '/account'
     | '/addresses'
@@ -953,20 +1013,26 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/about'
+    | '/affiliate'
+    | '/blog'
     | '/cart'
     | '/compare'
     | '/contact'
+    | '/digital-payments'
     | '/flash-sales'
     | '/forgot-password'
     | '/help-center'
     | '/how-to-buy'
     | '/login'
+    | '/mart'
     | '/privacy'
     | '/register'
     | '/reset-password'
+    | '/returns-policy'
     | '/shop'
     | '/sitemap.xml'
     | '/terms'
+    | '/track-orders-info'
     | '/verify-email'
     | '/account'
     | '/addresses'
@@ -1040,20 +1106,26 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/about'
+    | '/affiliate'
+    | '/blog'
     | '/cart'
     | '/compare'
     | '/contact'
+    | '/digital-payments'
     | '/flash-sales'
     | '/forgot-password'
     | '/help-center'
     | '/how-to-buy'
     | '/login'
+    | '/mart'
     | '/privacy'
     | '/register'
     | '/reset-password'
+    | '/returns-policy'
     | '/shop'
     | '/sitemap.xml'
     | '/terms'
+    | '/track-orders-info'
     | '/verify-email'
     | '/_authenticated/account'
     | '/_authenticated/addresses'
@@ -1132,20 +1204,26 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
+  AffiliateRoute: typeof AffiliateRoute
+  BlogRoute: typeof BlogRoute
   CartRoute: typeof CartRoute
   CompareRoute: typeof CompareRoute
   ContactRoute: typeof ContactRoute
+  DigitalPaymentsRoute: typeof DigitalPaymentsRoute
   FlashSalesRoute: typeof FlashSalesRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   HelpCenterRoute: typeof HelpCenterRoute
   HowToBuyRoute: typeof HowToBuyRoute
   LoginRoute: typeof LoginRoute
+  MartRoute: typeof MartRoute
   PrivacyRoute: typeof PrivacyRoute
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ReturnsPolicyRoute: typeof ReturnsPolicyRoute
   ShopRoute: typeof ShopRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
+  TrackOrdersInfoRoute: typeof TrackOrdersInfoRoute
   VerifyEmailRoute: typeof VerifyEmailRoute
   ProductSlugRoute: typeof ProductSlugRoute
   StoreSlugRoute: typeof StoreSlugRoute
@@ -1174,6 +1252,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/affiliate': {
+      id: '/affiliate'
+      path: '/affiliate'
+      fullPath: '/affiliate'
+      preLoaderRoute: typeof AffiliateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog': {
+      id: '/blog'
+      path: '/blog'
+      fullPath: '/blog'
+      preLoaderRoute: typeof BlogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/cart': {
       id: '/cart'
       path: '/cart'
@@ -1193,6 +1285,13 @@ declare module '@tanstack/react-router' {
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/digital-payments': {
+      id: '/digital-payments'
+      path: '/digital-payments'
+      fullPath: '/digital-payments'
+      preLoaderRoute: typeof DigitalPaymentsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/flash-sales': {
@@ -1230,6 +1329,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mart': {
+      id: '/mart'
+      path: '/mart'
+      fullPath: '/mart'
+      preLoaderRoute: typeof MartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/privacy': {
       id: '/privacy'
       path: '/privacy'
@@ -1251,6 +1357,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/returns-policy': {
+      id: '/returns-policy'
+      path: '/returns-policy'
+      fullPath: '/returns-policy'
+      preLoaderRoute: typeof ReturnsPolicyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/shop': {
       id: '/shop'
       path: '/shop'
@@ -1270,6 +1383,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/track-orders-info': {
+      id: '/track-orders-info'
+      path: '/track-orders-info'
+      fullPath: '/track-orders-info'
+      preLoaderRoute: typeof TrackOrdersInfoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/verify-email': {
@@ -2002,20 +2122,26 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AboutRoute: AboutRoute,
+  AffiliateRoute: AffiliateRoute,
+  BlogRoute: BlogRoute,
   CartRoute: CartRoute,
   CompareRoute: CompareRoute,
   ContactRoute: ContactRoute,
+  DigitalPaymentsRoute: DigitalPaymentsRoute,
   FlashSalesRoute: FlashSalesRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   HelpCenterRoute: HelpCenterRoute,
   HowToBuyRoute: HowToBuyRoute,
   LoginRoute: LoginRoute,
+  MartRoute: MartRoute,
   PrivacyRoute: PrivacyRoute,
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  ReturnsPolicyRoute: ReturnsPolicyRoute,
   ShopRoute: ShopRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
+  TrackOrdersInfoRoute: TrackOrdersInfoRoute,
   VerifyEmailRoute: VerifyEmailRoute,
   ProductSlugRoute: ProductSlugRoute,
   StoreSlugRoute: StoreSlugRoute,

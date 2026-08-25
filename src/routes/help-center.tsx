@@ -40,19 +40,19 @@ const HELP_CATEGORIES = [
     icon: <Headphones className="h-6 w-6" />,
     title: "Returns & Refunds",
     description: "Return policy, refund status, exchanges",
-    link: "/returns",
+    link: "/returns-policy",
   },
   {
     icon: <Mail className="h-6 w-6" />,
     title: "Account & Security",
     description: "Login issues, password, verification",
-    link: "/settings",
+    link: "/account",
   },
   {
     icon: <ChevronRight className="h-6 w-6" />,
     title: "Payment & Wallet",
     description: "Payment methods, wallet balance, transactions",
-    link: "/wallet",
+    link: "/_authenticated/wallet",
   },
 ];
 
