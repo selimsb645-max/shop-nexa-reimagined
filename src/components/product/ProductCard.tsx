@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Heart, Star, ShoppingCart } from 'lucide-react';
 import type { Product } from '@/types/commerce';
+import { getOptimizedImageUrl, getResponsiveSrcSet } from "@/services/cloudinary";
 import { formatPrice } from '@/utils/format';
 import { useWishlist } from '@/context/WishlistContext';
 
@@ -133,6 +134,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         <div className="relative w-full aspect-square overflow-hidden bg-slate-50 rounded-t-lg">
           <img
             src={imageUrl}
+            srcSet={getResponsiveSrcSet(getProductImage(product), [200, 300, 400, 600])}
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             alt={product.title || p.name || 'Product image'}
             onError={() => setImageError(true)}
             loading="lazy"
@@ -280,6 +283,8 @@ export const ProductCardCompact: React.FC<ProductCardCompactProps> = ({
         <div className="relative w-full aspect-square overflow-hidden bg-slate-50 rounded-t-lg">
           <img
             src={imageUrl}
+            srcSet={getResponsiveSrcSet(getProductImage(product), [160, 200, 320])}
+            sizes="160px"
             alt={product.title || p.name || 'Product image'}
             onError={() => setImageError(true)}
             loading="lazy"

@@ -27,6 +27,8 @@ import {
   Send,
 } from "lucide-react";
 
+import { getOptimizedImageUrl, getResponsiveSrcSet } from "@/services/cloudinary";
+
 import { BackButton } from "@/components/common/BackButton";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
@@ -481,6 +483,8 @@ export function ProductDetailPage() {
               >
                 <img
                   src={images[selectedImageIndex] || images[0]}
+                  srcSet={getResponsiveSrcSet(images[selectedImageIndex] || images[0], [400, 600, 800, 1200])}
+                  sizes="(max-width: 1024px) 100vw, 40vw"
                   alt={product.title || "Product image"}
                   className={`w-full h-full object-cover object-center transition-transform duration-200 ${
                     isZoomed ? "scale-150 cursor-crosshair" : "scale-100"
@@ -536,8 +540,9 @@ export function ProductDetailPage() {
                       }`}
                     >
                       <img
-                        src={img}
+                        src={getOptimizedImageUrl(img, 120)}
                         alt={`Thumbnail ${idx + 1}`}
+                        loading="lazy"
                         className="w-full h-full object-cover"
                       />
                     </button>
