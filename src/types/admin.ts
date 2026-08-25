@@ -33,6 +33,10 @@ export interface SiteSettings {
     /** Settlement hold period in days after delivery */
     holdPeriodDays: number;
   };
+  inventory: {
+    /** Stock level below which a low-stock alert is triggered */
+    alertThreshold: number;
+  };
   homepage: {
     heroHeadline: string;
     heroSubheadline: string;

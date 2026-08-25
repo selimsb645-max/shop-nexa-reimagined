@@ -44,6 +44,9 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     minWithdrawalAmount: 1000,
     holdPeriodDays: 7,
   },
+  inventory: {
+    alertThreshold: 5,
+  },
   homepage: {
     heroHeadline: "Shop Smarter. Live Better.",
     heroSubheadline:
@@ -68,6 +71,28 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     homepage: { ...DEFAULT_SETTINGS.homepage, ...(d.homepage ?? {}) },
     updatedAt: typeof d.updatedAt === "number" ? d.updatedAt : Date.now(),
   };
+}
+
+/**
+ * Reads a single setting value by dot-path (e.g. "inventory.alertThreshold").
+ * Returns the fallback if settings or the path don't exist.
+ */
+export async function getSiteSetting<T>(
+  path: string,
+  fallback: T,
+): Promise<T> {
+  try {
+    const settings = await getSiteSettings();
+    const parts = path.split(".");
+    let val: unknown = settings as unknown;
+    for (const p of parts) {
+      val = (val as Record<string, unknown>)?.[p];
+      if (val == null) return fallback;
+    }
+    return (val as T) ?? fallback;
+  } catch {
+    return fallback;
+  }
 }
 
 export async function saveSiteSettings(patch: Partial<SiteSettings>): Promise<void> {

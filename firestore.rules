@@ -58,6 +58,12 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    match /settings/{id}/notifications/{nid} {
+      allow read: if isAdmin();
+      allow create: if isAdmin() || isApprovedSeller();
+      allow update, delete: if isAdmin();
+    }
+
     // PRODUCTS
 
     match /products/{id} {

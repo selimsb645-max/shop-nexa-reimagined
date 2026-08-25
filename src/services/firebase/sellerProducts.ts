@@ -13,9 +13,56 @@ import {
   where,
 } from "firebase/firestore";
 import { getDb } from "./config";
+import { getSiteSetting } from "./adminSettings";
 import type { Product } from "@/types/commerce";
 
 const PRODUCTS = "products";
+const LOW_STOCK_FALLBACK = 5;
+
+/**
+ * Checks if stock is at/below threshold and creates a seller notification + admin notification.
+ * Client-side: writes to seller's own notifications (allowed by rules) and settings notifications.
+ */
+async function notifyLowStock(
+  sellerId: string,
+  productId: string,
+  title: string,
+  newStock: number,
+): Promise<void> {
+  if (newStock <= 0) return; // out-of-stock is handled separately
+  const threshold = await getSiteSetting("inventory.alertThreshold", LOW_STOCK_FALLBACK);
+  if (newStock > threshold) return;
+
+  const now = Date.now();
+  const db = getDb();
+
+  // Seller notification
+  await addDoc(collection(db, "sellers", sellerId, "notifications"), {
+    type: "stock_low",
+    title: "Low stock alert",
+    message: `${title} is running low — only ${newStock} left in stock.`,
+    link: "/seller/products",
+    read: false,
+    createdAt: now,
+  });
+
+  // Admin notification
+  try {
+    await addDoc(collection(db, "settings", "site", "notifications"), {
+      type: "stock_low",
+      title: "Low stock alert",
+      message: `${title} (seller: ${sellerId.slice(0, 8)}) is running low — only ${newStock} left in stock.`,
+      link: "/admin/inventory",
+      read: false,
+      productId,
+      sellerId,
+      currentStock: newStock,
+      createdAt: now,
+    });
+  } catch {
+    // Admin notification write may fail if rules don't permit — non-critical
+  }
+}
 
 function nowMs() {
   return Date.now();
@@ -138,6 +185,10 @@ export async function updateSellerProduct(
     sellerId,
     updatedAt: serverTimestamp(),
   });
+  // Low stock check — only if stock changed to a lower value
+  if (input.stock < existing.stock) {
+    await notifyLowStock(sellerId, id, input.title, Math.max(0, Math.floor(input.stock)));
+  }
 }
 
 export async function deleteSellerProduct(sellerId: string, id: string): Promise<void> {
@@ -163,8 +214,13 @@ export async function setProductStock(
 ): Promise<void> {
   const existing = await getSellerProduct(sellerId, id);
   if (!existing) throw new Error("Product not found.");
+  const newStock = Math.max(0, Math.floor(stock));
   await updateDoc(doc(getDb(), PRODUCTS, id), {
-    stock: Math.max(0, Math.floor(stock)),
+    stock: newStock,
     updatedAt: serverTimestamp(),
   });
+  // Low stock check — only if stock went down
+  if (newStock < existing.stock) {
+    await notifyLowStock(sellerId, id, existing.title, newStock);
+  }
 }

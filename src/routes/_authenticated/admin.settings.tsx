@@ -213,6 +213,28 @@ function SettingsAdmin() {
           Save commission settings
         </button>
       </section>
+
+      <section className="rounded-lg border bg-background p-4 space-y-3">
+        <h2 className="text-sm font-semibold">Inventory / Stock Alerts</h2>
+        <p className="text-xs text-muted-foreground">
+          Set the stock threshold below which low-stock notifications are sent
+          to sellers and admins automatically (after order placement or manual stock updates).
+        </p>
+        <div className="grid gap-3 md:grid-cols-2">
+          <Num
+            label="Low stock alert threshold"
+            value={s.inventory.alertThreshold}
+            onChange={(v) => setS({ ...s, inventory: { ...s.inventory, alertThreshold: Math.max(1, Math.floor(v)) } })}
+          />
+        </div>
+        <button
+          onClick={() => save("inventory", { inventory: s.inventory })}
+          disabled={saving}
+          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+        >
+          Save inventory settings
+        </button>
+      </section>
     </div>
   );
 }

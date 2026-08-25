@@ -32,6 +32,7 @@ import {
   type DeliveryZoneId,
 } from "@/data/bd-locations/deliveryZones";
 import { deactivateExpiredCoupons } from "./coupon-expiry.functions";
+import { checkLowStockAndNotify } from "./stock-alert.server";
 
 const POINTS_PER_CURRENCY_REDEEM = 100;
 const MAX_LINE_ITEMS = 100;
@@ -719,6 +720,27 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
   }
 
   await commitWrites(projectId, writes);
+
+  // ── LOW STOCK ALERTS ──
+  // After stock decrement, check if any product dropped to/below threshold.
+  // We compute the projected stock (original - ordered qty) and fire alerts.
+  try {
+    await checkLowStockAndNotify(
+      lines.map((l) => {
+        // Read original stock from the product doc we fetched earlier
+        const prodDoc = docs.get(docPath(projectId, ["products", l.productId]));
+        const originalStock = Number(prodDoc?.data?.["stock"] ?? 0);
+        return {
+          productId: l.productId,
+          sellerId: l.sellerId,
+          title: l.title,
+          currentStock: Math.max(0, originalStock - l.quantity),
+        };
+      }),
+    );
+  } catch {
+    // Low stock alert failure should never block order placement
+  }
 
   return {
     orderId,
