@@ -39,9 +39,7 @@ class MockEmailProvider implements EmailProvider {
   name = "mock";
   async send(to: string, subject: string, html: string) {
     if (typeof console !== "undefined") {
-      console.log(`\n[MOCK EMAIL] To: ${to}`);
-      console.log(`[MOCK EMAIL] Subject: ${subject}`);
-      console.log(`[MOCK EMAIL] HTML length: ${html.length} chars`);
+    if (import.meta.env?.DEV) console.log("[MOCK EMAIL] sent (dev only)");
     }
     return { success: true, providerId: `mock_${Date.now()}` };
   }
@@ -119,8 +117,7 @@ function getEmailProvider(): EmailProvider {
       _provider = new MockEmailProvider();
       break;
   }
-  if (typeof console !== "undefined")
-    console.log(`[EMAIL] Provider initialized: ${_provider.name}`);
+  
   return _provider;
 }
 
@@ -255,16 +252,14 @@ export async function sendTransactionalEmail(params: SendEmailParams): Promise<E
 
   // In-memory duplicate check
   if (_sentKeys.has(idempotencyKey)) {
-    if (typeof console !== "undefined")
-      console.log(`[EMAIL] Duplicate suppressed (in-memory): ${idempotencyKey}`);
+    
     return { delivered: true, provider: "cache", emailId, error: "duplicate_suppressed" };
   }
 
   // Firestore idempotency check
   const alreadySent = await checkIdempotency(idempotencyKey);
   if (alreadySent) {
-    if (typeof console !== "undefined")
-      console.log(`[EMAIL] Duplicate suppressed (firestore): ${idempotencyKey}`);
+    
     return { delivered: true, provider: "cache", emailId, error: "duplicate_suppressed" };
   }
 
@@ -306,7 +301,6 @@ export async function sendTransactionalEmail(params: SendEmailParams): Promise<E
   }
 
   if (typeof console !== "undefined")
-    console.log(`[EMAIL] ${event} \u2192 ${recipient}: ${status} (${provider.name})`);
 
   return { delivered: result.success, provider: provider.name, emailId, error: result.error };
 }

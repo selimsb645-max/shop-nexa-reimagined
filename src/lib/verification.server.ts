@@ -353,8 +353,6 @@ export interface VerificationProvider {
 class MockVerificationProvider implements VerificationProvider {
   name = "mock";
   async sendOtp(phone: string, otp: string) {
-    if (typeof console !== "undefined") {
-      console.log(`[MOCK OTP] ${phone}: ${otp}`);
     }
     return { delivered: true, mock: true };
   }

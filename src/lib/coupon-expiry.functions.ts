@@ -69,7 +69,7 @@ export async function deactivateExpiredCoupons(): Promise<number> {
   }));
 
   await commitWrites(projectId, writes);
-  console.log(`coupon-expiry: deactivated ${expiredDocs.length} expired coupons`);
+  // coupon-expiry: deactivated expired coupons (server log removed)
   return expiredDocs.length;
 }
 

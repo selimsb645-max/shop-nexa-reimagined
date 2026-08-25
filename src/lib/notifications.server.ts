@@ -53,11 +53,6 @@ export interface NotificationProvider {
 class MockNotificationProvider implements NotificationProvider {
   name = "mock";
   async send(payload: NotificationPayload): Promise<NotificationResult> {
-    if (typeof console !== "undefined") {
-      console.log(
-        `[MOCK NOTIFICATION] ${payload.event} → ${payload.phoneNumber}: ${payload.message}`,
-      );
-    }
     return { delivered: true, channel: this.name };
   }
 }
@@ -210,8 +205,6 @@ export async function sendOrderNotification(
   };
 
   // Log security event (no sensitive data)
-  if (typeof console !== "undefined") {
-    console.log(`[NOTIFICATION] ${event} for order ${payload.orderId}`);
   }
 
   const provider = getNotificationProvider();
