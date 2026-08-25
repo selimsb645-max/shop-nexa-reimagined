@@ -87,7 +87,7 @@ export function SellerShell({ children }: Props) {
               </button>
               <Link to="/" className="flex items-center gap-2">
                 <div className="bg-white rounded-lg px-2 py-1">
-                  <img src="/brand/aventa-shop-logo.png" alt="AVENTA SHOP Seller" className="h-5 w-auto object-contain" />
+                  <img src="/brand/aventa-shop-logo.png" alt="AVENTA SHOP Seller" className="h-7 w-auto object-contain" />
                 </div>
                 <div className="hidden sm:block leading-tight">
                   <span className="text-sm font-bold text-slate-400">Seller</span>

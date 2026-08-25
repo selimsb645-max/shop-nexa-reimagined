@@ -122,7 +122,7 @@ export function SiteHeader() {
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 md:gap-8">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
-            <img src="/brand/aventa-shop-logo.png" alt="AVENTA SHOP" className="h-8 sm:h-10 w-auto object-contain transition-transform group-hover:scale-105" />
+            <img src="/brand/aventa-shop-logo.png" alt="AVENTA SHOP" className="h-10 sm:h-12 w-auto object-contain transition-transform group-hover:scale-105" />
           </Link>
 
           {/* Search Bar Center */}
