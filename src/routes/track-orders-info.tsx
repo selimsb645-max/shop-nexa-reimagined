@@ -157,7 +157,7 @@ function TrackOrdersInfoPage() {
             Log in to view your order history and real-time delivery status.
           </p>
           <Link
-            to="/_authenticated/track-orders"
+            to="/track-orders"
             className="mt-4 inline-flex items-center gap-2 justify-center rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
           >
             Track My Orders <ArrowRight className="h-4 w-4" />

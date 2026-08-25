@@ -159,7 +159,7 @@ function Dashboard({ sellerId, profile }: { sellerId: string; profile: SellerPro
         <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
           <QuickAction to="/seller/products/new" icon={<Plus className="w-5 h-5" />} label="Add Product" color="#f57224" />
           <QuickAction to="/seller/orders" icon={<ShoppingBag className="w-5 h-5" />} label="Orders" color="#0ea5e9" />
-          <QuickAction to="/seller/withdrawals" icon={<Banknote className="w-5 h-5" />} label="Withdraw" color="#059669" />
+          <QuickAction to="/seller/settlements" icon={<Banknote className="w-5 h-5" />} label="Withdraw" color="#059669" />
           <QuickAction to="/seller/coupons" icon={<Tag className="w-5 h-5" />} label="Coupons" color="#d97706" />
           <QuickAction to="/seller/analytics" icon={<BarChart3 className="w-5 h-5" />} label="Analytics" color="#6366f1" />
           <QuickAction to="/seller/products" icon={<Boxes className="w-5 h-5" />} label="Inventory" color="#0f172a" />

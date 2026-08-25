@@ -210,7 +210,7 @@ function ReturnsPolicyPage() {
             Log in to your account and start a return request from your order history.
           </p>
           <Link
-            to="/_authenticated/returns"
+            to="/returns"
             className="mt-4 inline-flex items-center gap-2 justify-center rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
           >
             Go to My Returns <ArrowRight className="h-4 w-4" />
