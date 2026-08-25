@@ -15,8 +15,10 @@ import { scale } from "@cloudinary/url-gen/actions/resize";
 
 // ─── Configuration ──────────────────────────────────────────────
 
-const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME as string | undefined;
-const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET as string | undefined;
+// Cloudinary public config — cloud name and unsigned upload preset are safe
+// to ship in client code. Security is enforced via unsigned upload presets.
+const CLOUD_NAME = "cwq5zgzp";
+const UPLOAD_PRESET = "aventa_products";
 
 let cloudinaryInstance: Cloudinary | null = null;
 
