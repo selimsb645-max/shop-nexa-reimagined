@@ -27,7 +27,8 @@ import {
 } from "./settlement.server";
 
 import {
-  detectDeliveryZone,
+  detectDeliveryZoneId,
+  resolveZoneWithSettings,
   DELIVERY_ZONES,
   type DeliveryZoneId,
 } from "@/data/bd-locations/deliveryZones";
@@ -45,15 +46,37 @@ const MAX_QTY_PER_ITEM = 100;
  * Uses the deliveryAddressSnapshot (which is already server-validated) to
  * determine the zone and return the correct charge.
  */
-export function computeDeliveryChargeServer(
+/**
+ * Resolve delivery zone using admin-configured Firestore settings.
+ * This is the AUTHORITATIVE charge — the frontend value is just a preview.
+ *
+ * Reads the deliveryZones config from site settings to get the actual charge
+ * for the customer's zone. Falls back to DELIVERY_ZONES defaults if settings
+ * are not available.
+ */
+export async function computeDeliveryChargeServer(
   deliveryAddressSnapshot: Record<string, unknown> | null | undefined,
-): { zone: DeliveryZoneId; charge: number; label: string } {
+): Promise<{
+  zone: DeliveryZoneId;
+  zoneId: string;
+  zoneName: string;
+  charge: number;
+  label: string;
+  labelBn: string;
+  etaDays: [number, number];
+  resolved: boolean;
+}> {
   if (!deliveryAddressSnapshot) {
     // Fallback: no address → Outside Dhaka charge (safest default)
     return {
       zone: "OUTSIDE_DHAKA",
+      zoneId: "OUTSIDE_DHAKA",
+      zoneName: DELIVERY_ZONES.OUTSIDE_DHAKA.labelEn,
       charge: DELIVERY_ZONES.OUTSIDE_DHAKA.charge,
       label: DELIVERY_ZONES.OUTSIDE_DHAKA.labelEn,
+      labelBn: DELIVERY_ZONES.OUTSIDE_DHAKA.labelBn,
+      etaDays: DELIVERY_ZONES.OUTSIDE_DHAKA.etaDays,
+      resolved: true,
     };
   }
 
@@ -61,13 +84,76 @@ export function computeDeliveryChargeServer(
   const upazilaEn = String(deliveryAddressSnapshot["upazilaEn"] ?? "");
   const thanaEn = String(deliveryAddressSnapshot["thanaEn"] ?? "");
 
-  const result = detectDeliveryZone({
-    districtEn,
-    upazilaEn,
-    thanaEn,
-  });
+  // Read admin-configured delivery zones from Firestore settings
+  let settingsZones: Array<{
+    id: string; labelEn: string; labelBn: string; charge: number;
+    etaDays: [number, number]; description: string; active: boolean; priority: number;
+  }> = [];
+  let fallbackConfig: { fallbackZoneId: string; noZoneBehavior: "block" | "fallback" } = {
+    fallbackZoneId: "OUTSIDE_DHAKA",
+    noZoneBehavior: "fallback",
+  };
 
-  return { zone: result.zone, charge: result.charge, label: result.config.labelEn };
+  try {
+    const projectId = getProjectId();
+    const settingsDocPath = docPath(projectId, ["settings", "site"]);
+    const settingsDocs = await batchGetDocs(projectId, [settingsDocPath]);
+    const sDoc = settingsDocs.get(settingsDocPath);
+    if (sDoc?.exists) {
+      const sd = sDoc.data as Record<string, unknown>;
+      const dz = sd["deliveryZones"] as {
+        zones?: typeof settingsZones;
+        fallbackZoneId?: string;
+        noZoneBehavior?: "block" | "fallback";
+      } | undefined;
+      if (dz?.zones && Array.isArray(dz.zones)) {
+        settingsZones = dz.zones;
+      }
+      if (dz?.fallbackZoneId) fallbackConfig.fallbackZoneId = dz.fallbackZoneId;
+      if (dz?.noZoneBehavior) fallbackConfig.noZoneBehavior = dz.noZoneBehavior;
+    }
+  } catch {
+    // Settings not available — use defaults
+  }
+
+  if (settingsZones.length > 0) {
+    const result = resolveZoneWithSettings(
+      { districtEn, upazilaEn, thanaEn },
+      settingsZones,
+      fallbackConfig,
+    );
+
+    if (!result.resolved && fallbackConfig.noZoneBehavior === "block") {
+      throw new Error(
+        "Delivery is not available for your area. Please select a different delivery address.",
+      );
+    }
+
+    return {
+      zone: result.zone,
+      zoneId: result.zoneId,
+      zoneName: result.zoneName,
+      charge: result.charge,
+      label: result.label,
+      labelBn: result.labelBn,
+      etaDays: result.etaDays,
+      resolved: result.resolved,
+    };
+  }
+
+  // Fallback to defaults
+  const zone = detectDeliveryZoneId({ districtEn, upazilaEn, thanaEn });
+  const config = DELIVERY_ZONES[zone];
+  return {
+    zone,
+    zoneId: config.id,
+    zoneName: config.labelEn,
+    charge: config.charge,
+    label: config.labelEn,
+    labelBn: config.labelBn,
+    etaDays: config.etaDays,
+    resolved: true,
+  };
 }
 
 export interface PlaceOrderRequest {
@@ -100,6 +186,16 @@ export interface SellerEarningsBreakdown {
   sellerNetEarnings: number;
 }
 
+export interface DeliverySnapshot {
+  zoneId: string;
+  zoneName: string;
+  zoneCharge: number;
+  customerDeliveryCharge: number;
+  sellerDeliveryCharge: number;
+  labelBn: string;
+  etaDays: [number, number];
+}
+
 export interface PlaceOrderResult {
   orderId: string;
   items: Array<{ productId: string; slug: string; title: string; image: string; price: number; quantity: number; subtotal: number }>;
@@ -111,8 +207,14 @@ export interface PlaceOrderResult {
   taxLabel: string;
   shipping: number;
   deliveryZone: string;
+  deliveryZoneId: string;
+  deliveryZoneName: string;
   deliveryZoneLabel: string;
   deliveryCharge: number;
+  zoneCharge: number;
+  customerDeliveryCharge: number;
+  sellerDeliveryCharge: number;
+  deliverySnapshot: DeliverySnapshot;
   rewardDiscount: number;
   walletUsed: number;
   total: number;
@@ -184,6 +286,7 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
     quantity: number;
     subtotal: number;
     sellerId: string | null;
+    freeDelivery: boolean;
     updateTime: string | null;
   }
 
@@ -214,6 +317,7 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
       quantity: qty,
       subtotal: round2(price * qty),
       sellerId: (d["sellerId"] as string | null) ?? null,
+      freeDelivery: Boolean(d["freeDelivery"] ?? false),
       updateTime: doc.updateTime,
     });
   }
@@ -315,12 +419,81 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
   const subAfterDiscount = round2(subtotal - discount - promoDiscount);
   // Delivery charge is computed server-side from the address zone.
   // Customer cannot manipulate this — it's based on their delivery address.
+  // Reads admin-configured zone charges from Firestore settings.
   const {
     zone: deliveryZone,
-    charge: deliveryCharge,
+    zoneId: deliveryZoneId,
+    zoneName: deliveryZoneName,
+    charge: zoneCharge,
     label: deliveryZoneLabel,
-  } = computeDeliveryChargeServer(req.deliveryAddressSnapshot);
-  const shipping = deliveryCharge;
+    labelBn: deliveryZoneLabelBn,
+    etaDays: deliveryEtaDays,
+    resolved: deliveryZoneResolved,
+  } = await computeDeliveryChargeServer(req.deliveryAddressSnapshot);
+
+  if (!deliveryZoneResolved) {
+    throw new Error(
+      "Delivery is not available for your area. Please select a different delivery address.",
+    );
+  }
+
+  // ── BUILD ORDER ITEMS & SELLER GROUPS (needed for per-seller delivery) ──
+  const orderItems = lines.map((l) => ({
+    productId: l.productId,
+    slug: l.slug,
+    title: l.title,
+    image: l.image,
+    price: l.price,
+    quantity: l.quantity,
+    subtotal: l.subtotal,
+  }));
+
+  const itemsBySeller = new Map<string, typeof orderItems>();
+  lines.forEach((l, idx) => {
+    if (!l.sellerId) return;
+    const list = itemsBySeller.get(l.sellerId) ?? [];
+    list.push(orderItems[idx]);
+    itemsBySeller.set(l.sellerId, list);
+  });
+
+  // ── PER-SELLER FREE DELIVERY CALCULATION ──
+  // For each seller, determine if ALL their products have freeDelivery=true.
+  // If yes, the seller absorbs the zone charge. Customer pays 0 for that seller.
+  // If ANY product has freeDelivery=false, the customer pays the zone charge.
+  //
+  // In a multi-seller cart, each seller is evaluated independently.
+  // Customer's total delivery = SUM of per-seller customer delivery charges.
+  // Seller-specific delivery liability is stored in the seller order mirror.
+  const sellerDeliveryMap = new Map<string, {
+    sellerDeliveryCharge: number;
+    customerDeliveryCharge: number;
+    allFreeDelivery: boolean;
+  }>();
+  let totalCustomerDelivery = 0;
+  let totalSellerAbsorbed = 0;
+
+  for (const [sid] of itemsBySeller.entries()) {
+    const sellerLines = lines.filter((l) => l.sellerId === sid);
+    const allFreeDelivery = sellerLines.length > 0 && sellerLines.every((l) => l.freeDelivery);
+
+    if (allFreeDelivery) {
+      sellerDeliveryMap.set(sid, {
+        sellerDeliveryCharge: round2(zoneCharge),
+        customerDeliveryCharge: 0,
+        allFreeDelivery: true,
+      });
+      totalSellerAbsorbed = round2(totalSellerAbsorbed + zoneCharge);
+    } else {
+      sellerDeliveryMap.set(sid, {
+        sellerDeliveryCharge: 0,
+        customerDeliveryCharge: round2(zoneCharge),
+        allFreeDelivery: false,
+      });
+      totalCustomerDelivery = round2(totalCustomerDelivery + zoneCharge);
+    }
+  }
+
+  const shipping = totalCustomerDelivery; // Customer-facing total delivery charge
 
   // ── TAX / VAT COMPUTATION (server-side, authoritative) ──
   // Reads the global tax config from site settings. If perProductOverride
@@ -447,23 +620,6 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
   );
   const total = round2(totalBeforeRewardWallet - rewardWalletDeduction);
 
-  const orderItems = lines.map((l) => ({
-    productId: l.productId,
-    slug: l.slug,
-    title: l.title,
-    image: l.image,
-    price: l.price,
-    quantity: l.quantity,
-    subtotal: l.subtotal,
-  }));
-
-  const itemsBySeller = new Map<string, typeof orderItems>();
-  lines.forEach((l, idx) => {
-    if (!l.sellerId) return;
-    const list = itemsBySeller.get(l.sellerId) ?? [];
-    list.push(orderItems[idx]);
-    itemsBySeller.set(l.sellerId, list);
-  });
   const sellerIds = Array.from(itemsBySeller.keys());
 
   const paymentStatus = req.paymentMethod === "cash_on_delivery" ? "pending" : "unpaid";
@@ -514,8 +670,22 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
         taxRate,
         taxLabel,
         deliveryZone,
+        deliveryZoneId,
+        deliveryZoneName,
         deliveryZoneLabel,
-        deliveryCharge,
+        deliveryCharge: shipping,
+        zoneCharge,
+        customerDeliveryCharge: shipping,
+        sellerDeliveryCharge: totalSellerAbsorbed,
+        deliverySnapshot: {
+          zoneId: deliveryZoneId,
+          zoneName: deliveryZoneName,
+          zoneCharge,
+          customerDeliveryCharge: shipping,
+          sellerDeliveryCharge: totalSellerAbsorbed,
+          labelBn: deliveryZoneLabelBn,
+          etaDays: deliveryEtaDays,
+        },
         rewardDiscount,
         walletUsed,
         total,
@@ -622,17 +792,28 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
     const sellerSubtotal = round2(sItems.reduce((s, it) => s + it.subtotal, 0));
     const commissionRate = sellerCommissionRates.get(sid) ?? 0.08;
 
-    // Compute full settlement breakdown with pro-rata discount/shipping
+    // Use pre-computed delivery liability from the delivery map
+    const deliveryInfo = sellerDeliveryMap.get(sid)!;
+    const { sellerDeliveryCharge, customerDeliveryCharge: sellerCustomerDeliveryCharge, allFreeDelivery } = deliveryInfo;
+
+    // Compute full settlement breakdown with delivery snapshot
     const settlement = computeSellerSettlement({
       sellerId: sid,
       orderId,
       sellerSubtotal,
       orderSubtotal: subtotal,
       orderDiscount: discount,
-      orderShipping: shipping,
+      orderShipping: sellerCustomerDeliveryCharge, // Only customer-paid portion
       orderTax: tax,
       commissionRate,
       nowMs,
+      // Delivery zone snapshot (immutable per order)
+      zoneId: deliveryZoneId,
+      zoneName: deliveryZoneName,
+      zoneCharge,
+      customerDeliveryCharge: sellerCustomerDeliveryCharge,
+      sellerDeliveryCharge,
+      freeDelivery: allFreeDelivery,
     });
 
     // Refine platform fee total with precise pro-rata settlement
@@ -645,7 +826,7 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
       sellerNetEarnings: settlement.sellerNetEarnings,
     });
 
-    // Seller order mirror WITH settlement data
+    // Seller order mirror WITH settlement data + delivery snapshot
     writes.push(
       buildSellerOrderWrite({
         projectId,
@@ -659,6 +840,16 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
         paymentMethod: req.paymentMethod,
         paymentStatus,
         shippingAddress: req.shippingAddress,
+        deliverySnapshot: {
+          zoneId: deliveryZoneId,
+          zoneName: deliveryZoneName,
+          zoneCharge,
+          customerDeliveryCharge: sellerCustomerDeliveryCharge,
+          sellerDeliveryCharge,
+          freeDelivery: allFreeDelivery,
+          labelBn: deliveryZoneLabelBn,
+          etaDays: deliveryEtaDays,
+        },
         nowMs,
       }),
     );
@@ -753,8 +944,22 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
     taxLabel,
     shipping,
     deliveryZone,
+    deliveryZoneId,
+    deliveryZoneName,
     deliveryZoneLabel,
-    deliveryCharge,
+    deliveryCharge: shipping,
+    zoneCharge,
+    customerDeliveryCharge: shipping,
+    sellerDeliveryCharge: totalSellerAbsorbed,
+    deliverySnapshot: {
+      zoneId: deliveryZoneId,
+      zoneName: deliveryZoneName,
+      zoneCharge,
+      customerDeliveryCharge: shipping,
+      sellerDeliveryCharge: totalSellerAbsorbed,
+      labelBn: deliveryZoneLabelBn,
+      etaDays: deliveryEtaDays,
+    },
     rewardDiscount,
     walletUsed,
     total,

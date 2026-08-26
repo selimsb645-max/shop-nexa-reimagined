@@ -89,6 +89,7 @@ export interface SellerProductInput {
   colors: string[];
   sizes: string[];
   featured: boolean;
+  freeDelivery: boolean;
   status: "draft" | "published" | "archived";
 }
 
@@ -115,6 +116,7 @@ function toProduct(id: string, data: Record<string, unknown>): Product {
     reviewCount: Number(d.reviewCount ?? 0),
     tags: Array.isArray(d.tags) ? (d.tags as string[]) : [],
     featured: Boolean(d.featured),
+    freeDelivery: Boolean(d.freeDelivery ?? false),
     sellerId: d.sellerId ? String(d.sellerId) : null,
     sku: d.sku ? String(d.sku) : null,
     status: (d.status as "draft" | "published" | "archived") ?? "published",

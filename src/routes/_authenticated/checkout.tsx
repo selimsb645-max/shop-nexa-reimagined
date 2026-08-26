@@ -62,6 +62,7 @@ type EnrichedCartItem = {
   originalPrice?: number;
   sellerName: string;
   sellerVerified: boolean;
+  freeDelivery: boolean;
 };
 
 function round2(n: number): number {
@@ -167,6 +168,7 @@ function CheckoutPage() {
         originalPrice: product?.compareAtPrice ? Number(product.compareAtPrice) : undefined,
         sellerName: sellerInfo?.shopName || "AVENTA SHOP",
         sellerVerified: sellerInfo?.verified ?? false,
+        freeDelivery: Boolean(product?.freeDelivery ?? false),
       } satisfies EnrichedCartItem;
     });
   }, [cartItems, productDetails, sellerProfiles]);
@@ -641,6 +643,11 @@ function CheckoutPage() {
                         {sellerItems[0]?.sellerVerified && (
                           <span className="bg-amber-100 text-amber-800 text-[9px] font-bold px-1.5 py-0.2 rounded border border-amber-200">
                             Verified
+                          </span>
+                        )}
+                        {sellerItems.every((i: EnrichedCartItem) => i.freeDelivery) && (
+                          <span className="bg-emerald-100 text-emerald-700 text-[9px] font-bold px-1.5 py-0.2 rounded border border-emerald-200 ml-auto flex items-center gap-0.5">
+                            <Truck className="w-2.5 h-2.5" /> Free Delivery
                           </span>
                         )}
                       </div>

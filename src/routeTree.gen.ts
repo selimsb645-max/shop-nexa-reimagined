@@ -68,6 +68,7 @@ import { Route as AuthenticatedAdminBannersRouteImport } from './routes/_authent
 import { Route as AuthenticatedAdminCategoriesRouteImport } from './routes/_authenticated/admin.categories'
 import { Route as AuthenticatedAdminCouponsRouteImport } from './routes/_authenticated/admin.coupons'
 import { Route as AuthenticatedAdminDeliveryRouteImport } from './routes/_authenticated/admin.delivery'
+import { Route as AuthenticatedAdminDeliveryZonesRouteImport } from './routes/_authenticated/admin.delivery-zones'
 import { Route as AuthenticatedAdminFinanceRouteImport } from './routes/_authenticated/admin.finance'
 import { Route as AuthenticatedAdminHomepageRouteImport } from './routes/_authenticated/admin.homepage'
 import { Route as AuthenticatedAdminInventoryRouteImport } from './routes/_authenticated/admin.inventory'
@@ -413,6 +414,12 @@ const AuthenticatedAdminDeliveryRoute =
     path: '/delivery',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminDeliveryZonesRoute =
+  AuthenticatedAdminDeliveryZonesRouteImport.update({
+    id: '/delivery-zones',
+    path: '/delivery-zones',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminFinanceRoute =
   AuthenticatedAdminFinanceRouteImport.update({
     id: '/finance',
@@ -697,6 +704,7 @@ export interface FileRoutesByFullPath {
   '/admin/categories': typeof AuthenticatedAdminCategoriesRoute
   '/admin/coupons': typeof AuthenticatedAdminCouponsRoute
   '/admin/delivery': typeof AuthenticatedAdminDeliveryRoute
+  '/admin/delivery-zones': typeof AuthenticatedAdminDeliveryZonesRoute
   '/admin/finance': typeof AuthenticatedAdminFinanceRoute
   '/admin/homepage': typeof AuthenticatedAdminHomepageRoute
   '/admin/inventory': typeof AuthenticatedAdminInventoryRoute
@@ -793,6 +801,7 @@ export interface FileRoutesByTo {
   '/admin/categories': typeof AuthenticatedAdminCategoriesRoute
   '/admin/coupons': typeof AuthenticatedAdminCouponsRoute
   '/admin/delivery': typeof AuthenticatedAdminDeliveryRoute
+  '/admin/delivery-zones': typeof AuthenticatedAdminDeliveryZonesRoute
   '/admin/finance': typeof AuthenticatedAdminFinanceRoute
   '/admin/homepage': typeof AuthenticatedAdminHomepageRoute
   '/admin/inventory': typeof AuthenticatedAdminInventoryRoute
@@ -891,6 +900,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/categories': typeof AuthenticatedAdminCategoriesRoute
   '/_authenticated/admin/coupons': typeof AuthenticatedAdminCouponsRoute
   '/_authenticated/admin/delivery': typeof AuthenticatedAdminDeliveryRoute
+  '/_authenticated/admin/delivery-zones': typeof AuthenticatedAdminDeliveryZonesRoute
   '/_authenticated/admin/finance': typeof AuthenticatedAdminFinanceRoute
   '/_authenticated/admin/homepage': typeof AuthenticatedAdminHomepageRoute
   '/_authenticated/admin/inventory': typeof AuthenticatedAdminInventoryRoute
@@ -991,6 +1001,7 @@ export interface FileRouteTypes {
     | '/admin/categories'
     | '/admin/coupons'
     | '/admin/delivery'
+    | '/admin/delivery-zones'
     | '/admin/finance'
     | '/admin/homepage'
     | '/admin/inventory'
@@ -1087,6 +1098,7 @@ export interface FileRouteTypes {
     | '/admin/categories'
     | '/admin/coupons'
     | '/admin/delivery'
+    | '/admin/delivery-zones'
     | '/admin/finance'
     | '/admin/homepage'
     | '/admin/inventory'
@@ -1184,6 +1196,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/categories'
     | '/_authenticated/admin/coupons'
     | '/_authenticated/admin/delivery'
+    | '/_authenticated/admin/delivery-zones'
     | '/_authenticated/admin/finance'
     | '/_authenticated/admin/homepage'
     | '/_authenticated/admin/inventory'
@@ -1669,6 +1682,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminDeliveryRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/delivery-zones': {
+      id: '/_authenticated/admin/delivery-zones'
+      path: '/delivery-zones'
+      fullPath: '/admin/delivery-zones'
+      preLoaderRoute: typeof AuthenticatedAdminDeliveryZonesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/finance': {
       id: '/_authenticated/admin/finance'
       path: '/finance'
@@ -1977,6 +1997,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminCategoriesRoute: typeof AuthenticatedAdminCategoriesRoute
   AuthenticatedAdminCouponsRoute: typeof AuthenticatedAdminCouponsRoute
   AuthenticatedAdminDeliveryRoute: typeof AuthenticatedAdminDeliveryRoute
+  AuthenticatedAdminDeliveryZonesRoute: typeof AuthenticatedAdminDeliveryZonesRoute
   AuthenticatedAdminFinanceRoute: typeof AuthenticatedAdminFinanceRoute
   AuthenticatedAdminHomepageRoute: typeof AuthenticatedAdminHomepageRoute
   AuthenticatedAdminInventoryRoute: typeof AuthenticatedAdminInventoryRoute
@@ -2001,6 +2022,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminCategoriesRoute: AuthenticatedAdminCategoriesRoute,
   AuthenticatedAdminCouponsRoute: AuthenticatedAdminCouponsRoute,
   AuthenticatedAdminDeliveryRoute: AuthenticatedAdminDeliveryRoute,
+  AuthenticatedAdminDeliveryZonesRoute: AuthenticatedAdminDeliveryZonesRoute,
   AuthenticatedAdminFinanceRoute: AuthenticatedAdminFinanceRoute,
   AuthenticatedAdminHomepageRoute: AuthenticatedAdminHomepageRoute,
   AuthenticatedAdminInventoryRoute: AuthenticatedAdminInventoryRoute,

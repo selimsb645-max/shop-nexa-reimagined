@@ -44,6 +44,13 @@ export interface SellerSettlementBreakdown {
   sellerSubtotal: number;        // Sum of this seller's item subtotals
   sellerDiscountShare: number;    // Pro-rata share of order-level discount
   sellerShippingShare: number;    // Pro-rata share of shipping
+  // Delivery zone snapshot (immutable per order)
+  zoneId: string | null;          // Delivery zone ID at order time
+  zoneName: string | null;        // Zone label at order time
+  zoneCharge: number;             // Admin-configured charge at order time
+  customerDeliveryCharge: number; // What customer pays for delivery
+  sellerDeliveryCharge: number;   // What seller absorbs for delivery
+  freeDelivery: boolean;          // Whether freeDelivery was on for products
   sellerTaxShare: number;          // Pro-rata share of order tax
   sellerNetSubtotal: number;      // subtotal - discountShare + shippingShare + taxShare
   commissionRate: number;         // From seller profile (e.g. 0.08 = 8%)

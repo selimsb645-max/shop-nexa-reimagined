@@ -178,6 +178,31 @@ function OrderDetailAdmin() {
               <span className="text-muted-foreground">{t("admin.shipping")}</span>
               <span>{formatPrice(order.shipping)}</span>
             </div>
+            {order.deliverySnapshot && (
+              <div className="mt-2 rounded-md bg-muted/30 p-3 text-xs space-y-1">
+                <div className="font-semibold text-muted-foreground mb-1">Delivery Zone Breakdown</div>
+                <div className="flex justify-between">
+                  <span>Zone</span>
+                  <span>{order.deliverySnapshot.zoneName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Zone Charge</span>
+                  <span>{formatPrice(order.deliverySnapshot.zoneCharge)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Customer Paid</span>
+                  <span className="font-medium">{formatPrice(order.deliverySnapshot.customerDeliveryCharge)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Seller Absorbed</span>
+                  <span className="font-medium text-orange-600">{formatPrice(order.deliverySnapshot.sellerDeliveryCharge)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>ETA</span>
+                  <span>{order.deliverySnapshot.etaDays[0]}–{order.deliverySnapshot.etaDays[1]} days</span>
+                </div>
+              </div>
+            )}
             {!!order.tax && order.tax > 0 && (
               <div className="flex justify-between">
                 <span className="text-muted-foreground">

@@ -54,6 +54,7 @@ type ProductWithExtras = Product & {
   brand?: string;
   features?: string[];
   freeShipping?: boolean;
+  freeDelivery?: boolean;
   shortDescription?: string;
   soldCount?: number;
   seller?: { name: string; rating: number; responseTime: string; shipOnTime?: number; storeSlug?: string };
@@ -579,7 +580,7 @@ export function ProductDetailPage() {
                       -{discountPercent}% OFF
                     </span>
                   )}
-                  {(product as ProductWithExtras).freeShipping && (
+                  {((product as ProductWithExtras).freeDelivery || (product as ProductWithExtras).freeShipping) && (
                     <span className="bg-[#1a1f3a] text-white text-[11px] font-semibold px-2.5 py-0.5 rounded-md shadow-md flex items-center gap-1">
                       <Truck className="w-3 h-3 text-[#f97316]" /> Free Delivery
                     </span>

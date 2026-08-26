@@ -78,6 +78,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
             <AItem to="/admin/users" icon={<Users className="h-4 w-4" />} label="Users" />
             <AItem to="/admin/orders" icon={<ShoppingBag className="h-4 w-4" />} label="Orders" />
             <AItem to="/admin/delivery" icon={<Truck className="h-4 w-4" />} label="Delivery" />
+          <AItem to="/admin/delivery-zones" icon={<MapPin className="h-4 w-4" />} label="Delivery Zones" />
             <AItem to="/admin/coupons" icon={<Ticket className="h-4 w-4" />} label="Coupons" />
             <AItem to="/admin/promo-codes" icon={<Tag className="h-4 w-4" />} label="Promo Codes" />
             <AItem to="/admin/banners" icon={<ImageIcon className="h-4 w-4" />} label="Banners" />

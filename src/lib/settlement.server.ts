@@ -71,6 +71,13 @@ export function computeSellerSettlement(input: {
   orderTax: number;
   commissionRate: number;
   nowMs: number;
+  // Delivery zone snapshot (immutable per order)
+  zoneId?: string | null;
+  zoneName?: string | null;
+  zoneCharge?: number;
+  customerDeliveryCharge?: number;
+  sellerDeliveryCharge?: number;
+  freeDelivery?: boolean;
 }): SellerSettlementBreakdown {
   const {
     sellerId,
@@ -82,6 +89,12 @@ export function computeSellerSettlement(input: {
     orderTax,
     commissionRate: rawRate,
     nowMs,
+    zoneId = null,
+    zoneName = null,
+    zoneCharge = 0,
+    customerDeliveryCharge = 0,
+    sellerDeliveryCharge = 0,
+    freeDelivery = false,
   } = input;
 
   // Defense-in-depth: clamp commission rate to [0, 1] to prevent invalid
@@ -114,6 +127,13 @@ export function computeSellerSettlement(input: {
     commissionRate,
     commissionAmount,
     sellerNetEarnings,
+    // Delivery zone snapshot (immutable)
+    zoneId,
+    zoneName,
+    zoneCharge,
+    customerDeliveryCharge,
+    sellerDeliveryCharge,
+    freeDelivery,
     settlementStatus: "pending",
     payoutStatus: "none",
     orderCreatedAt: nowMs,
@@ -152,9 +172,19 @@ export function buildSellerOrderWrite(input: {
   paymentMethod: string;
   paymentStatus: string;
   shippingAddress: Record<string, unknown>;
+  deliverySnapshot?: {
+    zoneId: string;
+    zoneName: string;
+    zoneCharge: number;
+    customerDeliveryCharge: number;
+    sellerDeliveryCharge: number;
+    freeDelivery: boolean;
+    labelBn: string;
+    etaDays: [number, number];
+  };
   nowMs: number;
 }): FsWrite {
-  const { projectId, sellerId, orderId, settlement, ...rest } = input;
+  const { projectId, sellerId, orderId, settlement, deliverySnapshot, ...rest } = input;
   const s = settlement;
 
   return {
@@ -206,7 +236,16 @@ export function buildSellerOrderWrite(input: {
           payoutAt: s.payoutAt,
           payoutId: s.payoutId,
           reversalReason: s.reversalReason,
+          // Delivery zone snapshot (immutable per order)
+          zoneId: s.zoneId,
+          zoneName: s.zoneName,
+          zoneCharge: s.zoneCharge,
+          customerDeliveryCharge: s.customerDeliveryCharge,
+          sellerDeliveryCharge: s.sellerDeliveryCharge,
+          freeDelivery: s.freeDelivery,
         },
+        // Delivery snapshot for admin finance visibility
+        deliverySnapshot: deliverySnapshot ?? null,
         tracking: [{ status: "confirmed", note: "Order auto-confirmed", at: rest.nowMs }],
         createdAt: rest.nowMs,
         updatedAt: rest.nowMs,

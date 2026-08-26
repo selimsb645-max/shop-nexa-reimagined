@@ -100,6 +100,7 @@ export const productSchema = z.object({
   colors: z.string().max(400).optional().or(z.literal("")),
   sizes: z.string().max(400).optional().or(z.literal("")),
   featured: z.boolean().optional(),
+  freeDelivery: z.boolean().optional(),
   status: z.enum(["draft", "published", "archived"]),
 });
 export type ProductFormValues = z.infer<typeof productSchema>;

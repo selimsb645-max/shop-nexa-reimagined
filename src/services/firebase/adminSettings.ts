@@ -47,6 +47,42 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   inventory: {
     alertThreshold: 5,
   },
+  deliveryZones: {
+    zones: [
+      {
+        id: "INSIDE_DHAKA",
+        labelEn: "Inside Dhaka City",
+        labelBn: "ঢাকা শহরে",
+        charge: 60,
+        etaDays: [1, 2],
+        description: "Dhaka City Corporation / Dhaka Metro area",
+        active: true,
+        priority: 1,
+      },
+      {
+        id: "DHAKA_SUBURB",
+        labelEn: "Dhaka Suburb",
+        labelBn: "ঢাকার আশেপাশে",
+        charge: 100,
+        etaDays: [2, 3],
+        description: "Savar, Ashulia, Keraniganj, Gazipur, Tongi, Narayanganj, etc.",
+        active: true,
+        priority: 2,
+      },
+      {
+        id: "OUTSIDE_DHAKA",
+        labelEn: "Outside Dhaka",
+        labelBn: "ঢাকার বাইরে",
+        charge: 170,
+        etaDays: [3, 5],
+        description: "Rest of Bangladesh",
+        active: true,
+        priority: 3,
+      },
+    ],
+    fallbackZoneId: "OUTSIDE_DHAKA",
+    noZoneBehavior: "fallback",
+  },
   homepage: {
     heroHeadline: "Shop Smarter. Live Better.",
     heroSubheadline:
@@ -69,6 +105,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     cod: { ...DEFAULT_SETTINGS.cod, ...(d.cod ?? {}) },
     tax: { ...DEFAULT_SETTINGS.tax, ...(d.tax ?? {}) },
     homepage: { ...DEFAULT_SETTINGS.homepage, ...(d.homepage ?? {}) },
+    deliveryZones: { ...DEFAULT_SETTINGS.deliveryZones, ...(d.deliveryZones ?? {}) },
     updatedAt: typeof d.updatedAt === "number" ? d.updatedAt : Date.now(),
   };
 }

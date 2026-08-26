@@ -35,6 +35,7 @@ export interface Product {
   reviewCount: number;
   tags: string[];
   featured: boolean;
+  freeDelivery: boolean;  // Seller-controlled: true = seller pays zone charge, false = customer pays
   sellerId?: string | null;
   sku?: string | null;
   status?: "draft" | "published" | "archived";
@@ -162,8 +163,22 @@ export interface Order {
   deliveryAddressSnapshot?: DeliveryAddressSnapshot | null;
   // Delivery zone snapshot (saved at checkout, never recalculated)
   deliveryZone?: string | null;       // "INSIDE_DHAKA" | "DHAKA_SUBURB" | "OUTSIDE_DHAKA"
+  deliveryZoneId?: string | null;      // Zone ID at order time
+  deliveryZoneName?: string | null;    // Zone name at order time
   deliveryZoneLabel?: string | null;  // Human-readable label
   deliveryCharge?: number | null;     // Charge at time of order (BDT)
+  zoneCharge?: number | null;          // Admin-configured zone charge snapshot
+  customerDeliveryCharge?: number | null;  // What customer paid for delivery
+  sellerDeliveryCharge?: number | null;    // What seller(s) absorbed
+  deliverySnapshot?: {
+    zoneId: string;
+    zoneName: string;
+    zoneCharge: number;
+    customerDeliveryCharge: number;
+    sellerDeliveryCharge: number;
+    labelBn: string;
+    etaDays: [number, number];
+  } | null;
   tracking: TrackingEvent[];
   courierInfo?: CourierInfo | null;
   createdAt: number;

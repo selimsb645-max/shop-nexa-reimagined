@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Heart, Star, ShoppingCart } from 'lucide-react';
 import type { Product } from '@/types/commerce';
+import { Truck } from 'lucide-react';
 import { getOptimizedImageUrl, getResponsiveSrcSet } from "@/services/cloudinary";
 import { formatPrice } from '@/utils/format';
 import { useWishlist } from '@/context/WishlistContext';
@@ -146,6 +147,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           {discountPct > 0 && (
             <div className="absolute top-2 left-2 z-10 bg-[#f57224] text-white text-[11px] font-bold px-1.5 py-0.5 rounded shadow-sm pointer-events-none">
               -{discountPct}%
+            </div>
+          )}
+
+          {/* Free Delivery Badge */}
+          {(product as ProductCardProduct).freeDelivery && (
+            <div className="absolute bottom-2 left-2 z-10 bg-emerald-600 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded shadow-sm flex items-center gap-0.5 pointer-events-none">
+              <Truck className="w-2.5 h-2.5" /> Free Delivery
+            </div>
+          )}
+
+          {/* Free Delivery Badge */}
+          {(product as ProductCardProduct).freeDelivery && (
+            <div className="absolute bottom-2 left-2 z-10 bg-emerald-600 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded shadow-sm flex items-center gap-0.5 pointer-events-none">
+              <Truck className="w-2.5 h-2.5" /> Free Delivery
             </div>
           )}
 

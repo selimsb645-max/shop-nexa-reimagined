@@ -161,7 +161,7 @@ function getProductRating(p: Partial<Product>): number {
 // Helper to check if item is free delivery eligible
 function isProductFreeDelivery(p: Partial<Product>): boolean {
   const extP = p as ExtendedProduct;
-  if (extP.isFreeDelivery || extP.freeShipping || extP.isFreeShipping) {
+  if (extP.freeDelivery || extP.isFreeDelivery || extP.freeShipping || extP.isFreeShipping) {
     return true;
   }
   if (Array.isArray(p.tags) && p.tags.some((t) => t.toLowerCase().includes("free"))) {

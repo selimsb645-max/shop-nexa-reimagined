@@ -1,3 +1,14 @@
+export interface DeliveryZoneSetting {
+  id: string;
+  labelEn: string;
+  labelBn: string;
+  charge: number;
+  etaDays: [number, number];
+  description: string;
+  active: boolean;
+  priority: number;
+}
+
 export interface SiteSettings {
   siteName: string;
   supportEmail: string;
@@ -36,6 +47,13 @@ export interface SiteSettings {
   inventory: {
     /** Stock level below which a low-stock alert is triggered */
     alertThreshold: number;
+  };
+  deliveryZones: {
+    zones: DeliveryZoneSetting[];
+    /** Fallback when no zone matches customer address */
+    fallbackZoneId: string;
+    /** What to do when no zone matches: "block" = prevent checkout, "fallback" = use fallback zone */
+    noZoneBehavior: "block" | "fallback";
   };
   homepage: {
     heroHeadline: string;

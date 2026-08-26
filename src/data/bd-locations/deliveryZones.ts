@@ -6,9 +6,11 @@
  *   DHAKA_SUBURB   → ৳100 (Savar, Ashulia, Keraniganj, Gazipur, Tongi, Narayanganj, etc.)
  *   OUTSIDE_DHAKA  → ৳170 (Rest of Bangladesh)
  *
- * Admin can override charges or add/remove areas from any zone.
+ * Admin can override charges, enable/disable zones, and add/remove areas via
+ * the Admin Delivery Zones UI (stored in Firestore settings/site.deliveryZones).
  *
- * DO NOT hardcode delivery charges anywhere else — always import from here.
+ * DO NOT hardcode delivery charges anywhere else — always import from here
+ * or read from Firestore settings.
  */
 
 // ── Zone Types ──
@@ -22,9 +24,11 @@ export interface DeliveryZoneConfig {
   charge: number; // in BDT (৳)
   etaDays: [number, number];
   description: string;
+  active: boolean;
+  priority: number;
 }
 
-// ── Zone Definitions (Admin-adjustable) ──
+// ── Default Zone Definitions (fallback when Firestore settings unavailable) ──
 
 export const DELIVERY_ZONES: Record<DeliveryZoneId, DeliveryZoneConfig> = {
   INSIDE_DHAKA: {
@@ -34,6 +38,8 @@ export const DELIVERY_ZONES: Record<DeliveryZoneId, DeliveryZoneConfig> = {
     charge: 60,
     etaDays: [1, 2],
     description: "Dhaka City Corporation / Dhaka Metro area",
+    active: true,
+    priority: 1,
   },
   DHAKA_SUBURB: {
     id: "DHAKA_SUBURB",
@@ -42,6 +48,8 @@ export const DELIVERY_ZONES: Record<DeliveryZoneId, DeliveryZoneConfig> = {
     charge: 100,
     etaDays: [2, 3],
     description: "Savar, Ashulia, Keraniganj, Gazipur, Tongi, Narayanganj, etc.",
+    active: true,
+    priority: 2,
   },
   OUTSIDE_DHAKA: {
     id: "OUTSIDE_DHAKA",
@@ -50,81 +58,31 @@ export const DELIVERY_ZONES: Record<DeliveryZoneId, DeliveryZoneConfig> = {
     charge: 170,
     etaDays: [3, 5],
     description: "Rest of Bangladesh",
+    active: true,
+    priority: 3,
   },
 };
 
 // ── Area Mappings ──
 
-/**
- * INSIDE_DHAKA thanas (Dhaka City Corporation area).
- * These are the thanaEn values from post office data that fall within
- * Dhaka City Corporation / Dhaka Metro.
- */
 export const DHAKA_CITY_THANAS = new Set([
-  "Demra",
-  "Dhaka",
-  "Dhanmondi",
-  "Gulshan",
-  "Jatrabari",
-  "Khilgaon",
-  "Khilkhet",
-  "Lalbag",
-  "Mirpur",
-  "Mohammadpur",
-  "Motijheel",
-  "New Market",
-  "Palton",
-  "Ramna",
-  "Sabujbag",
-  "Sutrapur",
-  "Tejgaon",
-  "Tejgaon Industrial Area",
+  "Demra", "Dhaka", "Dhanmondi", "Gulshan", "Jatrabari", "Khilgaon",
+  "Khilkhet", "Lalbag", "Mirpur", "Mohammadpur", "Motijheel", "New Market",
+  "Palton", "Ramna", "Sabujbag", "Sutrapur", "Tejgaon", "Tejgaon Industrial Area",
   "Uttara",
 ]);
 
-/**
- * DHAKA_SUBURB — upazila names (matched against upazilaEn or thanaEn).
- * These are areas near Dhaka that are NOT in the city corporation
- * but are serviceable as suburb delivery.
- */
 export const DHAKA_SUBURB_UPAZILAS = new Set([
-  // Dhaka district (non-city upazilas)
-  "Savar",
-  "Dhamrai",
-  "Keraniganj",
-  "Nawabganj",
-  "Dohar",
-  // Gazipur district
-  "Gazipur Sadar",
-  "Kaliakair",
-  "Kaliganj",
-  "Kapasia",
-  "Sreepur",
-  // Narayanganj district
-  "Narayanganj Sadar",
-  "Bandar",
-  "Araihazar",
-  "Rupganj",
-  "Sonargaon",
-  // Munshiganj (Tongibari is close to Dhaka)
+  "Savar", "Dhamrai", "Keraniganj", "Nawabganj", "Dohar",
+  "Gazipur Sadar", "Kaliakair", "Kaliganj", "Kapasia", "Sreepur",
+  "Narayanganj Sadar", "Bandar", "Araihazar", "Rupganj", "Sonargaon",
   "Tongibari",
 ]);
 
-/**
- * DHAKA_SUBURB — district names.
- * If the entire district is considered suburb (simpler matching).
- * Gazipur and Narayanganj districts are entirely suburb zone.
- */
 export const DHAKA_SUBURB_DISTRICTS = new Set([
-  "Gazipur",
-  "Narayanganj",
+  "Gazipur", "Narayanganj",
 ]);
 
-/**
- * Districts that are part of Dhaka district (id 47).
- * The Dhaka district has both city and non-city areas, so we
- * need to check thana/upazila level for Dhaka district.
- */
 export const DHAKA_DISTRICT_NAMES = new Set([
   "Dhaka",
 ]);
@@ -141,56 +99,148 @@ export interface DeliveryLocationInput {
 }
 
 /**
- * Determine the delivery zone for a given location.
- * Returns the zone id and charge.
- *
- * Matching priority:
- * 1. If district is Gazipur or Narayanganj → DHAKA_SUBURB
- * 2. If district is Dhaka:
- *    a. If thana is in DHAKA_CITY_THANAS → INSIDE_DHAKA
- *    b. If upazila/thana is in DHAKA_SUBURB_UPAZILAS → DHAKA_SUBURB
- *    c. Default for Dhaka district → INSIDE_DHAKA (city corp)
- * 3. Everything else → OUTSIDE_DHAKA
+ * Detect which zone a location belongs to (zone ID only — does NOT read charge).
+ * Charge must come from admin-configured Firestore settings, not hardcoded here.
  */
-export function detectDeliveryZone(
+export function detectDeliveryZoneId(
   location: DeliveryLocationInput,
-): { zone: DeliveryZoneId; charge: number; config: DeliveryZoneConfig } {
+): DeliveryZoneId {
   const district = (location.districtEn ?? "").trim();
   const upazila = (location.upazilaEn ?? "").trim();
   const thana = (location.thanaEn ?? "").trim();
 
-  // Check suburb districts first (Gazipur, Narayanganj = entire district is suburb)
   if (DHAKA_SUBURB_DISTRICTS.has(district)) {
-    return { zone: "DHAKA_SUBURB", charge: DELIVERY_ZONES.DHAKA_SUBURB.charge, config: DELIVERY_ZONES.DHAKA_SUBURB };
+    return "DHAKA_SUBURB";
   }
 
-  // Dhaka district — need thana/upazila level matching
   if (DHAKA_DISTRICT_NAMES.has(district)) {
-    // Check if thana is a Dhaka city thana
     if (DHAKA_CITY_THANAS.has(thana)) {
-      return { zone: "INSIDE_DHAKA", charge: DELIVERY_ZONES.INSIDE_DHAKA.charge, config: DELIVERY_ZONES.INSIDE_DHAKA };
+      return "INSIDE_DHAKA";
     }
-    // Check if upazila/thana is a suburb upazila
     if (DHAKA_SUBURB_UPAZILAS.has(upazila) || DHAKA_SUBURB_UPAZILAS.has(thana)) {
-      return { zone: "DHAKA_SUBURB", charge: DELIVERY_ZONES.DHAKA_SUBURB.charge, config: DELIVERY_ZONES.DHAKA_SUBURB };
+      return "DHAKA_SUBURB";
     }
-    // Default: if it's in Dhaka district but not in suburb list, treat as city
-    return { zone: "INSIDE_DHAKA", charge: DELIVERY_ZONES.INSIDE_DHAKA.charge, config: DELIVERY_ZONES.INSIDE_DHAKA };
+    return "INSIDE_DHAKA";
   }
 
-  // Everything else is outside Dhaka
-  return { zone: "OUTSIDE_DHAKA", charge: DELIVERY_ZONES.OUTSIDE_DHAKA.charge, config: DELIVERY_ZONES.OUTSIDE_DHAKA };
+  return "OUTSIDE_DHAKA";
+}
+
+/**
+ * Backward-compatible: detect zone AND return charge from default DELIVERY_ZONES.
+ * For server-side use where admin-configured charges are needed, use
+ * resolveZoneWithSettings() instead.
+ */
+export function detectDeliveryZone(
+  location: DeliveryLocationInput,
+): { zone: DeliveryZoneId; charge: number; config: DeliveryZoneConfig } {
+  const zone = detectDeliveryZoneId(location);
+  const config = DELIVERY_ZONES[zone];
+  return { zone, charge: config.charge, config };
+}
+
+/**
+ * Resolve a zone using admin-configured settings from Firestore.
+ * This is the authoritative path — charges come from admin config, not hardcoded.
+ *
+ * `settingsZones` is the deliveryZones.zones array from site settings.
+ * Falls back to DELIVERY_ZONES defaults if a zone is not found in settings.
+ */
+export function resolveZoneWithSettings(
+  location: DeliveryLocationInput,
+  settingsZones: Array<{
+    id: string;
+    labelEn: string;
+    labelBn: string;
+    charge: number;
+    etaDays: [number, number];
+    description: string;
+    active: boolean;
+    priority: number;
+  }>,
+  fallbackConfig?: { fallbackZoneId: string; noZoneBehavior: "block" | "fallback" },
+): {
+  zone: DeliveryZoneId;
+  charge: number;
+  label: string;
+  labelBn: string;
+  etaDays: [number, number];
+  zoneId: string;
+  zoneName: string;
+  resolved: boolean;
+} {
+  const detectedZone = detectDeliveryZoneId(location);
+
+  // Find the zone in admin-configured settings
+  const settingsZone = settingsZones.find((z) => z.id === detectedZone);
+
+  if (settingsZone) {
+    if (!settingsZone.active) {
+      // Zone is disabled — check fallback behavior
+      if (fallbackConfig?.noZoneBehavior === "block") {
+        return {
+          zone: detectedZone,
+          charge: 0,
+          label: settingsZone.labelEn,
+          labelBn: settingsZone.labelBn,
+          etaDays: settingsZone.etaDays,
+          zoneId: settingsZone.id,
+          zoneName: settingsZone.labelEn,
+          resolved: false,
+        };
+      }
+      // Fallback to fallback zone
+      const fbZone = settingsZones.find((z) => z.id === fallbackConfig?.fallbackZoneId);
+      if (fbZone && fbZone.active) {
+        return {
+          zone: fbZone.id as DeliveryZoneId,
+          charge: fbZone.charge,
+          label: fbZone.labelEn,
+          labelBn: fbZone.labelBn,
+          etaDays: fbZone.etaDays,
+          zoneId: fbZone.id,
+          zoneName: fbZone.labelEn,
+          resolved: true,
+        };
+      }
+    }
+
+    return {
+      zone: detectedZone,
+      charge: settingsZone.charge,
+      label: settingsZone.labelEn,
+      labelBn: settingsZone.labelBn,
+      etaDays: settingsZone.etaDays,
+      zoneId: settingsZone.id,
+      zoneName: settingsZone.labelEn,
+      resolved: true,
+    };
+  }
+
+  // Zone not in settings — fall back to defaults
+  const defaultConfig = DELIVERY_ZONES[detectedZone];
+  return {
+    zone: detectedZone,
+    charge: defaultConfig.charge,
+    label: defaultConfig.labelEn,
+    labelBn: defaultConfig.labelBn,
+    etaDays: defaultConfig.etaDays,
+    zoneId: defaultConfig.id,
+    zoneName: defaultConfig.labelEn,
+    resolved: true,
+  };
 }
 
 /**
  * Get the delivery charge for a location (convenience function).
+ * Uses default DELIVERY_ZONES — for admin-configured charges, use resolveZoneWithSettings.
  */
 export function getDeliveryCharge(location: DeliveryLocationInput): number {
   return detectDeliveryZone(location).charge;
 }
 
 /**
- * Get zone config by zone id.
+ * Get zone config by zone id (from defaults).
  */
 export function getZoneConfig(zoneId: DeliveryZoneId): DeliveryZoneConfig {
   return DELIVERY_ZONES[zoneId];
