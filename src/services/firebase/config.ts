@@ -32,7 +32,7 @@ let authInstance: Auth | null = null;
 let dbInstance: Firestore | null = null;
 let storageInstance: FirebaseStorage | null = null;
 
-function getApp(): FirebaseApp {
+export function getApp(): FirebaseApp {
   if (!firebaseConfigured) {
     throw new Error(
       "Firebase is not configured. Add your Firebase web config to a .env file (see .env.example).",

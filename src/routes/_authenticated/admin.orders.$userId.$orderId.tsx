@@ -8,6 +8,7 @@ import {
   updateOrderStatusAdmin,
 } from "@/services/firebase/adminOrders";
 import { logActivity } from "@/services/firebase/adminLogs";
+import { pushNotification } from "@/services/firebase/notifications";
 import { useAuth } from "@/context/AuthContext";
 import { Spinner } from "@/components/common/Spinner";
 import { formatPrice, formatDateTime } from "@/utils/format";
@@ -60,6 +61,29 @@ function OrderDetailAdmin() {
     try {
       const idToken = await user.getIdToken();
       await updateOrderStatusAdmin(userId, orderId, status, note);
+
+      // Send in-app notification to customer
+      try {
+        const statusLabels: Record<string, string> = {
+          confirmed: "Order Confirmed",
+          processing: "Order Processing",
+          shipped: "Order Shipped",
+          out_for_delivery: "Out for Delivery",
+          delivered: "Order Delivered",
+          cancelled: "Order Cancelled",
+          refunded: "Refund Processed",
+        };
+        const label = statusLabels[status] || `Order ${status}`;
+        await pushNotification(userId, {
+          type: "order",
+          title: label,
+          message: `Your order #${orderId.slice(-8)} has been ${status}.`,
+          link: "/orders",
+        });
+      } catch {
+        // Non-critical — don't block order update
+      }
+
       await logActivity(
         { uid: user.uid, email: user.email },
         "order.status_update",

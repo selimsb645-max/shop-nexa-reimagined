@@ -29,6 +29,7 @@ import {
 import { ServicePageLayout } from "@/components/common/ServicePageLayout";
 import { Spinner } from "@/components/common/Spinner";
 import { useAuth } from "@/context/AuthContext";
+import { usePushNotifications } from "@/context/PushNotificationContext";
 import { useI18n } from "@/i18n/I18nContext";
 import { getCustomerSettings, saveCustomerSettings } from "@/services/firebase/customerSettings";
 import { resetPassword, signOut } from "@/services/firebase/auth";
@@ -221,13 +222,7 @@ function SettingsPage() {
               checked={form.smsOrderUpdates}
               onToggle={toggle("smsOrderUpdates")}
             />
-            <DarazToggleRow
-              icon={<Bell className="h-5 w-5" />}
-              label={t("settings.pushNotifications")}
-              hint={t("settings.pushNotificationsHint")}
-              checked={form.pushNotifications}
-              onToggle={toggle("pushNotifications")}
-            />
+            <PushNotificationToggle />
           </div>
         </DarazCard>
 
@@ -568,5 +563,45 @@ function DarazLinkRow({
       </div>
       <ChevronRight className="h-4 w-4 shrink-0 text-gray-300" strokeWidth={2.5} />
     </Link>
+  );
+}
+
+
+function PushNotificationToggle() {
+  const { supported, permission, enabled, enable, disable } = usePushNotifications();
+  const { t } = useI18n();
+
+  if (!supported) {
+    return (
+      <div className="flex items-center gap-3 p-4 opacity-60">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-orange-50 text-orange-500">
+          <Bell className="h-5 w-5" strokeWidth={2} />
+        </span>
+        <div className="flex-1">
+          <div className="text-sm font-medium text-slate-800">{t("settings.pushNotifications")}</div>
+          <div className="text-xs text-slate-400">Push notifications are not supported on this device</div>
+        </div>
+      </div>
+    );
+  }
+
+  const isChecked = enabled || permission === "granted";
+
+  async function handleToggle() {
+    if (isChecked) {
+      await disable();
+    } else {
+      await enable();
+    }
+  }
+
+  return (
+    <DarazToggleRow
+      icon={<Bell className="h-5 w-5" />}
+      label={t("settings.pushNotifications")}
+      hint={isChecked ? "Enabled — you'll receive order updates on this device" : "Get order status updates as push notifications"}
+      checked={isChecked}
+      onToggle={handleToggle}
+    />
   );
 }

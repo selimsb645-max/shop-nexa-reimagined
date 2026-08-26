@@ -14,6 +14,8 @@ import { CartProvider } from "../context/CartContext";
 import { WishlistProvider } from "../context/WishlistContext";
 import { I18nProvider } from "../i18n/I18nContext";
 import { MobileBottomNav } from "../components/layout/MobileBottomNav";
+import { PushNotificationProvider } from "../context/PushNotificationContext";
+import { PWAInstallPrompt } from "../components/layout/PWAInstallPrompt";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -80,9 +82,24 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
+    links: [
+      {
+        rel: "stylesheet",
+        href: appCss,
+      },
+      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "manifest", href: "/manifest.json" },
+      { rel: "apple-touch-icon", href: "/brand/aventa-shop-logo.png" },
+    ],
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=5" },
+      { name: "theme-color", content: "#f57224" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
+      { name: "apple-mobile-web-app-title", content: "AVENTA SHOP" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "application-name", content: "AVENTA SHOP" },
       { title: "AVENTA SHOP - Shop Smarter. Live Better." },
       { name: "description", content: "AVENTA SHOP is your one-stop online shop for electronics, fashion, grocery, beauty and more. Top quality products at unbeatable prices with free delivery over $50." },
       { name: "author", content: "AVENTA SHOP" },
@@ -91,13 +108,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@AventaShop" },
-    ],
-    links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
   }),
   shellComponent: RootShell,
@@ -126,18 +136,21 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <I18nBridge>
-          <CartProvider>
-            <WishlistProvider>
+        <PushNotificationProvider>
+          <I18nBridge>
+            <CartProvider>
+              <WishlistProvider>
               {/* Required: nested routes render here. */}
               <div className="animate-fade-in pb-24 md:pb-0">
                 <Outlet />
               </div>
               <MobileBottomNav />
+              <PWAInstallPrompt />
               <Toaster position="top-right" richColors />
-            </WishlistProvider>
-          </CartProvider>
-        </I18nBridge>
+              </WishlistProvider>
+            </CartProvider>
+          </I18nBridge>
+        </PushNotificationProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
