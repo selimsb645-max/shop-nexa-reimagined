@@ -141,6 +141,7 @@ describe("computeSellerSettlement — commission rate", () => {
       orderSubtotal: 1000,
       orderDiscount: 0,
       orderShipping: 0,
+      orderTax: 0,
       commissionRate: 0.1,
       nowMs: 1700000000000,
     });
@@ -160,6 +161,7 @@ describe("computeSellerSettlement — commission rate", () => {
       orderSubtotal: 1000,
       orderDiscount: 0,
       orderShipping: 0,
+      orderTax: 0,
       commissionRate: 0.15,
       nowMs: 1700000000000,
     });
@@ -179,6 +181,7 @@ describe("computeSellerSettlement — commission rate", () => {
       orderSubtotal: 1000,
       orderDiscount: 0,
       orderShipping: 0,
+      orderTax: 0,
       commissionRate: 0.08,
       nowMs: 1700000000000,
     });
@@ -198,6 +201,7 @@ describe("computeSellerSettlement — commission rate", () => {
       orderSubtotal: 1000,
       orderDiscount: 100,
       orderShipping: 50,
+      orderTax: 0,
       commissionRate: 0.1,
       nowMs: 1700000000000,
     });
@@ -209,6 +213,7 @@ describe("computeSellerSettlement — commission rate", () => {
       orderSubtotal: 1000,
       orderDiscount: 100,
       orderShipping: 50,
+      orderTax: 0,
       commissionRate: 0.15,
       nowMs: 1700000000000,
     });
@@ -241,6 +246,7 @@ describe("Rate Freezing — settlement record stores rate at creation", () => {
       orderSubtotal: 1000,
       orderDiscount: 0,
       orderShipping: 0,
+      orderTax: 0,
       commissionRate: 0.1,
       nowMs: 1700000000000,
     });
@@ -262,6 +268,7 @@ describe("Rate Freezing — settlement record stores rate at creation", () => {
       orderSubtotal: 1000,
       orderDiscount: 0,
       orderShipping: 0,
+      orderTax: 0,
       commissionRate: 0.1,
       nowMs: 1700000000000,
     });
@@ -283,6 +290,7 @@ describe("Rate Freezing — settlement record stores rate at creation", () => {
       orderSubtotal: 1000,
       orderDiscount: 0,
       orderShipping: 0,
+      orderTax: 0,
       commissionRate: 0.15,
       nowMs: 1700000000000,
     });
@@ -457,6 +465,7 @@ describe("Invalid Commission Rate Handling", () => {
       orderSubtotal: 1000,
       orderDiscount: 0,
       orderShipping: 0,
+      orderTax: 0,
       commissionRate: -0.05, // Negative rate → clamped to 0
       nowMs: 1700000000000,
     });
@@ -477,6 +486,7 @@ describe("Invalid Commission Rate Handling", () => {
       orderSubtotal: 1000,
       orderDiscount: 0,
       orderShipping: 0,
+      orderTax: 0,
       commissionRate: 1.5, // 150% → clamped to 100%
       nowMs: 1700000000000,
     });
@@ -497,6 +507,7 @@ describe("Invalid Commission Rate Handling", () => {
       orderSubtotal: 1000,
       orderDiscount: 0,
       orderShipping: 0,
+      orderTax: 0,
       commissionRate: NaN,
       nowMs: 1700000000000,
     });
@@ -516,6 +527,7 @@ describe("Invalid Commission Rate Handling", () => {
       orderSubtotal: 1000,
       orderDiscount: 0,
       orderShipping: 0,
+      orderTax: 0,
       commissionRate: Infinity,
       nowMs: 1700000000000,
     });

@@ -179,6 +179,7 @@ describe("Earnings — Order → Settlement Computation", () => {
       orderSubtotal: 1000,
       orderDiscount: 0,
       orderShipping: 60,
+      orderTax: 0,
       commissionRate: 0.08,
       nowMs: 1000000,
     });
@@ -203,6 +204,7 @@ describe("Earnings — Order → Settlement Computation", () => {
       orderSubtotal: 2000,
       orderDiscount: 200,
       orderShipping: 100,
+      orderTax: 0,
       commissionRate: 0.08,
       nowMs: 1000000,
     });
@@ -231,6 +233,7 @@ describe("Earnings — Order → Settlement Computation", () => {
       orderSubtotal: 100,
       orderDiscount: 0,
       orderShipping: 0,
+      orderTax: 0,
       commissionRate: -0.5,
       nowMs: 1000000,
     });
@@ -244,6 +247,7 @@ describe("Earnings — Order → Settlement Computation", () => {
       orderSubtotal: 100,
       orderDiscount: 0,
       orderShipping: 0,
+      orderTax: 0,
       commissionRate: 1.5,
       nowMs: 1000000,
     });
@@ -259,6 +263,7 @@ describe("Earnings — Order → Settlement Computation", () => {
       orderSubtotal: 0,
       orderDiscount: 100,
       orderShipping: 50,
+      orderTax: 0,
       commissionRate: 0.08,
       nowMs: 1000000,
     });
@@ -552,6 +557,7 @@ describe("Edge Cases", () => {
       orderSubtotal: 0,
       orderDiscount: 0,
       orderShipping: 0,
+      orderTax: 0,
       commissionRate: 0.08,
       nowMs: 1000000,
     });
@@ -568,6 +574,7 @@ describe("Edge Cases", () => {
       orderSubtotal: 100,
       orderDiscount: 0,
       orderShipping: 0,
+      orderTax: 0,
       commissionRate: NaN,
       nowMs: 1000000,
     });
@@ -585,6 +592,7 @@ describe("Edge Cases", () => {
       orderSubtotal: 100,
       orderDiscount: 0,
       orderShipping: 0,
+      orderTax: 0,
       commissionRate: Infinity,
       nowMs: 1000000,
     });
@@ -624,6 +632,7 @@ describe("Settlement Status Transitions — Amount Consistency", () => {
       orderSubtotal: 500,
       orderDiscount: 0,
       orderShipping: 50,
+      orderTax: 0,
       commissionRate: 0.08,
       nowMs: 1000000,
     });
@@ -655,6 +664,7 @@ describe("Settlement Status Transitions — Amount Consistency", () => {
       orderSubtotal: 800,
       orderDiscount: 0,
       orderShipping: 0,
+      orderTax: 0,
       commissionRate: 0.1, // 10%
       nowMs: 1000000,
     });

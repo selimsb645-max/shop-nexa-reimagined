@@ -11,6 +11,7 @@ import {
   DollarSign,
   ArrowRight,
   Info,
+  CheckCircle2,
 } from "lucide-react";
 import { buildMetaTags } from "@/lib/seo";
 

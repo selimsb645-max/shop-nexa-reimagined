@@ -110,6 +110,7 @@ describe("computeSellerSettlement — Commission Rate Calculation", () => {
       orderSubtotal: 1000,
       orderDiscount: 0,
       orderShipping: 0,
+      orderTax: 0,
       commissionRate: 0.1,
       nowMs: 1000000,
     });
@@ -128,6 +129,7 @@ describe("computeSellerSettlement — Commission Rate Calculation", () => {
       orderSubtotal: 1000,
       orderDiscount: 0,
       orderShipping: 0,
+      orderTax: 0,
       commissionRate: 0.15,
       nowMs: 1000000,
     });
@@ -148,6 +150,7 @@ describe("computeSellerSettlement — Commission Rate Calculation", () => {
       orderSubtotal: 2000,
       orderDiscount: 0,
       orderShipping: 0,
+      orderTax: 0,
       commissionRate: 0.1,
       nowMs: 1000000,
     });
@@ -159,6 +162,7 @@ describe("computeSellerSettlement — Commission Rate Calculation", () => {
       orderSubtotal: 2000,
       orderDiscount: 0,
       orderShipping: 0,
+      orderTax: 0,
       commissionRate: 0.15,
       nowMs: 1000000,
     });
@@ -187,6 +191,7 @@ describe("Rate Freezing — Settlement Record Stores Rate at Creation", () => {
       orderSubtotal: 1000,
       orderDiscount: 0,
       orderShipping: 0,
+      orderTax: 0,
       commissionRate: 0.1,
       nowMs: 1000000,
     });
@@ -209,6 +214,7 @@ describe("Rate Freezing — Settlement Record Stores Rate at Creation", () => {
       orderSubtotal: 1000,
       orderDiscount: 0,
       orderShipping: 0,
+      orderTax: 0,
       commissionRate: 0.1,
       nowMs: 1000000,
     });
@@ -231,6 +237,7 @@ describe("Rate Freezing — Settlement Record Stores Rate at Creation", () => {
       orderSubtotal: 1000,
       orderDiscount: 0,
       orderShipping: 0,
+      orderTax: 0,
       commissionRate: newRate,
       nowMs: 2000000,
     });
@@ -259,6 +266,7 @@ describe("Rate Change Scenario: 10% → 15%", () => {
       orderSubtotal: 1000,
       orderDiscount: 0,
       orderShipping: 0,
+      orderTax: 0,
       commissionRate: 0.1,
       nowMs: 1000000,
     });
@@ -274,6 +282,7 @@ describe("Rate Change Scenario: 10% → 15%", () => {
       orderSubtotal: 1000,
       orderDiscount: 0,
       orderShipping: 0,
+      orderTax: 0,
       commissionRate: await readSellerRate(SELLER_A),
       nowMs: 2000000,
     });
@@ -305,6 +314,7 @@ describe("Rate Change Scenario: 10% → 15%", () => {
       orderSubtotal: 2000,
       orderDiscount: 0,
       orderShipping: 0,
+      orderTax: 0,
       commissionRate: await readSellerRate(SELLER_A),
       nowMs: 1000000,
     });
@@ -316,6 +326,7 @@ describe("Rate Change Scenario: 10% → 15%", () => {
       orderSubtotal: 2000,
       orderDiscount: 0,
       orderShipping: 0,
+      orderTax: 0,
       commissionRate: await readSellerRate(SELLER_B),
       nowMs: 1000000,
     });
@@ -371,6 +382,7 @@ describe("Security — Commission Rate Protection", () => {
       orderSubtotal: 1000,
       orderDiscount: 0,
       orderShipping: 0,
+      orderTax: 0,
       commissionRate: -0.5,
       nowMs: 1000000,
     });
@@ -385,6 +397,7 @@ describe("Security — Commission Rate Protection", () => {
       orderSubtotal: 1000,
       orderDiscount: 0,
       orderShipping: 0,
+      orderTax: 0,
       commissionRate: 1.5,
       nowMs: 1000000,
     });
@@ -399,6 +412,7 @@ describe("Security — Commission Rate Protection", () => {
       orderSubtotal: 1000,
       orderDiscount: 0,
       orderShipping: 0,
+      orderTax: 0,
       commissionRate: NaN,
       nowMs: 1000000,
     });
@@ -413,6 +427,7 @@ describe("Security — Commission Rate Protection", () => {
       orderSubtotal: 1000,
       orderDiscount: 0,
       orderShipping: 0,
+      orderTax: 0,
       commissionRate: Infinity,
       nowMs: 1000000,
     });
@@ -469,6 +484,7 @@ describe("Earnings Release — Uses Stored Settlement Values", () => {
       orderSubtotal: 1000,
       orderDiscount: 0,
       orderShipping: 0,
+      orderTax: 0,
       commissionRate: 0.1,
       nowMs: 1000000,
     });

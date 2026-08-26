@@ -36,6 +36,8 @@ const mockOrder: OrderEmailData = {
   ],
   subtotal: 1950,
   discount: 200,
+  tax: 0,
+  taxLabel: "Tax",
   deliveryFee: 60,
   grandTotal: 1810,
   deliveryAddress: {
