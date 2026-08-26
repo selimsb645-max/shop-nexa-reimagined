@@ -154,6 +154,20 @@ function OrderDetailAdmin() {
               <span className="text-muted-foreground">{t("admin.shipping")}</span>
               <span>{formatPrice(order.shipping)}</span>
             </div>
+            {!!order.tax && order.tax > 0 && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">
+                  {order.taxLabel || "Tax"}
+                </span>
+                <span>+{formatPrice(order.tax)}</span>
+              </div>
+            )}
+            {!!order.platformFee && order.platformFee > 0 && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Platform Fee</span>
+                <span>{formatPrice(order.platformFee)}</span>
+              </div>
+            )}
             <div className="flex justify-between font-semibold">
               <span>{t("admin.total")}</span>
               <span>{formatPrice(order.total)}</span>
