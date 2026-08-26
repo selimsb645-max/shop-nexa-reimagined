@@ -53,6 +53,12 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // GIFT CARDS — client read-only (own cards), all writes server-side only
+    match /giftCards/{id} {
+      allow read: if isSignedIn() && resource.data.uid == request.auth.uid;
+      allow write: if false;
+    }
+
     match /settings/{id} {
       allow read: if true;
       allow write: if isAdmin();

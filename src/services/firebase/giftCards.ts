@@ -5,11 +5,11 @@ import {
   query,
   where,
   orderBy,
-  addDoc,
-  serverTimestamp,
   updateDoc,
 } from "firebase/firestore";
 import { getDb } from "./config";
+import { getFirebaseAuth } from "./config";
+import { purchaseGiftCardFn } from "@/lib/giftcards.functions";
 
 export interface GiftCard {
   id: string;
@@ -26,33 +26,44 @@ export interface GiftCard {
   createdAt: number;
 }
 
-export interface GiftCardPurchase {
+export interface GiftCardPurchaseInput {
   amount: number;
-  senderName: string;
-  senderEmail: string;
   recipientName: string;
   recipientEmail: string;
   message: string;
   theme: string;
 }
 
+export interface GiftCardPurchaseResult {
+  code: string;
+  giftCardId: string;
+  amount: number;
+}
+
+/**
+ * Purchases a gift card via the trusted server endpoint.
+ *
+ * The server verifies the user's Firebase ID token, reads the real wallet
+ * balance, deducts the amount, and creates the gift card — all atomically.
+ * The client never writes financial data directly to Firestore.
+ */
 export async function purchaseGiftCard(
-  uid: string,
-  data: GiftCardPurchase,
-): Promise<string> {
-  const db = getDb();
-  const code = `NXA-${Math.random().toString(36).substring(2, 8).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-  await addDoc(collection(db, "giftCards"), {
-    ...data,
-    code,
-    balance: data.amount,
-    status: "active",
-    uid,
-    expiresAt: Date.now() + 365 * 24 * 60 * 60 * 1000,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
+  input: GiftCardPurchaseInput,
+): Promise<GiftCardPurchaseResult> {
+  const currentUser = getFirebaseAuth().currentUser;
+  if (!currentUser) throw new Error("Please sign in to purchase a gift card.");
+  const idToken = await currentUser.getIdToken();
+
+  return purchaseGiftCardFn({
+    data: {
+      idToken,
+      amount: input.amount,
+      recipientName: input.recipientName,
+      recipientEmail: input.recipientEmail,
+      message: input.message,
+      theme: input.theme,
+    },
   });
-  return code;
 }
 
 export async function listUserGiftCards(uid: string): Promise<GiftCard[]> {
@@ -104,8 +115,8 @@ export async function redeemGiftCard(
     balance: 0,
     status: "redeemed",
     redeemedBy: uid,
-    redeemedAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
+    redeemedAt: new Date(),
+    updatedAt: new Date(),
   });
   return balance;
 }

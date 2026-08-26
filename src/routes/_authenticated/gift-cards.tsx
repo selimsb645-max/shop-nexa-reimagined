@@ -10,11 +10,16 @@ import {
   DollarSign,
   Sparkles,
   Clock,
+  CheckCircle,
 } from "lucide-react";
 import { ServicePageLayout } from "@/components/common/ServicePageLayout";
 import { useAuth } from "@/context/AuthContext";
 import { useI18n } from "@/i18n/I18nContext";
-import { listUserGiftCards, purchaseGiftCard } from "@/services/firebase/giftCards";
+import {
+  listUserGiftCards,
+  purchaseGiftCard,
+  type GiftCardPurchaseResult,
+} from "@/services/firebase/giftCards";
 import { firebaseConfigured } from "@/services/firebase/config";
 import { formatPrice } from "@/utils/format";
 
@@ -25,6 +30,7 @@ export const Route = createFileRoute("/_authenticated/gift-cards")({
 });
 
 const PRESET_AMOUNTS = [500, 1000, 2000, 5000, 10000, 20000];
+const MIN_AMOUNT = 100;
 
 function GiftCardsPage() {
   const { t } = useI18n();
@@ -35,6 +41,7 @@ function GiftCardsPage() {
   const [recipientName, setRecipientName] = useState("");
   const [recipientEmail, setRecipientEmail] = useState("");
   const [message, setMessage] = useState("");
+  const [purchasedCard, setPurchasedCard] = useState<GiftCardPurchaseResult | null>(null);
 
   const { data: giftCards, isLoading } = useQuery({
     queryKey: ["giftCards", user?.uid],
@@ -43,179 +50,220 @@ function GiftCardsPage() {
   });
 
   const purchaseMutation = useMutation({
-    mutationFn: () =>
-      purchaseGiftCard(user!.uid, {
-        amount,
-        senderName: user!.displayName || user!.email || "Shopper",
-        senderEmail: user!.email ?? "",
-        recipientName,
-        recipientEmail,
-        message,
+    mutationFn: () => {
+      // Normalize amount — guard against NaN, empty, negative, zero
+      const normalizedAmount = Math.round(Number(amount));
+      if (!Number.isFinite(normalizedAmount) || normalizedAmount < MIN_AMOUNT) {
+        return Promise.reject(new Error(`Please enter an amount of at least \u{09F3}${MIN_AMOUNT}.`));
+      }
+      if (!recipientName.trim()) {
+        return Promise.reject(new Error("Please enter the recipient's name."));
+      }
+      if (!recipientEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipientEmail.trim())) {
+        return Promise.reject(new Error("Please enter a valid recipient email."));
+      }
+      return purchaseGiftCard({
+        amount: normalizedAmount,
+        recipientName: recipientName.trim(),
+        recipientEmail: recipientEmail.trim(),
+        message: message.trim(),
         theme: "classic",
-      }),
-    onSuccess: () => {
+      });
+    },
+    onSuccess: (result) => {
       toast.success("Gift card purchased successfully!");
+      setPurchasedCard(result);
       queryClient.invalidateQueries({ queryKey: ["giftCards"] });
+      queryClient.invalidateQueries({ queryKey: ["wallet"] });
       setShowForm(false);
       setRecipientName("");
       setRecipientEmail("");
       setMessage("");
       setAmount(1000);
     },
-    onError: () => toast.error(t("giftCards.purchaseFailed")),
+    onError: (err: Error) => {
+      const msg = err.message || "Failed to purchase gift card. Please try again.";
+      toast.error(msg);
+    },
   });
 
   return (
     <ServicePageLayout title={t("giftCards.title")} subtitle={t("giftCards.subtitle")}>
 
-        {/* {t("giftCards.buy")} Button */}
-        {!showForm && (
+      {/* Success state after purchase */}
+      {purchasedCard && (
+        <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm">
+          <div className="flex items-center gap-2 mb-3">
+            <CheckCircle className="h-5 w-5 text-emerald-600" />
+            <h2 className="text-lg font-semibold text-emerald-800">Gift Card Purchased!</h2>
+          </div>
+          <div className="space-y-1 text-sm text-emerald-700">
+            <p>Amount: {formatPrice(purchasedCard.amount)}</p>
+            <p>Code: <span className="font-mono font-bold tracking-wider">{purchasedCard.code}</span></p>
+            <p className="text-xs text-emerald-600">The gift card has been added to your account.</p>
+          </div>
           <button
-            onClick={() => setShowForm(true)}
-            className="mb-4 flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground transition hover:opacity-90"
+            onClick={() => setPurchasedCard(null)}
+            className="mt-3 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
           >
-            <Plus className="h-5 w-5" /> Buy Gift Card
+            Got it
           </button>
-        )}
+        </div>
+      )}
 
-        {/* Purchase Form */}
-        {showForm && (
-          <div className="mb-6 rounded-2xl border bg-background p-5 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold">{t("giftCards.purchase")}</h2>
-            <div className="space-y-4">
-              {/* Amount Selection */}
-              <div>
-                <label className="mb-2 block text-sm font-medium">{t("giftCards.selectAmount")}</label>
-                <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-                  {PRESET_AMOUNTS.map((amt) => (
-                    <button
-                      key={amt}
-                      onClick={() => setAmount(amt)}
-                      className={`rounded-lg border px-3 py-2 text-sm font-medium transition ${
-                        amount === amt
-                          ? "border-primary bg-primary/5 text-primary"
-                          : "hover:border-primary/40"
-                      }`}
-                    >
-                      {formatPrice(amt)}
-                    </button>
-                  ))}
-                </div>
-                <div className="mt-2">
-                  <input
-                    type="number"
-                    value={amount}
-                    onChange={(e) => setAmount(Number(e.target.value))}
-                    className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-primary"
-                    placeholder={t("giftCards.customAmountPlaceholder")}
-                    min={100}
-                  />
-                </div>
-              </div>
+      {/* Buy Gift Card Button */}
+      {!showForm && !purchasedCard && (
+        <button
+          onClick={() => setShowForm(true)}
+          className="mb-4 flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground transition hover:opacity-90"
+        >
+          <Plus className="h-5 w-5" /> Buy Gift Card
+        </button>
+      )}
 
-              {/* Recipient */}
-              <div>
-                <label className="mb-1 block text-sm font-medium">{t("giftCards.recipientName")}</label>
+      {/* Purchase Form */}
+      {showForm && (
+        <div className="mb-6 rounded-2xl border bg-background p-5 shadow-sm">
+          <h2 className="mb-4 text-lg font-semibold">{t("giftCards.purchase")}</h2>
+          <div className="space-y-4">
+            {/* Amount Selection */}
+            <div>
+              <label className="mb-2 block text-sm font-medium">{t("giftCards.selectAmount")}</label>
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+                {PRESET_AMOUNTS.map((amt) => (
+                  <button
+                    key={amt}
+                    onClick={() => setAmount(amt)}
+                    className={`rounded-lg border px-3 py-2 text-sm font-medium transition ${
+                      amount === amt
+                        ? "border-primary bg-primary/5 text-primary"
+                        : "hover:border-primary/40"
+                    }`}
+                  >
+                    {formatPrice(amt)}
+                  </button>
+                ))}
+              </div>
+              <div className="mt-2">
                 <input
-                  type="text"
-                  value={recipientName}
-                  onChange={(e) => setRecipientName(e.target.value)}
-                  className="w-full rounded-lg border px-3 py-2.5 text-sm outline-none focus:border-primary"
-                  placeholder="Friend's name"
+                  type="number"
+                  value={amount}
+                  onChange={(e) => setAmount(Number(e.target.value))}
+                  className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-primary"
+                  placeholder={t("giftCards.customAmountPlaceholder")}
+                  min={MIN_AMOUNT}
                 />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium">{t("giftCards.recipientEmail")}</label>
-                <input
-                  type="email"
-                  value={recipientEmail}
-                  onChange={(e) => setRecipientEmail(e.target.value)}
-                  className="w-full rounded-lg border px-3 py-2.5 text-sm outline-none focus:border-primary"
-                  placeholder="friend@example.com"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium">{t("giftCards.messageOptional")}</label>
-                <textarea
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  rows={2}
-                  className="w-full rounded-lg border px-3 py-2.5 text-sm outline-none focus:border-primary"
-                  placeholder="Add a personal message..."
-                />
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => purchaseMutation.mutate()}
-                  disabled={purchaseMutation.isPending || !recipientName || !recipientEmail}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground disabled:opacity-50"
-                >
-                  {purchaseMutation.isPending ? (
-                    <><Loader className="h-4 w-4" />{t("giftCards.processing")}</>
-                  ) : (
-                    <><DollarSign className="h-4 w-4" /> Buy for {formatPrice(amount)}</>
-                  )}
-                </button>
-                <button
-                  onClick={() => setShowForm(false)}
-                  className="rounded-lg border px-4 py-2.5 text-sm font-medium hover:bg-muted"
-                >
-                  Cancel
-                </button>
               </div>
             </div>
-          </div>
-        )}
 
-        {/* Gift Cards List */}
-        {isLoading ? (
-          <div className="py-20 text-center">
-            <Loader className="mx-auto h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        ) : !giftCards || giftCards.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border bg-muted/30 py-20 text-center">
-            <Gift className="mb-4 h-12 w-12 text-muted-foreground/40" />
-            <h2 className="text-lg font-semibold">{t("giftCards.empty")} yet</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Purchase a gift card for friends and family
-            </p>
-          </div>
-        ) : (
-          <div className="grid gap-3 sm:grid-cols-2">
-            {giftCards.map((card) => (
-              <div
-                key={card.id}
-                className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-primary to-primary/80 p-5 text-primary-foreground shadow-sm"
+            {/* Recipient */}
+            <div>
+              <label className="mb-1 block text-sm font-medium">{t("giftCards.recipientName")}</label>
+              <input
+                type="text"
+                value={recipientName}
+                onChange={(e) => setRecipientName(e.target.value)}
+                className="w-full rounded-lg border px-3 py-2.5 text-sm outline-none focus:border-primary"
+                placeholder="Friend's name"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">{t("giftCards.recipientEmail")}</label>
+              <input
+                type="email"
+                value={recipientEmail}
+                onChange={(e) => setRecipientEmail(e.target.value)}
+                className="w-full rounded-lg border px-3 py-2.5 text-sm outline-none focus:border-primary"
+                placeholder="friend@example.com"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">{t("giftCards.messageOptional")}</label>
+              <textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                rows={2}
+                className="w-full rounded-lg border px-3 py-2.5 text-sm outline-none focus:border-primary"
+                placeholder="Add a personal message..."
+              />
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => purchaseMutation.mutate()}
+                disabled={purchaseMutation.isPending || !recipientName || !recipientEmail}
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground disabled:opacity-50"
               >
-                <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-white/10" />
-                <div className="absolute -bottom-8 -left-8 h-20 w-20 rounded-full bg-white/10" />
-                <div className="relative z-10">
-                  <div className="mb-4 flex items-center justify-between">
-                    <Sparkles className="h-6 w-6" />
-                    <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${
-                      card.status === "active" ? "bg-green-400/30" : "bg-red-400/30"
-                    }`}>
-                      {card.status.toUpperCase()}
-                    </span>
-                  </div>
-                  <p className="text-2xl font-bold">{formatPrice(card.balance)}</p>
-                  <p className="text-xs opacity-80">Balance: {formatPrice(card.balance)} / {formatPrice(card.amount)}</p>
-                  <div className="mt-3 space-y-1">
-                    <p className="text-xs opacity-80">
-                      <Mail className="mr-1 inline h-3 w-3" />
-                      To: {card.recipientName}
-                    </p>
-                    <p className="font-mono text-sm tracking-wider">{card.code}</p>
-                    <p className="text-xs opacity-60">
-                      <Clock className="mr-1 inline h-3 w-3" />
-                      Expires: {new Date(card.expiresAt).toLocaleDateString()}
-                    </p>
-                  </div>
+                {purchaseMutation.isPending ? (
+                  <><Loader className="h-4 w-4" />{t("giftCards.processing")}</>
+                ) : (
+                  <><DollarSign className="h-4 w-4" /> Buy for {formatPrice(amount)}</>
+                )}
+              </button>
+              <button
+                onClick={() => setShowForm(false)}
+                className="rounded-lg border px-4 py-2.5 text-sm font-medium hover:bg-muted"
+              >
+                Cancel
+              </button>
+            </div>
+            {purchaseMutation.isPending && (
+              <p className="text-xs text-muted-foreground text-center">
+                Processing your purchase... Please do not close this page.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Gift Cards List */}
+      {isLoading ? (
+        <div className="py-20 text-center">
+          <Loader className="mx-auto h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : !giftCards || giftCards.length === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-2xl border bg-muted/30 py-20 text-center">
+          <Gift className="mb-4 h-12 w-12 text-muted-foreground/40" />
+          <h2 className="text-lg font-semibold">{t("giftCards.empty")} yet</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Purchase a gift card for friends and family
+          </p>
+        </div>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {giftCards.map((card) => (
+            <div
+              key={card.id}
+              className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-primary to-primary/80 p-5 text-primary-foreground shadow-sm"
+            >
+              <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-white/10" />
+              <div className="absolute -bottom-8 -left-8 h-20 w-20 rounded-full bg-white/10" />
+              <div className="relative z-10">
+                <div className="mb-4 flex items-center justify-between">
+                  <Sparkles className="h-6 w-6" />
+                  <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${
+                    card.status === "active" ? "bg-green-400/30" : "bg-red-400/30"
+                  }`}>
+                    {card.status.toUpperCase()}
+                  </span>
+                </div>
+                <p className="text-2xl font-bold">{formatPrice(card.balance)}</p>
+                <p className="text-xs opacity-80">Balance: {formatPrice(card.balance)} / {formatPrice(card.amount)}</p>
+                <div className="mt-3 space-y-1">
+                  <p className="text-xs opacity-80">
+                    <Mail className="mr-1 inline h-3 w-3" />
+                    To: {card.recipientName}
+                  </p>
+                  <p className="font-mono text-sm tracking-wider">{card.code}</p>
+                  <p className="text-xs opacity-60">
+                    <Clock className="mr-1 inline h-3 w-3" />
+                    Expires: {new Date(card.expiresAt).toLocaleDateString()}
+                  </p>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+            </div>
+          ))}
+        </div>
+      )}
     </ServicePageLayout>
   );
 }
