@@ -148,7 +148,11 @@ export interface Order {
   taxLabel: string;
   total: number;
   platformFee: number;
+  promoDiscount: number;
+  rewardDiscount: number;
+  walletUsed: number;
   couponCode: string | null;
+  promoCode: string | null;
   status: OrderStatus;
   payment: PaymentInfo;
   shippingAddress: ShippingAddress;

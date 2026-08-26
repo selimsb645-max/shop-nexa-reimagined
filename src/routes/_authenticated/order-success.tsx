@@ -50,6 +50,15 @@ function OrderSuccessPage() {
   const orderId = search.orderId || "";
 interface OrderData {
   status?: string;
+  subtotal?: number;
+  discount?: number;
+  shipping?: number;
+  tax?: number;
+  taxRate?: number;
+  taxLabel?: string;
+  promoDiscount?: number;
+  rewardDiscount?: number;
+  walletUsed?: number;
   total?: number;
   payment?: { method?: string };
 }
@@ -174,13 +183,59 @@ interface OrderData {
               </div>
             </div>
 
-            {/* Order total */}
+            {/* Order summary breakdown */}
             {order && (
-              <div className="flex items-center justify-between mb-4 pb-4 border-b border-slate-100">
-                <span className="text-sm text-slate-500">{t("orderSuccess.orderTotal")}</span>
-                <span className="text-lg font-black text-[#f57224]">
-                  {formatPrice(order.total ?? 0)}
-                </span>
+              <div className="space-y-2 mb-4 pb-4 border-b border-slate-100">
+                {order.subtotal != null && order.subtotal > 0 && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-500">Subtotal</span>
+                    <span className="text-sm font-medium text-slate-700">{formatPrice(order.subtotal)}</span>
+                  </div>
+                )}
+                {order.discount != null && order.discount > 0 && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-500">Discount</span>
+                    <span className="text-sm font-medium text-emerald-600">-{formatPrice(order.discount)}</span>
+                  </div>
+                )}
+                {order.promoDiscount != null && order.promoDiscount > 0 && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-500">Promo Discount</span>
+                    <span className="text-sm font-medium text-emerald-600">-{formatPrice(order.promoDiscount)}</span>
+                  </div>
+                )}
+                {order.rewardDiscount != null && order.rewardDiscount > 0 && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-500">Reward Points</span>
+                    <span className="text-sm font-medium text-emerald-600">-{formatPrice(order.rewardDiscount)}</span>
+                  </div>
+                )}
+                {order.walletUsed != null && order.walletUsed > 0 && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-500">Wallet</span>
+                    <span className="text-sm font-medium text-emerald-600">-{formatPrice(order.walletUsed)}</span>
+                  </div>
+                )}
+                {order.shipping != null && order.shipping > 0 && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-500">Delivery Fee</span>
+                    <span className="text-sm font-medium text-slate-700">{formatPrice(order.shipping)}</span>
+                  </div>
+                )}
+                {order.tax != null && order.tax > 0 && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-500">
+                      {order.taxLabel || `VAT (${(order.taxRate ?? 0).toFixed(1)}%)`}
+                    </span>
+                    <span className="text-sm font-medium text-slate-700">{formatPrice(order.tax)}</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                  <span className="text-sm font-semibold text-slate-600">{t("orderSuccess.orderTotal")}</span>
+                  <span className="text-lg font-black text-[#f57224]">
+                    {formatPrice(order.total ?? 0)}
+                  </span>
+                </div>
               </div>
             )}
 
