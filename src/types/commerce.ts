@@ -178,6 +178,14 @@ export interface Order {
     sellerDeliveryCharge: number;
     labelBn: string;
     etaDays: [number, number];
+    deliveryLines?: Array<{
+      productId: string;
+      sellerId: string;
+      freeDelivery: boolean;
+      zoneCharge: number;
+      customerDeliveryCharge: number;
+      sellerAbsorbedCharge: number;
+    }>;
   } | null;
   tracking: TrackingEvent[];
   courierInfo?: CourierInfo | null;

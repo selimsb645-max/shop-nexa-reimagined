@@ -201,6 +201,22 @@ function OrderDetailAdmin() {
                   <span>ETA</span>
                   <span>{order.deliverySnapshot.etaDays[0]}–{order.deliverySnapshot.etaDays[1]} days</span>
                 </div>
+                {order.deliverySnapshot.deliveryLines && order.deliverySnapshot.deliveryLines.length > 0 && (
+                  <div className="mt-2 pt-2 border-t border-border/40 space-y-1">
+                    <div className="font-semibold text-muted-foreground mb-1">Per-Product Delivery</div>
+                    {order.deliverySnapshot.deliveryLines.map((dl) => {
+                      const item = order.items?.find((i) => i.productId === dl.productId);
+                      return (
+                        <div key={dl.productId} className="flex justify-between">
+                          <span className="truncate max-w-[60%]">{item?.title ?? dl.productId}</span>
+                          <span className={dl.freeDelivery ? "text-green-600" : "text-muted-foreground"}>
+                            {dl.freeDelivery ? "FREE" : formatPrice(dl.customerDeliveryCharge)}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
             {!!order.tax && order.tax > 0 && (

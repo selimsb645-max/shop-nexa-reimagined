@@ -33,6 +33,18 @@ export type PayoutStatus =
   | "rejected";   // Withdrawal rejected, funds returned to available
 
 // ----------------------------------------------------------------------
+// Per-Product Delivery Line (immutable snapshot at order time)
+// ----------------------------------------------------------------------
+export interface DeliveryLineItem {
+  productId: string;
+  sellerId: string;
+  freeDelivery: boolean;
+  zoneCharge: number;
+  customerDeliveryCharge: number;  // 0 if freeDelivery, zoneCharge if not
+  sellerAbsorbedCharge: number;    // zoneCharge if freeDelivery, 0 if not
+}
+
+// ----------------------------------------------------------------------
 // Seller-wise Order Settlement Breakdown
 // Stored in: sellers/{sellerId}/orders/{orderId}
 // ----------------------------------------------------------------------
@@ -50,7 +62,8 @@ export interface SellerSettlementBreakdown {
   zoneCharge: number;             // Admin-configured charge at order time
   customerDeliveryCharge: number; // What customer pays for delivery
   sellerDeliveryCharge: number;   // What seller absorbs for delivery
-  freeDelivery: boolean;          // Whether freeDelivery was on for products
+  freeDelivery: boolean;          // Whether ALL this seller's products had freeDelivery
+  deliveryLines: DeliveryLineItem[]; // Per-product delivery breakdown (immutable)
   sellerTaxShare: number;          // Pro-rata share of order tax
   sellerNetSubtotal: number;      // subtotal - discountShare + shippingShare + taxShare
   commissionRate: number;         // From seller profile (e.g. 0.08 = 8%)

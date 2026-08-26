@@ -40,6 +40,7 @@ import type {
   SellerSettlementBreakdown,
   SettlementTxEntry,
   SettlementTxType,
+  DeliveryLineItem,
 } from "@/types/settlement";
 
 function round2(n: number): number {
@@ -78,6 +79,7 @@ export function computeSellerSettlement(input: {
   customerDeliveryCharge?: number;
   sellerDeliveryCharge?: number;
   freeDelivery?: boolean;
+  deliveryLines?: DeliveryLineItem[];
 }): SellerSettlementBreakdown {
   const {
     sellerId,
@@ -95,6 +97,7 @@ export function computeSellerSettlement(input: {
     customerDeliveryCharge = 0,
     sellerDeliveryCharge = 0,
     freeDelivery = false,
+    deliveryLines = [],
   } = input;
 
   // Defense-in-depth: clamp commission rate to [0, 1] to prevent invalid
@@ -134,6 +137,7 @@ export function computeSellerSettlement(input: {
     customerDeliveryCharge,
     sellerDeliveryCharge,
     freeDelivery,
+    deliveryLines,
     settlementStatus: "pending",
     payoutStatus: "none",
     orderCreatedAt: nowMs,
@@ -181,6 +185,7 @@ export function buildSellerOrderWrite(input: {
     freeDelivery: boolean;
     labelBn: string;
     etaDays: [number, number];
+    deliveryLines: DeliveryLineItem[];
   };
   nowMs: number;
 }): FsWrite {
@@ -243,6 +248,7 @@ export function buildSellerOrderWrite(input: {
           customerDeliveryCharge: s.customerDeliveryCharge,
           sellerDeliveryCharge: s.sellerDeliveryCharge,
           freeDelivery: s.freeDelivery,
+          deliveryLines: s.deliveryLines,
         },
         // Delivery snapshot for admin finance visibility
         deliverySnapshot: deliverySnapshot ?? null,

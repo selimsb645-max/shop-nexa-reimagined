@@ -194,11 +194,19 @@ export interface DeliverySnapshot {
   sellerDeliveryCharge: number;
   labelBn: string;
   etaDays: [number, number];
+  deliveryLines: Array<{
+    productId: string;
+    sellerId: string;
+    freeDelivery: boolean;
+    zoneCharge: number;
+    customerDeliveryCharge: number;
+    sellerAbsorbedCharge: number;
+  }>;
 }
 
 export interface PlaceOrderResult {
   orderId: string;
-  items: Array<{ productId: string; slug: string; title: string; image: string; price: number; quantity: number; subtotal: number }>;
+  items: Array<{ productId: string; slug: string; title: string; image: string; price: number; quantity: number; subtotal: number; freeDelivery: boolean }>;
   subtotal: number;
   discount: number;
   promoDiscount: number;
@@ -438,7 +446,7 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
   }
 
   // ── BUILD ORDER ITEMS & SELLER GROUPS (needed for per-seller delivery) ──
-  const orderItems = lines.map((l) => ({
+  const orderItems = lines.map((l, idx) => ({
     productId: l.productId,
     slug: l.slug,
     title: l.title,
@@ -446,6 +454,7 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
     price: l.price,
     quantity: l.quantity,
     subtotal: l.subtotal,
+    freeDelivery: l.freeDelivery,
   }));
 
   const itemsBySeller = new Map<string, typeof orderItems>();
@@ -456,41 +465,47 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
     itemsBySeller.set(l.sellerId, list);
   });
 
-  // ── PER-SELLER FREE DELIVERY CALCULATION ──
-  // For each seller, determine if ALL their products have freeDelivery=true.
-  // If yes, the seller absorbs the zone charge. Customer pays 0 for that seller.
-  // If ANY product has freeDelivery=false, the customer pays the zone charge.
+  // ── PER-PRODUCT FREE DELIVERY CALCULATION ──
+  // Each product's freeDelivery flag is evaluated INDEPENDENTLY.
+  // If freeDelivery=true → customer pays 0, seller absorbs zoneCharge for that product.
+  // If freeDelivery=false → customer pays zoneCharge for that product.
   //
-  // In a multi-seller cart, each seller is evaluated independently.
-  // Customer's total delivery = SUM of per-seller customer delivery charges.
-  // Seller-specific delivery liability is stored in the seller order mirror.
+  // In a multi-seller cart, each product is evaluated independently.
+  // Customer's total delivery = SUM of per-product customer delivery charges.
+  // Seller-specific delivery liability is aggregated per seller for settlement.
+  const deliveryLines = lines.map((l) => {
+    const free = l.freeDelivery;
+    return {
+      productId: l.productId,
+      sellerId: l.sellerId!,
+      freeDelivery: free,
+      zoneCharge,
+      customerDeliveryCharge: free ? 0 : round2(zoneCharge),
+      sellerAbsorbedCharge: free ? round2(zoneCharge) : 0,
+    };
+  });
+
+  // Aggregate per-seller delivery totals for settlement
   const sellerDeliveryMap = new Map<string, {
-    sellerDeliveryCharge: number;
-    customerDeliveryCharge: number;
-    allFreeDelivery: boolean;
+    sellerDeliveryCharge: number;   // Total absorbed by this seller
+    customerDeliveryCharge: number;  // Total customer-paid for this seller's products
+    deliveryLines: typeof deliveryLines;
   }>();
   let totalCustomerDelivery = 0;
   let totalSellerAbsorbed = 0;
 
-  for (const [sid] of itemsBySeller.entries()) {
-    const sellerLines = lines.filter((l) => l.sellerId === sid);
-    const allFreeDelivery = sellerLines.length > 0 && sellerLines.every((l) => l.freeDelivery);
-
-    if (allFreeDelivery) {
-      sellerDeliveryMap.set(sid, {
-        sellerDeliveryCharge: round2(zoneCharge),
-        customerDeliveryCharge: 0,
-        allFreeDelivery: true,
-      });
-      totalSellerAbsorbed = round2(totalSellerAbsorbed + zoneCharge);
-    } else {
-      sellerDeliveryMap.set(sid, {
-        sellerDeliveryCharge: 0,
-        customerDeliveryCharge: round2(zoneCharge),
-        allFreeDelivery: false,
-      });
-      totalCustomerDelivery = round2(totalCustomerDelivery + zoneCharge);
-    }
+  for (const dl of deliveryLines) {
+    const existing = sellerDeliveryMap.get(dl.sellerId) ?? {
+      sellerDeliveryCharge: 0,
+      customerDeliveryCharge: 0,
+      deliveryLines: [] as typeof deliveryLines,
+    };
+    existing.sellerDeliveryCharge = round2(existing.sellerDeliveryCharge + dl.sellerAbsorbedCharge);
+    existing.customerDeliveryCharge = round2(existing.customerDeliveryCharge + dl.customerDeliveryCharge);
+    existing.deliveryLines.push(dl);
+    sellerDeliveryMap.set(dl.sellerId, existing);
+    totalCustomerDelivery = round2(totalCustomerDelivery + dl.customerDeliveryCharge);
+    totalSellerAbsorbed = round2(totalSellerAbsorbed + dl.sellerAbsorbedCharge);
   }
 
   const shipping = totalCustomerDelivery; // Customer-facing total delivery charge
@@ -792,9 +807,11 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
     const sellerSubtotal = round2(sItems.reduce((s, it) => s + it.subtotal, 0));
     const commissionRate = sellerCommissionRates.get(sid) ?? 0.08;
 
-    // Use pre-computed delivery liability from the delivery map
+    // Use pre-computed per-product delivery liability from the delivery map
     const deliveryInfo = sellerDeliveryMap.get(sid)!;
-    const { sellerDeliveryCharge, customerDeliveryCharge: sellerCustomerDeliveryCharge, allFreeDelivery } = deliveryInfo;
+    const { sellerDeliveryCharge, customerDeliveryCharge: sellerCustomerDeliveryCharge, deliveryLines: sellerDeliveryLines } = deliveryInfo;
+    // Per-seller freeDelivery: true only if ALL this seller's products have freeDelivery
+    const sellerAllFreeDelivery = sellerDeliveryLines.length > 0 && sellerDeliveryLines.every((dl) => dl.freeDelivery);
 
     // Compute full settlement breakdown with delivery snapshot
     const settlement = computeSellerSettlement({
@@ -813,7 +830,8 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
       zoneCharge,
       customerDeliveryCharge: sellerCustomerDeliveryCharge,
       sellerDeliveryCharge,
-      freeDelivery: allFreeDelivery,
+      freeDelivery: sellerAllFreeDelivery,
+      deliveryLines: sellerDeliveryLines,
     });
 
     // Refine platform fee total with precise pro-rata settlement
@@ -846,9 +864,10 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
           zoneCharge,
           customerDeliveryCharge: sellerCustomerDeliveryCharge,
           sellerDeliveryCharge,
-          freeDelivery: allFreeDelivery,
+          freeDelivery: sellerAllFreeDelivery,
           labelBn: deliveryZoneLabelBn,
           etaDays: deliveryEtaDays,
+          deliveryLines: sellerDeliveryLines,
         },
         nowMs,
       }),
@@ -959,6 +978,7 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
       sellerDeliveryCharge: totalSellerAbsorbed,
       labelBn: deliveryZoneLabelBn,
       etaDays: deliveryEtaDays,
+      deliveryLines,
     },
     rewardDiscount,
     walletUsed,
