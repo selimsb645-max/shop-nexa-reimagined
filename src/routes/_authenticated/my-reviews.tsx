@@ -1,10 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Star, Loader, Star as StarIcon } from "lucide-react";
+import { Star, Loader, Star as StarIcon, Clock, CheckCircle2 } from "lucide-react";
 import { ServicePageLayout } from "@/components/common/ServicePageLayout";
 import { useAuth } from "@/context/AuthContext";
 import { useI18n } from "@/i18n/I18nContext";
-import { listReviews } from "@/services/firebase/reviews";
+import { getMyReview } from "@/services/firebase/reviews";
 import { listAllProducts } from "@/services/firebase/products";
 import { firebaseConfigured } from "@/services/firebase/config";
 import type { Product } from "@/types/commerce";
@@ -31,8 +31,7 @@ function MyReviewsPage() {
     queryFn: async () => {
       const allReviews: { product: Product; review: Review }[] = [];
       for (const product of products ?? []) {
-        const reviews = await listReviews(product.id);
-        const myReview = reviews.find((r) => r.userId === user!.uid);
+        const myReview = await getMyReview(product.id, user!.uid);
         if (myReview) {
           allReviews.push({ product, review: myReview });
         }
@@ -96,6 +95,14 @@ function MyReviewsPage() {
                       ))}
                       <span className="ml-1 text-xs text-muted-foreground">
                         {new Date(review.createdAt).toLocaleDateString()}
+                      </span>
+                      <span className={`ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                        review.isApproved
+                          ? "bg-emerald-100 text-emerald-700"
+                          : "bg-amber-100 text-amber-700"
+                      }`}>
+                        {review.isApproved ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
+                        {review.isApproved ? "Approved" : "Pending"}
                       </span>
                     </div>
                     {review.title && (

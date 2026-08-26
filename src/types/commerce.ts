@@ -61,6 +61,9 @@ export interface Review {
   title: string;
   comment: string;
   createdAt: number;
+  isApproved: boolean;
+  productTitle?: string;
+  productImage?: string;
 }
 
 export interface CartItem {

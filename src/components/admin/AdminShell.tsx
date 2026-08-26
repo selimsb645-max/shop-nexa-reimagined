@@ -22,6 +22,7 @@ MapPin,
   Tag,
   Search,
   Truck,
+  MessageSquare,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { signOut } from "@/services/firebase/auth";
@@ -84,6 +85,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
             <AItem to="/admin/locations" icon={<MapPin className="h-4 w-4" />} label="Locations" />
             <AItem to="/admin/homepage" icon={<Home className="h-4 w-4" />} label="Homepage" />
             <AItem to="/admin/seo" icon={<Search className="h-4 w-4" />} label="SEO" />
+            <AItem to="/admin/reviews" icon={<MessageSquare className="h-4 w-4" />} label="Reviews" />
             <AItem to="/admin/notifications" icon={<Bell className="h-4 w-4" />} label="Notifications" />
           <AItem to="/admin/settings" icon={<Settings className="h-4 w-4" />} label="Settings" />
             <AItem to="/admin/logs" icon={<Activity className="h-4 w-4" />} label="Activity Logs" />

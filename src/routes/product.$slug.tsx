@@ -322,7 +322,7 @@ export function ProductDetailPage() {
       setUserReviews(fresh);
       setNewComment("");
       setNewTitle("");
-      toast.success("Thank you! Your review has been submitted successfully.");
+      toast.success("Your review has been submitted and is pending approval. It will appear once an admin reviews it.");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to submit review.");
     } finally {

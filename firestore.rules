@@ -82,9 +82,19 @@ service cloud.firestore {
                .hasAny(['approved', 'featured', 'rating', 'reviewCount', 'sellerId']));
 
       match /reviews/{rid} {
-        allow read: if true;
-        allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-        allow update, delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+        // Public can read approved reviews; review author can read their own; admins can read all
+        allow read: if isAdmin()
+          || (resource.data.isApproved == true)
+          || (isSignedIn() && resource.data.userId == request.auth.uid);
+        allow create: if isSignedIn()
+          && request.resource.data.userId == request.auth.uid
+          && request.resource.data.isApproved == false;
+        // Author can edit their review but cannot self-approve; admin can do anything
+        allow update: if isAdmin()
+          || (isSignedIn()
+            && resource.data.userId == request.auth.uid
+            && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isApproved', 'approvedAt']));
+        allow delete: if isAdmin();
       }
     }
 
