@@ -21,7 +21,7 @@ function getMessagingInstance(): Messaging {
 }
 
 // Firebase vAPID key — this is a public key for web push, safe to ship in client code
-const VAPID_KEY = "BPm7vG1LM0X_Q3z5H1K2nR8sT4vW6xY0aB3cD5eF7gH9iJ1kL2mN3oP4qR5sT6u";
+const VAPID_KEY = "BDZGalHpCd0gKKvQ8HB6uYhDaHAQa-5Xg7zvEdksagPdRnsuPdOcSG_r02Q4u5h-bIZdUu12cziENG93FwhLzp8";
 
 export type NotificationPermission = "granted" | "denied" | "default" | "unsupported";
 
