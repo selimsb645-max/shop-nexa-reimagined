@@ -90,6 +90,7 @@ function EditProductAdmin() {
               colors: parseCsv(v.colors),
               sizes: parseCsv(v.sizes),
               featured: Boolean(v.featured),
+              freeDelivery: Boolean(v.freeDelivery),
               status: v.status,
             });
             await logActivity(

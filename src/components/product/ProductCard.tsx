@@ -157,14 +157,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             </div>
           )}
 
-          {/* Free Delivery Badge */}
-          {(product as ProductCardProduct).freeDelivery && (
-            <div className="absolute bottom-2 left-2 z-10 bg-emerald-600 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded shadow-sm flex items-center gap-0.5 pointer-events-none">
-              <Truck className="w-2.5 h-2.5" /> Free Delivery
-            </div>
-          )}
-
-          {/* Wishlist Heart Icon Toggle */}
           <button
             type="button"
             onClick={handleWishlistClick}

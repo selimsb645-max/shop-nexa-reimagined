@@ -51,6 +51,7 @@ function NewProductAdmin() {
               colors: parseCsv(v.colors),
               sizes: parseCsv(v.sizes),
               featured: Boolean(v.featured),
+              freeDelivery: Boolean(v.freeDelivery),
               status: v.status,
             });
             await logActivity({ uid: user.uid, email: user.email }, "product.create", id);

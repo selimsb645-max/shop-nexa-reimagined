@@ -95,6 +95,7 @@ function EditProduct({ sellerId }: { sellerId: string }) {
               colors: parseCsv(v.colors),
               sizes: parseCsv(v.sizes),
               featured: Boolean(v.featured),
+              freeDelivery: Boolean(v.freeDelivery),
               status: v.status,
             });
             toast.success(t("seller.productUpdated"));
