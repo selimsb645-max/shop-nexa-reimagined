@@ -16,6 +16,12 @@ import {
 MapPin,
   Megaphone,
   Bell,
+  DollarSign,
+  BarChart3,
+  Boxes,
+  Tag,
+  Search,
+  Truck,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { signOut } from "@/services/firebase/auth";
@@ -62,16 +68,22 @@ export function AdminShell({ children }: { children: ReactNode }) {
         <aside className="rounded-lg border bg-background p-3">
           <nav className="space-y-1 text-sm">
             <AItem to="/admin" icon={<LayoutDashboard className="h-4 w-4" />} label="Dashboard" exact />
+            <AItem to="/admin/analytics" icon={<BarChart3 className="h-4 w-4" />} label="Analytics" />
+            <AItem to="/admin/finance" icon={<DollarSign className="h-4 w-4" />} label="Finance" />
             <AItem to="/admin/products" icon={<Package className="h-4 w-4" />} label="Products" />
+            <AItem to="/admin/inventory" icon={<Boxes className="h-4 w-4" />} label="Inventory" />
             <AItem to="/admin/categories" icon={<Layers className="h-4 w-4" />} label="Categories" />
             <AItem to="/admin/sellers" icon={<Store className="h-4 w-4" />} label="Sellers" />
             <AItem to="/admin/users" icon={<Users className="h-4 w-4" />} label="Users" />
             <AItem to="/admin/orders" icon={<ShoppingBag className="h-4 w-4" />} label="Orders" />
+            <AItem to="/admin/delivery" icon={<Truck className="h-4 w-4" />} label="Delivery" />
             <AItem to="/admin/coupons" icon={<Ticket className="h-4 w-4" />} label="Coupons" />
+            <AItem to="/admin/promo-codes" icon={<Tag className="h-4 w-4" />} label="Promo Codes" />
             <AItem to="/admin/banners" icon={<ImageIcon className="h-4 w-4" />} label="Banners" />
             <AItem to="/admin/announcements" icon={<Megaphone className="h-4 w-4" />} label="Announcements" />
             <AItem to="/admin/locations" icon={<MapPin className="h-4 w-4" />} label="Locations" />
             <AItem to="/admin/homepage" icon={<Home className="h-4 w-4" />} label="Homepage" />
+            <AItem to="/admin/seo" icon={<Search className="h-4 w-4" />} label="SEO" />
             <AItem to="/admin/notifications" icon={<Bell className="h-4 w-4" />} label="Notifications" />
           <AItem to="/admin/settings" icon={<Settings className="h-4 w-4" />} label="Settings" />
             <AItem to="/admin/logs" icon={<Activity className="h-4 w-4" />} label="Activity Logs" />
