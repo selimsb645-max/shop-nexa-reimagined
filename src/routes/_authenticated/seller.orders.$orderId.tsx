@@ -159,9 +159,37 @@ function OrderDetail({ sellerId }: { sellerId: string }) {
                 </div>
               ))}
             </div>
-            <div className="flex items-center justify-between border-t p-4 text-sm">
-              <span className="text-muted-foreground">{t("order.subtotal")}</span>
-              <span className="font-semibold">{formatPrice(order.subtotal)}</span>
+            <div className="space-y-2 border-t p-4 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">{t("order.subtotal")}</span>
+                <span className="font-semibold">{formatPrice(order.subtotal)}</span>
+              </div>
+              {order.discount > 0 && (
+                <div className="flex items-center justify-between text-emerald-600">
+                  <span>Discount</span>
+                  <span className="font-semibold">-{formatPrice(order.discount)}</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">{t("order.shipping")}</span>
+                <span className="font-semibold">{order.shipping === 0 ? "FREE" : formatPrice(order.shipping)}</span>
+              </div>
+              {!!order.tax && order.tax > 0 && (
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">{order.taxLabel || "Tax"}</span>
+                  <span className="font-semibold">+{formatPrice(order.tax)}</span>
+                </div>
+              )}
+              {!!order.platformFee && order.platformFee > 0 && (
+                <div className="flex items-center justify-between text-orange-600">
+                  <span>Platform Fee (Commission)</span>
+                  <span className="font-semibold">-{formatPrice(order.platformFee)}</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between border-t pt-2">
+                <span className="font-bold">Order Total</span>
+                <span className="font-black text-[#f57224]">{formatPrice(order.total)}</span>
+              </div>
             </div>
           </div>
 
