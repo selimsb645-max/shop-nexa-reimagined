@@ -12,19 +12,18 @@ import {
   ArrowRight,
   Info,
 } from "lucide-react";
+import { buildMetaTags } from "@/lib/seo";
 
 export const Route = createFileRoute("/returns-policy")({
-  ssr: false,
+  ssr: true,
   component: ReturnsPolicyPage,
   head: () => ({
-    meta: [
-      { title: "Returns & Refunds Policy — AVENTA SHOP" },
-      {
-        name: "description",
-        content:
-          "AVENTA SHOP return and refund policy — how to request a return, eligibility, timelines, and refund methods.",
-      },
-    ],
+    meta: buildMetaTags({
+      title: "Returns & Refunds Policy — AVENTA SHOP",
+      description: "AVENTA SHOP return and refund policy — how to request a return, eligibility, timelines, and refund methods. Shop with confidence with our hassle-free returns.",
+      path: "/returns-policy",
+      type: "website",
+    }),
   }),
 });
 

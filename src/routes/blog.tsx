@@ -3,19 +3,19 @@ import { BackButton } from "@/components/common/BackButton";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { Calendar, Clock, ArrowRight, TrendingUp, ShoppingBag, Tag } from "lucide-react";
+import { buildMetaTags, blogArticleJsonLd, jsonLdScript, getSiteUrl } from "@/lib/seo";
 
 export const Route = createFileRoute("/blog")({
-  ssr: false,
+  ssr: true,
   component: BlogPage,
   head: () => ({
-    meta: [
-      { title: "AVENTA SHOP Blog — Shopping Guides, Deals & Tips" },
-      {
-        name: "description",
-        content:
-          "Read the AVENTA SHOP Blog for shopping guides, product reviews, deal alerts, and smart buying tips for online shoppers in Bangladesh.",
-      },
-    ],
+    meta: buildMetaTags({
+      title: "AVENTA SHOP Blog — Shopping Guides, Deals & Tips",
+      description: "Read the AVENTA SHOP Blog for shopping guides, product reviews, deal alerts, and smart buying tips for online shoppers in Bangladesh. Stay informed and save more.",
+      path: "/blog",
+      type: "website",
+      image: "/brand/aventa-shop-logo.png",
+    }),
   }),
 });
 
@@ -27,6 +27,7 @@ const CATEGORIES = [
 
 const POSTS = [
   {
+    slug: "best-deals-flash-sales",
     title: "How to Find the Best Deals During AVENTA SHOP Flash Sales",
     excerpt:
       "Flash sales on AVENTA SHOP offer massive discounts on electronics, fashion, and home essentials. Learn how to set alerts, use coupons, and checkout faster to grab deals before they sell out.",
@@ -35,6 +36,7 @@ const POSTS = [
     readTime: "5 min read",
   },
   {
+    slug: "buying-electronics-online-bangladesh",
     title: "Complete Guide to Buying Electronics Online in Bangladesh",
     excerpt:
       "From smartphones to laptops to home appliances — everything you need to know about buying electronics online safely. We cover warranty, authenticity checks, price comparison, and return policies.",
@@ -43,6 +45,7 @@ const POSTS = [
     readTime: "8 min read",
   },
   {
+    slug: "bkash-vs-nagad-vs-rocket",
     title: "bKash vs Nagad vs Rocket: Which Payment Method is Best for Online Shopping?",
     excerpt:
       "A detailed comparison of Bangladesh's top mobile banking platforms for online shopping. Speed, fees, cashback offers, and security — we break it all down so you can choose the right one.",
@@ -51,6 +54,7 @@ const POSTS = [
     readTime: "6 min read",
   },
   {
+    slug: "top-10-fashion-trends-2026",
     title: "Top 10 Fashion Trends in Bangladesh for 2026",
     excerpt:
       "Discover the latest fashion trends sweeping across Bangladesh this year. From fusion wear to sustainable fabrics, here's what everyone is buying on AVENTA SHOP right now.",
@@ -124,7 +128,8 @@ function BlogPage() {
               </span>
             </div>
             <Link
-              to="/blog"
+              to="/blog/$slug"
+              params={{ slug: POSTS[0].slug }}
               className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
             >
               Read more <ArrowRight className="h-4 w-4" />
@@ -136,8 +141,10 @@ function BlogPage() {
         <h2 className="mb-4 text-xl font-bold text-foreground">Latest Articles</h2>
         <div className="mb-8 grid gap-4 sm:grid-cols-2">
           {POSTS.slice(1).map((post, i) => (
-            <div
+            <Link
               key={i}
+              to="/blog/$slug"
+              params={{ slug: post.slug }}
               className="flex flex-col rounded-2xl border bg-background p-5 shadow-sm transition hover:shadow-md"
             >
               <div className="mb-2 flex items-center justify-between">
@@ -158,7 +165,7 @@ function BlogPage() {
                 </div>
                 <ArrowRight className="h-4 w-4 text-muted-foreground" />
               </div>
-            </div>
+            </Link>
           ))}
         </div>
 

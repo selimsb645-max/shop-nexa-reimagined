@@ -11,19 +11,18 @@ import {
   MousePointerClick,
   Gift,
 } from "lucide-react";
+import { buildMetaTags } from "@/lib/seo";
 
 export const Route = createFileRoute("/affiliate")({
-  ssr: false,
+  ssr: true,
   component: AffiliatePage,
   head: () => ({
-    meta: [
-      { title: "Affiliate Program — AVENTA SHOP" },
-      {
-        name: "description",
-        content:
-          "Join the AVENTA SHOP Affiliate Program and earn commission by sharing products you love. Get your unique referral link, track clicks, and withdraw earnings via bKash or bank transfer.",
-      },
-    ],
+    meta: buildMetaTags({
+      title: "Affiliate Program — Earn Money with AVENTA SHOP",
+      description: "Join the AVENTA SHOP Affiliate Program and earn commission by sharing products you love. Get your unique referral link, track clicks, and withdraw earnings via bKash or bank transfer.",
+      path: "/affiliate",
+      type: "website",
+    }),
   }),
 });
 

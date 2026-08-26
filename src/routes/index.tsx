@@ -28,6 +28,7 @@ import {
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
+import { buildMetaTags, getSiteUrl } from "@/lib/seo";
 import { ProductCard } from "@/components/product/ProductCard";
 import { listCategories } from "@/services/firebase/categories";
 import { listProducts } from "@/services/firebase/products";
@@ -38,14 +39,13 @@ import type { Product } from "@/types/commerce";
 export const Route = createFileRoute("/")({
   component: HomePage,
   head: () => ({
-    meta: [
-      { title: "AVENTA SHOP — Online Shopping Marketplace" },
-      {
-        name: "description",
-        content:
-          "Discover amazing deals, electronics, fashion, and home essentials on AVENTA SHOP. Fast delivery and secure payments.",
-      },
-    ],
+    meta: buildMetaTags({
+      title: "AVENTA SHOP — Online Shopping Marketplace in Bangladesh",
+      description: "Discover amazing deals on electronics, fashion, grocery, beauty and home essentials on AVENTA SHOP. Fast delivery, secure payments, and free shipping over $50. Shop from verified sellers.",
+      path: "/",
+      type: "website",
+      image: "/brand/aventa-shop-logo.png",
+    }),
   }),
 });
 

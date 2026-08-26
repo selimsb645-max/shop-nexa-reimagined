@@ -38,6 +38,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { getProductBySlug, listProducts } from "@/services/firebase/products";
+import { buildMetaTags, productJsonLd, jsonLdScript, getSiteUrl } from "@/lib/seo";
 import { listReviews, upsertReview } from "@/services/firebase/reviews";
 import { firebaseConfigured } from "@/services/firebase/config";
 import { toast } from "sonner";
@@ -67,6 +68,15 @@ type ProductWithExtras = Product & {
 
 export const Route = createFileRoute("/product/$slug")({
   component: ProductDetailPage,
+  head: ({ params }) => ({
+    meta: buildMetaTags({
+      title: `${params.slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())} — AVENTA SHOP`,
+      description: `Buy ${params.slug.replace(/-/g, " ")} at the best price on AVENTA SHOP. Fast delivery, secure payments, and verified sellers.`,
+      path: `/product/${params.slug}`,
+      type: "product",
+      image: "/brand/aventa-shop-logo.png",
+    }),
+  }),
 });
 
 // ----------------------------------------------------------------------
@@ -84,6 +94,70 @@ export const Route = createFileRoute("/product/$slug")({
 export function ProductDetailPage() {
   const navigate = useNavigate();
   const _queryClient = useQueryClient();
+
+  // Update meta tags dynamically when product data loads
+  useEffect(() => {
+    if (!product) return;
+
+    const title = `${product.name} — AVENTA SHOP`;
+    const description = product.shortDescription || product.description?.slice(0, 160) || `Buy ${product.name} at the best price on AVENTA SHOP.`;
+    const image = product.images?.[0] || "/brand/aventa-shop-logo.png";
+
+    document.title = title;
+
+    const setMeta = (attr: string, key: string, val: string) => {
+      let el = document.querySelector(`meta[${attr}="${key}"]`);
+      if (!el) {
+        el = document.createElement("meta");
+        el.setAttribute(attr, key);
+        document.head.appendChild(el);
+      }
+      el.setAttribute("content", val);
+    };
+
+    setMeta("name", "description", description);
+    setMeta("property", "og:title", title);
+    setMeta("property", "og:description", description);
+    setMeta("property", "og:type", "product");
+    setMeta("property", "og:url", `${getSiteUrl()}/product/${product.slug}`);
+    setMeta("property", "og:image", image);
+    setMeta("name", "twitter:title", title);
+    setMeta("name", "twitter:description", description);
+    setMeta("name", "twitter:image", image);
+
+    // Canonical
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement("link");
+      canonical.setAttribute("rel", "canonical");
+      document.head.appendChild(canonical);
+    }
+    canonical.setAttribute("href", `${getSiteUrl()}/product/${product.slug}`);
+
+    // JSON-LD: Product
+    const jsonLdId = "product-jsonld";
+    let script = document.getElementById(jsonLdId) as HTMLScriptElement | null;
+    if (!script) {
+      script = document.createElement("script");
+      script.id = jsonLdId;
+      script.type = "application/ld+json";
+      document.head.appendChild(script);
+    }
+    script.textContent = jsonLdScript(
+      productJsonLd({
+        name: product.name,
+        description,
+        slug: product.slug,
+        price: product.price,
+        currency: "BDT",
+        image,
+        availability: product.stock > 0 ? "InStock" : "OutOfStock",
+        brand: product.brand || undefined,
+        rating: product.rating > 0 ? product.rating : undefined,
+        reviewCount: product.reviewCount > 0 ? product.reviewCount : undefined,
+      }),
+    );
+  }, [product]);
   const { slug } = Route.useParams();
 
   // Auth & Context Hooks

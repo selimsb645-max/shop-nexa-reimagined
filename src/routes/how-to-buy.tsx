@@ -4,15 +4,18 @@ import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { ShoppingCart, Search, CreditCard, Truck, PackageCheck } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { buildMetaTags } from "@/lib/seo";
 
 export const Route = createFileRoute("/how-to-buy")({
-  ssr: false,
+  ssr: true,
   component: HowToBuyPage,
   head: () => ({
-    meta: [
-      { title: "How to Buy — AVENTA SHOP" },
-      { name: "description", content: "Learn how to shop on AVENTA SHOP — search, add to cart, checkout, and get your products delivered." },
-    ],
+    meta: buildMetaTags({
+      title: "How to Buy on AVENTA SHOP — Shopping Guide",
+      description: "Learn how to shop on AVENTA SHOP — search products, add to cart, checkout securely, and get your products delivered fast. Complete step-by-step buying guide.",
+      path: "/how-to-buy",
+      type: "website",
+    }),
   }),
 });
 

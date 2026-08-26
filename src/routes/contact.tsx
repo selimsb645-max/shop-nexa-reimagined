@@ -3,15 +3,18 @@ import { BackButton } from "@/components/common/BackButton";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { Mail, Phone, MessageCircle, MapPin, Clock, Headphones } from "lucide-react";
+import { buildMetaTags } from "@/lib/seo";
 
 export const Route = createFileRoute("/contact")({
-  ssr: false,
+  ssr: true,
   component: ContactPage,
   head: () => ({
-    meta: [
-      { title: "Contact Us — AVENTA SHOP" },
-      { name: "description", content: "Get in touch with AVENTA SHOP — customer support, email, phone, and office address." },
-    ],
+    meta: buildMetaTags({
+      title: "Contact AVENTA SHOP — Customer Support & Inquiries",
+      description: "Get in touch with AVENTA SHOP customer support. Find our email, phone number, and office address. We're here to help with orders, returns, payments and more.",
+      path: "/contact",
+      type: "website",
+    }),
   }),
 });
 

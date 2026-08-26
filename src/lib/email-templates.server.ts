@@ -14,7 +14,7 @@
 /* ------------------------------------------------------------------ */
 
 function getSiteUrl(): string {
-  return (typeof Deno !== "undefined" && Deno.env.get("SITE_URL")) || "https://shopnexa.app";
+  return (typeof Deno !== "undefined" && Deno.env.get("SITE_URL")) || "https://aventa-shop.com";
 }
 
 function formatPrice(amount: number): string {

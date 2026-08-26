@@ -45,7 +45,7 @@ interface SubcategorySitemapData {
 function getSiteUrl(): string {
   return (
     (typeof Deno !== "undefined" && (Deno.env.get("SITE_URL") ?? Deno.env.get("VITE_SITE_URL"))) ||
-    "https://shop-nexa.lovable.app"
+    "https://aventa-shop.com"
   );
 }
 const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
@@ -241,9 +241,35 @@ function staticPages(): SitemapUrl[] {
     { loc: `${getSiteUrl()}/`, changefreq: "daily", priority: "1.0" },
     { loc: `${getSiteUrl()}/shop`, changefreq: "daily", priority: "0.9" },
     { loc: `${getSiteUrl()}/flash-sales`, changefreq: "daily", priority: "0.8" },
+    { loc: `${getSiteUrl()}/blog`, changefreq: "weekly", priority: "0.7" },
     { loc: `${getSiteUrl()}/compare`, changefreq: "weekly", priority: "0.5" },
     { loc: `${getSiteUrl()}/help-center`, changefreq: "monthly", priority: "0.5" },
+    { loc: `${getSiteUrl()}/about`, changefreq: "monthly", priority: "0.5" },
+    { loc: `${getSiteUrl()}/contact`, changefreq: "monthly", priority: "0.5" },
+    { loc: `${getSiteUrl()}/mart`, changefreq: "weekly", priority: "0.6" },
+    { loc: `${getSiteUrl()}/returns-policy`, changefreq: "monthly", priority: "0.4" },
+    { loc: `${getSiteUrl()}/how-to-buy`, changefreq: "monthly", priority: "0.4" },
+    { loc: `${getSiteUrl()}/track-orders-info`, changefreq: "monthly", priority: "0.4" },
+    { loc: `${getSiteUrl()}/digital-payments`, changefreq: "monthly", priority: "0.4" },
+    { loc: `${getSiteUrl()}/affiliate`, changefreq: "monthly", priority: "0.4" },
+    { loc: `${getSiteUrl()}/privacy`, changefreq: "yearly", priority: "0.3" },
+    { loc: `${getSiteUrl()}/terms`, changefreq: "yearly", priority: "0.3" },
   ];
+}
+
+/** Static blog post URLs */
+function blogPostPages(): SitemapUrl[] {
+  const slugs = [
+    "best-deals-flash-sales",
+    "buying-electronics-online-bangladesh",
+    "bkash-vs-nagad-vs-rocket",
+    "top-10-fashion-trends-2026",
+  ];
+  return slugs.map((slug) => ({
+    loc: `${getSiteUrl()}/blog/${slug}`,
+    changefreq: "weekly" as const,
+    priority: "0.6",
+  }));
 }
 
 function buildXml(urls: SitemapUrl[]): string {
@@ -287,6 +313,11 @@ export async function generateSitemap(): Promise<{ xml: string; count: number }>
     addUrl(page.loc, page.lastmod, page.changefreq, page.priority);
   }
 
+  // 1b. Blog posts
+  for (const page of blogPostPages()) {
+    addUrl(page.loc, page.lastmod, page.changefreq, page.priority);
+  }
+
   // 2. Categories + Subcategories
   try {
     const { categories, subcategories } = await fetchCategoriesAndSubs(projectId);
@@ -323,6 +354,32 @@ export async function generateSitemap(): Promise<{ xml: string; count: number }>
     }
   } catch (err) {
     console.error("[sitemap] Failed to fetch products:", err);
+  }
+
+  // 4. Stores/Sellers
+  try {
+    const token = await getAccessToken();
+    const storesRes = await fetch(`${fsBaseUrl(projectId)}/stores?pageSize=1000`, {
+      headers: { authorization: `Bearer ${token}` },
+    });
+    if (storesRes.ok) {
+      const storesJson = (await storesRes.json()) as {
+        documents?: Array<{ fields?: Record<string, FsValue> }>;
+      };
+      for (const doc of storesJson.documents ?? []) {
+        const fields = doc.fields ? fromFsFields(doc.fields) : {};
+        const slug = String(fields.slug ?? "").trim();
+        if (!slug) continue;
+        addUrl(
+          `${getSiteUrl()}/store/${encodeURIComponent(slug)}`,
+          undefined,
+          "weekly",
+          "0.6",
+        );
+      }
+    }
+  } catch (err) {
+    console.error("[sitemap] Failed to fetch stores:", err);
   }
 
   const xml = buildXml(urls);

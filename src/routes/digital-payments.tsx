@@ -11,19 +11,18 @@ import {
   CheckCircle2,
   Info,
 } from "lucide-react";
+import { buildMetaTags } from "@/lib/seo";
 
 export const Route = createFileRoute("/digital-payments")({
-  ssr: false,
+  ssr: true,
   component: DigitalPaymentsPage,
   head: () => ({
-    meta: [
-      { title: "Digital Payments — AVENTA SHOP" },
-      {
-        name: "description",
-        content:
-          "Pay your way on AVENTA SHOP — Cash on Delivery, bKash, Nagad, Rocket, credit/debit cards, and bank transfers. Secure, fast, and trusted.",
-      },
-    ],
+    meta: buildMetaTags({
+      title: "Digital Payment Methods — AVENTA SHOP Secure Payments",
+      description: "Pay your way on AVENTA SHOP — Cash on Delivery, bKash, Nagad, Rocket, credit/debit cards, and bank transfers. Secure, fast, and trusted payment options.",
+      path: "/digital-payments",
+      type: "website",
+    }),
   }),
 });
 

@@ -19,8 +19,8 @@ export const Route = createFileRoute("/sitemap.xml")({
           const fallbackXml = [
             '<?xml version="1.0" encoding="UTF-8"?>',
             '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-            "  <url><loc>https://shop-nexa.lovable.app/</loc><priority>1.0</priority></url>",
-            "  <url><loc>https://shop-nexa.lovable.app/shop</loc><priority>0.9</priority></url>",
+            "  <url><loc>https://aventa-shop.com/</loc><priority>1.0</priority></url>",
+            "  <url><loc>https://aventa-shop.com/shop</loc><priority>0.9</priority></url>",
             "</urlset>",
           ].join("\n");
           return new Response(fallbackXml, {

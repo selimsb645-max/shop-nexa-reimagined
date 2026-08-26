@@ -25,18 +25,18 @@ import { ProductCard, ProductCardSkeleton } from "@/components/product/ProductCa
 import { listProducts } from "@/services/firebase/products";
 import { firebaseConfigured } from "@/services/firebase/config";
 import type { Product } from "@/types/commerce";
+import { buildMetaTags } from "@/lib/seo";
 
 export const Route = createFileRoute("/flash-sales")({
-  ssr: false,
+  ssr: true,
   component: FlashSalesPage,
   head: () => ({
-    meta: [
-      { title: "Flash Sales — AVENTA SHOP" },
-      {
-        name: "description",
-        content: "AVENTA SHOP Flash Sales: Unbeatable mega discounts on top items! Limited quantities, hurry before stock runs out.",
-      },
-    ],
+    meta: buildMetaTags({
+      title: "Flash Sales — Mega Deals & Discounts on AVENTA SHOP",
+      description: "AVENTA SHOP Flash Sales: Unbeatable mega discounts on electronics, fashion, home essentials and more! Limited quantities, hurry before stock runs out.",
+      path: "/flash-sales",
+      type: "website",
+    }),
   }),
 });
 

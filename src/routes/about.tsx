@@ -3,15 +3,18 @@ import { BackButton } from "@/components/common/BackButton";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { Truck, ShieldCheck, Headphones, Tag, Store, Users } from "lucide-react";
+import { buildMetaTags } from "@/lib/seo";
 
 export const Route = createFileRoute("/about")({
-  ssr: false,
+  ssr: true,
   component: AboutPage,
   head: () => ({
-    meta: [
-      { title: "About Us — AVENTA SHOP" },
-      { name: "description", content: "AVENTA SHOP is your one-stop online marketplace for electronics, fashion, groceries, and more — quality products at unbeatable prices across Bangladesh." },
-    ],
+    meta: buildMetaTags({
+      title: "About AVENTA SHOP — Online Shopping Marketplace in Bangladesh",
+      description: "AVENTA SHOP is your one-stop online marketplace for electronics, fashion, groceries, and more — quality products at unbeatable prices across Bangladesh with fast delivery and secure payments.",
+      path: "/about",
+      type: "website",
+    }),
   }),
 });
 

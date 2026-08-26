@@ -10,19 +10,18 @@ import { listAllProducts } from "@/services/firebase/products";
 import { firebaseConfigured } from "@/services/firebase/config";
 import { formatPrice } from "@/utils/format";
 import type { Product } from "@/types/commerce";
+import { buildMetaTags } from "@/lib/seo";
 
 export const Route = createFileRoute("/compare")({
-  ssr: false,
+  ssr: true,
   component: ComparePage,
   head: () => ({
-    meta: [
-      { title: "Compare Products — AVENTA SHOP" },
-      { name: "description", content: "Compare products side by side on AVENTA SHOP." },
-      { property: "og:title", content: "Compare Products — AVENTA SHOP" },
-      { property: "og:description", content: "Compare products side by side on AVENTA SHOP." },
-      { property: "og:url", content: "https://shop-nexa.lovable.app/compare" },
-    ],
-    links: [{ rel: "canonical", href: "https://shop-nexa.lovable.app/compare" }],
+    meta: buildMetaTags({
+      title: "Compare Products Side by Side — AVENTA SHOP",
+      description: "Compare products side by side on AVENTA SHOP. Compare prices, specifications, ratings, and features to make the best buying decision.",
+      path: "/compare",
+      type: "website",
+    }),
   }),
 
 });

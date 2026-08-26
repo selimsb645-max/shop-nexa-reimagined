@@ -12,19 +12,18 @@ import {
 import { BackButton } from "@/components/common/BackButton";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
+import { buildMetaTags } from "@/lib/seo";
 
 export const Route = createFileRoute("/help-center")({
-  ssr: false,
+  ssr: true,
   component: HelpCenterPage,
   head: () => ({
-    meta: [
-      { title: "Help Center — AVENTA SHOP" },
-      { name: "description", content: "Answers about AVENTA SHOP shipping, returns, payments, orders and account support." },
-      { property: "og:title", content: "Help Center — AVENTA SHOP" },
-      { property: "og:description", content: "Shipping, returns, payments and account support answers." },
-      { property: "og:url", content: "https://shop-nexa.lovable.app/help-center" },
-    ],
-    links: [{ rel: "canonical", href: "https://shop-nexa.lovable.app/help-center" }],
+    meta: buildMetaTags({
+      title: "Help Center — AVENTA SHOP Support & FAQ",
+      description: "Find answers about AVENTA SHOP shipping, returns, payments, orders, account support, and seller policies. Get help with your shopping experience.",
+      path: "/help-center",
+      type: "website",
+    }),
   }),
 
 });

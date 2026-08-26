@@ -10,15 +10,19 @@ import { listAllProducts } from "@/services/firebase/products";
 import { getPublicStoreBySlug, type PublicStoreData } from "@/lib/store.functions";
 import { formatPrice } from "@/utils/format";
 import type { Product } from "@/types/commerce";
+import { buildMetaTags, storeJsonLd, jsonLdScript, getSiteUrl } from "@/lib/seo";
 
 export const Route = createFileRoute("/store/$slug")({
-  ssr: false,
+  ssr: true,
   component: StorePage,
-  head: () => ({
-    meta: [
-      { title: "Store — AVENTA SHOP" },
-      { name: "description", content: "Browse products from this AVENTA SHOP seller store." },
-    ],
+  head: ({ params }) => ({
+    meta: buildMetaTags({
+      title: `${params.slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())} Store — AVENTA SHOP`,
+      description: `Browse products from ${params.slug.replace(/-/g, " ")} on AVENTA SHOP. Verified seller with quality products and fast delivery.`,
+      path: `/store/${params.slug}`,
+      type: "website",
+      image: "/brand/aventa-shop-logo.png",
+    }),
   }),
 });
 
@@ -70,6 +74,53 @@ function StorePage() {
   useEffect(() => {
     if (!store) return;
     document.title = `${store.shopName} — AVENTA SHOP Store`;
+    // Update meta tags dynamically when store data loads
+    if (store) {
+      const title = `${store.name} Store — AVENTA SHOP`;
+      const description = store.description || `Browse products from ${store.name} on AVENTA SHOP.`;
+
+      document.title = title;
+      const setMeta = (attr: string, key: string, val: string) => {
+        let el = document.querySelector(`meta[${attr}="${key}"]`);
+        if (!el) {
+          el = document.createElement("meta");
+          el.setAttribute(attr, key);
+          document.head.appendChild(el);
+        }
+        el.setAttribute("content", val);
+      };
+      setMeta("name", "description", description);
+      setMeta("property", "og:title", title);
+      setMeta("property", "og:description", description);
+      setMeta("property", "og:url", `${getSiteUrl()}/store/${store.slug}`);
+
+      // Canonical
+      let canonical = document.querySelector('link[rel="canonical"]');
+      if (!canonical) {
+        canonical = document.createElement("link");
+        canonical.setAttribute("rel", "canonical");
+        document.head.appendChild(canonical);
+      }
+      canonical.setAttribute("href", `${getSiteUrl()}/store/${store.slug}`);
+
+      // JSON-LD: Store
+      let script = document.getElementById("store-jsonld") as HTMLScriptElement | null;
+      if (!script) {
+        script = document.createElement("script");
+        script.id = "store-jsonld";
+        script.type = "application/ld+json";
+        document.head.appendChild(script);
+      }
+      script.textContent = jsonLdScript(
+        storeJsonLd({
+          name: store.name,
+          description,
+          slug: store.slug,
+          rating: store.rating,
+          reviewCount: store.reviewCount,
+        }),
+      );
+    }
     const metaDesc = document.querySelector('meta[name="description"]');
     if (metaDesc) {
       metaDesc.setAttribute(

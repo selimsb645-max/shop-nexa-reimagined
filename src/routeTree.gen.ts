@@ -58,6 +58,7 @@ import { Route as AuthenticatedSupportRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedTrackOrdersRouteImport } from './routes/_authenticated/track-orders'
 import { Route as AuthenticatedWalletRouteImport } from './routes/_authenticated/wallet'
 import { Route as AuthenticatedWishlistRouteImport } from './routes/_authenticated/wishlist'
+import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as ProductSlugRouteImport } from './routes/product.$slug'
 import { Route as StoreSlugRouteImport } from './routes/store.$slug'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
@@ -356,6 +357,11 @@ const AuthenticatedWishlistRoute = AuthenticatedWishlistRouteImport.update({
   path: '/wishlist',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => BlogRoute,
+} as any)
 const ProductSlugRoute = ProductSlugRouteImport.update({
   id: '/product/$slug',
   path: '/product/$slug',
@@ -637,7 +643,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/affiliate': typeof AffiliateRoute
-  '/blog': typeof BlogRoute
+  '/blog': typeof BlogRouteWithChildren
   '/cart': typeof CartRoute
   '/compare': typeof CompareRoute
   '/contact': typeof ContactRoute
@@ -682,6 +688,7 @@ export interface FileRoutesByFullPath {
   '/track-orders': typeof AuthenticatedTrackOrdersRoute
   '/wallet': typeof AuthenticatedWalletRoute
   '/wishlist': typeof AuthenticatedWishlistRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/product/$slug': typeof ProductSlugRoute
   '/store/$slug': typeof StoreSlugRoute
   '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
@@ -734,7 +741,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/affiliate': typeof AffiliateRoute
-  '/blog': typeof BlogRoute
+  '/blog': typeof BlogRouteWithChildren
   '/cart': typeof CartRoute
   '/compare': typeof CompareRoute
   '/contact': typeof ContactRoute
@@ -777,6 +784,7 @@ export interface FileRoutesByTo {
   '/track-orders': typeof AuthenticatedTrackOrdersRoute
   '/wallet': typeof AuthenticatedWalletRoute
   '/wishlist': typeof AuthenticatedWishlistRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/product/$slug': typeof ProductSlugRoute
   '/store/$slug': typeof StoreSlugRoute
   '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
@@ -829,7 +837,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/affiliate': typeof AffiliateRoute
-  '/blog': typeof BlogRoute
+  '/blog': typeof BlogRouteWithChildren
   '/cart': typeof CartRoute
   '/compare': typeof CompareRoute
   '/contact': typeof ContactRoute
@@ -874,6 +882,7 @@ export interface FileRoutesById {
   '/_authenticated/track-orders': typeof AuthenticatedTrackOrdersRoute
   '/_authenticated/wallet': typeof AuthenticatedWalletRoute
   '/_authenticated/wishlist': typeof AuthenticatedWishlistRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/product/$slug': typeof ProductSlugRoute
   '/store/$slug': typeof StoreSlugRoute
   '/_authenticated/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
@@ -973,6 +982,7 @@ export interface FileRouteTypes {
     | '/track-orders'
     | '/wallet'
     | '/wishlist'
+    | '/blog/$slug'
     | '/product/$slug'
     | '/store/$slug'
     | '/admin/analytics'
@@ -1068,6 +1078,7 @@ export interface FileRouteTypes {
     | '/track-orders'
     | '/wallet'
     | '/wishlist'
+    | '/blog/$slug'
     | '/product/$slug'
     | '/store/$slug'
     | '/admin/analytics'
@@ -1164,6 +1175,7 @@ export interface FileRouteTypes {
     | '/_authenticated/track-orders'
     | '/_authenticated/wallet'
     | '/_authenticated/wishlist'
+    | '/blog/$slug'
     | '/product/$slug'
     | '/store/$slug'
     | '/_authenticated/admin/analytics'
@@ -1218,7 +1230,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
   AffiliateRoute: typeof AffiliateRoute
-  BlogRoute: typeof BlogRoute
+  BlogRoute: typeof BlogRouteWithChildren
   CartRoute: typeof CartRoute
   CompareRoute: typeof CompareRoute
   ContactRoute: typeof ContactRoute
@@ -1586,6 +1598,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/wishlist'
       preLoaderRoute: typeof AuthenticatedWishlistRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
+      parentRoute: typeof BlogRoute
     }
     '/product/$slug': {
       id: '/product/$slug'
@@ -2140,12 +2159,22 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface BlogRouteChildren {
+  BlogSlugRoute: typeof BlogSlugRoute
+}
+
+const BlogRouteChildren: BlogRouteChildren = {
+  BlogSlugRoute: BlogSlugRoute,
+}
+
+const BlogRouteWithChildren = BlogRoute._addFileChildren(BlogRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AboutRoute: AboutRoute,
   AffiliateRoute: AffiliateRoute,
-  BlogRoute: BlogRoute,
+  BlogRoute: BlogRouteWithChildren,
   CartRoute: CartRoute,
   CompareRoute: CompareRoute,
   ContactRoute: ContactRoute,
