@@ -76,8 +76,8 @@ function StorePage() {
     document.title = `${store.shopName} — AVENTA SHOP Store`;
     // Update meta tags dynamically when store data loads
     if (store) {
-      const title = `${store.name} Store — AVENTA SHOP`;
-      const description = store.description || `Browse products from ${store.name} on AVENTA SHOP.`;
+      const title = `${store.shopName} Store — AVENTA SHOP`;
+      const description = store.description || `Browse products from ${store.shopName} on AVENTA SHOP.`;
 
       document.title = title;
       const setMeta = (attr: string, key: string, val: string) => {
@@ -92,7 +92,7 @@ function StorePage() {
       setMeta("name", "description", description);
       setMeta("property", "og:title", title);
       setMeta("property", "og:description", description);
-      setMeta("property", "og:url", `${getSiteUrl()}/store/${store.slug}`);
+      setMeta("property", "og:url", `${getSiteUrl()}/store/${store.shopSlug}`);
 
       // Canonical
       let canonical = document.querySelector('link[rel="canonical"]');
@@ -101,7 +101,7 @@ function StorePage() {
         canonical.setAttribute("rel", "canonical");
         document.head.appendChild(canonical);
       }
-      canonical.setAttribute("href", `${getSiteUrl()}/store/${store.slug}`);
+      canonical.setAttribute("href", `${getSiteUrl()}/store/${store.shopSlug}`);
 
       // JSON-LD: Store
       let script = document.getElementById("store-jsonld") as HTMLScriptElement | null;
@@ -113,11 +113,11 @@ function StorePage() {
       }
       script.textContent = jsonLdScript(
         storeJsonLd({
-          name: store.name,
+          name: store.shopName,
           description,
-          slug: store.slug,
-          rating: store.rating,
-          reviewCount: store.reviewCount,
+          slug: store.shopSlug,
+          rating: (store.rating ?? 0),
+          reviewCount: (store.reviewCount ?? 0),
         }),
       );
     }

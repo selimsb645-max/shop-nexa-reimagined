@@ -29,6 +29,11 @@ function mapOrder(id: string, d: Record<string, unknown>): SellerOrder {
     buyerEmail: (r.buyerEmail as string | null) ?? null,
     items: (r.items as SellerOrder["items"]) ?? [],
     subtotal: Number(r.subtotal ?? 0),
+    discount: Number(r.discount ?? 0),
+    tax: Number(r.tax ?? 0),
+    taxLabel: String(r.taxLabel ?? "Tax"),
+    platformFee: Number(r.platformFee ?? 0),
+    total: Number(r.total ?? 0),
     commission: Number(r.commission ?? 0),
     earnings: Number(r.earnings ?? 0),
     shipping: (r.shipping as ShippingInfo) ?? {

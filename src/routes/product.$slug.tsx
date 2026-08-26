@@ -96,12 +96,53 @@ export function ProductDetailPage() {
   const navigate = useNavigate();
   const _queryClient = useQueryClient();
 
+  const { slug } = Route.useParams();
+
+  // Auth & Context Hooks
+  const authContext = useAuth();
+  const user = authContext?.user ?? null;
+
+  const cartContext = useCart();
+  const wishlistContext = useWishlist();
+
+  // Fetch Main Product
+  const {
+    data: rawProduct,
+    isLoading: productLoading,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: ["product-detail", slug],
+    queryFn: async () => {
+      if (firebaseConfigured) {
+        try {
+          const res = await getProductBySlug(slug);
+          if (res) return res;
+        } catch (err) {
+          console.warn("getProductBySlug error or missing:", err);
+        }
+      }
+      // Try fetching from product list as secondary lookup
+      try {
+        const all = await listProducts();
+        const matched = all.find((p) => p.slug === slug || p.id === slug);
+        if (matched) return matched;
+      } catch (_) { /* ignore */ }
+
+      // Product not found - return null so UI shows proper "not found" state
+      return null;
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const product = rawProduct as Partial<ProductWithExtras> | null;
+
   // Update meta tags dynamically when product data loads
   useEffect(() => {
     if (!product) return;
 
-    const title = `${product.name} — AVENTA SHOP`;
-    const description = product.shortDescription || product.description?.slice(0, 160) || `Buy ${product.name} at the best price on AVENTA SHOP.`;
+    const title = `${product.title} — AVENTA SHOP`;
+    const description = product.shortDescription || product.description?.slice(0, 160) || `Buy ${product.title} at the best price on AVENTA SHOP.`;
     const image = product.images?.[0] || "/brand/aventa-shop-logo.png";
 
     document.title = title;
@@ -146,59 +187,19 @@ export function ProductDetailPage() {
     }
     script.textContent = jsonLdScript(
       productJsonLd({
-        name: product.name,
+        name: product.title ?? "",
         description,
-        slug: product.slug,
-        price: product.price,
+        slug: product.slug ?? "",
+        price: product.price ?? 0,
         currency: "BDT",
         image,
-        availability: product.stock > 0 ? "InStock" : "OutOfStock",
+        availability: (product.stock ?? 0) > 0 ? "InStock" : "OutOfStock",
         brand: product.brand || undefined,
-        rating: product.rating > 0 ? product.rating : undefined,
-        reviewCount: product.reviewCount > 0 ? product.reviewCount : undefined,
+        rating: (product.rating ?? 0) > 0 ? product.rating : undefined,
+        reviewCount: (product.reviewCount ?? 0) > 0 ? product.reviewCount : undefined,
       }),
     );
   }, [product]);
-  const { slug } = Route.useParams();
-
-  // Auth & Context Hooks
-  const authContext = useAuth();
-  const user = authContext?.user ?? null;
-
-  const cartContext = useCart();
-  const wishlistContext = useWishlist();
-
-  // Fetch Main Product
-  const {
-    data: rawProduct,
-    isLoading: productLoading,
-    isError,
-    refetch,
-  } = useQuery({
-    queryKey: ["product-detail", slug],
-    queryFn: async () => {
-      if (firebaseConfigured) {
-        try {
-          const res = await getProductBySlug(slug);
-          if (res) return res;
-        } catch (err) {
-          console.warn("getProductBySlug error or missing:", err);
-        }
-      }
-      // Try fetching from product list as secondary lookup
-      try {
-        const all = await listProducts();
-        const matched = all.find((p) => p.slug === slug || p.id === slug);
-        if (matched) return matched;
-      } catch (_) { /* ignore */ }
-
-      // Product not found - return null so UI shows proper "not found" state
-      return null;
-    },
-    staleTime: 1000 * 60 * 5,
-  });
-
-  const product = rawProduct as Partial<ProductWithExtras> | null;
 
   // Fetch Related Products
   const { data: relatedProducts = [] } = useQuery({

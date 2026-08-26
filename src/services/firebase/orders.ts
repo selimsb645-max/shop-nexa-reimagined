@@ -94,6 +94,7 @@ function mapOrder(id: string, data: Record<string, unknown>): Order {
     total: Number(raw.total ?? 0),
     platformFee: Number(raw.platformFee ?? 0),
     couponCode: (raw.couponCode as string | null) ?? null,
+    promoCode: (raw.promoCode as string | null) ?? null,
     status: (raw.status as OrderStatus) ?? "pending",
     payment: (raw.payment as Order["payment"]) ?? {
       method: "cash_on_delivery",

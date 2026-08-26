@@ -172,7 +172,7 @@ function OrderDetail({ sellerId }: { sellerId: string }) {
               )}
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">{t("order.shipping")}</span>
-                <span className="font-semibold">{order.shipping === 0 ? "FREE" : formatPrice(order.shipping)}</span>
+                <span className="font-semibold">{order.shipping.shippingCharge === 0 ? "FREE" : formatPrice(order.shipping.shippingCharge)}</span>
               </div>
               {!!order.tax && order.tax > 0 && (
                 <div className="flex items-center justify-between">

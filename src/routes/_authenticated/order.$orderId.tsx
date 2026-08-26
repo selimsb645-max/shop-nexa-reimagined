@@ -20,6 +20,7 @@ import {
 import { ServicePageLayout } from "@/components/common/ServicePageLayout";
 import { useAuth } from "@/context/AuthContext";
 import { useI18n } from "@/i18n/I18nContext";
+import type { TranslationKeys } from "@/i18n/types";
 import { getOrder } from "@/services/firebase/orders";
 import { formatDateTime, formatPrice } from "@/utils/format";
 import { firebaseConfigured } from "@/services/firebase/config";

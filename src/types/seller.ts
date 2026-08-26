@@ -324,6 +324,11 @@ export interface SellerOrder {
   status: SellerOrderStatus;
   commission: number;
   earnings: number;
+  discount: number;
+  tax: number;
+  taxLabel: string;
+  platformFee: number;
+  total: number;
   shipping: ShippingInfo;
   shippingAddress: {
     fullName: string;

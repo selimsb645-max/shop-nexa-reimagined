@@ -39,6 +39,8 @@ export interface PublicStoreData {
   country: string;
   phone: string;
   uid: string; // needed to query products by sellerId
+  rating?: number;
+  reviewCount?: number;
 }
 
 export const getPublicStoreBySlug = createServerFn({ method: "POST" })

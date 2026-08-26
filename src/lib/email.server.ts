@@ -298,7 +298,13 @@ export async function sendTransactionalEmail(params: SendEmailParams): Promise<E
     setTimeout(() => _sentKeys.delete(idempotencyKey), 10 * 60 * 1000);
   }
 
-  if (typeof console !== "undefined")
+  if (typeof console !== "undefined") {
+    if (result.success) {
+      console.log(`[EMAIL] Sent ${event} to ${recipient} (${emailId})`);
+    } else {
+      console.error(`[EMAIL] Failed to send ${event} to ${recipient}: ${result.error}`);
+    }
+  }
 
   return { delivered: result.success, provider: provider.name, emailId, error: result.error };
 }

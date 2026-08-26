@@ -864,7 +864,7 @@ export async function processSettlementWithdrawal(input: {
   action: "approve" | "reject";
   note?: string;
   txRef?: string; // Manual payout transaction reference (for approve)
-}): Promise<{ status: string }> {
+}): Promise<{ status: string; amount?: number; method?: string }> {
   const projectId = getProjectId();
   const token = await getAccessToken();
 
@@ -1036,7 +1036,7 @@ export async function processSettlementWithdrawal(input: {
   });
 
   await commitWrites(projectId, writes);
-  return { status: input.action === "approve" ? "completed" : "rejected" };
+  return { status: input.action === "approve" ? "completed" : "rejected", amount, method };
 }
 
 // ====================================================================

@@ -32,6 +32,7 @@ export async function getProductForComparison(productId: string): Promise<Compar
     reviewCount: Number(data.reviewCount ?? 0),
     tags: Array.isArray(data.tags) ? (data.tags as string[]) : [],
     featured: Boolean(data.featured),
+    freeDelivery: Boolean(data.freeDelivery),
     sellerId: data.sellerId ? String(data.sellerId) : null,
     sku: data.sku ? String(data.sku) : null,
     status: (data.status as "draft" | "published" | "archived") ?? "published",

@@ -65,6 +65,8 @@ export interface CartItemType {
   size?: string;
   quantity: number;
   stock?: number;
+  slug?: string;
+  addedAt?: number;
 }
 
 export interface CouponType {
@@ -422,6 +424,7 @@ export default function CartPage() {
         reviewCount: 0,
         tags: [],
         featured: false,
+        freeDelivery: false,
         createdAt: item.addedAt || Date.now(),
         updatedAt: Date.now(),
       } as Product);
@@ -464,6 +467,7 @@ export default function CartPage() {
           reviewCount: 0,
           tags: [],
           featured: false,
+        freeDelivery: false,
           createdAt: item.addedAt || Date.now(),
           updatedAt: Date.now(),
         } as Product);

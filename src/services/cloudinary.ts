@@ -137,7 +137,7 @@ export function getOptimizedImageUrl(
     }
 
     const img = cld.image(publicId);
-    img.format(formatAuto());
+    img.format(formatAuto() as unknown as string);
     img.quality(autoGood());
 
     if (width) {

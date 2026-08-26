@@ -276,7 +276,7 @@ function BlogPostPage() {
       <SiteHeader />
       <main className="flex-1">
         <div className="mx-auto max-w-3xl px-4 py-6 md:py-10">
-          <BackButton to="/blog" label="Back to Blog" />
+          <BackButton fallbackTo="/blog" label="Back to Blog" />
 
           <div className="mt-6 flex items-center gap-3">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-orange-50 px-3 py-1 text-xs font-medium text-orange-600">

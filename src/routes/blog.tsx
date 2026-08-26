@@ -63,6 +63,7 @@ const POSTS = [
     readTime: "7 min read",
   },
   {
+    slug: "save-money-coupons-vouchers",
     title: "How to Save Money with AVENTA SHOP Coupons and Vouchers",
     excerpt:
       "AVENTA SHOP offers multiple coupon types — sitewide discounts, category vouchers, and seller-specific deals. Learn how to stack coupons, find hidden vouchers, and maximize your savings on every purchase.",
@@ -71,6 +72,7 @@ const POSTS = [
     readTime: "5 min read",
   },
   {
+    slug: "cash-on-delivery-tips",
     title: "Understanding Cash on Delivery: Tips for Safe and Smart Shopping",
     excerpt:
       "COD is the most popular payment method in Bangladesh. Learn the best practices for COD orders — inspecting packages, checking products before paying, and what to do if something goes wrong.",
