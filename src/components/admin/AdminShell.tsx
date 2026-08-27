@@ -17,6 +17,7 @@ MapPin,
   Megaphone,
   Bell,
   DollarSign,
+  Percent,
   BarChart3,
   Boxes,
   Tag,
@@ -74,6 +75,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
             <AItem to="/admin/products" icon={<Package className="h-4 w-4" />} label="Products" />
             <AItem to="/admin/inventory" icon={<Boxes className="h-4 w-4" />} label="Inventory" />
             <AItem to="/admin/categories" icon={<Layers className="h-4 w-4" />} label="Categories" />
+            <AItem to="/admin/commission-setup" icon={<Percent className="h-4 w-4" />} label="Commission Setup" />
             <AItem to="/admin/sellers" icon={<Store className="h-4 w-4" />} label="Sellers" />
             <AItem to="/admin/users" icon={<Users className="h-4 w-4" />} label="Users" />
             <AItem to="/admin/orders" icon={<ShoppingBag className="h-4 w-4" />} label="Orders" />

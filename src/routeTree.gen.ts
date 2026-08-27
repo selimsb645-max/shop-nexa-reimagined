@@ -66,6 +66,7 @@ import { Route as AuthenticatedAdminAnalyticsRouteImport } from './routes/_authe
 import { Route as AuthenticatedAdminAnnouncementsRouteImport } from './routes/_authenticated/admin.announcements'
 import { Route as AuthenticatedAdminBannersRouteImport } from './routes/_authenticated/admin.banners'
 import { Route as AuthenticatedAdminCategoriesRouteImport } from './routes/_authenticated/admin.categories'
+import { Route as AuthenticatedAdminCommissionSetupRouteImport } from './routes/_authenticated/admin.commission-setup'
 import { Route as AuthenticatedAdminCouponsRouteImport } from './routes/_authenticated/admin.coupons'
 import { Route as AuthenticatedAdminDeliveryRouteImport } from './routes/_authenticated/admin.delivery'
 import { Route as AuthenticatedAdminDeliveryZonesRouteImport } from './routes/_authenticated/admin.delivery-zones'
@@ -402,6 +403,12 @@ const AuthenticatedAdminCategoriesRoute =
     path: '/categories',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminCommissionSetupRoute =
+  AuthenticatedAdminCommissionSetupRouteImport.update({
+    id: '/commission-setup',
+    path: '/commission-setup',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminCouponsRoute =
   AuthenticatedAdminCouponsRouteImport.update({
     id: '/coupons',
@@ -702,6 +709,7 @@ export interface FileRoutesByFullPath {
   '/admin/announcements': typeof AuthenticatedAdminAnnouncementsRoute
   '/admin/banners': typeof AuthenticatedAdminBannersRoute
   '/admin/categories': typeof AuthenticatedAdminCategoriesRoute
+  '/admin/commission-setup': typeof AuthenticatedAdminCommissionSetupRoute
   '/admin/coupons': typeof AuthenticatedAdminCouponsRoute
   '/admin/delivery': typeof AuthenticatedAdminDeliveryRoute
   '/admin/delivery-zones': typeof AuthenticatedAdminDeliveryZonesRoute
@@ -799,6 +807,7 @@ export interface FileRoutesByTo {
   '/admin/announcements': typeof AuthenticatedAdminAnnouncementsRoute
   '/admin/banners': typeof AuthenticatedAdminBannersRoute
   '/admin/categories': typeof AuthenticatedAdminCategoriesRoute
+  '/admin/commission-setup': typeof AuthenticatedAdminCommissionSetupRoute
   '/admin/coupons': typeof AuthenticatedAdminCouponsRoute
   '/admin/delivery': typeof AuthenticatedAdminDeliveryRoute
   '/admin/delivery-zones': typeof AuthenticatedAdminDeliveryZonesRoute
@@ -898,6 +907,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/announcements': typeof AuthenticatedAdminAnnouncementsRoute
   '/_authenticated/admin/banners': typeof AuthenticatedAdminBannersRoute
   '/_authenticated/admin/categories': typeof AuthenticatedAdminCategoriesRoute
+  '/_authenticated/admin/commission-setup': typeof AuthenticatedAdminCommissionSetupRoute
   '/_authenticated/admin/coupons': typeof AuthenticatedAdminCouponsRoute
   '/_authenticated/admin/delivery': typeof AuthenticatedAdminDeliveryRoute
   '/_authenticated/admin/delivery-zones': typeof AuthenticatedAdminDeliveryZonesRoute
@@ -999,6 +1009,7 @@ export interface FileRouteTypes {
     | '/admin/announcements'
     | '/admin/banners'
     | '/admin/categories'
+    | '/admin/commission-setup'
     | '/admin/coupons'
     | '/admin/delivery'
     | '/admin/delivery-zones'
@@ -1096,6 +1107,7 @@ export interface FileRouteTypes {
     | '/admin/announcements'
     | '/admin/banners'
     | '/admin/categories'
+    | '/admin/commission-setup'
     | '/admin/coupons'
     | '/admin/delivery'
     | '/admin/delivery-zones'
@@ -1194,6 +1206,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/announcements'
     | '/_authenticated/admin/banners'
     | '/_authenticated/admin/categories'
+    | '/_authenticated/admin/commission-setup'
     | '/_authenticated/admin/coupons'
     | '/_authenticated/admin/delivery'
     | '/_authenticated/admin/delivery-zones'
@@ -1668,6 +1681,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminCategoriesRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/commission-setup': {
+      id: '/_authenticated/admin/commission-setup'
+      path: '/commission-setup'
+      fullPath: '/admin/commission-setup'
+      preLoaderRoute: typeof AuthenticatedAdminCommissionSetupRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/coupons': {
       id: '/_authenticated/admin/coupons'
       path: '/coupons'
@@ -1995,6 +2015,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAnnouncementsRoute: typeof AuthenticatedAdminAnnouncementsRoute
   AuthenticatedAdminBannersRoute: typeof AuthenticatedAdminBannersRoute
   AuthenticatedAdminCategoriesRoute: typeof AuthenticatedAdminCategoriesRoute
+  AuthenticatedAdminCommissionSetupRoute: typeof AuthenticatedAdminCommissionSetupRoute
   AuthenticatedAdminCouponsRoute: typeof AuthenticatedAdminCouponsRoute
   AuthenticatedAdminDeliveryRoute: typeof AuthenticatedAdminDeliveryRoute
   AuthenticatedAdminDeliveryZonesRoute: typeof AuthenticatedAdminDeliveryZonesRoute
@@ -2020,6 +2041,8 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAnnouncementsRoute: AuthenticatedAdminAnnouncementsRoute,
   AuthenticatedAdminBannersRoute: AuthenticatedAdminBannersRoute,
   AuthenticatedAdminCategoriesRoute: AuthenticatedAdminCategoriesRoute,
+  AuthenticatedAdminCommissionSetupRoute:
+    AuthenticatedAdminCommissionSetupRoute,
   AuthenticatedAdminCouponsRoute: AuthenticatedAdminCouponsRoute,
   AuthenticatedAdminDeliveryRoute: AuthenticatedAdminDeliveryRoute,
   AuthenticatedAdminDeliveryZonesRoute: AuthenticatedAdminDeliveryZonesRoute,
