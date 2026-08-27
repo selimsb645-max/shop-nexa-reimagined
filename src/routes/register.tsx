@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { RegisterForm } from "@/components/auth/RegisterForm";
+import { getSiteUrl } from "@/lib/seo";
 
 export const Route = createFileRoute("/register")({
   ssr: false,
@@ -11,10 +12,10 @@ export const Route = createFileRoute("/register")({
       { name: "description", content: "Create a free AVENTA SHOP account to shop deals, track orders and earn rewards." },
       { property: "og:title", content: "Create Account — AVENTA SHOP" },
       { property: "og:description", content: "Create a free AVENTA SHOP account." },
-      { property: "og:url", content: "https://shop-nexa.lovable.app/register" },
+      { property: "og:url", content: `${getSiteUrl()}/register` },
       { name: "robots", content: "noindex" },
     ],
-    links: [{ rel: "canonical", href: "https://shop-nexa.lovable.app/register" }],
+    links: [{ rel: "canonical", href: `${getSiteUrl()}/register` }],
   }),
 });
 

@@ -7,6 +7,7 @@ import { mapFirebaseError } from "@/utils/errors";
 import { useState } from "react";
 import { Spinner } from "@/components/common/Spinner";
 import { MailCheck } from "lucide-react";
+import { getSiteUrl } from "@/lib/seo";
 
 export const Route = createFileRoute("/verify-email")({
   ssr: false,
@@ -17,10 +18,10 @@ export const Route = createFileRoute("/verify-email")({
       { name: "description", content: "Confirm your email address to activate your AVENTA SHOP account." },
       { property: "og:title", content: "Verify Your Email — AVENTA SHOP" },
       { property: "og:description", content: "Confirm your email address to activate your AVENTA SHOP account." },
-      { property: "og:url", content: "https://shop-nexa.lovable.app/verify-email" },
+      { property: "og:url", content: `${getSiteUrl()}/verify-email` },
       { name: "robots", content: "noindex" },
     ],
-    links: [{ rel: "canonical", href: "https://shop-nexa.lovable.app/verify-email" }],
+    links: [{ rel: "canonical", href: `${getSiteUrl()}/verify-email` }],
   }),
 });
 

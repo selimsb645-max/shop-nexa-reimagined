@@ -103,6 +103,17 @@ let _provider: EmailProvider | null = null;
 function getEmailProvider(): EmailProvider {
   if (_provider) return _provider;
   const name = (typeof Deno !== "undefined" && Deno.env.get("EMAIL_PROVIDER")) ?? "mock";
+  const isProduction = typeof Deno !== "undefined" && Deno.env.get("NODE_ENV") === "production";
+
+  // PRODUCTION SAFETY: Never fall back to mock in production.
+  // If the env var is missing or "mock" in production, fail safely.
+  if (isProduction && (name === "mock" || !name)) {
+    throw new Error(
+      "Email provider is not configured for production. " +
+        "Set EMAIL_PROVIDER to 'resend' or 'sendgrid' and configure the API key.",
+    );
+  }
+
   switch (name) {
     case "resend":
       _provider = new ResendEmailProvider();

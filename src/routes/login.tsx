@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { LoginForm } from "@/components/auth/LoginForm";
+import { getSiteUrl } from "@/lib/seo";
 
 export const Route = createFileRoute("/login")({
   ssr: false,
@@ -11,10 +12,10 @@ export const Route = createFileRoute("/login")({
       { name: "description", content: "Sign in to your AVENTA SHOP account to track orders, save wishlists and checkout faster." },
       { property: "og:title", content: "Sign In — AVENTA SHOP" },
       { property: "og:description", content: "Sign in to your AVENTA SHOP account." },
-      { property: "og:url", content: "https://shop-nexa.lovable.app/login" },
+      { property: "og:url", content: `${getSiteUrl()}/login` },
       { name: "robots", content: "noindex" },
     ],
-    links: [{ rel: "canonical", href: "https://shop-nexa.lovable.app/login" }],
+    links: [{ rel: "canonical", href: `${getSiteUrl()}/login` }],
   }),
   validateSearch: (s: Record<string, unknown>): { redirect?: string } => ({
     redirect: typeof s.redirect === "string" ? s.redirect : undefined,
