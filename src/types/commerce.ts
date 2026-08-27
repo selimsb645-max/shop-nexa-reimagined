@@ -4,6 +4,8 @@ export interface Category {
   slug: string;
   image: string | null;
   order: number;
+  /** Category-level base commission rate (0-1, e.g. 0.0645 = 6.45%). Source: 50% of Daraz New Rate. */
+  commissionRate?: number | null;
 }
 
 export interface Subcategory {
@@ -12,6 +14,8 @@ export interface Subcategory {
   name: string;
   slug: string;
   order: number;
+  /** Subcategory commission override (0-1). Takes priority over category base rate. Source: 50% of Daraz New Rate. */
+  commissionRate?: number | null;
 }
 
 export interface Product {

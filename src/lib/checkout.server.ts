@@ -25,6 +25,10 @@ import {
   buildSellerOrderWrite,
   buildSettlementPendingTxWrite,
 } from "./settlement.server";
+import {
+  resolveCategoryCommissions,
+  resolveProductCommissionRate,
+} from "./category-commission.server";
 
 import {
   detectDeliveryZoneId,
@@ -296,6 +300,8 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
     sellerId: string | null;
     freeDelivery: boolean;
     updateTime: string | null;
+    categoryId: string | null;
+    subcategoryId: string | null;
   }
 
   const lines: Line[] = [];
@@ -327,6 +333,8 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
       sellerId: (d["sellerId"] as string | null) ?? null,
       freeDelivery: Boolean(d["freeDelivery"] ?? false),
       updateTime: doc.updateTime,
+      categoryId: (d["categoryId"] as string | null) ?? null,
+      subcategoryId: (d["subcategoryId"] as string | null) ?? null,
     });
   }
 
@@ -644,13 +652,13 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
   const sellerDocs =
     sellerDocPaths.length > 0 ? await batchGetDocs(projectId, sellerDocPaths) : new Map();
   const sellerCommissionRates = new Map<string, number>();
+  const commissionConfig = siteSettingsData["commission"] as
+    | { defaultRate?: number; categoryBased?: boolean }
+    | undefined;
+  const globalDefault = (commissionConfig?.defaultRate ?? 8) / 100;
   for (const sid of sellerIds) {
     const sDoc = sellerDocs.get(docPath(projectId, ["sellers", sid]));
     const sData = sDoc?.exists ? sDoc.data : {};
-    const commissionConfig = siteSettingsData["commission"] as
-      | { defaultRate?: number }
-      | undefined;
-    const globalDefault = (commissionConfig?.defaultRate ?? 8) / 100;
     const rawRate = Number(sData["commissionRate"] ?? globalDefault);
     const rate = Number.isFinite(rawRate)
       ? Math.min(Math.max(rawRate, 0), 1)
@@ -658,12 +666,44 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
     sellerCommissionRates.set(sid, rate);
   }
 
+  // ── RESOLVE CATEGORY-BASED COMMISSIONS ──
+  // Read category and subcategory commission rates from Firestore.
+  // If categoryBased is enabled, commission is resolved per product:
+  //   subcategory override > category base rate > seller rate > global default
+  // If categoryBased is disabled, falls back to seller flat rate (legacy).
+  const categoryBasedEnabled = Boolean(commissionConfig?.categoryBased);
+  const allCategoryIds = lines.map((l) => l.categoryId).filter(Boolean) as string[];
+  const allSubcategoryIds = lines
+    .filter((l) => l.categoryId && l.subcategoryId)
+    .map((l) => ({ categoryId: l.categoryId!, subcategoryId: l.subcategoryId! }));
+  const categoryCommissionCache = categoryBasedEnabled && allCategoryIds.length > 0
+    ? await resolveCategoryCommissions(allCategoryIds, allSubcategoryIds)
+    : new Map();
+
+  // Build per-product commission rate map
+  const productCommissionRates = new Map<string, number>();
+  for (const l of lines) {
+    if (categoryBasedEnabled && l.categoryId) {
+      const sellerRate = sellerCommissionRates.get(l.sellerId ?? "") ?? globalDefault;
+      const rate = resolveProductCommissionRate(
+        l.categoryId,
+        l.subcategoryId,
+        categoryCommissionCache,
+        sellerRate,
+        globalDefault,
+      );
+      productCommissionRates.set(l.productId, rate);
+    }
+  }
+
   // ── COMPUTE PLATFORM FEE (preliminary, refined later in settlement loop) ──
   let platformFeeTotal = 0;
   for (const [sid, sItems] of itemsBySeller.entries()) {
-    const sSub = round2(sItems.reduce((s, it) => s + it.subtotal, 0));
-    const cRate = sellerCommissionRates.get(sid) ?? 0.08;
-    platformFeeTotal = round2(platformFeeTotal + sSub * cRate);
+    const sellerRate = sellerCommissionRates.get(sid) ?? 0.08;
+    for (const it of sItems) {
+      const pRate = productCommissionRates.get(it.productId) ?? sellerRate;
+      platformFeeTotal = round2(platformFeeTotal + it.subtotal * pRate);
+    }
   }
 
   const writes: FsWrite[] = [];
@@ -805,7 +845,19 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
 
   for (const [sid, sItems] of itemsBySeller.entries()) {
     const sellerSubtotal = round2(sItems.reduce((s, it) => s + it.subtotal, 0));
-    const commissionRate = sellerCommissionRates.get(sid) ?? 0.08;
+    // Compute effective commission rate for this seller's items
+    // If category-based commission is active, each product may have a different rate.
+    // We compute a weighted average rate for the seller-level settlement record,
+    // while storing per-product rates in the order items for audit trail.
+    const sellerRate = sellerCommissionRates.get(sid) ?? 0.08;
+    let totalCommissionForSeller = 0;
+    for (const it of sItems) {
+      const pRate = productCommissionRates.get(it.productId) ?? sellerRate;
+      totalCommissionForSeller = round2(totalCommissionForSeller + it.subtotal * pRate);
+    }
+    const commissionRate = sellerSubtotal > 0
+      ? totalCommissionForSeller / sellerSubtotal
+      : sellerRate;
 
     // Use pre-computed per-product delivery liability from the delivery map
     const deliveryInfo = sellerDeliveryMap.get(sid)!;
