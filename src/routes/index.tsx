@@ -58,18 +58,19 @@ interface CategoryItem {
   gradient: string;
   color: string;
   iconBg: string;
+  image?: string;
 }
 
 // Default static categories for fallback/enrichment
 const DEFAULT_CATEGORIES: CategoryItem[] = [
-  { id: "fashion", name: "Fashion", slug: "fashion", icon: Shirt, gradient: "from-orange-400 to-orange-500", color: "text-blue-600", iconBg: "bg-blue-50" },
-  { id: "electronics", name: "Electronics", slug: "electronics", icon: Smartphone, gradient: "from-blue-500 to-blue-600", color: "text-violet-600", iconBg: "bg-violet-50" },
-  { id: "groceries", name: "Fresh & Grocery", slug: "groceries", icon: Apple, gradient: "from-green-400 to-green-600", color: "text-green-600", iconBg: "bg-green-50" },
-  { id: "beauty", name: "Beauty", slug: "beauty", icon: Sparkles, gradient: "from-pink-400 to-pink-600", color: "text-pink-500", iconBg: "bg-pink-50" },
-  { id: "home-living", name: "Home & Kitchen", slug: "home-living", icon: Sofa, gradient: "from-emerald-400 to-emerald-600", color: "text-sky-600", iconBg: "bg-sky-50" },
-  { id: "audio-acc", name: "Accessories", slug: "audio-accessories", icon: Headphones, gradient: "from-purple-500 to-purple-700", color: "text-slate-700", iconBg: "bg-slate-100" },
-  { id: "gaming", name: "Gaming", slug: "gaming", icon: Gamepad2, gradient: "from-indigo-500 to-indigo-700", color: "text-slate-900", iconBg: "bg-slate-100" },
-  { id: "mother-baby", name: "Baby & Kids", slug: "mother-baby", icon: Baby, gradient: "from-pink-400 to-pink-600", color: "text-rose-500", iconBg: "bg-rose-50" },
+  { id: "fashion", name: "Fashion", slug: "fashion", icon: Shirt, gradient: "from-orange-400 to-orange-500", color: "text-blue-600", iconBg: "bg-blue-50", image: "/categories/fashion.jpg" },
+  { id: "electronics", name: "Electronics", slug: "electronics", icon: Smartphone, gradient: "from-blue-500 to-blue-600", color: "text-violet-600", iconBg: "bg-violet-50", image: "/categories/electronics.jpg" },
+  { id: "groceries", name: "Fresh & Grocery", slug: "groceries", icon: Apple, gradient: "from-green-400 to-green-600", color: "text-green-600", iconBg: "bg-green-50", image: "/categories/grocery.jpg" },
+  { id: "beauty", name: "Beauty", slug: "beauty", icon: Sparkles, gradient: "from-pink-400 to-pink-600", color: "text-pink-500", iconBg: "bg-pink-50", image: "/categories/beauty.jpg" },
+  { id: "home-living", name: "Home & Kitchen", slug: "home-living", icon: Sofa, gradient: "from-emerald-400 to-emerald-600", color: "text-sky-600", iconBg: "bg-sky-50", image: "/categories/home-kitchen.jpg" },
+  { id: "audio-acc", name: "Accessories", slug: "audio-accessories", icon: Headphones, gradient: "from-purple-500 to-purple-700", color: "text-slate-700", iconBg: "bg-slate-100", image: "/categories/accessories.jpg" },
+  { id: "gaming", name: "Gaming", slug: "gaming", icon: Gamepad2, gradient: "from-indigo-500 to-indigo-700", color: "text-slate-900", iconBg: "bg-slate-100", image: "/categories/gaming.jpg" },
+  { id: "mother-baby", name: "Baby & Kids", slug: "mother-baby", icon: Baby, gradient: "from-pink-400 to-pink-600", color: "text-rose-500", iconBg: "bg-rose-50", image: "/categories/baby-kids.jpg" },
 ];
 
 // Hero banner slide configuration
@@ -164,7 +165,7 @@ function HomePage() {
     if (Array.isArray(rawCategories) && rawCategories.length > 0) {
       return rawCategories.map((cat, idx) => {
         const fallback = DEFAULT_CATEGORIES[idx % DEFAULT_CATEGORIES.length];
-        return { id: cat.id || cat.slug || `cat-${idx}`, name: cat.name || "Category", slug: cat.slug || cat.name?.toLowerCase().replace(/\s+/g, "-") || "", icon: fallback.icon, gradient: fallback.gradient, color: fallback.color, iconBg: fallback.iconBg };
+        return { id: cat.id || cat.slug || `cat-${idx}`, name: cat.name || "Category", slug: cat.slug || cat.name?.toLowerCase().replace(/\s+/g, "-") || "", icon: fallback.icon, gradient: fallback.gradient, color: fallback.color, iconBg: fallback.iconBg, image: fallback.image };
       });
     }
     return DEFAULT_CATEGORIES;
@@ -421,12 +422,21 @@ function CategoriesGrid({
                   className="group flex min-w-[86px] snap-start flex-col items-center gap-2 rounded-xl border border-slate-200 bg-white px-2 py-3.5 text-center transition-all duration-200 hover:border-orange-300 hover:shadow-md active:scale-95 sm:min-w-0 sm:py-4"
                 >
                   <div
-                    className={`grid h-12 w-12 place-items-center rounded-xl ${cat.iconBg} transition-transform duration-200 group-hover:scale-105 sm:h-14 sm:w-14`}
+                    className={`grid h-12 w-12 place-items-center overflow-hidden rounded-xl ${cat.image ? "bg-white" : cat.iconBg} transition-transform duration-200 group-hover:scale-105 sm:h-14 sm:w-14`}
                   >
-                    <IconComp
-                      className={`h-6 w-6 ${cat.color} sm:h-7 sm:w-7`}
-                      strokeWidth={1.75}
-                    />
+                    {cat.image ? (
+                      <img
+                        src={cat.image}
+                        alt={cat.name}
+                        className="h-full w-full object-contain p-0.5"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <IconComp
+                        className={`h-6 w-6 ${cat.color} sm:h-7 sm:w-7`}
+                        strokeWidth={1.75}
+                      />
+                    )}
                   </div>
                   <span className="text-[11px] font-semibold text-slate-700 line-clamp-1 sm:text-xs">
                     {cat.name}
