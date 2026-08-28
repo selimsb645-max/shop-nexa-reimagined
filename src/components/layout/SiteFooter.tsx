@@ -259,7 +259,7 @@ export function SiteFooter() {
               <div className="bg-[#0f172a] text-[#f97316] px-3 py-1.5 rounded-lg font-bold text-lg flex items-center gap-2 border border-slate-700">
                 <ShoppingCart className="w-5 h-5 text-[#f97316]" />
                 <span className="text-white font-extrabold tracking-tight">
-                  SHOP <span className="text-[#f97316]">NEXA</span>
+                  AVENTA <span className="text-[#f97316]">SHOP</span>
                 </span>
               </div>
             </div>
