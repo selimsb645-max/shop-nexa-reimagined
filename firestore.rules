@@ -4,10 +4,38 @@ service cloud.firestore {
     function isSignedIn() { return request.auth != null; }
     function isSelf(uid) { return isSignedIn() && request.auth.uid == uid; }
 
+    // ───────────────────────────────────────────────────────────
+    // Admin helpers
+    // ───────────────────────────────────────────────────────────
+    // Reads the requester's user document once and caches the
+    // result so subsequent checks in the same request don't
+    // incur additional document reads.
+    //
+    // isAdmin()     — any authenticated, non-blocked admin role
+    // isSuperAdmin()— only the super_admin sub-role, non-blocked
+    //
+    // The blocked check ensures suspended admins cannot perform
+    // any admin operation, even if their role field is still
+    // "admin" in Firestore.
+    // ───────────────────────────────────────────────────────────
+
+    function adminDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
     function isAdmin() {
       return isSignedIn()
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+        && adminDoc().data.role == 'admin'
+        && (adminDoc().data.blocked == false || !('blocked' in adminDoc().data));
+    }
+
+    function isSuperAdmin() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && adminDoc().data.role == 'admin'
+        && adminDoc().data.adminRole == 'super_admin'
+        && (adminDoc().data.blocked == false || !('blocked' in adminDoc().data));
     }
 
     function isApprovedSeller() {
@@ -59,9 +87,10 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // SETTINGS — read is public; write is Super Admin only (settings.edit)
     match /settings/{id} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isSuperAdmin();
     }
 
     match /settings/{id}/notifications/{nid} {
@@ -138,12 +167,20 @@ service cloud.firestore {
       allow read: if isSelf(uid) || isAdmin();
       allow create: if isSelf(uid)
         && (!('role' in request.resource.data) || request.resource.data.role == 'customer')
-        && (!('blocked' in request.resource.data) || request.resource.data.blocked == false);
-      allow update: if isAdmin() ||
+        && (!('blocked' in request.resource.data) || request.resource.data.blocked == false)
+        // SECURITY: New users cannot self-assign adminRole at signup
+        && (!('adminRole' in request.resource.data) || request.resource.data.adminRole == null);
+      // SECURITY: Only Super Admin can modify other users' profiles
+      // (admin.manage + users.edit permissions). Self can update
+      // own profile but CANNOT change role, adminRole, or blocked
+      // — prevents privilege escalation.
+      allow update: if isSuperAdmin() ||
         (isSelf(uid)
           && request.resource.data.role == resource.data.role
+          && (!('adminRole' in request.resource.data) || request.resource.data.adminRole == resource.data.adminRole)
           && (!('blocked' in request.resource.data) ? true : request.resource.data.blocked == resource.data.blocked));
-      allow delete: if isAdmin();
+      // SECURITY: Only Super Admin can delete users (users.delete)
+      allow delete: if isSuperAdmin();
 
       match /cart/{itemId} {
         allow read, write: if isSelf(uid) || isAdmin();
@@ -317,7 +354,8 @@ service cloud.firestore {
             'storeSettings', 'warehouses', 'pickupPoints',
             'supportedCurrencies', 'internationalShipping', 'crossBorderSeller'
           ]));
-      allow delete: if isAdmin();
+      // SECURITY: Only Super Admin can delete sellers (sellers.delete)
+      allow delete: if isSuperAdmin();
 
       // Seller orders - server-created, seller updates fulfillment only
       // shipping allowed but shippingCharge protected within it
