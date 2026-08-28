@@ -422,13 +422,13 @@ function CategoriesGrid({
                   className="group flex min-w-[86px] snap-start flex-col items-center gap-2 rounded-xl border border-slate-200 bg-white px-2 py-3.5 text-center transition-all duration-200 hover:border-orange-300 hover:shadow-md active:scale-95 sm:min-w-0 sm:py-4"
                 >
                   <div
-                    className={`grid h-12 w-12 place-items-center overflow-hidden rounded-xl ${cat.image ? "bg-white" : cat.iconBg} transition-transform duration-200 group-hover:scale-105 sm:h-14 sm:w-14`}
+                    className={`grid h-11 w-11 place-items-center overflow-hidden rounded-lg ${cat.image ? "bg-white" : cat.iconBg} transition-transform duration-200 group-hover:scale-110 sm:h-12 sm:w-12`}
                   >
                     {cat.image ? (
                       <img
                         src={cat.image}
                         alt={cat.name}
-                        className="h-full w-full object-contain p-0.5"
+                        className="h-full w-full scale-125 object-contain"
                         loading="lazy"
                       />
                     ) : (
