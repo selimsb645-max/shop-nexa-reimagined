@@ -56,18 +56,20 @@ interface CategoryItem {
   slug: string;
   icon: LucideIcon;
   gradient: string;
+  color: string;
+  iconBg: string;
 }
 
 // Default static categories for fallback/enrichment
 const DEFAULT_CATEGORIES: CategoryItem[] = [
-  { id: "electronics", name: "Electronics", slug: "electronics", icon: Smartphone, gradient: "from-blue-500 to-blue-600" },
-  { id: "fashion", name: "Fashion", slug: "fashion", icon: Shirt, gradient: "from-orange-400 to-orange-500" },
-  { id: "home-living", name: "Home & Living", slug: "home-living", icon: Sofa, gradient: "from-emerald-400 to-emerald-600" },
-  { id: "audio-acc", name: "Audio & Accessories", slug: "audio-accessories", icon: Headphones, gradient: "from-purple-500 to-purple-700" },
-  { id: "gaming", name: "Gaming & Tech", slug: "gaming", icon: Gamepad2, gradient: "from-indigo-500 to-indigo-700" },
-  { id: "groceries", name: "Fresh & Grocery", slug: "groceries", icon: Apple, gradient: "from-green-400 to-green-600" },
-  { id: "mother-baby", name: "Mother & Baby", slug: "mother-baby", icon: Baby, gradient: "from-pink-400 to-pink-600" },
-  { id: "offers-deals", name: "Special Offers", slug: "offers", icon: Tag, gradient: "from-rose-400 to-rose-600" },
+  { id: "fashion", name: "Fashion", slug: "fashion", icon: Shirt, gradient: "from-orange-400 to-orange-500", color: "text-blue-600", iconBg: "bg-blue-50" },
+  { id: "electronics", name: "Electronics", slug: "electronics", icon: Smartphone, gradient: "from-blue-500 to-blue-600", color: "text-violet-600", iconBg: "bg-violet-50" },
+  { id: "groceries", name: "Fresh & Grocery", slug: "groceries", icon: Apple, gradient: "from-green-400 to-green-600", color: "text-green-600", iconBg: "bg-green-50" },
+  { id: "beauty", name: "Beauty", slug: "beauty", icon: Sparkles, gradient: "from-pink-400 to-pink-600", color: "text-pink-500", iconBg: "bg-pink-50" },
+  { id: "home-living", name: "Home & Kitchen", slug: "home-living", icon: Sofa, gradient: "from-emerald-400 to-emerald-600", color: "text-sky-600", iconBg: "bg-sky-50" },
+  { id: "audio-acc", name: "Accessories", slug: "audio-accessories", icon: Headphones, gradient: "from-purple-500 to-purple-700", color: "text-slate-700", iconBg: "bg-slate-100" },
+  { id: "gaming", name: "Gaming", slug: "gaming", icon: Gamepad2, gradient: "from-indigo-500 to-indigo-700", color: "text-slate-900", iconBg: "bg-slate-100" },
+  { id: "mother-baby", name: "Baby & Kids", slug: "mother-baby", icon: Baby, gradient: "from-pink-400 to-pink-600", color: "text-rose-500", iconBg: "bg-rose-50" },
 ];
 
 // Hero banner slide configuration
@@ -162,7 +164,7 @@ function HomePage() {
     if (Array.isArray(rawCategories) && rawCategories.length > 0) {
       return rawCategories.map((cat, idx) => {
         const fallback = DEFAULT_CATEGORIES[idx % DEFAULT_CATEGORIES.length];
-        return { id: cat.id || cat.slug || `cat-${idx}`, name: cat.name || "Category", slug: cat.slug || cat.name?.toLowerCase().replace(/\s+/g, "-") || "", icon: fallback.icon, gradient: fallback.gradient };
+        return { id: cat.id || cat.slug || `cat-${idx}`, name: cat.name || "Category", slug: cat.slug || cat.name?.toLowerCase().replace(/\s+/g, "-") || "", icon: fallback.icon, gradient: fallback.gradient, color: fallback.color, iconBg: fallback.iconBg };
       });
     }
     return DEFAULT_CATEGORIES;
@@ -379,7 +381,7 @@ function CountdownBox({ value, label }: { value: number; label: string }) {
   );
 }
 
-/* ========================================================================== Categories Grid (Shop by Category) ========================================================================== */
+/* ========================================================================== Categories Grid (Shop by Category) — Daraz-style bordered icon cards ========================================================================== */
 function CategoriesGrid({
   categories,
   isLoading,
@@ -406,7 +408,7 @@ function CategoriesGrid({
           ? Array.from({ length: 8 }).map((_, i) => (
               <div
                 key={i}
-                className="h-28 min-w-[80px] snap-start animate-pulse rounded-xl bg-slate-100 sm:min-w-0"
+                className="h-24 min-w-[86px] snap-start animate-pulse rounded-xl border border-slate-100 bg-slate-50 sm:min-w-0"
               />
             ))
           : categories.map((cat) => {
@@ -416,13 +418,13 @@ function CategoriesGrid({
                   key={cat.id}
                   to="/shop"
                   search={{ category: cat.slug }}
-                  className="group flex min-w-[80px] snap-start flex-col items-center gap-2 sm:min-w-0"
+                  className="group flex min-w-[86px] snap-start flex-col items-center gap-2 rounded-xl border border-slate-200 bg-white px-2 py-3.5 text-center transition-all duration-200 hover:border-orange-300 hover:shadow-md active:scale-95 sm:min-w-0 sm:py-4"
                 >
                   <div
-                    className={`grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br ${cat.gradient} shadow-sm transition-transform duration-200 group-hover:scale-105 group-active:scale-95 sm:h-18 sm:w-18`}
+                    className={`grid h-12 w-12 place-items-center rounded-xl ${cat.iconBg} transition-transform duration-200 group-hover:scale-105 sm:h-14 sm:w-14`}
                   >
                     <IconComp
-                      className="h-7 w-7 text-white sm:h-8 sm:w-8"
+                      className={`h-6 w-6 ${cat.color} sm:h-7 sm:w-7`}
                       strokeWidth={1.75}
                     />
                   </div>
