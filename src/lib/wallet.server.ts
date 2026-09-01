@@ -95,15 +95,67 @@ export async function redeemPointsServer(
 export const REFERRAL_BONUS_POINTS = 500;
 export const REFERRAL_WELCOME_POINTS = 250;
 
+/** Deterministic referral code derived from a uid (mirrors the client helper). */
+function referralCodeForUid(uid: string): string {
+  let hash = 0;
+  for (let i = 0; i < uid.length; i += 1) {
+    hash = (hash * 31 + uid.charCodeAt(i)) % 2176782336; // 36^6
+  }
+  return `NEXA${hash.toString(36).toUpperCase().padStart(6, "0")}`;
+}
+
+/**
+ * SECURITY: resolves the owner of a referral code entirely server side so a
+ * caller can never nominate an arbitrary referrer uid.
+ */
+async function resolveReferrerId(
+  projectId: string,
+  token: string,
+  code: string,
+): Promise<string | null> {
+  const res = await fetch(
+    `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery`,
+    {
+      method: "POST",
+      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+      body: JSON.stringify({
+        structuredQuery: {
+          from: [{ collectionId: "users" }],
+          where: {
+            fieldFilter: {
+              field: { fieldPath: "referralCode" },
+              op: "EQUAL",
+              value: { stringValue: code },
+            },
+          },
+          limit: 1,
+        },
+      }),
+    },
+  );
+  if (!res.ok) return null;
+  const json = (await res.json()) as Array<{ document?: { name?: string } }>;
+  const name = json.find((r) => r.document?.name)?.document?.name;
+  if (!name) return null;
+  const uid = name.split("/").pop() ?? "";
+  // Double-check the stored code really belongs to that uid.
+  if (!uid || referralCodeForUid(uid) !== code) return null;
+  return uid;
+}
+
 export async function applyReferralServer(input: {
   uid: string;
   displayName: string | null;
   code: string;
-  referrerId: string;
 }): Promise<{ points: number }> {
   const projectId = getProjectId();
   const code = input.code.trim().toUpperCase();
   const token = await getAccessToken();
+
+  // SECURITY: derive the referrer from the code — never trust a client-supplied id.
+  const referrerId = await resolveReferrerId(projectId, token, code);
+  if (!referrerId) throw new Error("Referral code not found");
+  if (referrerId === input.uid) throw new Error("You cannot use your own code");
 
   const res = await fetch(
     `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${encodeURIComponent(input.uid)}:runQuery`,
