@@ -54,6 +54,41 @@ service cloud.firestore {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowed);
     }
 
+    // ───────────────────────────────────────────────────────────
+    // Financial field protection helpers
+    // ───────────────────────────────────────────────────────────
+    // These lists define server-controlled financial fields that
+    // must NEVER be writable via client SDK (admin or seller).
+    // All financial mutations go through server-side functions
+    // that use the Firebase Admin SDK, which bypasses these rules.
+    // ───────────────────────────────────────────────────────────
+
+    // Seller profile financial/payout fields — server-controlled only
+    function isSellerFinancialField(key) {
+      return key in [
+        'commissionRate', 'totalEarnings', 'availableBalance',
+        'pendingBalance', 'withdrawnTotal', 'bankInfo',
+        'verified', 'totalProducts', 'totalOrders',
+        'rating', 'ratingCount', 'followers',
+        'approvedAt', 'rejectionReason',
+        'email', 'uid', 'createdAt',
+        'storeSettings', 'warehouses', 'pickupPoints',
+        'supportedCurrencies', 'internationalShipping', 'crossBorderSeller'
+      ];
+    }
+
+    // Seller order financial/settlement fields — server-controlled only
+    function isSellerOrderFinancialField(key) {
+      return key in [
+        'settlement', 'earnings', 'commission', 'commissionRate',
+        'discountShare', 'shippingShare', 'taxShare', 'netSubtotal',
+        'sellerNetEarnings', 'sellerSubtotal', 'sellerDiscountShare',
+        'sellerShippingShare', 'sellerTaxShare', 'sellerNetSubtotal',
+        'subtotal', 'paymentStatus', 'paymentMethod', 'platformFee',
+        'deliverySnapshot'
+      ];
+    }
+
     // PUBLIC MASTER DATA
 
     match /locations/{locId} {
@@ -287,10 +322,10 @@ service cloud.firestore {
           || isAdmin()
         );
       allow create: if isSignedIn()
-        && request.resource.data.customerId == request.auth.uid
-        && 'sellerId' in request.resource.data
         && 'customerId' in request.resource.data
-        && 'lastMessage' in request.resource.data;
+        && 'sellerId' in request.resource.data
+        && (request.resource.data.customerId == request.auth.uid
+          || request.resource.data.sellerId == request.auth.uid);
       allow update: if isSignedIn()
         && (
           resource.data.customerId == request.auth.uid
@@ -301,24 +336,27 @@ service cloud.firestore {
           'lastMessage', 'lastAt', 'customerUnread', 'sellerUnread'
         ]);
       allow delete: if isAdmin();
+    }
 
-      match /messages/{msgId} {
-        allow read: if isSignedIn()
-          && (
-            get(/databases/$(database)/documents/conversations/$(convId)).data.customerId == request.auth.uid
-            || get(/databases/$(database)/documents/conversations/$(convId)).data.sellerId == request.auth.uid
-            || isAdmin()
-          );
-        allow create: if isSignedIn()
-          && request.resource.data.from in ['customer', 'seller']
-          && request.resource.data.senderId == request.auth.uid
-          && (
-            get(/databases/$(database)/documents/conversations/$(convId)).data.customerId == request.auth.uid
-            || get(/databases/$(database)/documents/conversations/$(convId)).data.sellerId == request.auth.uid
-          );
-        allow update: if isAdmin();
-        allow delete: if isAdmin();
-      }
+    match /conversations/{convId}/messages/{msgId} {
+      allow read: if isSignedIn()
+        && (
+          get(/databases/$(database)/documents/conversations/$(convId)).data.customerId == request.auth.uid
+          || get(/databases/$(database)/documents/conversations/$(convId)).data.sellerId == request.auth.uid
+          || isAdmin()
+        );
+      allow create: if isSignedIn()
+        && (
+          get(/databases/$(database)/documents/conversations/$(convId)).data.customerId == request.auth.uid
+          || get(/databases/$(database)/documents/conversations/$(convId)).data.sellerId == request.auth.uid
+        )
+        && request.resource.data.from in ['customer', 'seller'];
+      allow update: if isSignedIn()
+        && (
+          get(/databases/$(database)/documents/conversations/$(convId)).data.customerId == request.auth.uid
+          || get(/databases/$(database)/documents/conversations/$(convId)).data.sellerId == request.auth.uid
+        );
+      allow delete: if isAdmin();
     }
 
     // SELLERS
@@ -326,7 +364,33 @@ service cloud.firestore {
     match /sellers/{uid} {
       allow read: if isSelf(uid) || isAdmin();
       allow create: if isSelf(uid) && request.resource.data.status == 'draft';
-      allow update: if isAdmin()
+      allow update: if
+        // ADMIN PATH: Admin can only update operational (non-financial) fields.
+        // Financial fields (commissionRate, balances, bankInfo, etc.) are
+        // server-controlled via Admin SDK functions and are NEVER writable
+        // through client SDK — not even by admins.
+        (isAdmin()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'status', 'rejectionReason', 'updatedAt',
+            'shopName', 'shopSlug', 'description', 'logoUrl', 'bannerUrl',
+            'phone', 'addressLine', 'city', 'area', 'country', 'postalCode',
+            'business', 'identity',
+            'currentStep',
+            'termsAccepted', 'termsAcceptedAt',
+            'submittedAt'
+          ])
+          // DEFENSE-IN-DEPTH: Even within the whitelist, financial fields
+          // are explicitly blocked. This catches any accidental inclusion.
+          && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+            'commissionRate', 'totalEarnings', 'availableBalance',
+            'pendingBalance', 'withdrawnTotal', 'bankInfo',
+            'verified', 'approvedAt',
+            'totalProducts', 'totalOrders', 'rating', 'ratingCount',
+            'followers',
+            'email', 'uid', 'createdAt',
+            'storeSettings', 'warehouses', 'pickupPoints',
+            'supportedCurrencies', 'internationalShipping', 'crossBorderSeller'
+          ]))
         || (isSelf(uid)
           && (
             request.resource.data.status == resource.data.status
@@ -358,11 +422,32 @@ service cloud.firestore {
       allow delete: if isSuperAdmin();
 
       // Seller orders - server-created, seller updates fulfillment only
-      // shipping allowed but shippingCharge protected within it
+      // Admin can update operational fields but NEVER financial/settlement fields
       match /orders/{orderId} {
         allow read: if isSelf(uid) || isAdmin();
         allow create: if false;
-        allow update: if isAdmin()
+        allow update: if
+          // ADMIN PATH: Admin can update operational fields only.
+          // Financial settlement fields are server-controlled and
+          // NEVER writable via client SDK — not even by admins.
+          (isAdmin()
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'status', 'tracking', 'shipping', 'updatedAt'
+            ])
+            // DEFENSE-IN-DEPTH: Block all financial/settlement fields
+            // even if they somehow appear in the whitelist above.
+            && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+              'settlement', 'earnings', 'commission', 'commissionRate',
+              'discountShare', 'shippingShare', 'taxShare', 'netSubtotal',
+              'sellerNetEarnings', 'sellerSubtotal', 'sellerDiscountShare',
+              'sellerShippingShare', 'sellerTaxShare', 'sellerNetSubtotal',
+              'subtotal', 'paymentStatus', 'paymentMethod', 'platformFee',
+              'deliverySnapshot'
+            ])
+            // Protect shippingCharge within shipping object
+            && (!('shipping' in request.resource.data.diff(resource.data).affectedKeys())
+                || (resource.data.shipping.shippingCharge
+                    == request.resource.data.shipping.shippingCharge)))
           || (isSelf(uid)
             && onlyChanges(['status', 'tracking', 'shipping', 'updatedAt'])
             && !request.resource.data.diff(resource.data).affectedKeys()
