@@ -180,7 +180,11 @@ function HomePage() {
       <SiteHeader />
 
       <main className="mx-auto max-w-7xl px-3 pb-28 sm:px-6 sm:pb-16 lg:px-8">
+        <h1 className="sr-only">
+          AVENTA SHOP — online shopping marketplace for electronics, fashion, grocery, beauty and home essentials in Bangladesh
+        </h1>
         {/* 1. Hero Carousel */}
+
         <section className="mt-3 sm:mt-4">
           <HeroCarousel />
         </section>

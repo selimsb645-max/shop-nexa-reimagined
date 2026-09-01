@@ -16,7 +16,7 @@ import {
   PackageX,
 } from "lucide-react";
 import { BackButton } from "@/components/common/BackButton";
-import { buildMetaTags } from "@/lib/seo";
+import { buildMetaTags, collectionPageJsonLd, breadcrumbJsonLd, jsonLdScript } from "@/lib/seo";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
@@ -91,12 +91,33 @@ export const Route = createFileRoute("/shop")({
   },
   component: ShopPage,
   head: () => ({
-    meta: [
-      { title: "Shop & Categories — AVENTA SHOP" },
+    meta: buildMetaTags({
+      title: "Shop All Products & Categories — AVENTA SHOP",
+      description:
+        "Browse thousands of products across electronics, fashion, grocery, beauty and home essentials on AVENTA SHOP. Filter by price, brand, rating and category.",
+      path: "/shop",
+      type: "website",
+    }),
+    scripts: [
       {
-        name: "description",
-        content:
-          "Browse thousands of products, top brands, and exclusive discounts on AVENTA SHOP.",
+        type: "application/ld+json",
+        children: jsonLdScript(
+          collectionPageJsonLd({
+            name: "Shop All Products — AVENTA SHOP",
+            description:
+              "Browse thousands of products across electronics, fashion, grocery, beauty and home essentials on AVENTA SHOP.",
+            path: "/shop",
+          }),
+        ),
+      },
+      {
+        type: "application/ld+json",
+        children: jsonLdScript(
+          breadcrumbJsonLd([
+            { name: "Home", path: "/" },
+            { name: "Shop", path: "/shop" },
+          ]),
+        ),
       },
     ],
   }),
@@ -582,6 +603,7 @@ function ShopPage() {
                     : "text-slate-500"
                 }`}
                 title="Grid View"
+                aria-label="Grid view"
               >
                 <LayoutGrid className="w-4 h-4" />
               </button>
@@ -593,6 +615,7 @@ function ShopPage() {
                     : "text-slate-500"
                 }`}
                 title="List View"
+                aria-label="List view"
               >
                 <List className="w-4 h-4" />
               </button>
@@ -935,6 +958,7 @@ function ShopPage() {
                         : "text-slate-500 hover:text-slate-800"
                     }`}
                     title="Grid View"
+                aria-label="Grid view"
                   >
                     <LayoutGrid className="w-4 h-4" />
                   </button>
@@ -946,6 +970,7 @@ function ShopPage() {
                         : "text-slate-500 hover:text-slate-800"
                     }`}
                     title="List View"
+                aria-label="List view"
                   >
                     <List className="w-4 h-4" />
                   </button>

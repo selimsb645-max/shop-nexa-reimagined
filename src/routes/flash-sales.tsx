@@ -25,7 +25,7 @@ import { ProductCard, ProductCardSkeleton } from "@/components/product/ProductCa
 import { listProducts } from "@/services/firebase/products";
 import { firebaseConfigured } from "@/services/firebase/config";
 import type { Product } from "@/types/commerce";
-import { buildMetaTags } from "@/lib/seo";
+import { buildMetaTags, collectionPageJsonLd, breadcrumbJsonLd, jsonLdScript } from "@/lib/seo";
 
 export const Route = createFileRoute("/flash-sales")({
   ssr: true,
@@ -37,6 +37,28 @@ export const Route = createFileRoute("/flash-sales")({
       path: "/flash-sales",
       type: "website",
     }),
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: jsonLdScript(
+          collectionPageJsonLd({
+            name: "Flash Sales — AVENTA SHOP",
+            description:
+              "Limited-time flash sale deals with mega discounts on electronics, fashion, home essentials and more at AVENTA SHOP.",
+            path: "/flash-sales",
+          }),
+        ),
+      },
+      {
+        type: "application/ld+json",
+        children: jsonLdScript(
+          breadcrumbJsonLd([
+            { name: "Home", path: "/" },
+            { name: "Flash Sales", path: "/flash-sales" },
+          ]),
+        ),
+      },
+    ],
   }),
 });
 

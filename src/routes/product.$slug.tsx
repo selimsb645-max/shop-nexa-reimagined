@@ -38,7 +38,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { getProductBySlug, listProducts } from "@/services/firebase/products";
-import { buildMetaTags, productJsonLd, jsonLdScript, getSiteUrl } from "@/lib/seo";
+import { buildMetaTags, productJsonLd, breadcrumbJsonLd, jsonLdScript, getSiteUrl } from "@/lib/seo";
 import { listReviews, upsertReview } from "@/services/firebase/reviews";
 import { firebaseConfigured } from "@/services/firebase/config";
 import { toast } from "sonner";
@@ -77,8 +77,24 @@ export const Route = createFileRoute("/product/$slug")({
       type: "product",
       image: "/brand/aventa-shop-logo.png",
     }),
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: jsonLdScript(
+          breadcrumbJsonLd([
+            { name: "Home", path: "/" },
+            { name: "Shop", path: "/shop" },
+            {
+              name: params.slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+              path: `/product/${params.slug}`,
+            },
+          ]),
+        ),
+      },
+    ],
   }),
 });
+
 
 // ----------------------------------------------------------------------
 // Fallback / Mock Data Generator
@@ -593,6 +609,7 @@ export function ProductDetailPage() {
                   onClick={handleToggleWishlist}
                   className="absolute top-3 right-3 z-10 w-10 h-10 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-slate-600 shadow-md hover:bg-white hover:text-red-500 transition"
                   title="Save to Wishlist"
+                  aria-label="Save to wishlist"
                 >
                   <Heart
                     className={`w-5 h-5 transition-colors ${
@@ -609,6 +626,7 @@ export function ProductDetailPage() {
                     <button
                       key={idx}
                       onClick={() => setSelectedImageIndex(idx)}
+                      aria-label={`View product image ${idx + 1}`}
                       className={`relative w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden border-2 transition shrink-0 bg-slate-50 ${
                         selectedImageIndex === idx
                           ? "border-[#f97316] ring-2 ring-orange-100 scale-105"
@@ -636,6 +654,7 @@ export function ProductDetailPage() {
                     onClick={handleShareFacebook}
                     className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition flex items-center gap-1 font-medium"
                     title="Share on Facebook"
+                    aria-label="Share on Facebook"
                   >
                     <Facebook className="w-4 h-4" />
                   </button>
@@ -644,6 +663,7 @@ export function ProductDetailPage() {
                     onClick={handleShareWhatsApp}
                     className="p-2 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition flex items-center gap-1 font-medium"
                     title="Share on WhatsApp"
+                    aria-label="Share on WhatsApp"
                   >
                     <MessageCircle className="w-4 h-4" />
                   </button>
@@ -652,6 +672,7 @@ export function ProductDetailPage() {
                     onClick={handleCopyLink}
                     className="p-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition flex items-center gap-1 font-medium"
                     title="Copy Link"
+                    aria-label="Copy product link"
                   >
                     {copied ? (
                       <Check className="w-4 h-4 text-emerald-600" />

@@ -106,7 +106,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "author", content: "AVENTA SHOP" },
       { name: "robots", content: "index, follow" },
       // Canonical
-      { tagName: "link", rel: "canonical", href: getSiteUrl() + "/" },
       // Open Graph
       { property: "og:title", content: "AVENTA SHOP - Shop Smarter. Live Better." },
       { property: "og:description", content: "Everything you need in one place. Top quality products at unbeatable prices with free delivery over $50." },

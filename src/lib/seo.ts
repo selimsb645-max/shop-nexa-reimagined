@@ -229,3 +229,35 @@ export function storeJsonLd(store: {
 export function jsonLdScript(data: Record<string, unknown>): string {
   return JSON.stringify(data);
 }
+
+/** Build JSON-LD for a product listing / collection page */
+export function collectionPageJsonLd(opts: {
+  name: string;
+  description: string;
+  path: string;
+}) {
+  const siteUrl = getSiteUrl();
+  return {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: opts.name,
+    description: opts.description,
+    url: `${siteUrl}${opts.path}`,
+    isPartOf: { "@type": "WebSite", name: "AVENTA SHOP", url: siteUrl },
+  };
+}
+
+/** Build BreadcrumbList JSON-LD from ordered crumbs */
+export function breadcrumbJsonLd(items: Array<{ name: string; path: string }>) {
+  const siteUrl = getSiteUrl();
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: item.name,
+      item: `${siteUrl}${item.path}`,
+    })),
+  };
+}

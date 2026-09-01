@@ -38,6 +38,7 @@ import { getSellerProfile } from "@/services/firebase/sellers";
 import { firebaseConfigured } from "@/services/firebase/config";
 import { validateCoupon, CouponError } from "@/services/firebase/coupons";
 import type { Product } from "@/types/commerce";
+import { buildMetaTags, breadcrumbJsonLd, jsonLdScript } from "@/lib/seo";
 
 // ----------------------------------------------------------------------
 // Route Definition
@@ -45,6 +46,26 @@ import type { Product } from "@/types/commerce";
 
 export const Route = createFileRoute("/cart")({
   component: CartPage,
+  head: () => ({
+    meta: buildMetaTags({
+      title: "Your Shopping Cart — AVENTA SHOP",
+      description:
+        "Review the items in your AVENTA SHOP cart, apply vouchers, check delivery charges and continue to secure checkout with cash on delivery or online payment.",
+      path: "/cart",
+      type: "website",
+    }),
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: jsonLdScript(
+          breadcrumbJsonLd([
+            { name: "Home", path: "/" },
+            { name: "Cart", path: "/cart" },
+          ]),
+        ),
+      },
+    ],
+  }),
 });
 
 // ----------------------------------------------------------------------
