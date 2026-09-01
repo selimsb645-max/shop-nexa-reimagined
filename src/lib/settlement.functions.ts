@@ -109,7 +109,12 @@ export const processSettlementWithdrawal = createServerFn({ method: "POST" })
     if (!userRes.ok) throw new Error("Could not verify admin permissions.");
     const userDoc = await userRes.json();
     const role = userDoc.fields?.role?.stringValue ?? "customer";
-    if (role !== "admin") throw new Error("Only admins can process withdrawals.");
+    const adminRole = userDoc.fields?.adminRole?.stringValue ?? null;
+    // SECURITY: sub-role boundaries are enforced server side, not only in the UI.
+    // Only super_admin / finance_admin may move money.
+    if (role !== "admin" || (adminRole !== "super_admin" && adminRole !== "finance_admin")) {
+      throw new Error("Only finance admins can process withdrawals.");
+    }
 
     const result = await processWithdrawal({
       adminUid: uid,
