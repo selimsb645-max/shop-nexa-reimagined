@@ -10,7 +10,6 @@ const referralSchema = z.object({
   idToken: z.string().min(10),
   code: z.string().trim().min(3).max(64),
   displayName: z.string().max(120).nullable(),
-  referrerId: z.string().min(1).max(200),
 });
 
 /** Redeems reward points into wallet credit, verified and written server side. */
