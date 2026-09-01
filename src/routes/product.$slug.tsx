@@ -38,7 +38,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { getProductBySlug, listProducts } from "@/services/firebase/products";
-import { buildMetaTags, productJsonLd, jsonLdScript, getSiteUrl } from "@/lib/seo";
+import { buildMetaTags, productJsonLd, breadcrumbJsonLd, jsonLdScript, getSiteUrl } from "@/lib/seo";
 import { listReviews, upsertReview } from "@/services/firebase/reviews";
 import { firebaseConfigured } from "@/services/firebase/config";
 import { toast } from "sonner";
