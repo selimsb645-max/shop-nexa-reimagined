@@ -77,8 +77,24 @@ export const Route = createFileRoute("/product/$slug")({
       type: "product",
       image: "/brand/aventa-shop-logo.png",
     }),
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: jsonLdScript(
+          breadcrumbJsonLd([
+            { name: "Home", path: "/" },
+            { name: "Shop", path: "/shop" },
+            {
+              name: params.slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+              path: `/product/${params.slug}`,
+            },
+          ]),
+        ),
+      },
+    ],
   }),
 });
+
 
 // ----------------------------------------------------------------------
 // Fallback / Mock Data Generator
