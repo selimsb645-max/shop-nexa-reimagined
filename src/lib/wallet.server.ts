@@ -185,7 +185,7 @@ export async function applyReferralServer(input: {
   await commitWrites(projectId, [
     {
       update: {
-        name: docPath(projectId, ["users", input.referrerId, "referrals", input.uid]),
+        name: docPath(projectId, ["users", referrerId, "referrals", input.uid]),
         fields: toFsFields({
           referredUserId: input.uid,
           referredName: input.displayName ?? "New customer",
