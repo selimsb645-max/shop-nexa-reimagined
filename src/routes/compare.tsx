@@ -94,6 +94,7 @@ function ComparePage() {
                       <div className="relative">
                         <button
                           onClick={() => removeProduct(product.id)}
+                          aria-label={`Remove ${product.title} from comparison`}
                           className="absolute right-0 top-0 grid h-6 w-6 place-items-center rounded-full bg-muted text-muted-foreground hover:bg-destructive hover:text-destructive-foreground"
                         >
                           <X className="h-4 w-4" />

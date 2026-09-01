@@ -582,6 +582,7 @@ function ShopPage() {
                     : "text-slate-500"
                 }`}
                 title="Grid View"
+                aria-label="Grid view"
               >
                 <LayoutGrid className="w-4 h-4" />
               </button>
@@ -593,6 +594,7 @@ function ShopPage() {
                     : "text-slate-500"
                 }`}
                 title="List View"
+                aria-label="List view"
               >
                 <List className="w-4 h-4" />
               </button>
@@ -935,6 +937,7 @@ function ShopPage() {
                         : "text-slate-500 hover:text-slate-800"
                     }`}
                     title="Grid View"
+                aria-label="Grid view"
                   >
                     <LayoutGrid className="w-4 h-4" />
                   </button>
@@ -946,6 +949,7 @@ function ShopPage() {
                         : "text-slate-500 hover:text-slate-800"
                     }`}
                     title="List View"
+                aria-label="List view"
                   >
                     <List className="w-4 h-4" />
                   </button>
