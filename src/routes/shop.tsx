@@ -91,12 +91,33 @@ export const Route = createFileRoute("/shop")({
   },
   component: ShopPage,
   head: () => ({
-    meta: [
-      { title: "Shop & Categories — AVENTA SHOP" },
+    meta: buildMetaTags({
+      title: "Shop All Products & Categories — AVENTA SHOP",
+      description:
+        "Browse thousands of products across electronics, fashion, grocery, beauty and home essentials on AVENTA SHOP. Filter by price, brand, rating and category.",
+      path: "/shop",
+      type: "website",
+    }),
+    scripts: [
       {
-        name: "description",
-        content:
-          "Browse thousands of products, top brands, and exclusive discounts on AVENTA SHOP.",
+        type: "application/ld+json",
+        children: jsonLdScript(
+          collectionPageJsonLd({
+            name: "Shop All Products — AVENTA SHOP",
+            description:
+              "Browse thousands of products across electronics, fashion, grocery, beauty and home essentials on AVENTA SHOP.",
+            path: "/shop",
+          }),
+        ),
+      },
+      {
+        type: "application/ld+json",
+        children: jsonLdScript(
+          breadcrumbJsonLd([
+            { name: "Home", path: "/" },
+            { name: "Shop", path: "/shop" },
+          ]),
+        ),
       },
     ],
   }),
