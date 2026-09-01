@@ -16,7 +16,7 @@ import {
   PackageX,
 } from "lucide-react";
 import { BackButton } from "@/components/common/BackButton";
-import { buildMetaTags } from "@/lib/seo";
+import { buildMetaTags, collectionPageJsonLd, breadcrumbJsonLd, jsonLdScript } from "@/lib/seo";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";

@@ -25,7 +25,7 @@ import { ProductCard, ProductCardSkeleton } from "@/components/product/ProductCa
 import { listProducts } from "@/services/firebase/products";
 import { firebaseConfigured } from "@/services/firebase/config";
 import type { Product } from "@/types/commerce";
-import { buildMetaTags } from "@/lib/seo";
+import { buildMetaTags, collectionPageJsonLd, breadcrumbJsonLd, jsonLdScript } from "@/lib/seo";
 
 export const Route = createFileRoute("/flash-sales")({
   ssr: true,
