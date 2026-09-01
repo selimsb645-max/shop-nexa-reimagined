@@ -66,6 +66,7 @@ class SmsNotificationProvider implements NotificationProvider {
   async send(payload: NotificationPayload): Promise<NotificationResult> {
     const apiUrl = Deno.env.get("SMS_GATEWAY_URL");
     const apiKey = Deno.env.get("SMS_GATEWAY_API_KEY");
+    const deviceId = Deno.env.get("SMS_GATEWAY_DEVICE_ID");
     if (!apiUrl || !apiKey) {
       return { delivered: false, channel: this.name, error: "SMS gateway not configured" };
     }
@@ -74,11 +75,12 @@ class SmsNotificationProvider implements NotificationProvider {
         method: "POST",
         headers: {
           "content-type": "application/json",
-          authorization: `Bearer ${apiKey}`,
+          "x-api-key": apiKey,
         },
         body: JSON.stringify({
-          to: payload.phoneNumber,
+          recipients: [payload.phoneNumber],
           message: payload.message,
+          ...(deviceId ? { deviceId } : {}),
         }),
       });
       return {
