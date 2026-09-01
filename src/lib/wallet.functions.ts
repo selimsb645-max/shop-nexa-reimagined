@@ -29,11 +29,10 @@ export const claimReferralBonus = createServerFn({ method: "POST" })
     const { verifyIdToken } = await import("./firebase-admin.server");
     const { applyReferralServer } = await import("./wallet.server");
     const { uid } = await verifyIdToken(data.idToken);
-    if (data.referrerId === uid) throw new Error("You cannot use your own code");
+    // SECURITY: the referrer is resolved from the code inside the server module.
     return applyReferralServer({
       uid,
       displayName: data.displayName,
       code: data.code,
-      referrerId: data.referrerId,
     });
   });
