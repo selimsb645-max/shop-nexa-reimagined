@@ -50,6 +50,47 @@ service cloud.firestore {
         && request.auth.uid in resource.data.sellerIds;
     }
 
+    // Step 22: Status transition validation (defense-in-depth)
+    // Enforces valid order status transitions at the Firestore rules level.
+    // Service layer also validates — this is the final boundary for client SDK.
+    function isValidOrderTransition(from, to) {
+      return from == to
+        || (from == 'pending' && to in ['confirmed', 'processing', 'cancelled'])
+        || (from == 'confirmed' && to in ['processing', 'cancelled'])
+        || (from == 'processing' && to in ['shipped', 'cancelled'])
+        || (from == 'shipped' && to in ['delivered', 'cancelled']);
+    }
+
+    function isTerminalStatus(status) {
+      return status == 'delivered' || status == 'cancelled';
+    }
+
+    function statusNotChanged() {
+      return !('status' in request.resource.data.diff(resource.data).affectedKeys());
+    }
+
+    function validStatusTransition() {
+      return statusNotChanged()
+        || ('status' in request.resource.data.diff(resource.data).affectedKeys()
+            && isValidOrderTransition(resource.data.status, request.resource.data.status));
+    }
+
+    // Seller order transitions include "returned" from "delivered"
+    function isValidSellerOrderTransition(from, to) {
+      return from == to
+        || (from == 'pending' && to in ['confirmed', 'processing', 'cancelled'])
+        || (from == 'confirmed' && to in ['processing', 'cancelled'])
+        || (from == 'processing' && to in ['shipped', 'cancelled'])
+        || (from == 'shipped' && to in ['delivered', 'cancelled'])
+        || (from == 'delivered' && to in ['returned']);
+    }
+
+    function validSellerStatusTransition() {
+      return statusNotChanged()
+        || ('status' in request.resource.data.diff(resource.data).affectedKeys()
+            && isValidSellerOrderTransition(resource.data.status, request.resource.data.status));
+    }
+
     function onlyChanges(allowed) {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowed);
     }
@@ -276,9 +317,12 @@ service cloud.firestore {
               'sellerDeliveryCharge', 'deliveryZone', 'deliveryZoneId',
               'deliveryZoneName', 'deliveryZoneLabel',
               'items', 'userId', 'sellerIds', 'createdAt'
-            ]))
+            ])
+            // Step 22: Validate status transition
+            && validStatusTransition())
           || (isOrderSeller()
-            && onlyChanges(['status', 'tracking', 'courierInfo', 'updatedAt']));
+            && onlyChanges(['status', 'tracking', 'courierInfo', 'updatedAt'])
+            && validStatusTransition());
         // SECURITY: Only Super Admin can delete customer orders
         allow delete: if isSuperAdmin();
       }
@@ -467,7 +511,9 @@ service cloud.firestore {
             // Protect shippingCharge within shipping object
             && (!('shipping' in request.resource.data.diff(resource.data).affectedKeys())
                 || (resource.data.shipping.shippingCharge
-                    == request.resource.data.shipping.shippingCharge)))
+                    == request.resource.data.shipping.shippingCharge))
+            // Step 22: Validate seller order status transition
+            && validSellerStatusTransition())
           || (isSelf(uid)
             && onlyChanges(['status', 'tracking', 'shipping', 'updatedAt'])
             && !request.resource.data.diff(resource.data).affectedKeys()
@@ -476,7 +522,9 @@ service cloud.firestore {
                           'subtotal', 'paymentStatus', 'paymentMethod'])
             && (!('shipping' in request.resource.data.diff(resource.data).affectedKeys())
                 || (resource.data.shipping.shippingCharge
-                    == request.resource.data.shipping.shippingCharge)));
+                    == request.resource.data.shipping.shippingCharge))
+            // Step 22: Validate seller order status transition
+            && validSellerStatusTransition());
         // SECURITY: Only Super Admin can delete seller order mirrors
         allow delete: if isSuperAdmin();
       }

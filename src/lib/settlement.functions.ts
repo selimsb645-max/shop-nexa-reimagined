@@ -186,7 +186,16 @@ export const reverseSettlement = createServerFn({ method: "POST" })
     if (!userRes.ok) throw new Error("Could not verify admin permissions.");
     const userDoc = await userRes.json();
     const role = userDoc.fields?.role?.stringValue ?? "customer";
+    const adminRole = userDoc.fields?.adminRole?.stringValue ?? null;
     if (role !== "admin") throw new Error("Only admins can reverse settlements.");
+    // Step 22: Least-privilege — only super_admin and admin can trigger
+    // settlement reversal (cancellation is a financial operation).
+    // support_admin, finance_admin, content_admin are NOT authorized.
+    if (adminRole !== "super_admin" && adminRole !== "admin") {
+      throw new Error(
+        "You do not have permission to reverse settlements. Only admins and super admins can cancel orders.",
+      );
+    }
 
     return reverseSellerSettlement({
       sellerId: data.sellerId,

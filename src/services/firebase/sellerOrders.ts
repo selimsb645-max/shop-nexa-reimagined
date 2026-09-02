@@ -9,8 +9,12 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { getDb } from "./config";
-import type { SellerOrder, SellerOrderStatus , ShippingInfo } from "@/types/seller";
+import type { SellerOrder, SellerOrderStatus, ShippingInfo } from "@/types/seller";
 import { markOrderDelivered } from "@/lib/settlement.functions";
+import {
+  isValidSellerOrderStatusTransition,
+  transitionErrorMessage,
+} from "@/lib/order-transitions";
 
 const SELLERS = "sellers";
 const ORDERS = "orders";
@@ -65,10 +69,7 @@ function mapOrder(id: string, d: Record<string, unknown>): SellerOrder {
 
 export async function listSellerOrders(sellerId: string): Promise<SellerOrder[]> {
   const snap = await getDocs(
-    query(
-      collection(getDb(), SELLERS, sellerId, ORDERS),
-      orderBy("createdAt", "desc"),
-    ),
+    query(collection(getDb(), SELLERS, sellerId, ORDERS), orderBy("createdAt", "desc")),
   );
   return snap.docs.map((d) => mapOrder(d.id, d.data()));
 }
@@ -96,6 +97,11 @@ export async function getSellerOrder(
  *
  * When status is "cancelled", the reversal is handled by the admin
  * via adminOrders.ts cancelOrderAdmin which calls reverseSettlement.
+ *
+ * SECURITY (Step 22):
+ * - isValidSellerOrderStatusTransition() called before any status write
+ * - Terminal states (delivered except returned, cancelled, returned) reject
+ * - Invalid transitions (e.g. delivered → processing) are rejected
  */
 export async function updateSellerOrderStatus(
   sellerId: string,
@@ -113,6 +119,11 @@ export async function updateSellerOrderStatus(
   const currentStatus = String(snap.data().status ?? "pending");
   if (currentStatus === status) return;
 
+  // Step 22: Validate seller order status transition
+  if (!isValidSellerOrderStatusTransition(currentStatus, status)) {
+    throw new Error(transitionErrorMessage(currentStatus, status, true));
+  }
+
   const existingTracking = (snap.data().tracking as SellerOrder["tracking"]) ?? [];
   const ts = nowMs();
 
@@ -122,10 +133,7 @@ export async function updateSellerOrderStatus(
     trackingNote = `Shipped via ${courierInfo.name}${courierInfo.trackingNumber ? ` (Tracking: ${courierInfo.trackingNumber})` : ""}`;
   }
 
-  const tracking = [
-    ...existingTracking,
-    { status, note: trackingNote, at: ts },
-  ];
+  const tracking = [...existingTracking, { status, note: trackingNote, at: ts }];
 
   const sellerUpdate: Record<string, unknown> = {
     status,

@@ -9,8 +9,7 @@ export type AdminRole =
   | "admin" // General admin, no finance/super permissions
   | "finance_admin" // Withdrawals, earnings, commissions, payouts
   | "support_admin" // Orders, customer support, refunds
-  | "content_admin" // Products, categories, coupons, banners
-  ;
+  | "content_admin"; // Products, categories, coupons, banners
 
 /**
  * Granular permissions. Each admin role has a predefined set.
@@ -55,51 +54,87 @@ export type AdminPermission =
   // System
   | "settings.view"
   | "settings.edit"
-  | "admin.manage" // Super admin only: manage other admins
-  ;
+  | "admin.manage"; // Super admin only: manage other admins
 
 /**
  * Role → permission mapping. Super admin gets every permission.
  */
 export const ROLE_PERMISSIONS: Record<AdminRole, AdminPermission[]> = {
   super_admin: [
-    "sellers.view", "sellers.approve", "sellers.suspend", "sellers.delete",
-    "products.view", "products.edit", "products.delete", "products.approve",
-    "orders.view", "orders.update", "orders.cancel",
-    "finance.view", "finance.commissions", "finance.withdrawals.process", "finance.payouts",
-    "coupons.view", "coupons.create", "coupons.edit", "coupons.delete",
-    "categories.view", "categories.create", "categories.edit", "categories.delete",
-    "users.view", "users.edit", "users.delete",
+    "sellers.view",
+    "sellers.approve",
+    "sellers.suspend",
+    "sellers.delete",
+    "products.view",
+    "products.edit",
+    "products.delete",
+    "products.approve",
+    "orders.view",
+    "orders.update",
+    "orders.cancel",
+    "finance.view",
+    "finance.commissions",
+    "finance.withdrawals.process",
+    "finance.payouts",
+    "coupons.view",
+    "coupons.create",
+    "coupons.edit",
+    "coupons.delete",
+    "categories.view",
+    "categories.create",
+    "categories.edit",
+    "categories.delete",
+    "users.view",
+    "users.edit",
+    "users.delete",
     "analytics.view",
-    "settings.view", "settings.edit",
+    "settings.view",
+    "settings.edit",
     "admin.manage",
   ],
   admin: [
-    "sellers.view", "sellers.approve", "sellers.suspend",
-    "products.view", "products.edit", "products.approve",
-    "orders.view", "orders.update",
-    "coupons.view", "coupons.create", "coupons.edit",
-    "categories.view", "categories.create", "categories.edit",
+    "sellers.view",
+    "sellers.approve",
+    "sellers.suspend",
+    "products.view",
+    "products.edit",
+    "products.approve",
+    "orders.view",
+    "orders.update",
+    "orders.cancel",
+    "coupons.view",
+    "coupons.create",
+    "coupons.edit",
+    "categories.view",
+    "categories.create",
+    "categories.edit",
     "users.view",
     "analytics.view",
     "settings.view",
   ],
   finance_admin: [
-    "finance.view", "finance.commissions", "finance.withdrawals.process", "finance.payouts",
+    "finance.view",
+    "finance.commissions",
+    "finance.withdrawals.process",
+    "finance.payouts",
     "orders.view",
     "analytics.view",
     "sellers.view",
   ],
-  support_admin: [
-    "orders.view", "orders.update", "orders.cancel",
-    "sellers.view",
-    "products.view",
-    "users.view",
-  ],
+  support_admin: ["orders.view", "orders.update", "sellers.view", "products.view", "users.view"],
   content_admin: [
-    "products.view", "products.edit", "products.delete", "products.approve",
-    "coupons.view", "coupons.create", "coupons.edit", "coupons.delete",
-    "categories.view", "categories.create", "categories.edit", "categories.delete",
+    "products.view",
+    "products.edit",
+    "products.delete",
+    "products.approve",
+    "coupons.view",
+    "coupons.create",
+    "coupons.edit",
+    "coupons.delete",
+    "categories.view",
+    "categories.create",
+    "categories.edit",
+    "categories.delete",
   ],
 };
 

