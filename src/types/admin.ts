@@ -79,8 +79,6 @@ export interface Banner {
   updatedAt: number;
 }
 
-
-
 // ═══════════════════════════════════════════════════════════════
 // ANNOUNCEMENTS
 // ═══════════════════════════════════════════════════════════════
@@ -146,6 +144,14 @@ export type ActivityAction =
   | "announcement.create"
   | "announcement.update"
   | "announcement.delete"
+  | "return.create"
+  | "return.review"
+  | "return.approve"
+  | "return.reject"
+  | "return.item_received"
+  | "return.refund_approved"
+  | "return.refund_processed"
+  | "return.cancel"
   | "order.status_update"
   | "order.cancel"
   | "settings.update";
