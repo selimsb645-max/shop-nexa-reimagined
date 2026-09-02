@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-// Admin Orders Service — Shop Nexa Reimagined (Main App)
+// Admin Orders Service — AVENTA SHOP (Main App)
 // ═══════════════════════════════════════════════════════════════
 // Read + status update + cancel operations for customer orders.
 // Orders live in users/{uid}/orders/{orderId} subcollections.

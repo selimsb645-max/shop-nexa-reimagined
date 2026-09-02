@@ -272,10 +272,10 @@ export function SiteFooter() {
               <li className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-[#f97316] shrink-0" />
                 <a
-                  href="mailto:help.shopnexa@gmail.com"
+                  href="mailto:help.aventashop@gmail.com"
                   className="hover:text-[#f97316] font-medium transition-colors"
                 >
-                  help.shopnexa@gmail.com
+                  help.aventashop@gmail.com
                 </a>
               </li>
               <li className="flex items-start gap-2">

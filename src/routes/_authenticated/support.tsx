@@ -84,10 +84,10 @@ function SupportPage() {
     <ServicePageLayout title={t("support.title")} subtitle={t("support.subtitle")}>
       {/* Quick contact cards */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <a href="mailto:help.shopnexa@gmail.com" className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:border-orange-200 hover:shadow-md">
+        <a href="mailto:help.aventashop@gmail.com" className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:border-orange-200 hover:shadow-md">
           <Mail className="h-5 w-5 text-[#f57224]" />
           <div className="mt-2 font-bold text-slate-800">Email Support</div>
-          <p className="text-sm text-slate-500">help.shopnexa@gmail.com</p>
+          <p className="text-sm text-slate-500">help.aventashop@gmail.com</p>
         </a>
         <Link to="/messages" className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:border-orange-200 hover:shadow-md">
           <MessageSquare className="h-5 w-5 text-[#f57224]" />

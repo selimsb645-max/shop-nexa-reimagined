@@ -465,7 +465,7 @@ function PromotionalBanner() {
         <div className="max-w-[62%] sm:max-w-xl">
           <div className="inline-flex items-center gap-1.5 rounded-full border border-[#1455c6]/15 bg-white/80 px-2.5 py-0.5 text-[10px] font-bold text-[#1455c6] sm:px-3 sm:py-1 sm:text-xs"><Sparkles className="h-3 w-3 text-[#ff7a00] sm:h-3.5 sm:w-3.5" />AVENTA SHOP App Exclusive</div>
           <h2 className="mt-2 text-xl font-black leading-snug tracking-tight text-slate-950 sm:mt-3 sm:text-3xl">Get Extra 15% OFF + Free Shipping</h2>
-          <p className="mt-1.5 text-[11px] text-slate-700 sm:mt-2 sm:text-sm">Use promo code <span className="font-mono font-bold text-[#ff7a00]">NEXA15</span> at checkout on your first order.</p>
+          <p className="mt-1.5 text-[11px] text-slate-700 sm:mt-2 sm:text-sm">Use promo code <span className="font-mono font-bold text-[#ff7a00]">AVEN10</span> at checkout on your first order.</p>
         </div>
         <div className="flex items-center gap-3 shrink-0">
           <Link to="/shop" className="inline-flex min-h-11 items-center justify-center rounded-lg bg-[#ff7a00] px-5 py-2.5 text-xs font-bold text-white shadow-lg transition hover:bg-[#e56500] active:scale-[0.97] sm:rounded-xl sm:px-6 sm:py-3.5 sm:text-sm">Claim Discount Now</Link>

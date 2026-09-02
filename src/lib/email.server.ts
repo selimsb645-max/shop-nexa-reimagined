@@ -48,7 +48,7 @@ class ResendEmailProvider implements EmailProvider {
   name = "resend";
   async send(to: string, subject: string, html: string) {
     const apiKey = Deno.env.get("RESEND_API_KEY");
-    const fromEmail = Deno.env.get("EMAIL_FROM") ?? "noreply@shopnexa.app";
+    const fromEmail = Deno.env.get("EMAIL_FROM") ?? "noreply@aventa-shop.com";
     if (!apiKey) return { success: false, error: "RESEND_API_KEY not configured" };
     try {
       const res = await fetch("https://api.resend.com/emails", {
@@ -73,7 +73,7 @@ class SendGridEmailProvider implements EmailProvider {
   name = "sendgrid";
   async send(to: string, subject: string, html: string) {
     const apiKey = Deno.env.get("SENDGRID_API_KEY");
-    const fromEmail = Deno.env.get("EMAIL_FROM") ?? "noreply@shopnexa.app";
+    const fromEmail = Deno.env.get("EMAIL_FROM") ?? "noreply@aventa-shop.com";
     if (!apiKey) return { success: false, error: "SENDGRID_API_KEY not configured" };
     try {
       const res = await fetch("https://api.sendgrid.com/v3/mail/send", {
