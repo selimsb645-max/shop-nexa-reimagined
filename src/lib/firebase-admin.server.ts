@@ -389,10 +389,7 @@ export async function commitWithTx(
 }
 
 /** Rollback a transaction (release locks without committing). */
-export async function rollbackTransaction(
-  projectId: string,
-  transaction: string,
-): Promise<void> {
+export async function rollbackTransaction(projectId: string, transaction: string): Promise<void> {
   try {
     const token = await getAccessToken();
     await fetch(`${baseUrl(projectId)}:rollback`, {
@@ -424,9 +421,7 @@ export async function rollbackTransaction(
  */
 export async function runFirestoreTransaction(
   projectId: string,
-  fn: (
-    read: (names: string[]) => Promise<Map<string, FetchedDoc>>,
-  ) => Promise<FsWrite[]>,
+  fn: (read: (names: string[]) => Promise<Map<string, FetchedDoc>>) => Promise<FsWrite[]>,
   maxRetries = 5,
 ): Promise<void> {
   let lastError: Error | null = null;

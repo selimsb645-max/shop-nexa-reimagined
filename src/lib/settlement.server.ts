@@ -115,7 +115,9 @@ export function computeSellerSettlement(input: {
   const sellerShippingShare = round2(orderShipping * sellerRatio);
   const sellerTaxShare = round2(orderTax * sellerRatio);
 
-  const sellerNetSubtotal = round2(sellerSubtotal - sellerDiscountShare + sellerShippingShare + sellerTaxShare);
+  const sellerNetSubtotal = round2(
+    sellerSubtotal - sellerDiscountShare + sellerShippingShare + sellerTaxShare,
+  );
   const commissionAmount = round2(sellerSubtotal * commissionRate);
   const sellerNetEarnings = round2(sellerNetSubtotal - commissionAmount);
 
@@ -335,8 +337,7 @@ export async function markOrderDeliveredSettlement(input: {
     const sDoc = settingsDocs.get(settingsDocPath);
     if (sDoc?.exists) {
       const commissionConfig = (sDoc.data as Record<string, unknown>)["commission"] as
-        | { holdPeriodDays?: number }
-        | undefined;
+        { holdPeriodDays?: number } | undefined;
       if (commissionConfig?.holdPeriodDays && commissionConfig.holdPeriodDays > 0) {
         holdDays = commissionConfig.holdPeriodDays;
       }
