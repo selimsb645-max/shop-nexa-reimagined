@@ -257,10 +257,30 @@ service cloud.firestore {
       match /orders/{orderId} {
         allow read: if isSelf(uid) || isAdmin();
         allow create: if false;
-        allow update: if isAdmin()
+        allow update: if
+          // ADMIN PATH: Admin can only update operational (non-financial) fields.
+          // Financial fields (payment, total, subtotal, discount, shipping, tax,
+          // platformFee, deliverySnapshot, etc.) are server-controlled and
+          // NEVER writable via client SDK — not even by admins.
+          (isAdmin()
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'status', 'tracking', 'courierInfo', 'updatedAt'
+            ])
+            // DEFENSE-IN-DEPTH: Block all financial fields even if they
+            // somehow appear in the whitelist above.
+            && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+              'payment', 'subtotal', 'discount', 'shipping', 'tax', 'taxRate',
+              'total', 'platformFee', 'promoDiscount', 'rewardDiscount',
+              'walletUsed', 'couponCode', 'promoCode', 'deliverySnapshot',
+              'deliveryCharge', 'zoneCharge', 'customerDeliveryCharge',
+              'sellerDeliveryCharge', 'deliveryZone', 'deliveryZoneId',
+              'deliveryZoneName', 'deliveryZoneLabel',
+              'items', 'userId', 'sellerIds', 'createdAt'
+            ]))
           || (isOrderSeller()
             && onlyChanges(['status', 'tracking', 'courierInfo', 'updatedAt']));
-        allow delete: if isAdmin();
+        // SECURITY: Only Super Admin can delete customer orders
+        allow delete: if isSuperAdmin();
       }
 
       match /walletTx/{txId} {
@@ -457,7 +477,8 @@ service cloud.firestore {
             && (!('shipping' in request.resource.data.diff(resource.data).affectedKeys())
                 || (resource.data.shipping.shippingCharge
                     == request.resource.data.shipping.shippingCharge)));
-        allow delete: if isAdmin();
+        // SECURITY: Only Super Admin can delete seller order mirrors
+        allow delete: if isSuperAdmin();
       }
 
       match /settlementTx/{txId} {
