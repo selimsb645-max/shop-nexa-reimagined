@@ -1,7 +1,7 @@
 /**
  * AVENTA SHOP — Category & Commission Seeding Function
  *
- * Creates all 20 approved top-level categories and 133 subcategories
+ * Creates all 20 approved top-level categories and 134 subcategories
  * in Firestore with their approved AVENTA commission rates.
  *
  * Commission rates = 50% of Daraz "New Commission Rate" (PK Commission Rates - May 2026)
@@ -9,6 +9,12 @@
  * SECURITY: Admin-only. Uses Firebase Admin SDK to bypass security rules.
  * This is a one-time seeding function — safe to call repeatedly (idempotent for
  * categories that already exist with the same slug).
+ *
+ * Idempotency guarantees:
+ * - Deterministic slug-based document IDs (slug becomes the doc ID)
+ * - Running twice updates existing docs, never creates duplicates
+ * - Subcategories include explicit parentCategoryId reference
+ * - Duplicate slug detection prevents conflicting seeds
  */
 
 import { getAccessToken, getProjectId, toFsFields, fromFsFields } from "./firebase-admin.server";
@@ -34,7 +40,7 @@ interface SeedCategory {
   }>;
 }
 
-// ── APPROVED AVENTA CATEGORY STRUCTURE (20 categories, 133 subcategories) ──
+// ── APPROVED AVENTA CATEGORY STRUCTURE (20 categories, 134 subcategories) ──
 const SEED_DATA: SeedCategory[] = [
   {
     name: "Phones & Tablets", slug: "phones-tablets", order: 1, commissionRate: 0.0645,
@@ -272,9 +278,89 @@ const SEED_DATA: SeedCategory[] = [
   },
 ];
 
+// ── VALIDATION HELPERS ──
+
+const MAX_RATE = 0.20; // 20% absolute cap
+const MIN_RATE = 0.005; // 0.5% minimum
+
+function validateRate(rate: number, ctx: string): void {
+  if (rate == null || isNaN(rate) || rate < 0 || rate > MAX_RATE) {
+    throw new Error(`Invalid commission rate for ${ctx}: ${rate} (must be 0–${MAX_RATE})`);
+  }
+  if (rate < MIN_RATE) {
+    throw new Error(`Commission rate for ${ctx} (${rate}) is below minimum ${MIN_RATE}`);
+  }
+}
+
+/** Validate the entire SEED_DATA before writing anything. Throws on any issue. */
+export function validateSeedData(): {
+  categories: number;
+  subcategories: number;
+  overrides: number;
+  inherited: number;
+  duplicateCategorySlugs: string[];
+  duplicateSubcategorySlugs: string[];
+} {
+  let totalCats = 0;
+  let totalSubs = 0;
+  let overrides = 0;
+  let inherited = 0;
+  const catSlugs = new Set<string>();
+  const subSlugs = new Set<string>();
+  const dupCatSlugs: string[] = [];
+  const dupSubSlugs: string[] = [];
+
+  for (const cat of SEED_DATA) {
+    totalCats++;
+    validateRate(cat.commissionRate, `category "${cat.name}"`);
+
+    if (catSlugs.has(cat.slug)) dupCatSlugs.push(cat.slug);
+    catSlugs.add(cat.slug);
+
+    for (const sub of cat.subcategories) {
+      totalSubs++;
+      const subCtx = `subcategory "${cat.name} > ${sub.name}"`;
+      if (sub.commissionRate != null) {
+        overrides++;
+        validateRate(sub.commissionRate, subCtx);
+      } else {
+        inherited++;
+      }
+
+      // Check for duplicate subcategory slugs GLOBALLY
+      if (subSlugs.has(sub.slug)) dupSubSlugs.push(sub.slug);
+      subSlugs.add(sub.slug);
+
+      // Orphan prevention: every sub must have a non-empty parent
+      if (!cat.slug || !cat.name) {
+        throw new Error(`Subcategory "${sub.name}" has an invalid parent (slug="${cat.slug}", name="${cat.name}")`);
+      }
+    }
+  }
+
+  if (dupCatSlugs.length > 0) {
+    throw new Error(`Duplicate category slugs: ${dupCatSlugs.join(", ")}`);
+  }
+  if (dupSubSlugs.length > 0) {
+    throw new Error(`Duplicate subcategory slugs: ${dupSubSlugs.join(", ")}`);
+  }
+
+  return {
+    categories: totalCats,
+    subcategories: totalSubs,
+    overrides,
+    inherited,
+    duplicateCategorySlugs: dupCatSlugs,
+    duplicateSubcategorySlugs: dupSubSlugs,
+  };
+}
+
 /**
  * Seeds all categories and subcategories into Firestore.
- * Idempotent: checks for existing categories by slug before creating.
+ *
+ * Idempotent: uses deterministic slug-based document IDs.
+ * Running multiple times updates existing docs, never creates duplicates.
+ * Parent-child relationship explicitly stored via parentCategoryId on subcategories.
  *
  * @returns Summary of created/updated categories and subcategories
  */
@@ -284,7 +370,11 @@ export async function seedCategoriesAndCommissions(): Promise<{
   categoriesUpdated: number;
   subcategoriesUpdated: number;
   errors: string[];
+  validation: ReturnType<typeof validateSeedData>;
 }> {
+  // Pre-flight validation — fail fast if seed data has issues
+  const validation = validateSeedData();
+
   const projectId = getProjectId();
   const token = await getAccessToken();
   const base = fsBaseUrl(projectId);
@@ -296,69 +386,46 @@ export async function seedCategoriesAndCommissions(): Promise<{
   let subcategoriesUpdated = 0;
   const errors: string[] = [];
 
-  // First, read all existing categories to check for duplicates
-  const existingCatsRes = await fetch(`${base}/categories?pageSize=1000`, {
-    headers: { authorization: `Bearer ${token}` },
-  });
-  const existingCats: Map<string, string> = new Map(); // slug -> docId
-  if (existingCatsRes.ok) {
-    const catsData = await existingCatsRes.json();
-    if (catsData.documents) {
-      for (const doc of catsData.documents) {
-        const data = fromFsFields(doc.fields ?? {});
-        existingCats.set(String(data.slug ?? ""), doc.name.split("/").pop() ?? "");
-      }
-    }
-  }
-
   for (const cat of SEED_DATA) {
-    let catDocId: string;
+    // Deterministic ID = slug (safe for Firestore document IDs)
+    const catDocId = cat.slug;
 
-    if (existingCats.has(cat.slug)) {
-      // Update existing category with commission rate
-      catDocId = existingCats.get(cat.slug)!;
+    // Check if category already exists (idempotent)
+    const existingCatRes = await fetch(`${base}/categories/${encodeURIComponent(catDocId)}`, {
+      headers: { authorization: `Bearer ${token}` },
+    });
+
+    const catFields: Record<string, unknown> = {
+      name: cat.name,
+      slug: cat.slug,
+      image: null,
+      order: cat.order,
+      commissionRate: cat.commissionRate,
+      updatedAt: nowMs,
+    };
+
+    if (existingCatRes.ok) {
+      // Update existing category in place
       try {
-        const patchBody = {
-          fields: toFsFields({
-            name: cat.name,
-            slug: cat.slug,
-            image: null,
-            order: cat.order,
-            commissionRate: cat.commissionRate,
-            updatedAt: nowMs,
-          }),
-        };
         await fetch(`${base}/categories/${encodeURIComponent(catDocId)}?`, {
           method: "PATCH",
           headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-          body: JSON.stringify(patchBody),
+          body: JSON.stringify({ fields: toFsFields(catFields) }),
         });
         categoriesUpdated++;
       } catch (e) {
         errors.push(`Failed to update category ${cat.name}: ${String(e)}`);
       }
     } else {
-      // Create new category
+      // Create new category with deterministic ID via PATCH (upsert)
       try {
-        const createBody = {
-          fields: toFsFields({
-            name: cat.name,
-            slug: cat.slug,
-            image: null,
-            order: cat.order,
-            commissionRate: cat.commissionRate,
-            createdAt: nowMs,
-            updatedAt: nowMs,
-          }),
-        };
-        const res = await fetch(`${base}/categories`, {
-          method: "POST",
+        const createFields: Record<string, unknown> = { ...catFields, createdAt: nowMs };
+        const res = await fetch(`${base}/categories/${encodeURIComponent(catDocId)}?`, {
+          method: "PATCH",
           headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-          body: JSON.stringify(createBody),
+          body: JSON.stringify({ fields: toFsFields(createFields) }),
         });
         if (res.ok) {
-          const doc = await res.json();
-          catDocId = doc.name.split("/").pop();
           categoriesCreated++;
         } else {
           errors.push(`Failed to create category ${cat.name}: ${await res.text()}`);
@@ -370,62 +437,54 @@ export async function seedCategoriesAndCommissions(): Promise<{
       }
     }
 
-    // Now create/update subcategories
-    // Read existing subcategories for this category
-    const existingSubs: Map<string, string> = new Map();
-    try {
-      const subsRes = await fetch(
-        `${base}/categories/${encodeURIComponent(catDocId)}/subcategories?pageSize=1000`,
-        { headers: { authorization: `Bearer ${token}` } },
-      );
-      if (subsRes.ok) {
-        const subsData = await subsRes.json();
-        if (subsData.documents) {
-          for (const doc of subsData.documents) {
-            const data = fromFsFields(doc.fields ?? {});
-            existingSubs.set(String(data.slug ?? ""), doc.name.split("/").pop() ?? "");
-          }
-        }
-      }
-    } catch {
-      // Ignore — no existing subs
-    }
-
+    // Now create/update subcategories with deterministic IDs and parent reference
     for (const sub of cat.subcategories) {
+      // Deterministic subcategory ID = slug (unique within parent subcollection)
+      const subDocId = sub.slug;
+
       const subFields: Record<string, unknown> = {
         name: sub.name,
         slug: sub.slug,
         order: sub.order,
+        parentCategoryId: catDocId, // Explicit parent reference — prevents orphans
         updatedAt: nowMs,
       };
       if (sub.commissionRate != null) {
         subFields.commissionRate = sub.commissionRate;
       }
 
-      if (existingSubs.has(sub.slug)) {
+      // Check if subcategory already exists
+      const existingSubRes = await fetch(
+        `${base}/categories/${encodeURIComponent(catDocId)}/subcategories/${encodeURIComponent(subDocId)}`,
+        { headers: { authorization: `Bearer ${token}` } },
+      );
+
+      if (existingSubRes.ok) {
         // Update existing subcategory
-        const subDocId = existingSubs.get(sub.slug)!;
         try {
-          await fetch(`${base}/categories/${encodeURIComponent(catDocId)}/subcategories/${encodeURIComponent(subDocId)}?`, {
-            method: "PATCH",
-            headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-            body: JSON.stringify({ fields: toFsFields(subFields) }),
-          });
+          await fetch(
+            `${base}/categories/${encodeURIComponent(catDocId)}/subcategories/${encodeURIComponent(subDocId)}?`,
+            {
+              method: "PATCH",
+              headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+              body: JSON.stringify({ fields: toFsFields(subFields) }),
+            },
+          );
           subcategoriesUpdated++;
         } catch (e) {
           errors.push(`Failed to update subcategory ${cat.name} > ${sub.name}: ${String(e)}`);
         }
       } else {
-        // Create new subcategory
+        // Create new subcategory with deterministic ID via PATCH (upsert)
         try {
           const createFields: Record<string, unknown> = {
             ...subFields,
             createdAt: nowMs,
           };
           const res = await fetch(
-            `${base}/categories/${encodeURIComponent(catDocId)}/subcategories`,
+            `${base}/categories/${encodeURIComponent(catDocId)}/subcategories/${encodeURIComponent(subDocId)}?`,
             {
-              method: "POST",
+              method: "PATCH",
               headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
               body: JSON.stringify({ fields: toFsFields(createFields) }),
             },
@@ -464,5 +523,15 @@ export async function seedCategoriesAndCommissions(): Promise<{
     errors.push(`Failed to update commission settings: ${String(e)}`);
   }
 
-  return { categoriesCreated, subcategoriesCreated, categoriesUpdated, subcategoriesUpdated, errors };
+  return {
+    categoriesCreated,
+    subcategoriesCreated,
+    categoriesUpdated,
+    subcategoriesUpdated,
+    errors,
+    validation,
+  };
 }
+
+/** Export SEED_DATA for testing and reconciliation */
+export { SEED_DATA };

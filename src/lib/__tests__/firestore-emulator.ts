@@ -253,10 +253,30 @@ export function createFirestoreEmulator(port = 8080): Promise<Server> {
         const method = req.method ?? "GET";
         const body = await parseBody(req);
 
-        // ---- Document GET (read by path) ----
+        // ---- Document GET (read by path) or Collection list ----
         if (method === "GET") {
           const docPath = getDocPath("", url);
           if (docPath) {
+            const segments = docPath.split("/");
+            // Odd number of segments = collection (e.g., "categories" or "categories/x/subcategories")
+            // Even number = document (e.g., "categories/x")
+            if (segments.length % 2 === 1) {
+              // Collection list — return all documents under this collection
+              const prefix = docPath + "/";
+              const docs: StoredDoc[] = [];
+              for (const [path, doc] of store.entries()) {
+                if (path.startsWith(prefix)) {
+                  // Ensure it's a direct child (not a grandchild)
+                  const rest = path.slice(prefix.length);
+                  if (!rest.includes("/")) {
+                    docs.push(doc);
+                  }
+                }
+              }
+              res.end(JSON.stringify({ documents: docs }));
+              return;
+            }
+            // Even segments = document read
             const doc = store.get(docPath);
             if (!doc) {
               res.statusCode = 404;
