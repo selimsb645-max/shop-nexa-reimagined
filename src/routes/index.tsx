@@ -196,7 +196,7 @@ function HomePage() {
 
         {/* 3. Categories Grid */}
         <section className="mt-5 sm:mt-7">
-          <CategoriesGrid categories={categoryList} isLoading={categoriesLoading} />
+          <CategoryShowcase categories={categoryList} isLoading={categoriesLoading} />
         </section>
 
         {/* 4. Promotional Banner */}
