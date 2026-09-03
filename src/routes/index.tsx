@@ -49,29 +49,22 @@ export const Route = createFileRoute("/")({
   }),
 });
 
-// Category definition interface for display
-interface CategoryItem {
-  id: string;
-  name: string;
-  slug: string;
-  icon: LucideIcon;
-  gradient: string;
-  color: string;
-  iconBg: string;
-  image?: string;
-}
-
-// Default static categories for fallback/enrichment
-const DEFAULT_CATEGORIES: CategoryItem[] = [
-  { id: "fashion", name: "Fashion", slug: "fashion", icon: Shirt, gradient: "from-orange-400 to-orange-500", color: "text-blue-600", iconBg: "bg-blue-50", image: "/categories/fashion.jpg" },
-  { id: "electronics", name: "Electronics", slug: "electronics", icon: Smartphone, gradient: "from-blue-500 to-blue-600", color: "text-violet-600", iconBg: "bg-violet-50", image: "/categories/electronics.jpg" },
-  { id: "groceries", name: "Fresh & Grocery", slug: "groceries", icon: Apple, gradient: "from-green-400 to-green-600", color: "text-green-600", iconBg: "bg-green-50", image: "/categories/grocery.jpg" },
-  { id: "beauty", name: "Beauty", slug: "beauty", icon: Sparkles, gradient: "from-pink-400 to-pink-600", color: "text-pink-500", iconBg: "bg-pink-50", image: "/categories/beauty.jpg" },
-  { id: "home-living", name: "Home & Kitchen", slug: "home-living", icon: Sofa, gradient: "from-emerald-400 to-emerald-600", color: "text-sky-600", iconBg: "bg-sky-50", image: "/categories/home-kitchen.jpg" },
-  { id: "audio-acc", name: "Accessories", slug: "audio-accessories", icon: Headphones, gradient: "from-purple-500 to-purple-700", color: "text-slate-700", iconBg: "bg-slate-100", image: "/categories/accessories.jpg" },
-  { id: "gaming", name: "Gaming", slug: "gaming", icon: Gamepad2, gradient: "from-indigo-500 to-indigo-700", color: "text-slate-900", iconBg: "bg-slate-100", image: "/categories/gaming.jpg" },
-  { id: "mother-baby", name: "Baby & Kids", slug: "mother-baby", icon: Baby, gradient: "from-pink-400 to-pink-600", color: "text-rose-500", iconBg: "bg-rose-50", image: "/categories/baby-kids.jpg" },
+// Fallback categories used only when the category collection is unavailable.
+// Names/slugs mirror the live category data source; visuals are resolved
+// deterministically by @/lib/categoryVisuals.
+const FALLBACK_CATEGORIES: ShowcaseCategory[] = [
+  { id: "electronics", name: "Electronics & Gadgets", slug: "electronics" },
+  { id: "fashion", name: "Fashion & Lifestyle", slug: "fashion" },
+  { id: "home-living", name: "Home & Living", slug: "home-living" },
+  { id: "health-beauty", name: "Beauty & Personal Care", slug: "health-beauty" },
+  { id: "groceries", name: "Grocery & Essentials", slug: "groceries" },
+  { id: "shoes", name: "Shoes & Footwear", slug: "shoes" },
+  { id: "toys-kids", name: "Toys & Kids", slug: "toys-kids" },
+  { id: "sports-outdoor", name: "Sports & Fitness", slug: "sports-outdoor" },
+  { id: "automotive", name: "Automotive", slug: "automotive" },
+  { id: "books-stationery", name: "Books & Stationery", slug: "books-stationery" },
 ];
+
 
 // Hero banner slide configuration
 const HERO_SLIDES = [
