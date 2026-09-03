@@ -60,7 +60,7 @@ self.addEventListener("notificationclick", (event) => {
 
 // Basic cache for offline shell (PWA installability)
 const CACHE_NAME = "aventa-shop-v1";
-const PRECACHE_URLS = ["/", "/shop", "/brand/aventa-shop-logo.png", "/manifest.json", "/favicon.ico"];
+const PRECACHE_URLS = ["/", "/shop", "/brand/aventa-shop-logo.png", "/manifest.json", "/favicon.ico", "/favicon.svg", "/apple-touch-icon.png", "/icon-192.png", "/icon-512.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
