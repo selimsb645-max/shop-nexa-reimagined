@@ -161,15 +161,17 @@ function HomePage() {
     return discounted.length >= 4 ? discounted.slice(0, 8) : justForYouPool.slice(0, 8);
   }, [justForYouPool]);
 
-  const categoryList: CategoryItem[] = useMemo(() => {
+  const categoryList: ShowcaseCategory[] = useMemo(() => {
     if (Array.isArray(rawCategories) && rawCategories.length > 0) {
-      return rawCategories.map((cat, idx) => {
-        const fallback = DEFAULT_CATEGORIES[idx % DEFAULT_CATEGORIES.length];
-        return { id: cat.id || cat.slug || `cat-${idx}`, name: cat.name || "Category", slug: cat.slug || cat.name?.toLowerCase().replace(/\s+/g, "-") || "", icon: fallback.icon, gradient: fallback.gradient, color: fallback.color, iconBg: fallback.iconBg, image: fallback.image };
-      });
+      return rawCategories.map((cat, idx) => ({
+        id: cat.id || cat.slug || `cat-${idx}`,
+        name: cat.name || "Category",
+        slug: cat.slug || cat.name?.toLowerCase().replace(/\s+/g, "-") || "",
+      }));
     }
-    return DEFAULT_CATEGORIES;
+    return FALLBACK_CATEGORIES;
   }, [rawCategories]);
+
 
   const [visibleCount, setVisibleCount] = useState(12);
   const handleLoadMore = () => setVisibleCount((prev) => prev + 12);
