@@ -7,14 +7,6 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Sparkles,
   ArrowRight,
-  Shirt,
-  Smartphone,
-  Apple,
-  Sofa,
-  Headphones,
-  Gamepad2,
-  Baby,
-  Tag,
   Truck,
   ShieldCheck,
   Package,
@@ -23,11 +15,12 @@ import {
   Flame,
   ChevronLeft,
   ChevronRight,
-  type LucideIcon,
 } from "lucide-react";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
+import { CategoryShowcase, type ShowcaseCategory } from "@/components/home/CategoryShowcase";
+
 import { buildMetaTags, getSiteUrl } from "@/lib/seo";
 import { ProductCard } from "@/components/product/ProductCard";
 import { listCategories } from "@/services/firebase/categories";
@@ -49,29 +42,22 @@ export const Route = createFileRoute("/")({
   }),
 });
 
-// Category definition interface for display
-interface CategoryItem {
-  id: string;
-  name: string;
-  slug: string;
-  icon: LucideIcon;
-  gradient: string;
-  color: string;
-  iconBg: string;
-  image?: string;
-}
-
-// Default static categories for fallback/enrichment
-const DEFAULT_CATEGORIES: CategoryItem[] = [
-  { id: "fashion", name: "Fashion", slug: "fashion", icon: Shirt, gradient: "from-orange-400 to-orange-500", color: "text-blue-600", iconBg: "bg-blue-50", image: "/categories/fashion.jpg" },
-  { id: "electronics", name: "Electronics", slug: "electronics", icon: Smartphone, gradient: "from-blue-500 to-blue-600", color: "text-violet-600", iconBg: "bg-violet-50", image: "/categories/electronics.jpg" },
-  { id: "groceries", name: "Fresh & Grocery", slug: "groceries", icon: Apple, gradient: "from-green-400 to-green-600", color: "text-green-600", iconBg: "bg-green-50", image: "/categories/grocery.jpg" },
-  { id: "beauty", name: "Beauty", slug: "beauty", icon: Sparkles, gradient: "from-pink-400 to-pink-600", color: "text-pink-500", iconBg: "bg-pink-50", image: "/categories/beauty.jpg" },
-  { id: "home-living", name: "Home & Kitchen", slug: "home-living", icon: Sofa, gradient: "from-emerald-400 to-emerald-600", color: "text-sky-600", iconBg: "bg-sky-50", image: "/categories/home-kitchen.jpg" },
-  { id: "audio-acc", name: "Accessories", slug: "audio-accessories", icon: Headphones, gradient: "from-purple-500 to-purple-700", color: "text-slate-700", iconBg: "bg-slate-100", image: "/categories/accessories.jpg" },
-  { id: "gaming", name: "Gaming", slug: "gaming", icon: Gamepad2, gradient: "from-indigo-500 to-indigo-700", color: "text-slate-900", iconBg: "bg-slate-100", image: "/categories/gaming.jpg" },
-  { id: "mother-baby", name: "Baby & Kids", slug: "mother-baby", icon: Baby, gradient: "from-pink-400 to-pink-600", color: "text-rose-500", iconBg: "bg-rose-50", image: "/categories/baby-kids.jpg" },
+// Fallback categories used only when the category collection is unavailable.
+// Names/slugs mirror the live category data source; visuals are resolved
+// deterministically by @/lib/categoryVisuals.
+const FALLBACK_CATEGORIES: ShowcaseCategory[] = [
+  { id: "electronics", name: "Electronics & Gadgets", slug: "electronics" },
+  { id: "fashion", name: "Fashion & Lifestyle", slug: "fashion" },
+  { id: "home-living", name: "Home & Living", slug: "home-living" },
+  { id: "health-beauty", name: "Beauty & Personal Care", slug: "health-beauty" },
+  { id: "groceries", name: "Grocery & Essentials", slug: "groceries" },
+  { id: "shoes", name: "Shoes & Footwear", slug: "shoes" },
+  { id: "toys-kids", name: "Toys & Kids", slug: "toys-kids" },
+  { id: "sports-outdoor", name: "Sports & Fitness", slug: "sports-outdoor" },
+  { id: "automotive", name: "Automotive", slug: "automotive" },
+  { id: "books-stationery", name: "Books & Stationery", slug: "books-stationery" },
 ];
+
 
 // Hero banner slide configuration
 const HERO_SLIDES = [
@@ -161,15 +147,17 @@ function HomePage() {
     return discounted.length >= 4 ? discounted.slice(0, 8) : justForYouPool.slice(0, 8);
   }, [justForYouPool]);
 
-  const categoryList: CategoryItem[] = useMemo(() => {
+  const categoryList: ShowcaseCategory[] = useMemo(() => {
     if (Array.isArray(rawCategories) && rawCategories.length > 0) {
-      return rawCategories.map((cat, idx) => {
-        const fallback = DEFAULT_CATEGORIES[idx % DEFAULT_CATEGORIES.length];
-        return { id: cat.id || cat.slug || `cat-${idx}`, name: cat.name || "Category", slug: cat.slug || cat.name?.toLowerCase().replace(/\s+/g, "-") || "", icon: fallback.icon, gradient: fallback.gradient, color: fallback.color, iconBg: fallback.iconBg, image: fallback.image };
-      });
+      return rawCategories.map((cat, idx) => ({
+        id: cat.id || cat.slug || `cat-${idx}`,
+        name: cat.name || "Category",
+        slug: cat.slug || cat.name?.toLowerCase().replace(/\s+/g, "-") || "",
+      }));
     }
-    return DEFAULT_CATEGORIES;
+    return FALLBACK_CATEGORIES;
   }, [rawCategories]);
+
 
   const [visibleCount, setVisibleCount] = useState(12);
   const handleLoadMore = () => setVisibleCount((prev) => prev + 12);
@@ -196,7 +184,7 @@ function HomePage() {
 
         {/* 3. Categories Grid */}
         <section className="mt-5 sm:mt-7">
-          <CategoriesGrid categories={categoryList} isLoading={categoriesLoading} />
+          <CategoryShowcase categories={categoryList} isLoading={categoriesLoading} />
         </section>
 
         {/* 4. Promotional Banner */}
@@ -386,72 +374,8 @@ function CountdownBox({ value, label }: { value: number; label: string }) {
   );
 }
 
-/* ========================================================================== Categories Grid (Shop by Category) — Daraz-style bordered icon cards ========================================================================== */
-function CategoriesGrid({
-  categories,
-  isLoading,
-}: {
-  categories: CategoryItem[];
-  isLoading: boolean;
-}) {
-  return (
-    <div className="rounded-xl sm:rounded-2xl bg-white p-3 shadow-sm border border-slate-200 sm:p-5">
-      <div className="mb-3 flex items-center justify-between sm:mb-4">
-        <h2 className="text-base font-bold text-slate-900 sm:text-lg">
-          Shop by Category
-        </h2>
-        <Link
-          to="/shop"
-          className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:underline sm:text-sm"
-        >
-          View All Categories{" "}
-          <ChevronRight className="h-3.5 w-3.5" />
-        </Link>
-      </div>
-      <div className="-mr-3 flex snap-x snap-mandatory gap-2.5 overflow-x-auto pb-1 pr-3 scrollbar-none sm:mr-0 sm:grid sm:grid-cols-4 sm:gap-3 sm:overflow-visible sm:pr-0 lg:grid-cols-8">
-        {isLoading
-          ? Array.from({ length: 8 }).map((_, i) => (
-              <div
-                key={i}
-                className="h-24 min-w-[86px] snap-start animate-pulse rounded-xl border border-slate-100 bg-slate-50 sm:min-w-0"
-              />
-            ))
-          : categories.map((cat) => {
-              const IconComp = cat.icon || Smartphone;
-              return (
-                <Link
-                  key={cat.id}
-                  to="/shop"
-                  search={{ category: cat.slug }}
-                  className="group flex min-w-[86px] snap-start flex-col items-center gap-2 rounded-xl border border-slate-200 bg-white px-2 py-3.5 text-center transition-all duration-200 hover:border-orange-300 hover:shadow-md active:scale-95 sm:min-w-0 sm:py-4"
-                >
-                  <div
-                    className={`grid h-11 w-11 place-items-center overflow-hidden rounded-lg ${cat.image ? "bg-white" : cat.iconBg} transition-transform duration-200 group-hover:scale-110 sm:h-12 sm:w-12`}
-                  >
-                    {cat.image ? (
-                      <img
-                        src={cat.image}
-                        alt={cat.name}
-                        className="h-full w-full scale-125 object-contain"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <IconComp
-                        className={`h-6 w-6 ${cat.color} sm:h-7 sm:w-7`}
-                        strokeWidth={1.75}
-                      />
-                    )}
-                  </div>
-                  <span className="text-[11px] font-semibold text-slate-700 line-clamp-1 sm:text-xs">
-                    {cat.name}
-                  </span>
-                </Link>
-              );
-            })}
-      </div>
-    </div>
-  );
-}
+/* Shop by Category now lives in @/components/home/CategoryShowcase */
+
 
 /* ========================================================================== Promotional Banner ========================================================================== */
 function PromotionalBanner() {
