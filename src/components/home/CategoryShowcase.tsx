@@ -35,7 +35,7 @@ export function CategoryShowcase({
         </Link>
       </div>
 
-      <div className="-mx-3 flex snap-x snap-mandatory gap-3 overflow-x-auto px-3 pb-1 no-scrollbar [-webkit-overflow-scrolling:touch] sm:mx-0 sm:grid sm:grid-cols-4 sm:gap-4 sm:overflow-visible sm:px-0 lg:grid-cols-5">
+      <div className="-mx-3 flex snap-x snap-mandatory gap-3 overflow-x-auto px-3 pb-1 no-scrollbar [-webkit-overflow-scrolling:touch] sm:mx-0 sm:grid sm:grid-cols-4 sm:gap-4 sm:overflow-visible sm:px-0 lg:grid-cols-5 xl:grid-cols-5">
         {isLoading
           ? Array.from({ length: 10 }).map((_, i) => (
               <div
