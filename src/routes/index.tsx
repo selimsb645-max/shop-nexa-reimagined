@@ -386,72 +386,8 @@ function CountdownBox({ value, label }: { value: number; label: string }) {
   );
 }
 
-/* ========================================================================== Categories Grid (Shop by Category) — Daraz-style bordered icon cards ========================================================================== */
-function CategoriesGrid({
-  categories,
-  isLoading,
-}: {
-  categories: CategoryItem[];
-  isLoading: boolean;
-}) {
-  return (
-    <div className="rounded-xl sm:rounded-2xl bg-white p-3 shadow-sm border border-slate-200 sm:p-5">
-      <div className="mb-3 flex items-center justify-between sm:mb-4">
-        <h2 className="text-base font-bold text-slate-900 sm:text-lg">
-          Shop by Category
-        </h2>
-        <Link
-          to="/shop"
-          className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:underline sm:text-sm"
-        >
-          View All Categories{" "}
-          <ChevronRight className="h-3.5 w-3.5" />
-        </Link>
-      </div>
-      <div className="-mr-3 flex snap-x snap-mandatory gap-2.5 overflow-x-auto pb-1 pr-3 scrollbar-none sm:mr-0 sm:grid sm:grid-cols-4 sm:gap-3 sm:overflow-visible sm:pr-0 lg:grid-cols-8">
-        {isLoading
-          ? Array.from({ length: 8 }).map((_, i) => (
-              <div
-                key={i}
-                className="h-24 min-w-[86px] snap-start animate-pulse rounded-xl border border-slate-100 bg-slate-50 sm:min-w-0"
-              />
-            ))
-          : categories.map((cat) => {
-              const IconComp = cat.icon || Smartphone;
-              return (
-                <Link
-                  key={cat.id}
-                  to="/shop"
-                  search={{ category: cat.slug }}
-                  className="group flex min-w-[86px] snap-start flex-col items-center gap-2 rounded-xl border border-slate-200 bg-white px-2 py-3.5 text-center transition-all duration-200 hover:border-orange-300 hover:shadow-md active:scale-95 sm:min-w-0 sm:py-4"
-                >
-                  <div
-                    className={`grid h-11 w-11 place-items-center overflow-hidden rounded-lg ${cat.image ? "bg-white" : cat.iconBg} transition-transform duration-200 group-hover:scale-110 sm:h-12 sm:w-12`}
-                  >
-                    {cat.image ? (
-                      <img
-                        src={cat.image}
-                        alt={cat.name}
-                        className="h-full w-full scale-125 object-contain"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <IconComp
-                        className={`h-6 w-6 ${cat.color} sm:h-7 sm:w-7`}
-                        strokeWidth={1.75}
-                      />
-                    )}
-                  </div>
-                  <span className="text-[11px] font-semibold text-slate-700 line-clamp-1 sm:text-xs">
-                    {cat.name}
-                  </span>
-                </Link>
-              );
-            })}
-      </div>
-    </div>
-  );
-}
+/* Shop by Category now lives in @/components/home/CategoryShowcase */
+
 
 /* ========================================================================== Promotional Banner ========================================================================== */
 function PromotionalBanner() {
