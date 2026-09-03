@@ -7,14 +7,6 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Sparkles,
   ArrowRight,
-  Shirt,
-  Smartphone,
-  Apple,
-  Sofa,
-  Headphones,
-  Gamepad2,
-  Baby,
-  Tag,
   Truck,
   ShieldCheck,
   Package,
@@ -23,11 +15,12 @@ import {
   Flame,
   ChevronLeft,
   ChevronRight,
-  type LucideIcon,
 } from "lucide-react";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
+import { CategoryShowcase, type ShowcaseCategory } from "@/components/home/CategoryShowcase";
+
 import { buildMetaTags, getSiteUrl } from "@/lib/seo";
 import { ProductCard } from "@/components/product/ProductCard";
 import { listCategories } from "@/services/firebase/categories";
