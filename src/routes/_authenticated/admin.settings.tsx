@@ -14,8 +14,8 @@ export const Route = createFileRoute("/_authenticated/admin/settings")({
 });
 
 function SettingsAdmin() {
-
-  const { t } = useI18n();  const { user } = useAuth();
+  const { t } = useI18n();
+  const { user } = useAuth();
   const [s, setS] = useState<SiteSettings | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -49,12 +49,32 @@ function SettingsAdmin() {
       <section className="rounded-lg border bg-background p-4 space-y-3">
         <h2 className="text-sm font-semibold">{t("admin.website")}</h2>
         <div className="grid gap-3 md:grid-cols-2">
-          <Text label="Site name" value={s.siteName} onChange={(v) => setS({ ...s, siteName: v })} />
+          <Text
+            label="Site name"
+            value={s.siteName}
+            onChange={(v) => setS({ ...s, siteName: v })}
+          />
           <Text label="Currency" value={s.currency} onChange={(v) => setS({ ...s, currency: v })} />
-          <Text label="Support email" value={s.supportEmail} onChange={(v) => setS({ ...s, supportEmail: v })} />
-          <Text label="Support phone" value={s.supportPhone} onChange={(v) => setS({ ...s, supportPhone: v })} />
-          <Text label="WhatsApp number" value={s.whatsappNumber} onChange={(v) => setS({ ...s, whatsappNumber: v })} />
-          <Text label="Facebook URL" value={s.facebookUrl} onChange={(v) => setS({ ...s, facebookUrl: v })} />
+          <Text
+            label="Support email"
+            value={s.supportEmail}
+            onChange={(v) => setS({ ...s, supportEmail: v })}
+          />
+          <Text
+            label="Support phone"
+            value={s.supportPhone}
+            onChange={(v) => setS({ ...s, supportPhone: v })}
+          />
+          <Text
+            label="WhatsApp number"
+            value={s.whatsappNumber}
+            onChange={(v) => setS({ ...s, whatsappNumber: v })}
+          />
+          <Text
+            label="Facebook URL"
+            value={s.facebookUrl}
+            onChange={(v) => setS({ ...s, facebookUrl: v })}
+          />
         </div>
         <button
           onClick={() =>
@@ -93,9 +113,7 @@ function SettingsAdmin() {
           <Num
             label="Free shipping threshold"
             value={s.shipping.freeShippingThreshold}
-            onChange={(v) =>
-              setS({ ...s, shipping: { ...s.shipping, freeShippingThreshold: v } })
-            }
+            onChange={(v) => setS({ ...s, shipping: { ...s.shipping, freeShippingThreshold: v } })}
           />
         </div>
         <button

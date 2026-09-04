@@ -1,12 +1,16 @@
 /**
- * Shop Nexa — Client-side Seller Settlement Service
- * 
+ * Aventa Shop — Client-side Seller Settlement Service
+ *
  * Read-only access to seller settlement data via server functions.
  * Sellers can READ their settlement data but CANNOT mutate it.
  * All mutations go through verified server functions.
  */
 
-import { requestSettlementWithdrawal, getSellerFinancials, releaseSettlements } from "@/lib/settlement.functions";
+import {
+  requestSettlementWithdrawal,
+  getSellerFinancials,
+  releaseSettlements,
+} from "@/lib/settlement.functions";
 
 export interface SellerSettlementData {
   totalSales: number;

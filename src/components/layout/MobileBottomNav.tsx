@@ -1,6 +1,6 @@
 /**
  * Pocket Storefront design: a visible, safe-area-aware mobile navigation keeps
- * ShopNexa's five primary destinations within thumb reach without covering content.
+ * Aventa Shop's five primary destinations within thumb reach without covering content.
  */
 import { Link } from "@tanstack/react-router";
 import { Home, LayoutGrid, MessageCircle, ShoppingCart, User } from "lucide-react";
@@ -9,7 +9,6 @@ import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { countUnreadMessages } from "@/services/firebase/messages";
 import { firebaseConfigured } from "@/services/firebase/config";
-
 
 function Badge({ n }: { n: number }) {
   if (!n) return null;
@@ -40,14 +39,18 @@ export function MobileBottomNav() {
     refetchInterval: 30_000,
   });
 
-
   return (
     <nav
       className="fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] md:hidden"
       aria-label="Bottom navigation"
     >
       <div className="mx-auto flex max-w-md items-stretch gap-0.5 rounded-2xl border border-blue-100 bg-background/95 p-1 shadow-[0_8px_26px_rgba(20,85,198,0.18)] backdrop-blur-md">
-        <Link to="/" activeOptions={{ exact: true }} activeProps={{ className: activeCls }} className={itemCls}>
+        <Link
+          to="/"
+          activeOptions={{ exact: true }}
+          activeProps={{ className: activeCls }}
+          className={itemCls}
+        >
           <Indicator />
           <Home className="h-[26px] w-[26px]" strokeWidth={1.8} />
           <span>Home</span>
@@ -57,7 +60,11 @@ export function MobileBottomNav() {
           <LayoutGrid className="h-[26px] w-[26px]" strokeWidth={1.8} />
           <span>Categories</span>
         </Link>
-        <Link to={user ? "/messages" : "/login"} activeProps={{ className: activeCls }} className={itemCls}>
+        <Link
+          to={user ? "/messages" : "/login"}
+          activeProps={{ className: activeCls }}
+          className={itemCls}
+        >
           <Indicator />
           <span className="relative">
             <MessageCircle className="h-[26px] w-[26px]" strokeWidth={1.8} />
@@ -74,7 +81,11 @@ export function MobileBottomNav() {
           </span>
           <span>Cart</span>
         </Link>
-        <Link to={user ? "/account" : "/login"} activeProps={{ className: activeCls }} className={itemCls}>
+        <Link
+          to={user ? "/account" : "/login"}
+          activeProps={{ className: activeCls }}
+          className={itemCls}
+        >
           <Indicator />
           <User className="h-[26px] w-[26px]" strokeWidth={1.8} />
           <span>Account</span>

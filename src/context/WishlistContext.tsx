@@ -9,11 +9,7 @@ import {
 } from "react";
 import { toast } from "sonner";
 import { useAuth } from "./AuthContext";
-import {
-  addToWishlist,
-  listWishlist,
-  removeFromWishlist,
-} from "@/services/firebase/wishlist";
+import { addToWishlist, listWishlist, removeFromWishlist } from "@/services/firebase/wishlist";
 import type { Product, WishlistItem } from "@/types/commerce";
 import { firebaseConfigured } from "@/services/firebase/config";
 

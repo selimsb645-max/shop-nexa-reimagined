@@ -1,5 +1,5 @@
 /**
- * Secure Checkout Verification System for Shop Nexa
+ * Secure Checkout Verification System for Aventa Shop
  *
  * Server-side OTP generation, hashing, session management,
  * rate limiting, and provider abstraction.
@@ -377,7 +377,7 @@ class SmsVerificationProvider implements VerificationProvider {
       },
       body: JSON.stringify({
         to: phone,
-        message: `Your Shop Nexa verification code is ${otp}. Valid for 5 minutes.`,
+        message: `Your Aventa Shop verification code is ${otp}. Valid for 5 minutes.`,
       }),
     });
     return { delivered: res.ok };

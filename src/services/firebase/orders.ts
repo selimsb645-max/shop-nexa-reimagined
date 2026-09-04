@@ -1,11 +1,4 @@
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  orderBy,
-  query,
-} from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, orderBy, query } from "firebase/firestore";
 import { getDb, getFirebaseAuth } from "./config";
 import { placeOrder } from "@/lib/orders.functions";
 import type {
@@ -17,7 +10,11 @@ import type {
 } from "@/types/commerce";
 
 import type { DeliveryAddressSnapshot } from "@/types/address";
-import { detectDeliveryZone, getDeliveryCharge, type DeliveryLocationInput } from "@/data/bd-locations/deliveryZones";
+import {
+  detectDeliveryZone,
+  getDeliveryCharge,
+  type DeliveryLocationInput,
+} from "@/data/bd-locations/deliveryZones";
 
 /**
  * Compute delivery charge based on the customer's delivery address zone.
@@ -36,9 +33,7 @@ export function computeDeliveryChargePreview(
 /**
  * Detect the delivery zone from a DeliveryAddressSnapshot.
  */
-export function detectZoneFromSnapshot(
-  snapshot: DeliveryAddressSnapshot | null | undefined,
-) {
+export function detectZoneFromSnapshot(snapshot: DeliveryAddressSnapshot | null | undefined) {
   if (!snapshot) return null;
   return detectDeliveryZone({
     divisionEn: snapshot.divisionEn,
@@ -70,11 +65,9 @@ export interface CreateOrderInput {
   verificationSessionId: string;
 }
 
-
 function nowMs() {
   return Date.now();
 }
-
 
 function mapOrder(id: string, data: Record<string, unknown>): Order {
   const raw = data as Partial<Order> & Record<string, unknown>;
@@ -95,12 +88,13 @@ function mapOrder(id: string, data: Record<string, unknown>): Order {
       transactionId: null,
       paidAt: null,
     },
-    deliveryAddressSnapshot: (raw.deliveryAddressSnapshot as DeliveryAddressSnapshot | null) ?? null,
+    deliveryAddressSnapshot:
+      (raw.deliveryAddressSnapshot as DeliveryAddressSnapshot | null) ?? null,
     deliveryZone: (raw.deliveryZone as string | null) ?? null,
     deliveryZoneLabel: (raw.deliveryZoneLabel as string | null) ?? null,
     deliveryCharge: (raw.deliveryCharge as number | null) ?? null,
     courierInfo: (raw.courierInfo as Order["courierInfo"]) ?? null,
-  shippingAddress: (raw.shippingAddress as ShippingAddress) ?? {
+    shippingAddress: (raw.shippingAddress as ShippingAddress) ?? {
       fullName: "",
       phone: "",
       addressLine: "",
@@ -148,13 +142,14 @@ export async function createOrder(input: CreateOrderInput): Promise<string> {
       promoCode: input.promoCode,
       rewardPoints: input.rewardPoints ?? 0,
       walletUsed: input.walletUsed ?? 0,
-      ...(input.deliveryAddressSnapshot ? { deliveryAddressSnapshot: input.deliveryAddressSnapshot } : {}),
+      ...(input.deliveryAddressSnapshot
+        ? { deliveryAddressSnapshot: input.deliveryAddressSnapshot }
+        : {}),
     },
   });
 
   return result.orderId;
 }
-
 
 export async function listOrders(uid: string): Promise<Order[]> {
   const snap = await getDocs(

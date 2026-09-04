@@ -21,8 +21,8 @@ export const Route = createFileRoute("/_authenticated/admin/coupons")({
 });
 
 function CouponsAdmin() {
-
-  const { t } = useI18n();  const { user } = useAuth();
+  const { t } = useI18n();
+  const { user } = useAuth();
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({

@@ -5,7 +5,10 @@ import { ArrowLeft, GitCompare, X, Check } from "lucide-react";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { WhatsAppFab } from "@/components/layout/SiteChrome";
-import { getProductForComparison, type ComparedProduct } from "@/services/firebase/productComparison";
+import {
+  getProductForComparison,
+  type ComparedProduct,
+} from "@/services/firebase/productComparison";
 import { listAllProducts } from "@/services/firebase/products";
 import { firebaseConfigured } from "@/services/firebase/config";
 import { formatPrice } from "@/utils/format";
@@ -16,15 +19,14 @@ export const Route = createFileRoute("/compare")({
   component: ComparePage,
   head: () => ({
     meta: [
-      { title: "Compare Products — ShopNexa" },
-      { name: "description", content: "Compare products side by side on ShopNexa." },
-      { property: "og:title", content: "Compare Products — ShopNexa" },
-      { property: "og:description", content: "Compare products side by side on ShopNexa." },
+      { title: "Compare Products — Aventa Shop" },
+      { name: "description", content: "Compare products side by side on Aventa Shop." },
+      { property: "og:title", content: "Compare Products — Aventa Shop" },
+      { property: "og:description", content: "Compare products side by side on Aventa Shop." },
       { property: "og:url", content: "https://shop-nexa.lovable.app/compare" },
     ],
     links: [{ rel: "canonical", href: "https://shop-nexa.lovable.app/compare" }],
   }),
-
 });
 
 function ComparePage() {
@@ -39,9 +41,7 @@ function ComparePage() {
   const comparedProducts = useQuery({
     queryKey: ["compare", selectedIds],
     queryFn: async () => {
-      const results = await Promise.all(
-        selectedIds.map((id) => getProductForComparison(id)),
-      );
+      const results = await Promise.all(selectedIds.map((id) => getProductForComparison(id)));
       return results.filter((p): p is ComparedProduct => p !== null);
     },
     enabled: firebaseConfigured && selectedIds.length > 0,
@@ -75,9 +75,7 @@ function ComparePage() {
           <div className="flex flex-col items-center justify-center rounded-2xl border bg-muted/30 py-20 text-center">
             <GitCompare className="mb-4 h-12 w-12 text-muted-foreground/40" />
             <h2 className="text-lg font-semibold">No products selected</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Select up to 4 products to compare
-            </p>
+            <p className="mt-1 text-sm text-muted-foreground">Select up to 4 products to compare</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -114,14 +112,46 @@ function ComparePage() {
                 </tr>
               </thead>
               <tbody>
-                <CompareRow label="Price" products={comparedProducts.data ?? []} render={(p) => formatPrice(p.price)} />
-                <CompareRow label="Original Price" products={comparedProducts.data ?? []} render={(p) => p.compareAtPrice ? formatPrice(p.compareAtPrice) : "—"} />
-                <CompareRow label="Rating" products={comparedProducts.data ?? []} render={(p) => `${p.rating} ★ (${p.reviewCount})`} />
-                <CompareRow label="Stock" products={comparedProducts.data ?? []} render={(p) => p.stock > 0 ? `${p.stock} available` : "Out of stock"} />
-                <CompareRow label="Category" products={comparedProducts.data ?? []} render={(p) => p.categorySlug} />
-                <CompareRow label="Tags" products={comparedProducts.data ?? []} render={(p) => p.tags.join(", ") || "—"} />
-                <CompareRow label="Colors" products={comparedProducts.data ?? []} render={(p) => p.colors?.join(", ") || "—"} />
-                <CompareRow label="Sizes" products={comparedProducts.data ?? []} render={(p) => p.sizes?.join(", ") || "—"} />
+                <CompareRow
+                  label="Price"
+                  products={comparedProducts.data ?? []}
+                  render={(p) => formatPrice(p.price)}
+                />
+                <CompareRow
+                  label="Original Price"
+                  products={comparedProducts.data ?? []}
+                  render={(p) => (p.compareAtPrice ? formatPrice(p.compareAtPrice) : "—")}
+                />
+                <CompareRow
+                  label="Rating"
+                  products={comparedProducts.data ?? []}
+                  render={(p) => `${p.rating} ★ (${p.reviewCount})`}
+                />
+                <CompareRow
+                  label="Stock"
+                  products={comparedProducts.data ?? []}
+                  render={(p) => (p.stock > 0 ? `${p.stock} available` : "Out of stock")}
+                />
+                <CompareRow
+                  label="Category"
+                  products={comparedProducts.data ?? []}
+                  render={(p) => p.categorySlug}
+                />
+                <CompareRow
+                  label="Tags"
+                  products={comparedProducts.data ?? []}
+                  render={(p) => p.tags.join(", ") || "—"}
+                />
+                <CompareRow
+                  label="Colors"
+                  products={comparedProducts.data ?? []}
+                  render={(p) => p.colors?.join(", ") || "—"}
+                />
+                <CompareRow
+                  label="Sizes"
+                  products={comparedProducts.data ?? []}
+                  render={(p) => p.sizes?.join(", ") || "—"}
+                />
               </tbody>
             </table>
           </div>
@@ -140,9 +170,7 @@ function ComparePage() {
                   key={product.id}
                   onClick={() => toggleProduct(product.id)}
                   className={`flex items-center gap-2 rounded-xl border p-3 text-left transition ${
-                    isSelected
-                      ? "border-primary bg-primary/5"
-                      : "hover:border-primary/40"
+                    isSelected ? "border-primary bg-primary/5" : "hover:border-primary/40"
                   }`}
                 >
                   <img
@@ -152,11 +180,11 @@ function ComparePage() {
                   />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium">{product.title}</span>
-                    <span className="block text-xs text-muted-foreground">{formatPrice(product.price)}</span>
+                    <span className="block text-xs text-muted-foreground">
+                      {formatPrice(product.price)}
+                    </span>
                   </span>
-                  {isSelected && (
-                    <Check className="h-5 w-5 shrink-0 text-primary" />
-                  )}
+                  {isSelected && <Check className="h-5 w-5 shrink-0 text-primary" />}
                 </button>
               );
             })}

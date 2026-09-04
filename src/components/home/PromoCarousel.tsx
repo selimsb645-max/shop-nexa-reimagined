@@ -96,7 +96,9 @@ export function PromoCarousel() {
               <br />
               <span className="text-primary">{s.highlight}</span>
             </h1>
-            <p className="mt-2.5 max-w-md text-[13px] leading-relaxed text-muted-foreground md:text-base">{s.desc}</p>
+            <p className="mt-2.5 max-w-md text-[13px] leading-relaxed text-muted-foreground md:text-base">
+              {s.desc}
+            </p>
             <div className="mt-4 flex flex-wrap gap-2.5 md:mt-5 md:gap-3">
               <Link
                 to={s.cta.to}
@@ -114,7 +116,12 @@ export function PromoCarousel() {
             </div>
           </div>
           <div className="relative hidden md:block">
-            <img src={s.image} alt="" loading="eager" className="h-full max-h-[304px] w-full object-cover" />
+            <img
+              src={s.image}
+              alt=""
+              loading="eager"
+              className="h-full max-h-[304px] w-full object-cover"
+            />
             <div className="absolute right-6 top-6 flex h-24 w-24 flex-col items-center justify-center rounded-full bg-primary text-center text-primary-foreground shadow-lg">
               <Tag className="h-4 w-4" />
               <span className="mt-1 text-[10px] font-semibold leading-tight">{s.badge}</span>
@@ -154,10 +161,38 @@ export function PromoCarousel() {
       {/* Promo strip */}
       <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
         {[
-          { icon: Zap, label: "Flash Sale", sub: "Ends soon", color: "text-destructive", to: "/shop" as const, search: { sort: "price-desc" as const } },
-          { icon: Flame, label: "Today's Deals", sub: "Up to 70% off", color: "text-accent", to: "/shop" as const, search: {} },
-          { icon: Tag, label: "Campaign", sub: "Weekly picks", color: "text-primary", to: "/shop" as const, search: {} },
-          { icon: Sparkles, label: "Limited Time", sub: "Hurry up!", color: "text-green-600", to: "/shop" as const, search: {} },
+          {
+            icon: Zap,
+            label: "Flash Sale",
+            sub: "Ends soon",
+            color: "text-destructive",
+            to: "/shop" as const,
+            search: { sort: "price-desc" as const },
+          },
+          {
+            icon: Flame,
+            label: "Today's Deals",
+            sub: "Up to 70% off",
+            color: "text-accent",
+            to: "/shop" as const,
+            search: {},
+          },
+          {
+            icon: Tag,
+            label: "Campaign",
+            sub: "Weekly picks",
+            color: "text-primary",
+            to: "/shop" as const,
+            search: {},
+          },
+          {
+            icon: Sparkles,
+            label: "Limited Time",
+            sub: "Hurry up!",
+            color: "text-green-600",
+            to: "/shop" as const,
+            search: {},
+          },
         ].map((c) => (
           <Link
             key={c.label}
@@ -178,4 +213,3 @@ export function PromoCarousel() {
     </section>
   );
 }
-

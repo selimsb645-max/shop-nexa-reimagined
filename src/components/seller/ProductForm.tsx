@@ -263,7 +263,11 @@ export function ProductForm({ sellerId, initial, onSubmit, submitLabel }: Props)
             disabled={uploading}
             className="flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm hover:bg-muted disabled:opacity-60"
           >
-            {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageUp className="h-4 w-4" />}
+            {uploading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <ImageUp className="h-4 w-4" />
+            )}
             Upload
           </button>
           <input
@@ -282,7 +286,10 @@ export function ProductForm({ sellerId, initial, onSubmit, submitLabel }: Props)
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {images.map((url, i) => (
-              <div key={url} className="group relative aspect-square overflow-hidden rounded-md border">
+              <div
+                key={url}
+                className="group relative aspect-square overflow-hidden rounded-md border"
+              >
                 <img src={url} alt="" className="h-full w-full object-cover" />
                 <button
                   type="button"

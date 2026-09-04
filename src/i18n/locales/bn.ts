@@ -345,7 +345,7 @@ export const bn: TranslationKeys = {
   "admin.joined": "যোগ দিয়েছে",
   "admin.location": "লোকেশন",
   "admin.manageCategoriesDesc": "ক্যাটাগরি এবং সাবক্যাটাগরি ম্যানেজ করুন।",
-  "admin.managePromoCodes": "NEXA প্রোমো কোড ম্যানেজ করুন",
+  "admin.managePromoCodes": "প্রোমো কোড ম্যানেজ করুন",
   "admin.middle": "মিডল",
   "admin.minOrderAmount": "ন্যূনতম অর্ডার পরিমাণ",
   "admin.minSubtotal": "ন্যূনতম সাবটোটাল",
@@ -418,7 +418,7 @@ export const bn: TranslationKeys = {
   "admin.withdrawalApproved": "উইথড্র অনুমোদিত",
   "admin.withdrawalRejected": "উইথড্র প্রত্যাখ্যাত",
   "admin.withdrawalRequests": "উইথড্র রিকোয়েস্ট",
-  "promoCodes.welcome": "Shop Nexa-এ স্বাগতম!",
+  "promoCodes.welcome": "Aventa Shop-এ স্বাগতম!",
   "support.category": "ক্যাটাগরি",
   "support.none": "নেই",
   "account.referEarn": "রেফার করে আয় করুন",
@@ -501,14 +501,14 @@ export const bn: TranslationKeys = {
   "settings.smsOrderUpdates": "SMS অর্ডার আপডেট",
   "settings.smsOrderUpdatesHint": "আপনার ফোনে ডেলিভারি এলার্ট",
   "settings.pushNotifications": "ইন-অ্যাপ নোটিফিকেশন",
-  "settings.pushNotificationsHint": "Shop Nexa-তে এলার্ট দেখান",
+  "settings.pushNotificationsHint": "Aventa Shop-তে এলার্ট দেখান",
   "settings.savePreferences": "প্রিফারেন্স সেভ করুন",
   "settings.saved": "সেটিংস সেভ হয়েছে",
   "settings.saveError": "সেটিংস সেভ করা যায়নি",
   "settings.legal": "লিগ্যাল",
   "settings.termsConditions": "শর্তাবলী",
   "settings.privacyPolicy": "প্রাইভেসি পলিসি",
-  "settings.aboutShopNexa": "Shop Nexa সম্পর্কে",
+  "settings.aboutShop": "Aventa Shop সম্পর্কে",
   "settings.aboutHint": "স্মার্ট শপিং, উন্নত জীবন",
 
   // Device info
@@ -676,19 +676,26 @@ export const bn: TranslationKeys = {
   "support.noTickets": "আপনার কোনো সাপোর্ট টিকেট নেই।",
   "support.faqTitle": "সাধারণ জিজ্ঞাসা",
   "account.backHome": "হোমে ফিরুন",
-  "account.becomeSeller": "Shop Nexa-তে সেলার হোন",
+  "account.becomeSeller": "Aventa Shop-তে সেলার হোন",
   "account.becomeSellerHint": "আপনার পণ্য হাজার হাজার ক্রেতার কাছে বিক্রি করুন",
   "orders.unknownStatus": "অজানা অর্ডার স্ট্যাটাস",
   "orders.backToAccount": "অ্যাকাউন্টে ফিরুন",
   "messages.paymentMethod": "পেমেন্ট মাধ্যম",
   "messages.paymentStatus": "স্ট্যাটাস",
-  "messages.aiWelcome": "হাই! আমি আপনার এআই শপিং অ্যাসিস্ট্যান্ট। আমি পণ্য খুঁজে দিতে, অর্ডার ট্র্যাক করতে, কুপন সাজেস্ট করতে এবং আরও সাহায্য করতে পারি। আজ কীভাবে সাহায্য করব?",
-  "messages.aiTrackOrder": "আপনার অর্ডার ট্র্যাক করতে, উপরের অর্ডার ট্যাবে যান এবং যেকোনো অর্ডারে ট্যাপ করে রিয়েল-টাইম ট্র্যাকিং আপডেট দেখুন। আপনি লাইভ ডেলিভারি ট্র্যাকিংয়ের জন্য ট্র্যাক অর্ডার পেজেও যেতে পারেন।",
-  "messages.aiCoupon": "আপনি কুপন পেজে সব কুপন খুঁজে পাবেন। আমরা প্রায়ই ফ্ল্যাশ সেল ডিসকাউন্ট এবং প্রোমো কোড অফার করি। নতুন ডিলের জন্য বারবার চেক করুন!",
-  "messages.aiFlashSale": "ফ্ল্যাশ সেল ফ্ল্যাশ সেল পেজে লাইভ! এগুলো লিমিটেড-টাইম ডিল যা উল্লেখযোগ্য ডিসকাউন্ট সহ। শেষ হওয়ার আগেই দ্রুত কিনুন!",
-  "messages.aiReturn": "আপনি রিটার্ন ও রিফান্ড পেজ থেকে রিটার্ন রিকোয়েস্ট করতে পারেন। আমরা ডেলিভারির ৭ দিনের মধ্যে যোগ্য পণ্যের রিটার্ন গ্রহণ করি।",
-  "messages.aiProduct": "আপনি শপ পেজে সব পণ্য ব্রাউজ করতে পারেন। নির্দিষ্ট পণ্য খুঁজতে উপরের সার্চ বার ব্যবহার করুন, অথবা নতুন পণ্য আবিষ্কার করতে ক্যাটাগরি অনুযায়ী ফিল্টার করুন।",
-  "messages.aiDefault": "আমি সাহায্য করতে এখানে আছি! আপনি আমাকে অর্ডার, পণ্য, কুপন, রিটার্ন, ফ্ল্যাশ সেল এবং আরও নিয়ে জিজ্ঞাসা করতে পারেন। কী জানতে চান?",
+  "messages.aiWelcome":
+    "হাই! আমি আপনার এআই শপিং অ্যাসিস্ট্যান্ট। আমি পণ্য খুঁজে দিতে, অর্ডার ট্র্যাক করতে, কুপন সাজেস্ট করতে এবং আরও সাহায্য করতে পারি। আজ কীভাবে সাহায্য করব?",
+  "messages.aiTrackOrder":
+    "আপনার অর্ডার ট্র্যাক করতে, উপরের অর্ডার ট্যাবে যান এবং যেকোনো অর্ডারে ট্যাপ করে রিয়েল-টাইম ট্র্যাকিং আপডেট দেখুন। আপনি লাইভ ডেলিভারি ট্র্যাকিংয়ের জন্য ট্র্যাক অর্ডার পেজেও যেতে পারেন।",
+  "messages.aiCoupon":
+    "আপনি কুপন পেজে সব কুপন খুঁজে পাবেন। আমরা প্রায়ই ফ্ল্যাশ সেল ডিসকাউন্ট এবং প্রোমো কোড অফার করি। নতুন ডিলের জন্য বারবার চেক করুন!",
+  "messages.aiFlashSale":
+    "ফ্ল্যাশ সেল ফ্ল্যাশ সেল পেজে লাইভ! এগুলো লিমিটেড-টাইম ডিল যা উল্লেখযোগ্য ডিসকাউন্ট সহ। শেষ হওয়ার আগেই দ্রুত কিনুন!",
+  "messages.aiReturn":
+    "আপনি রিটার্ন ও রিফান্ড পেজ থেকে রিটার্ন রিকোয়েস্ট করতে পারেন। আমরা ডেলিভারির ৭ দিনের মধ্যে যোগ্য পণ্যের রিটার্ন গ্রহণ করি।",
+  "messages.aiProduct":
+    "আপনি শপ পেজে সব পণ্য ব্রাউজ করতে পারেন। নির্দিষ্ট পণ্য খুঁজতে উপরের সার্চ বার ব্যবহার করুন, অথবা নতুন পণ্য আবিষ্কার করতে ক্যাটাগরি অনুযায়ী ফিল্টার করুন।",
+  "messages.aiDefault":
+    "আমি সাহায্য করতে এখানে আছি! আপনি আমাকে অর্ডার, পণ্য, কুপন, রিটার্ন, ফ্ল্যাশ সেল এবং আরও নিয়ে জিজ্ঞাসা করতে পারেন। কী জানতে চান?",
   "messages.notifAllRead": "সব নোটিফিকেশন পড়া হিসেবে চিহ্নিত করা হয়েছে",
   "messages.notifMarkAllRead": "সব পড়া হয়েছে মার্ক করুন",
   "messages.filterAll": "সব",
@@ -792,7 +799,7 @@ export const bn: TranslationKeys = {
 
   // Misc
   "misc.version": "ভার্সন 1.0.0",
-  "misc.tagline": "Shop Nexa — স্মার্ট শপিং, উন্নত জীবন",
+  "misc.tagline": "Aventa Shop — স্মার্ট শপিং, উন্নত জীবন",
   "admin.manageUsersDesc": "ক্রেতা, সেলার এবং অ্যাডমিন ম্যানেজ করুন।",
   "checkout.backToCart": "কার্টে ফিরুন",
   "checkout.browseProducts": "পণ্য ব্রাউজ করুন",

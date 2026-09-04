@@ -8,19 +8,14 @@ export async function listCategories(): Promise<Category[]> {
 }
 
 export async function getCategoryBySlug(slug: string): Promise<Category | null> {
-  const snap = await getDocs(
-    query(collection(getDb(), "categories"), where("slug", "==", slug)),
-  );
+  const snap = await getDocs(query(collection(getDb(), "categories"), where("slug", "==", slug)));
   const doc = snap.docs[0];
   return doc ? { id: doc.id, ...(doc.data() as Omit<Category, "id">) } : null;
 }
 
 export async function listSubcategories(categoryId: string): Promise<Subcategory[]> {
   const snap = await getDocs(
-    query(
-      collection(getDb(), "categories", categoryId, "subcategories"),
-      orderBy("order", "asc"),
-    ),
+    query(collection(getDb(), "categories", categoryId, "subcategories"), orderBy("order", "asc")),
   );
   return snap.docs.map((d) => ({
     id: d.id,

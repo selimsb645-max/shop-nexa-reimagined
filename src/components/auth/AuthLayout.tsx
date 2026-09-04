@@ -22,8 +22,8 @@ export function AuthLayout({
               <ShoppingCart className="h-5 w-5" />
             </div>
             <span className="text-xl font-bold">
-              <span className="text-primary">Shop</span>
-              <span className="text-accent">Nexa</span>
+              <span className="text-primary">Aventa</span>
+              <span className="text-accent">Shop</span>
             </span>
           </Link>
         </div>

@@ -48,16 +48,10 @@ function mapCoupon(id: string, d: Record<string, unknown>): Coupon {
 /**
  * List all coupons for a specific seller.
  */
-export async function listSellerCoupons(
-  sellerId: string,
-): Promise<Coupon[]> {
+export async function listSellerCoupons(sellerId: string): Promise<Coupon[]> {
   if (!firebaseConfigured) return [];
   const snap = await getDocs(
-    query(
-      collection(getDb(), COUPONS),
-      where("sellerId", "==", sellerId),
-      orderBy("code", "asc"),
-    ),
+    query(collection(getDb(), COUPONS), where("sellerId", "==", sellerId), orderBy("code", "asc")),
   );
   return snap.docs.map((d) => mapCoupon(d.id, d.data()));
 }
@@ -65,10 +59,7 @@ export async function listSellerCoupons(
 /**
  * Get a single seller coupon.
  */
-export async function getSellerCoupon(
-  sellerId: string,
-  code: string,
-): Promise<Coupon | null> {
+export async function getSellerCoupon(sellerId: string, code: string): Promise<Coupon | null> {
   if (!firebaseConfigured) return null;
   const snap = await getDoc(doc(getDb(), COUPONS, code.toUpperCase()));
   if (!snap.exists()) return null;
@@ -134,10 +125,7 @@ export async function updateSellerCoupon(
 /**
  * Delete a seller coupon.
  */
-export async function deleteSellerCoupon(
-  sellerId: string,
-  code: string,
-): Promise<void> {
+export async function deleteSellerCoupon(sellerId: string, code: string): Promise<void> {
   if (!firebaseConfigured) throw new Error("Firebase is not configured.");
   const coupon = await getSellerCoupon(sellerId, code);
   if (!coupon) throw new Error("Coupon not found or not owned by you.");

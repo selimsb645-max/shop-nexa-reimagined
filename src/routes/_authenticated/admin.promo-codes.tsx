@@ -2,7 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Spinner } from "@/components/common/Spinner";
-import { adminListPromoCodes, adminCreatePromoCode, adminDisablePromoCode } from "@/lib/promo.functions";
+import {
+  adminListPromoCodes,
+  adminCreatePromoCode,
+  adminDisablePromoCode,
+} from "@/lib/promo.functions";
 import type { PromoCode } from "@/types/promo";
 import { useI18n } from "@/i18n";
 
@@ -11,8 +15,8 @@ export const Route = createFileRoute("/_authenticated/admin/promo-codes")({
 });
 
 function AdminPromoCodesPage() {
-
-  const { t } = useI18n();  const { user } = useAuth();
+  const { t } = useI18n();
+  const { user } = useAuth();
   const [promos, setPromos] = useState<PromoCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -112,7 +116,9 @@ function AdminPromoCodesPage() {
             <h2 className="text-lg font-semibold mb-4">{t("admin.issueNewPromoCode")}</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-medium text-slate-600 mb-1 block">{t("admin.targetUserId")}</label>
+                <label className="text-xs font-medium text-slate-600 mb-1 block">
+                  {t("admin.targetUserId")}
+                </label>
                 <input
                   type="text"
                   value={targetUid}
@@ -122,7 +128,9 @@ function AdminPromoCodesPage() {
                 />
               </div>
               <div>
-                <label className="text-xs font-medium text-slate-600 mb-1 block">{t("admin.discountType")}</label>
+                <label className="text-xs font-medium text-slate-600 mb-1 block">
+                  {t("admin.discountType")}
+                </label>
                 <select
                   value={discountType}
                   onChange={(e) => setDiscountType(e.target.value as "percent" | "fixed")}
@@ -133,7 +141,9 @@ function AdminPromoCodesPage() {
                 </select>
               </div>
               <div>
-                <label className="text-xs font-medium text-slate-600 mb-1 block">{t("admin.discountValue")}</label>
+                <label className="text-xs font-medium text-slate-600 mb-1 block">
+                  {t("admin.discountValue")}
+                </label>
                 <input
                   type="number"
                   value={discountValue}
@@ -142,7 +152,9 @@ function AdminPromoCodesPage() {
                 />
               </div>
               <div>
-                <label className="text-xs font-medium text-slate-600 mb-1 block">{t("admin.usageLimit")}</label>
+                <label className="text-xs font-medium text-slate-600 mb-1 block">
+                  {t("admin.usageLimit")}
+                </label>
                 <input
                   type="number"
                   value={usageLimit}
@@ -152,7 +164,9 @@ function AdminPromoCodesPage() {
                 />
               </div>
               <div>
-                <label className="text-xs font-medium text-slate-600 mb-1 block">Expiry (days)</label>
+                <label className="text-xs font-medium text-slate-600 mb-1 block">
+                  Expiry (days)
+                </label>
                 <input
                   type="number"
                   value={expiryDays}
@@ -162,7 +176,9 @@ function AdminPromoCodesPage() {
                 />
               </div>
               <div>
-                <label className="text-xs font-medium text-slate-600 mb-1 block">{t("admin.minOrderAmount")}</label>
+                <label className="text-xs font-medium text-slate-600 mb-1 block">
+                  {t("admin.minOrderAmount")}
+                </label>
                 <input
                   type="number"
                   value={minOrder}
@@ -195,39 +211,66 @@ function AdminPromoCodesPage() {
             <table className="w-full text-sm">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="text-left px-4 py-3 font-semibold text-slate-600">{t("admin.code")}</th>
-                  <th className="text-left px-4 py-3 font-semibold text-slate-600">{t("admin.user")}</th>
-                  <th className="text-left px-4 py-3 font-semibold text-slate-600">{t("admin.discount")}</th>
-                  <th className="text-left px-4 py-3 font-semibold text-slate-600">{t("admin.status")}</th>
-                  <th className="text-left px-4 py-3 font-semibold text-slate-600">{t("admin.uses")}</th>
-                  <th className="text-left px-4 py-3 font-semibold text-slate-600">{t("admin.expiry")}</th>
-                  <th className="text-right px-4 py-3 font-semibold text-slate-600">{t("admin.action")}</th>
+                  <th className="text-left px-4 py-3 font-semibold text-slate-600">
+                    {t("admin.code")}
+                  </th>
+                  <th className="text-left px-4 py-3 font-semibold text-slate-600">
+                    {t("admin.user")}
+                  </th>
+                  <th className="text-left px-4 py-3 font-semibold text-slate-600">
+                    {t("admin.discount")}
+                  </th>
+                  <th className="text-left px-4 py-3 font-semibold text-slate-600">
+                    {t("admin.status")}
+                  </th>
+                  <th className="text-left px-4 py-3 font-semibold text-slate-600">
+                    {t("admin.uses")}
+                  </th>
+                  <th className="text-left px-4 py-3 font-semibold text-slate-600">
+                    {t("admin.expiry")}
+                  </th>
+                  <th className="text-right px-4 py-3 font-semibold text-slate-600">
+                    {t("admin.action")}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {promos.map((promo) => (
                   <tr key={promo.code} className="hover:bg-slate-50">
                     <td className="px-4 py-3 font-mono font-bold">{promo.code}</td>
-                    <td className="px-4 py-3 text-xs text-slate-500">{promo.userId.slice(0, 12)}...</td>
+                    <td className="px-4 py-3 text-xs text-slate-500">
+                      {promo.userId.slice(0, 12)}...
+                    </td>
                     <td className="px-4 py-3">
                       {promo.discountType === "percent"
                         ? `${promo.discountValue}%`
                         : promo.discountValue.toFixed(2)}
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs ${
-                        promo.status === "active" ? "bg-green-100 text-green-700" :
-                        promo.status === "used" ? "bg-slate-100 text-slate-500" :
-                        promo.status === "expired" ? "bg-red-100 text-red-600" :
-                        "bg-slate-100 text-slate-400"
-                      }`}>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-xs ${
+                          promo.status === "active"
+                            ? "bg-green-100 text-green-700"
+                            : promo.status === "used"
+                              ? "bg-slate-100 text-slate-500"
+                              : promo.status === "expired"
+                                ? "bg-red-100 text-red-600"
+                                : "bg-slate-100 text-slate-400"
+                        }`}
+                      >
                         {promo.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-xs">{promo.usedCount}/{promo.usageLimit}</td>
+                    <td className="px-4 py-3 text-xs">
+                      {promo.usedCount}/{promo.usageLimit}
+                    </td>
                     <td className="px-4 py-3 text-xs text-slate-500">
                       {promo.expiresAt > 0
-                        ? new Date(promo.expiresAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                        ? new Date(promo.expiresAt).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })
                         : "No expiry"}
                     </td>
                     <td className="px-4 py-3 text-right">

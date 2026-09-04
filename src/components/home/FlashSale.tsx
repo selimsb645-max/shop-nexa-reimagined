@@ -85,6 +85,5 @@ export function FlashSale({
         </div>
       </div>
     </section>
-
   );
 }

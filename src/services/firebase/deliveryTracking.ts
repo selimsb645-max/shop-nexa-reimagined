@@ -1,10 +1,4 @@
-import {
-  collection,
-  getDocs,
-  query,
-  where,
-  orderBy,
-} from "firebase/firestore";
+import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
 import { getDb } from "./config";
 import type { Order } from "@/types/commerce";
 
@@ -29,10 +23,7 @@ export interface DeliveryTracking {
 export async function getDeliveryTracking(orderId: string): Promise<DeliveryTracking | null> {
   const db = getDb();
   const snap = await getDocs(
-    query(
-      collection(db, "deliveryTracking"),
-      where("orderId", "==", orderId),
-    ),
+    query(collection(db, "deliveryTracking"), where("orderId", "==", orderId)),
   );
   if (snap.empty) return null;
   const data = snap.docs[0].data() as Record<string, unknown>;
@@ -54,11 +45,11 @@ export async function getDeliveryTracking(orderId: string): Promise<DeliveryTrac
     createdAt:
       typeof data.createdAt === "number"
         ? data.createdAt
-        : (data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? Date.now(),
+        : ((data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? Date.now()),
     updatedAt:
       typeof data.updatedAt === "number"
         ? data.updatedAt
-        : (data.updatedAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? Date.now(),
+        : ((data.updatedAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? Date.now()),
   };
 }
 
@@ -84,17 +75,32 @@ export async function listOrdersForTracking(uid: string): Promise<Order[]> {
       total: Number(data.total ?? 0),
       couponCode: (data.couponCode as string | null) ?? null,
       status: (data.status as Order["status"]) ?? "pending",
-      payment: (data.payment as Order["payment"]) ?? { method: "cash_on_delivery", status: "unpaid", provider: null, transactionId: null, paidAt: null },
-      shippingAddress: (data.shippingAddress as Order["shippingAddress"]) ?? { fullName: "", phone: "", addressLine: "", city: "", postalCode: "", country: "" },
+      payment: (data.payment as Order["payment"]) ?? {
+        method: "cash_on_delivery",
+        status: "unpaid",
+        provider: null,
+        transactionId: null,
+        paidAt: null,
+      },
+      shippingAddress: (data.shippingAddress as Order["shippingAddress"]) ?? {
+        fullName: "",
+        phone: "",
+        addressLine: "",
+        city: "",
+        postalCode: "",
+        country: "",
+      },
       tracking: Array.isArray(data.tracking) ? data.tracking : [],
       createdAt:
         typeof data.createdAt === "number"
           ? data.createdAt
-          : (data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? Date.now(),
+          : ((data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ??
+            Date.now()),
       updatedAt:
         typeof data.updatedAt === "number"
           ? data.updatedAt
-          : (data.updatedAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? Date.now(),
+          : ((data.updatedAt as { toMillis?: () => number } | undefined)?.toMillis?.() ??
+            Date.now()),
     };
   });
 }

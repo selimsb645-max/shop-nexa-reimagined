@@ -12,11 +12,7 @@ import {
 } from "firebase/firestore";
 import { getDb } from "./config";
 import { toMs } from "./timestamps";
-import type {
-  StructuredAddress,
-  AddressType,
-  StructuredLocation,
-} from "@/types/address";
+import type { StructuredAddress, AddressType, StructuredLocation } from "@/types/address";
 
 // ── Firestore paths ──
 // Customer addresses: users/{uid}/addresses/{addressId}

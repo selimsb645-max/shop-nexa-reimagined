@@ -1,11 +1,4 @@
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  query,
-  where,
-} from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
 import { getDb } from "./config";
 import type { Product } from "@/types/commerce";
 
@@ -27,11 +20,7 @@ export async function listActiveFlashSales(): Promise<FlashSale[]> {
   const db = getDb();
   const now = Date.now();
   const snap = await getDocs(
-    query(
-      collection(db, "flashSales"),
-      where("active", "==", true),
-      where("startsAt", "<=", now),
-    ),
+    query(collection(db, "flashSales"), where("active", "==", true), where("startsAt", "<=", now)),
   );
   return snap.docs
     .map((d) => {
@@ -50,7 +39,8 @@ export async function listActiveFlashSales(): Promise<FlashSale[]> {
         createdAt:
           typeof data.createdAt === "number"
             ? data.createdAt
-            : (data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? Date.now(),
+            : ((data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ??
+              Date.now()),
       };
     })
     .filter((s) => s.endsAt > now)
@@ -76,7 +66,7 @@ export async function getFlashSale(id: string): Promise<FlashSale | null> {
     createdAt:
       typeof data.createdAt === "number"
         ? data.createdAt
-        : (data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? Date.now(),
+        : ((data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? Date.now()),
   };
 }
 

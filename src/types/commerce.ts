@@ -18,13 +18,13 @@ export interface Product {
   id: string;
   title: string;
   slug: string;
-  shortDescription: string;  // NEW: short description for cards/previews
+  shortDescription: string; // NEW: short description for cards/previews
   description: string;
-  brand: string | null;      // NEW: product brand
+  brand: string | null; // NEW: product brand
   price: number;
   compareAtPrice: number | null;
-  costPrice: number | null;  // NEW: seller/admin only
-  tax: number;               // NEW: tax percentage (0-100)
+  costPrice: number | null; // NEW: seller/admin only
+  tax: number; // NEW: tax percentage (0-100)
   images: string[];
   categoryId: string;
   categorySlug: string;
@@ -105,12 +105,7 @@ export interface PaymentInfo {
 }
 
 export type OrderStatus =
-  | "pending"
-  | "confirmed"
-  | "processing"
-  | "shipped"
-  | "delivered"
-  | "cancelled";
+  "pending" | "confirmed" | "processing" | "shipped" | "delivered" | "cancelled";
 
 export interface OrderItem {
   productId: string;
@@ -129,10 +124,10 @@ export interface TrackingEvent {
 }
 
 export interface CourierInfo {
-  name: string | null;        // Courier company name (e.g. "Steadfast", "RedX")
+  name: string | null; // Courier company name (e.g. "Steadfast", "RedX")
   trackingNumber: string | null; // Tracking number from courier
-  trackingUrl: string | null;  // Optional URL to track on courier site
-  shippedAt: number | null;    // Timestamp when handed to courier
+  trackingUrl: string | null; // Optional URL to track on courier site
+  shippedAt: number | null; // Timestamp when handed to courier
   estimatedDays: number | null; // Estimated delivery days
 }
 
@@ -150,9 +145,9 @@ export interface Order {
   shippingAddress: ShippingAddress;
   deliveryAddressSnapshot?: DeliveryAddressSnapshot | null;
   // Delivery zone snapshot (saved at checkout, never recalculated)
-  deliveryZone?: string | null;       // "INSIDE_DHAKA" | "DHAKA_SUBURB" | "OUTSIDE_DHAKA"
-  deliveryZoneLabel?: string | null;  // Human-readable label
-  deliveryCharge?: number | null;     // Charge at time of order (BDT)
+  deliveryZone?: string | null; // "INSIDE_DHAKA" | "DHAKA_SUBURB" | "OUTSIDE_DHAKA"
+  deliveryZoneLabel?: string | null; // Human-readable label
+  deliveryCharge?: number | null; // Charge at time of order (BDT)
   tracking: TrackingEvent[];
   courierInfo?: CourierInfo | null;
   createdAt: number;

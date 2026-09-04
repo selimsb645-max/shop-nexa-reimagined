@@ -10,6 +10,8 @@ export async function listAvailableCoupons(): Promise<Coupon[]> {
   const now = Date.now();
   return snap.docs
     .map((d) => ({ code: d.id, ...(d.data() as Omit<Coupon, "code">) }))
-    .filter((c) => (!c.expiresAt || c.expiresAt > now) && (c.usageLimit == null || c.uses < c.usageLimit))
+    .filter(
+      (c) => (!c.expiresAt || c.expiresAt > now) && (c.usageLimit == null || c.uses < c.usageLimit),
+    )
     .sort((a, b) => b.value - a.value);
 }

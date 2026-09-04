@@ -244,3 +244,25 @@ service cloud.firestore {
     }
   }
 }
+
+    // ====================================================================
+    // ORDER TRACKING SYSTEM (Phase 1)
+    // ====================================================================
+
+    // Delivery agents — admin managed
+    match /deliveryAgents/{agentId} {
+      allow read: if isSignedIn() && (isSelf(agentId) || isAdmin() || isApprovedSeller());
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Order status history — server-created, read by authorized users
+    match /orderStatusHistory/{historyId} {
+      allow read: if true; // Tracking IDs are semi-public (needed for /track/:trackingId)
+      allow create, update, delete: if false; // Server function only
+    }
+
+    // Order audit logs — admin only
+    match /orderAuditLogs/{auditId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if false; // Server function only
+    }

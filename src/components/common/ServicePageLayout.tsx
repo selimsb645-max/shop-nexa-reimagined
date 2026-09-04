@@ -53,9 +53,7 @@ export function ServicePageLayout({
             </Link>
             <div className="min-w-0">
               <h1 className="truncate text-lg font-bold sm:text-xl">{title}</h1>
-              {subtitle && (
-                <p className="truncate text-xs text-white/80">{subtitle}</p>
-              )}
+              {subtitle && <p className="truncate text-xs text-white/80">{subtitle}</p>}
             </div>
           </div>
         </div>

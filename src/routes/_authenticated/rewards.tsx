@@ -118,8 +118,11 @@ function RewardsPage() {
                   <div className="truncate text-xs text-slate-400">{t.note}</div>
                   <div className="text-xs text-slate-400">{formatDateTime(t.createdAt)}</div>
                 </div>
-                <div className={`text-sm font-bold ${t.points >= 0 ? "text-green-700" : "text-red-600"}`}>
-                  {t.points >= 0 ? "+" : ""}{t.points} pts
+                <div
+                  className={`text-sm font-bold ${t.points >= 0 ? "text-green-700" : "text-red-600"}`}
+                >
+                  {t.points >= 0 ? "+" : ""}
+                  {t.points} pts
                 </div>
               </li>
             ))}

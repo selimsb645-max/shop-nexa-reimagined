@@ -18,15 +18,21 @@ export const Route = createFileRoute("/help-center")({
   component: HelpCenterPage,
   head: () => ({
     meta: [
-      { title: "Help Center — ShopNexa" },
-      { name: "description", content: "Answers about ShopNexa shipping, returns, payments, orders and account support." },
-      { property: "og:title", content: "Help Center — ShopNexa" },
-      { property: "og:description", content: "Shipping, returns, payments and account support answers." },
+      { title: "Help Center — Aventa Shop" },
+      {
+        name: "description",
+        content:
+          "Answers about Aventa Shop shipping, returns, payments, orders and account support.",
+      },
+      { property: "og:title", content: "Help Center — Aventa Shop" },
+      {
+        property: "og:description",
+        content: "Shipping, returns, payments and account support answers.",
+      },
       { property: "og:url", content: "https://shop-nexa.lovable.app/help-center" },
     ],
     links: [{ rel: "canonical", href: "https://shop-nexa.lovable.app/help-center" }],
   }),
-
 });
 
 const HELP_CATEGORIES = [
@@ -34,13 +40,13 @@ const HELP_CATEGORIES = [
     icon: <MessageCircle className="h-6 w-6" />,
     title: "Orders & Delivery",
     description: "Track orders, delivery info, cancellations",
-    link: "/support",
+    link: "/track-order",
   },
   {
     icon: <Headphones className="h-6 w-6" />,
     title: "Returns & Refunds",
     description: "Return policy, refund status, exchanges",
-    link: "/returns",
+    link: "/returns-refunds",
   },
   {
     icon: <Mail className="h-6 w-6" />,
@@ -52,16 +58,31 @@ const HELP_CATEGORIES = [
     icon: <ChevronRight className="h-6 w-6" />,
     title: "Payment & Wallet",
     description: "Payment methods, wallet balance, transactions",
-    link: "/wallet",
+    link: "/digital-payments",
   },
 ];
 
 const FAQS = [
-  { q: "How can I track my order?", a: "Go to Track Orders in your account to see real-time delivery tracking." },
-  { q: "What is the return policy?", a: "You can request a return within 7 days of delivery for eligible products." },
-  { q: "How do I use my wallet balance?", a: "Wallet balance can be used during checkout as a payment option." },
-  { q: "How do I become a seller?", a: "Visit 'Become a Seller' from your account to start the registration process." },
-  { q: "How do I use coupons?", a: "Go to the Coupons page to see available vouchers and apply them at checkout." },
+  {
+    q: "How can I track my order?",
+    a: "Go to Track Orders in your account to see real-time delivery tracking.",
+  },
+  {
+    q: "What is the return policy?",
+    a: "You can request a return within 7 days of delivery for eligible products.",
+  },
+  {
+    q: "How do I use my wallet balance?",
+    a: "Wallet balance can be used during checkout as a payment option.",
+  },
+  {
+    q: "How do I become a seller?",
+    a: "Visit 'Become a Seller' from your account to start the registration process.",
+  },
+  {
+    q: "How do I use coupons?",
+    a: "Go to the Coupons page to see available vouchers and apply them at checkout.",
+  },
 ];
 
 function HelpCenterPage() {
@@ -136,7 +157,9 @@ function HelpCenterPage() {
 
         {/* FAQs */}
         <div className="mb-6">
-          <h2 className="mb-3 text-sm font-semibold text-muted-foreground">Frequently Asked Questions</h2>
+          <h2 className="mb-3 text-sm font-semibold text-muted-foreground">
+            Frequently Asked Questions
+          </h2>
           <div className="space-y-2">
             {FAQS.map((faq, i) => (
               <details key={i} className="group rounded-xl border bg-background p-4 shadow-sm">

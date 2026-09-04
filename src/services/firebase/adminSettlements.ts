@@ -1,6 +1,6 @@
 /**
- * Shop Nexa — Admin Finance & Settlement Service
- * 
+ * Aventa Shop — Admin Finance & Settlement Service
+ *
  * Client-side read access for the admin/finance panel.
  * Admin can view overview, process withdrawals, and reverse settlements.
  * All mutations go through verified server functions.

@@ -1,11 +1,4 @@
-import {
-  collection,
-  getDocs,
-  limit as fbLimit,
-  orderBy,
-  query,
-  where,
-} from "firebase/firestore";
+import { collection, getDocs, limit as fbLimit, orderBy, query, where } from "firebase/firestore";
 import { getDb } from "./config";
 import { firebaseConfigured } from "./config";
 import type { SellerWalletTx, SellerWalletTxType } from "@/types/seller";
@@ -29,7 +22,7 @@ function mapTx(id: string, d: Record<string, unknown>): SellerWalletTx {
     createdAt:
       typeof r.createdAt === "number"
         ? r.createdAt
-        : ((r.createdAt as unknown) as { toMillis?: () => number })?.toMillis?.() ?? nowMs(),
+        : ((r.createdAt as unknown as { toMillis?: () => number })?.toMillis?.() ?? nowMs()),
   };
 }
 
@@ -39,10 +32,7 @@ function mapTx(id: string, d: Record<string, unknown>): SellerWalletTx {
 export async function getSellerWalletBalance(sellerId: string): Promise<number> {
   if (!firebaseConfigured) return 0;
   const snap = await getDocs(
-    query(
-      collection(getDb(), SELLERS, sellerId, WALLET_TX),
-      fbLimit(1000),
-    ),
+    query(collection(getDb(), SELLERS, sellerId, WALLET_TX), fbLimit(1000)),
   );
   let balance = 0;
   snap.docs.forEach((d) => {
@@ -66,10 +56,7 @@ export async function getSellerWalletBalance(sellerId: string): Promise<number> 
 export async function getSellerTotalEarnings(sellerId: string): Promise<number> {
   if (!firebaseConfigured) return 0;
   const snap = await getDocs(
-    query(
-      collection(getDb(), SELLERS, sellerId, WALLET_TX),
-      where("type", "==", "earning"),
-    ),
+    query(collection(getDb(), SELLERS, sellerId, WALLET_TX), where("type", "==", "earning")),
   );
   let total = 0;
   snap.docs.forEach((d) => {
@@ -104,10 +91,7 @@ export async function listSellerWalletTransactions(
   opts?: { type?: SellerWalletTxType; max?: number },
 ): Promise<SellerWalletTx[]> {
   if (!firebaseConfigured) return [];
-  let q = query(
-    collection(getDb(), SELLERS, sellerId, WALLET_TX),
-    orderBy("createdAt", "desc"),
-  );
+  let q = query(collection(getDb(), SELLERS, sellerId, WALLET_TX), orderBy("createdAt", "desc"));
   if (opts?.type) {
     q = query(
       collection(getDb(), SELLERS, sellerId, WALLET_TX),

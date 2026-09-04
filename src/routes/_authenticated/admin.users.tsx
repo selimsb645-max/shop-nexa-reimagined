@@ -16,8 +16,8 @@ export const Route = createFileRoute("/_authenticated/admin/users")({
 });
 
 function UsersAdmin() {
-
-  const { t } = useI18n();  const { user } = useAuth();
+  const { t } = useI18n();
+  const { user } = useAuth();
   const [rows, setRows] = useState<AdminUserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
@@ -161,7 +161,11 @@ function UsersAdmin() {
                   <td className="px-3 py-2">
                     <div className="flex items-center gap-3">
                       {r.photoURL ? (
-                        <img src={r.photoURL} alt="" className="h-8 w-8 rounded-full object-cover" />
+                        <img
+                          src={r.photoURL}
+                          alt=""
+                          className="h-8 w-8 rounded-full object-cover"
+                        />
                       ) : (
                         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs">
                           {(r.displayName || r.email || "?").slice(0, 1).toUpperCase()}

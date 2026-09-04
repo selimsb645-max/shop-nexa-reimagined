@@ -32,8 +32,8 @@ function slugify(s: string) {
 }
 
 function CategoriesAdmin() {
-
-  const { t } = useI18n();  const { user } = useAuth();
+  const { t } = useI18n();
+  const { user } = useAuth();
   const [cats, setCats] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -91,7 +91,9 @@ function CategoriesAdmin() {
 
   const onDeleteCat = async (c: Category) => {
     if (!user) return;
-    if (!confirm(`Delete category "${c.name}"? Subcategories will remain unless removed separately.`))
+    if (
+      !confirm(`Delete category "${c.name}"? Subcategories will remain unless removed separately.`)
+    )
       return;
     try {
       await deleteCategory(c.id);
@@ -265,10 +267,7 @@ function CategoryRow(p: RowProps) {
   const [image, setImage] = useState(p.c.image ?? "");
   const [order, setOrder] = useState(p.c.order);
   const dirty =
-    name !== p.c.name ||
-    slug !== p.c.slug ||
-    image !== (p.c.image ?? "") ||
-    order !== p.c.order;
+    name !== p.c.name || slug !== p.c.slug || image !== (p.c.image ?? "") || order !== p.c.order;
 
   return (
     <div className="rounded-lg border bg-background">
@@ -303,10 +302,7 @@ function CategoryRow(p: RowProps) {
             <Save className="h-3 w-3" /> Save
           </button>
         )}
-        <button
-          onClick={p.onToggle}
-          className="rounded-md border px-2 py-1 text-xs hover:bg-muted"
-        >
+        <button onClick={p.onToggle} className="rounded-md border px-2 py-1 text-xs hover:bg-muted">
           {p.open ? "Hide subs" : "Subs"}
         </button>
         <button

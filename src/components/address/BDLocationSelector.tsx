@@ -83,30 +83,35 @@ function SelectField({
         disabled={disabled}
         onClick={() => setOpen(!open)}
         className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl border-2 transition-all
-          ${disabled
-            ? "border-slate-100 bg-slate-50 cursor-not-allowed"
-            : open
-            ? "border-orange-400 bg-white ring-2 ring-orange-100"
-            : value
-            ? "border-slate-200 bg-white hover:border-orange-300"
-            : "border-slate-200 bg-white hover:border-orange-300"
+          ${
+            disabled
+              ? "border-slate-100 bg-slate-50 cursor-not-allowed"
+              : open
+                ? "border-orange-400 bg-white ring-2 ring-orange-100"
+                : value
+                  ? "border-slate-200 bg-white hover:border-orange-300"
+                  : "border-slate-200 bg-white hover:border-orange-300"
           }`}
       >
         <div className="flex items-center gap-2 flex-1 text-left min-w-0">
           {disabled ? (
             <Lock className="w-4 h-4 shrink-0 text-slate-300" />
           ) : (
-            <MapPin className={`w-4 h-4 shrink-0 ${value ? "text-orange-500" : "text-slate-300"}`} />
+            <MapPin
+              className={`w-4 h-4 shrink-0 ${value ? "text-orange-500" : "text-slate-300"}`}
+            />
           )}
-          <span className={`truncate text-sm ${disabled ? "text-slate-300" : value ? "text-slate-800 font-medium" : "text-slate-400"}`}>
+          <span
+            className={`truncate text-sm ${disabled ? "text-slate-300" : value ? "text-slate-800 font-medium" : "text-slate-400"}`}
+          >
             {selectedItem ? getLabel(selectedItem) : placeholder}
           </span>
         </div>
         <div className="flex items-center gap-1 shrink-0">
-          {selectedItem && !disabled && (
-            <Check className="w-4 h-4 text-orange-500" />
-          )}
-          <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} />
+          {selectedItem && !disabled && <Check className="w-4 h-4 text-orange-500" />}
+          <ChevronDown
+            className={`w-4 h-4 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`}
+          />
         </div>
       </button>
 
@@ -155,10 +160,14 @@ function SelectField({
                         {value === key && <Check className="w-4 h-4 text-orange-500 shrink-0" />}
                       </div>
                       {(item as Record<string, unknown>).nameBn ? (
-                        <span className="text-xs text-slate-400">{String((item as Record<string, unknown>).nameBn)}</span>
+                        <span className="text-xs text-slate-400">
+                          {String((item as Record<string, unknown>).nameBn)}
+                        </span>
                       ) : null}
                       {subLabel ? (
-                        <span className="text-xs text-slate-400 block mt-0.5">Postal: {subLabel}</span>
+                        <span className="text-xs text-slate-400 block mt-0.5">
+                          Postal: {subLabel}
+                        </span>
                       ) : null}
                     </button>
                   );
@@ -172,7 +181,11 @@ function SelectField({
   );
 }
 
-export function BDLocationSelector({ value, onChange, showLabels = true }: BDLocationSelectorProps) {
+export function BDLocationSelector({
+  value,
+  onChange,
+  showLabels = true,
+}: BDLocationSelectorProps) {
   const [divisionId, setDivisionId] = useState(value.divisionId ?? "");
   const [districtId, setDistrictId] = useState(value.districtId ?? "");
   const [upazilaId, setUpazilaId] = useState(value.upazilaId ?? "");
@@ -188,108 +201,158 @@ export function BDLocationSelector({ value, onChange, showLabels = true }: BDLoc
   }, [value.divisionId, value.districtId, value.upazilaId, value.unionId]);
 
   // ── Division ──
-  const onDivisionChange = useCallback((id: string) => {
-    setDivisionId(id);
-    // Reset all children
-    setDistrictId("");
-    setUpazilaId("");
-    setUnionId("");
-    setPostOfficeIdx("");
-    const div = divisions.find((d) => d.id === id);
-    if (div) {
-      onChange({
-        divisionId: div.id,
-        divisionEn: div.nameEn,
-        divisionBn: div.nameBn,
-        districtId: "", districtEn: "", districtBn: "",
-        upazilaId: "", upazilaEn: "", upazilaBn: "",
-        thanaEn: "", thanaBn: "",
-        unionId: "", unionEn: "", unionBn: "",
-        postOfficeEn: "", postOfficeBn: "",
-        postalCode: "",
-      });
-    }
-  }, [onChange]);
+  const onDivisionChange = useCallback(
+    (id: string) => {
+      setDivisionId(id);
+      // Reset all children
+      setDistrictId("");
+      setUpazilaId("");
+      setUnionId("");
+      setPostOfficeIdx("");
+      const div = divisions.find((d) => d.id === id);
+      if (div) {
+        onChange({
+          divisionId: div.id,
+          divisionEn: div.nameEn,
+          divisionBn: div.nameBn,
+          districtId: "",
+          districtEn: "",
+          districtBn: "",
+          upazilaId: "",
+          upazilaEn: "",
+          upazilaBn: "",
+          thanaEn: "",
+          thanaBn: "",
+          unionId: "",
+          unionEn: "",
+          unionBn: "",
+          postOfficeEn: "",
+          postOfficeBn: "",
+          postalCode: "",
+        });
+      }
+    },
+    [onChange],
+  );
 
   // ── District ──
   const availableDistricts = useMemo(
-    () => divisionId ? getDistrictsByDivision(divisionId) : [],
+    () => (divisionId ? getDistrictsByDivision(divisionId) : []),
     [divisionId],
   );
 
-  const onDistrictChange = useCallback((id: string) => {
-    setDistrictId(id);
-    // Reset children
-    setUpazilaId("");
-    setUnionId("");
-    setPostOfficeIdx("");
-    const dist = districts.find((d) => d.id === id);
-    const div = divisions.find((d) => d.id === divisionId);
-    if (dist && div) {
-      onChange({
-        divisionId: div.id, divisionEn: div.nameEn, divisionBn: div.nameBn,
-        districtId: dist.id, districtEn: dist.nameEn, districtBn: dist.nameBn,
-        upazilaId: "", upazilaEn: "", upazilaBn: "",
-        thanaEn: "", thanaBn: "",
-        unionId: "", unionEn: "", unionBn: "",
-        postOfficeEn: "", postOfficeBn: "",
-        postalCode: "",
-      });
-    }
-  }, [divisionId, onChange]);
+  const onDistrictChange = useCallback(
+    (id: string) => {
+      setDistrictId(id);
+      // Reset children
+      setUpazilaId("");
+      setUnionId("");
+      setPostOfficeIdx("");
+      const dist = districts.find((d) => d.id === id);
+      const div = divisions.find((d) => d.id === divisionId);
+      if (dist && div) {
+        onChange({
+          divisionId: div.id,
+          divisionEn: div.nameEn,
+          divisionBn: div.nameBn,
+          districtId: dist.id,
+          districtEn: dist.nameEn,
+          districtBn: dist.nameBn,
+          upazilaId: "",
+          upazilaEn: "",
+          upazilaBn: "",
+          thanaEn: "",
+          thanaBn: "",
+          unionId: "",
+          unionEn: "",
+          unionBn: "",
+          postOfficeEn: "",
+          postOfficeBn: "",
+          postalCode: "",
+        });
+      }
+    },
+    [divisionId, onChange],
+  );
 
   // ── Upazila ──
   const availableUpazilas = useMemo(
-    () => districtId ? getUpazilasByDistrict(districtId) : [],
+    () => (districtId ? getUpazilasByDistrict(districtId) : []),
     [districtId],
   );
 
-  const onUpazilaChange = useCallback((id: string) => {
-    setUpazilaId(id);
-    // Reset children
-    setUnionId("");
-    setPostOfficeIdx("");
-    const upz = upazilas.find((u) => u.id === id);
-    const dist = districts.find((d) => d.id === districtId);
-    const div = divisions.find((d) => d.id === divisionId);
-    if (upz && dist && div) {
-      onChange({
-        divisionId: div.id, divisionEn: div.nameEn, divisionBn: div.nameBn,
-        districtId: dist.id, districtEn: dist.nameEn, districtBn: dist.nameBn,
-        upazilaId: upz.id, upazilaEn: upz.nameEn, upazilaBn: upz.nameBn,
-        thanaEn: upz.nameEn, thanaBn: upz.nameBn,
-        unionId: "", unionEn: "", unionBn: "",
-        postOfficeEn: "", postOfficeBn: "",
-        postalCode: "",
-      });
-    }
-  }, [divisionId, districtId, onChange]);
+  const onUpazilaChange = useCallback(
+    (id: string) => {
+      setUpazilaId(id);
+      // Reset children
+      setUnionId("");
+      setPostOfficeIdx("");
+      const upz = upazilas.find((u) => u.id === id);
+      const dist = districts.find((d) => d.id === districtId);
+      const div = divisions.find((d) => d.id === divisionId);
+      if (upz && dist && div) {
+        onChange({
+          divisionId: div.id,
+          divisionEn: div.nameEn,
+          divisionBn: div.nameBn,
+          districtId: dist.id,
+          districtEn: dist.nameEn,
+          districtBn: dist.nameBn,
+          upazilaId: upz.id,
+          upazilaEn: upz.nameEn,
+          upazilaBn: upz.nameBn,
+          thanaEn: upz.nameEn,
+          thanaBn: upz.nameBn,
+          unionId: "",
+          unionEn: "",
+          unionBn: "",
+          postOfficeEn: "",
+          postOfficeBn: "",
+          postalCode: "",
+        });
+      }
+    },
+    [divisionId, districtId, onChange],
+  );
 
   // ── Union ──
   const availableUnions = useMemo(
-    () => upazilaId ? getUnionsByUpazila(upazilaId) : [],
+    () => (upazilaId ? getUnionsByUpazila(upazilaId) : []),
     [upazilaId],
   );
 
-  const onUnionChange = useCallback((id: string) => {
-    setUnionId(id);
-    setPostOfficeIdx("");
-    const unn = unions.find((u) => u.id === id);
-    const upz = upazilas.find((u) => u.id === upazilaId);
-    const dist = districts.find((d) => d.id === districtId);
-    const div = divisions.find((d) => d.id === divisionId);
-    if (unn && upz && dist && div) {
-      onChange({
-        divisionId: div.id, divisionEn: div.nameEn, divisionBn: div.nameBn,
-        districtId: dist.id, districtEn: dist.nameEn, districtBn: dist.nameBn,
-        upazilaId: upz.id, upazilaEn: upz.nameEn, upazilaBn: upz.nameBn,
-        thanaEn: upz.nameEn, thanaBn: upz.nameBn,
-        unionId: unn.id, unionEn: unn.nameEn, unionBn: unn.nameBn,
-        postOfficeEn: "", postOfficeBn: "",
-        postalCode: "",
-      });
-    }
-  }, [divisionId, districtId, upazilaId, onChange]);
+  const onUnionChange = useCallback(
+    (id: string) => {
+      setUnionId(id);
+      setPostOfficeIdx("");
+      const unn = unions.find((u) => u.id === id);
+      const upz = upazilas.find((u) => u.id === upazilaId);
+      const dist = districts.find((d) => d.id === districtId);
+      const div = divisions.find((d) => d.id === divisionId);
+      if (unn && upz && dist && div) {
+        onChange({
+          divisionId: div.id,
+          divisionEn: div.nameEn,
+          divisionBn: div.nameBn,
+          districtId: dist.id,
+          districtEn: dist.nameEn,
+          districtBn: dist.nameBn,
+          upazilaId: upz.id,
+          upazilaEn: upz.nameEn,
+          upazilaBn: upz.nameBn,
+          thanaEn: upz.nameEn,
+          thanaBn: upz.nameBn,
+          unionId: unn.id,
+          unionEn: unn.nameEn,
+          unionBn: unn.nameBn,
+          postOfficeEn: "",
+          postOfficeBn: "",
+          postalCode: "",
+        });
+      }
+    },
+    [divisionId, districtId, upazilaId, onChange],
+  );
 
   // ── Post Office + Postal Code ──
   const availablePostOffices = useMemo(() => {
@@ -300,27 +363,40 @@ export function BDLocationSelector({ value, onChange, showLabels = true }: BDLoc
     return getPostOfficesForUpazila(dist.nameEn, upz.nameEn);
   }, [upazilaId, districtId]);
 
-  const onPostOfficeChange = useCallback((idx: string) => {
-    setPostOfficeIdx(idx);
-    const po = availablePostOffices[parseInt(idx, 10)];
-    if (po) {
-      const unn = unions.find((u) => u.id === unionId);
-      const upz = upazilas.find((u) => u.id === upazilaId);
-      const dist = districts.find((d) => d.id === districtId);
-      const div = divisions.find((d) => d.id === divisionId);
-      if (dist && div) {
-        onChange({
-          divisionId: div.id, divisionEn: div.nameEn, divisionBn: div.nameBn,
-          districtId: dist.id, districtEn: dist.nameEn, districtBn: dist.nameBn,
-          upazilaId: upz?.id ?? "", upazilaEn: upz?.nameEn ?? "", upazilaBn: upz?.nameBn ?? "",
-          thanaEn: po.thanaEn, thanaBn: po.thanaBn,
-          unionId: unn?.id ?? "", unionEn: unn?.nameEn ?? "", unionBn: unn?.nameBn ?? "",
-          postOfficeEn: po.subofficeEn, postOfficeBn: po.subofficeBn,
-          postalCode: po.postcode,
-        });
+  const onPostOfficeChange = useCallback(
+    (idx: string) => {
+      setPostOfficeIdx(idx);
+      const po = availablePostOffices[parseInt(idx, 10)];
+      if (po) {
+        const unn = unions.find((u) => u.id === unionId);
+        const upz = upazilas.find((u) => u.id === upazilaId);
+        const dist = districts.find((d) => d.id === districtId);
+        const div = divisions.find((d) => d.id === divisionId);
+        if (dist && div) {
+          onChange({
+            divisionId: div.id,
+            divisionEn: div.nameEn,
+            divisionBn: div.nameBn,
+            districtId: dist.id,
+            districtEn: dist.nameEn,
+            districtBn: dist.nameBn,
+            upazilaId: upz?.id ?? "",
+            upazilaEn: upz?.nameEn ?? "",
+            upazilaBn: upz?.nameBn ?? "",
+            thanaEn: po.thanaEn,
+            thanaBn: po.thanaBn,
+            unionId: unn?.id ?? "",
+            unionEn: unn?.nameEn ?? "",
+            unionBn: unn?.nameBn ?? "",
+            postOfficeEn: po.subofficeEn,
+            postOfficeBn: po.subofficeBn,
+            postalCode: po.postcode,
+          });
+        }
       }
-    }
-  }, [availablePostOffices, unionId, upazilaId, districtId, divisionId, onChange]);
+    },
+    [availablePostOffices, unionId, upazilaId, districtId, divisionId, onChange],
+  );
 
   // Auto-select if only one post office
   useEffect(() => {
@@ -353,7 +429,11 @@ export function BDLocationSelector({ value, onChange, showLabels = true }: BDLoc
 
       {/* Division */}
       <div>
-        {showLabels && <label className="block text-xs font-semibold text-slate-600 mb-1.5">বিভাগ / Division</label>}
+        {showLabels && (
+          <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+            বিভাগ / Division
+          </label>
+        )}
         <SelectField
           items={divisions as unknown as Array<Record<string, unknown>>}
           value={divisionId}
@@ -367,7 +447,11 @@ export function BDLocationSelector({ value, onChange, showLabels = true }: BDLoc
 
       {/* District */}
       <div>
-        {showLabels && <label className="block text-xs font-semibold text-slate-600 mb-1.5">জেলা / District</label>}
+        {showLabels && (
+          <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+            জেলা / District
+          </label>
+        )}
         <SelectField
           items={availableDistricts as unknown as Array<Record<string, unknown>>}
           value={districtId}
@@ -382,7 +466,11 @@ export function BDLocationSelector({ value, onChange, showLabels = true }: BDLoc
 
       {/* Upazila */}
       <div>
-        {showLabels && <label className="block text-xs font-semibold text-slate-600 mb-1.5">উপজেলা / থানা / Upazila</label>}
+        {showLabels && (
+          <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+            উপজেলা / থানা / Upazila
+          </label>
+        )}
         <SelectField
           items={availableUpazilas as unknown as Array<Record<string, unknown>>}
           value={upazilaId}
@@ -397,7 +485,11 @@ export function BDLocationSelector({ value, onChange, showLabels = true }: BDLoc
 
       {/* Union */}
       <div>
-        {showLabels && <label className="block text-xs font-semibold text-slate-600 mb-1.5">ইউনিয়ন / Union</label>}
+        {showLabels && (
+          <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+            ইউনিয়ন / Union
+          </label>
+        )}
         <SelectField
           items={availableUnions as unknown as Array<Record<string, unknown>>}
           value={unionId}
@@ -414,9 +506,17 @@ export function BDLocationSelector({ value, onChange, showLabels = true }: BDLoc
       {availablePostOffices.length > 0 && (
         <div className="grid grid-cols-3 gap-3">
           <div className="col-span-2">
-            {showLabels && <label className="block text-xs font-semibold text-slate-600 mb-1.5">পোস্ট অফিস / Post Office</label>}
+            {showLabels && (
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                পোস্ট অফিস / Post Office
+              </label>
+            )}
             <SelectField
-              items={availablePostOffices.map((po, idx) => ({ ...po, _idx: idx })) as unknown as Array<Record<string, unknown>>}
+              items={
+                availablePostOffices.map((po, idx) => ({ ...po, _idx: idx })) as unknown as Array<
+                  Record<string, unknown>
+                >
+              }
               value={postOfficeIdx}
               onChange={onPostOfficeChange}
               placeholder="পোস্ট অফিস নির্বাচন করুন"
@@ -428,7 +528,11 @@ export function BDLocationSelector({ value, onChange, showLabels = true }: BDLoc
             />
           </div>
           <div>
-            {showLabels && <label className="block text-xs font-semibold text-slate-600 mb-1.5">পোস্ট কোড / Postal</label>}
+            {showLabels && (
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                পোস্ট কোড / Postal
+              </label>
+            )}
             <input
               type="text"
               readOnly
@@ -447,9 +551,7 @@ export function BDLocationSelector({ value, onChange, showLabels = true }: BDLoc
             <MapPin className="w-4 h-4 text-orange-500" />
             <span className="text-xs font-semibold text-orange-700">Selected Location</span>
           </div>
-          <div className="text-sm text-slate-700">
-            {summaryParts.join(" → ")}
-          </div>
+          <div className="text-sm text-slate-700">{summaryParts.join(" → ")}</div>
         </div>
       )}
     </div>

@@ -45,7 +45,8 @@ function WalletPage() {
   const balance = Math.round((tx.data ?? []).reduce((s, t) => s + t.amount, 0) * 100) / 100;
   const credited = (tx.data ?? []).filter((t) => t.amount > 0).reduce((s, t) => s + t.amount, 0);
   const spent = (tx.data ?? []).filter((t) => t.amount < 0).reduce((s, t) => s - t.amount, 0);
-  const redeemable = Math.floor((points.data ?? 0) / POINTS_PER_CURRENCY_REDEEM) * POINTS_PER_CURRENCY_REDEEM;
+  const redeemable =
+    Math.floor((points.data ?? 0) / POINTS_PER_CURRENCY_REDEEM) * POINTS_PER_CURRENCY_REDEEM;
 
   const doRedeem = async () => {
     if (!user || redeemable <= 0) return;
@@ -94,7 +95,8 @@ function WalletPage() {
             <Sparkles className="h-4 w-4 text-[#f57224]" /> Convert reward points
           </div>
           <p className="mt-1 text-sm text-slate-500">
-            You have <span className="font-bold text-slate-700">{points.data ?? 0}</span> points. {POINTS_PER_CURRENCY_REDEEM} points = {formatPrice(1)} credit.
+            You have <span className="font-bold text-slate-700">{points.data ?? 0}</span> points.{" "}
+            {POINTS_PER_CURRENCY_REDEEM} points = {formatPrice(1)} credit.
           </p>
         </div>
         <button
@@ -135,15 +137,24 @@ function WalletPage() {
                     t.amount >= 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
                   }`}
                 >
-                  {t.amount >= 0 ? <ArrowDownLeft className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
+                  {t.amount >= 0 ? (
+                    <ArrowDownLeft className="h-4 w-4" />
+                  ) : (
+                    <ArrowUpRight className="h-4 w-4" />
+                  )}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <div className="text-sm font-semibold text-slate-700">{TYPE_LABEL[t.type] ?? t.type}</div>
+                  <div className="text-sm font-semibold text-slate-700">
+                    {TYPE_LABEL[t.type] ?? t.type}
+                  </div>
                   <div className="truncate text-xs text-slate-400">{t.note}</div>
                   <div className="text-xs text-slate-400">{formatDateTime(t.createdAt)}</div>
                 </div>
-                <div className={`text-sm font-bold ${t.amount >= 0 ? "text-green-700" : "text-red-600"}`}>
-                  {t.amount >= 0 ? "+" : "-"}{formatPrice(Math.abs(t.amount))}
+                <div
+                  className={`text-sm font-bold ${t.amount >= 0 ? "text-green-700" : "text-red-600"}`}
+                >
+                  {t.amount >= 0 ? "+" : "-"}
+                  {formatPrice(Math.abs(t.amount))}
                 </div>
               </li>
             ))}

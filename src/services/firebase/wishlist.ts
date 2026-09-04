@@ -22,7 +22,7 @@ export async function listWishlist(uid: string): Promise<WishlistItem[]> {
       addedAt:
         typeof data.addedAt === "number"
           ? data.addedAt
-          : (data.addedAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? Date.now(),
+          : ((data.addedAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? Date.now()),
       title: String(data.title ?? ""),
       image: String(data.image ?? ""),
       price: Number(data.price ?? 0),

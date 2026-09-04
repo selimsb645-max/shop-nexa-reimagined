@@ -1,8 +1,22 @@
 import { useState, useEffect } from "react";
 import { BDLocationSelector } from "./BDLocationSelector";
 import type { StructuredLocation, AddressType } from "@/types/address";
-import { ADDRESS_TYPE_META, isValidBDPhone, normalizeBDPhone, buildDetailedAddress } from "@/types/address";
-import { User, Phone, FileText, MessageSquare, Star, Home as HomeIcon, MapPin, Check } from "lucide-react";
+import {
+  ADDRESS_TYPE_META,
+  isValidBDPhone,
+  normalizeBDPhone,
+  buildDetailedAddress,
+} from "@/types/address";
+import {
+  User,
+  Phone,
+  FileText,
+  MessageSquare,
+  Star,
+  Home as HomeIcon,
+  MapPin,
+  Check,
+} from "lucide-react";
 
 export interface StructuredAddressFormValues {
   label: string;
@@ -30,12 +44,22 @@ interface StructuredAddressFormProps {
 }
 
 const EMPTY_LOCATION: StructuredLocation = {
-  divisionId: "", divisionEn: "", divisionBn: "",
-  districtId: "", districtEn: "", districtBn: "",
-  upazilaId: "", upazilaEn: "", upazilaBn: "",
-  thanaEn: "", thanaBn: "",
-  unionId: "", unionEn: "", unionBn: "",
-  postOfficeEn: "", postOfficeBn: "",
+  divisionId: "",
+  divisionEn: "",
+  divisionBn: "",
+  districtId: "",
+  districtEn: "",
+  districtBn: "",
+  upazilaId: "",
+  upazilaEn: "",
+  upazilaBn: "",
+  thanaEn: "",
+  thanaBn: "",
+  unionId: "",
+  unionEn: "",
+  unionBn: "",
+  postOfficeEn: "",
+  postOfficeBn: "",
   postalCode: "",
 };
 
@@ -74,7 +98,14 @@ export function StructuredAddressForm({
   }, [addressType]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Build detailed address from individual fields
-  const detailedAddress = buildDetailedAddress(house, road, block || null, floor || null, landmark || null, villageArea || null);
+  const detailedAddress = buildDetailedAddress(
+    house,
+    road,
+    block || null,
+    floor || null,
+    landmark || null,
+    villageArea || null,
+  );
 
   function validate(): boolean {
     const errs: Record<string, string> = {};
@@ -95,7 +126,8 @@ export function StructuredAddressForm({
     // or named roads. If BOTH are empty, Landmark becomes mandatory so the
     // courier still has something concrete to find the delivery point.
     if (!house.trim() && !road.trim() && !landmark.trim()) {
-      errs.landmark = "বাড়ি/রাস্তা না দিলে ল্যান্ডমার্ক আবশ্যক / Landmark is required when House & Road are empty";
+      errs.landmark =
+        "বাড়ি/রাস্তা না দিলে ল্যান্ডমার্ক আবশ্যক / Landmark is required when House & Road are empty";
     }
     if (!location.postalCode) errs.postalCode = "পোস্ট অফিস নির্বাচন করুন / Select a post office";
 
@@ -151,7 +183,9 @@ export function StructuredAddressForm({
                   >
                     {isSelected && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
                   </span>
-                  <span className={`text-sm ${isSelected ? "text-slate-800 font-medium" : "text-slate-500"}`}>
+                  <span
+                    className={`text-sm ${isSelected ? "text-slate-800 font-medium" : "text-slate-500"}`}
+                  >
                     {ADDRESS_TYPE_META[type].labelEn}
                   </span>
                 </button>
@@ -169,7 +203,9 @@ export function StructuredAddressForm({
             onClick={() => setIsDefault(!isDefault)}
             className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${isDefault ? "bg-orange-500" : "bg-slate-300"}`}
           >
-            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${isDefault ? "translate-x-5" : ""}`} />
+            <span
+              className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${isDefault ? "translate-x-5" : ""}`}
+            />
           </button>
         </div>
       </div>
@@ -235,7 +271,9 @@ export function StructuredAddressForm({
       <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
         <div className="flex items-center gap-2 mb-3">
           <MapPin className="w-4 h-4 text-orange-500" />
-          <span className="text-sm font-semibold text-slate-700">আপনার এলাকা নির্বাচন করুন / Select Your Location</span>
+          <span className="text-sm font-semibold text-slate-700">
+            আপনার এলাকা নির্বাচন করুন / Select Your Location
+          </span>
         </div>
         <BDLocationSelector
           value={location}
@@ -251,7 +289,8 @@ export function StructuredAddressForm({
       {/* Village / Area / Locality — manual entry */}
       <div>
         <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-          গ্রাম/এলাকা/লোকেশন / Village / Area / Locality <span className="text-slate-400">(optional)</span>
+          গ্রাম/এলাকা/লোকেশন / Village / Area / Locality{" "}
+          <span className="text-slate-400">(optional)</span>
         </label>
         <div className="relative">
           <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -274,8 +313,8 @@ export function StructuredAddressForm({
           </span>
         </div>
         <p className="text-xs text-slate-400 mb-3">
-          শহরে বাড়ি/রাস্তা নম্বর দিন। গ্রামে সেগুলো না থাকলে নিচের ল্যান্ডমার্ক ঘরে
-          পরিচিত কোনো জায়গার নাম দিন — যেমন মসজিদ, বাজার, স্কুল বা ব্রিজ।
+          শহরে বাড়ি/রাস্তা নম্বর দিন। গ্রামে সেগুলো না থাকলে নিচের ল্যান্ডমার্ক ঘরে পরিচিত কোনো
+          জায়গার নাম দিন — যেমন মসজিদ, বাজার, স্কুল বা ব্রিজ।
         </p>
 
         <div className="space-y-3">
@@ -286,7 +325,7 @@ export function StructuredAddressForm({
                 <MapPin className="w-3.5 h-3.5 text-orange-500" />
                 ল্যান্ডমার্ক / Landmark
               </span>
-              {(!house.trim() && !road.trim()) ? (
+              {!house.trim() && !road.trim() ? (
                 <span className="text-[10px] font-semibold text-red-500 shrink-0">
                   * গ্রামে আবশ্যক / Required
                 </span>
@@ -303,7 +342,8 @@ export function StructuredAddressForm({
             />
             {errors.landmark && <p className="text-xs text-red-500 mt-1">{errors.landmark}</p>}
             <p className="text-[10px] text-slate-400 mt-1.5">
-              গ্রামের ঠিকানার জন্য এটিই সবচেয়ে গুরুত্বপূর্ণ তথ্য — ডেলিভারি ম্যান এটি দিয়েই বাড়ি খুঁজে পাবে।
+              গ্রামের ঠিকানার জন্য এটিই সবচেয়ে গুরুত্বপূর্ণ তথ্য — ডেলিভারি ম্যান এটি দিয়েই বাড়ি
+              খুঁজে পাবে।
             </p>
           </div>
 

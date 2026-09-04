@@ -2,11 +2,7 @@ import { createFileRoute, useNavigate, useParams } from "@tanstack/react-router"
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ProductForm, parseCsv } from "@/components/seller/ProductForm";
-import {
-  getProductAdmin,
-  updateProductAdmin,
-  slugTaken,
-} from "@/services/firebase/adminProducts";
+import { getProductAdmin, updateProductAdmin, slugTaken } from "@/services/firebase/adminProducts";
 import { logActivity } from "@/services/firebase/adminLogs";
 import { useAuth } from "@/context/AuthContext";
 import { mapFirebaseError } from "@/utils/errors";
@@ -19,8 +15,8 @@ export const Route = createFileRoute("/_authenticated/admin/products/$id/edit")(
 });
 
 function EditProductAdmin() {
-
-  const { t } = useI18n();  const { user } = useAuth();
+  const { t } = useI18n();
+  const { user } = useAuth();
   const { id } = useParams({ from: "/_authenticated/admin/products/$id/edit" });
   const navigate = useNavigate();
   const [product, setProduct] = useState<Product | null>(null);
@@ -67,9 +63,7 @@ function EditProductAdmin() {
         onSubmit={async (v) => {
           try {
             const compareAt =
-              v.compareAtPrice === "" || v.compareAtPrice == null
-                ? null
-                : Number(v.compareAtPrice);
+              v.compareAtPrice === "" || v.compareAtPrice == null ? null : Number(v.compareAtPrice);
             if (v.slug !== product.slug && (await slugTaken(v.slug, product.id))) {
               throw new Error("A product with this slug already exists.");
             }
@@ -92,11 +86,7 @@ function EditProductAdmin() {
               featured: Boolean(v.featured),
               status: v.status,
             });
-            await logActivity(
-              { uid: user.uid, email: user.email },
-              "product.update",
-              product.id,
-            );
+            await logActivity({ uid: user.uid, email: user.email }, "product.update", product.id);
             toast.success(t("admin.productUpdated"));
             navigate({ to: "/admin/products" });
           } catch (err) {

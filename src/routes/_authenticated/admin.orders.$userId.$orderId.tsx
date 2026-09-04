@@ -1,7 +1,18 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { ArrowLeft } from "lucide-react";
+import {
+  ArrowLeft,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  Truck,
+  Package,
+  Home,
+  Bike,
+  PackageCheck,
+  RotateCcw,
+} from "lucide-react";
 import {
   cancelOrderAdmin,
   getAdminOrder,
@@ -14,12 +25,19 @@ import { formatPrice, formatDateTime } from "@/utils/format";
 import { mapFirebaseError } from "@/utils/errors";
 import type { Order, OrderStatus } from "@/types/commerce";
 import { useI18n } from "@/i18n";
+import {
+  getNextValidStatuses,
+  isValidTransition,
+  canCancel,
+  type TrackingOrderStatus,
+  STATUS_LABELS,
+} from "@/lib/tracking-utils";
 
 export const Route = createFileRoute("/_authenticated/admin/orders/$userId/$orderId")({
   component: OrderDetailAdmin,
 });
 
-const STATUSES: OrderStatus[] = [
+const STATUS_FLOW: OrderStatus[] = [
   "pending",
   "confirmed",
   "processing",
@@ -28,12 +46,23 @@ const STATUSES: OrderStatus[] = [
   "cancelled",
 ];
 
-function OrderDetailAdmin() {
+const STATUS_ICONS: Record<string, typeof Package> = {
+  pending: Clock,
+  confirmed: CheckCircle2,
+  processing: Package,
+  shipped: Truck,
+  delivered: Home,
+  cancelled: XCircle,
+};
 
-  const { t } = useI18n();  const { user } = useAuth();
-  const { userId, orderId } = useParams({
-    from: "/_authenticated/admin/orders/$userId/$orderId",
-  });
+function toTracking(s: OrderStatus): TrackingOrderStatus {
+  return s as TrackingOrderStatus;
+}
+
+function OrderDetailAdmin() {
+  const { t } = useI18n();
+  const { user } = useAuth();
+  const { userId, orderId } = useParams({ from: "/_authenticated/admin/orders/$userId/$orderId" });
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<OrderStatus>("pending");
@@ -50,15 +79,22 @@ function OrderDetailAdmin() {
       setLoading(false);
     }
   };
+
   useEffect(() => {
     void refresh();
   }, [userId, orderId]);
 
   const save = async () => {
     if (!user || !order) return;
+    // Validate transition
+    if (!isValidTransition(toTracking(order.status), toTracking(status))) {
+      toast.error(`Invalid transition: ${order.status} → ${status}`);
+      return;
+    }
+    // Confirm critical actions
+    if (status === "delivered" && !confirm("Mark this order as delivered?")) return;
     setSaving(true);
     try {
-      const idToken = await user.getIdToken();
       await updateOrderStatusAdmin(userId, orderId, status, note);
       await logActivity(
         { uid: user.uid, email: user.email },
@@ -78,6 +114,10 @@ function OrderDetailAdmin() {
 
   const cancel = async () => {
     if (!user) return;
+    if (!canCancel(toTracking(order?.status ?? "pending"))) {
+      toast.error("This order cannot be cancelled in its current state.");
+      return;
+    }
     const reason = prompt("Cancellation reason:") ?? "";
     if (!confirm("Cancel this order? This will reverse all seller settlements.")) return;
     setSaving(true);
@@ -97,7 +137,7 @@ function OrderDetailAdmin() {
   if (loading) {
     return (
       <div className="flex items-center gap-2 rounded-lg border bg-background p-8 text-sm text-muted-foreground">
-        <Spinner /> Loading order…
+        <Spinner /> Loading order...
       </div>
     );
   }
@@ -108,6 +148,11 @@ function OrderDetailAdmin() {
       </div>
     );
   }
+
+  const validNext = getNextValidStatuses(toTracking(order.status));
+  const validAdminNext = validNext.filter((s) =>
+    ["confirmed", "processing", "shipped", "delivered", "cancelled"].includes(s),
+  );
 
   return (
     <div className="space-y-6">
@@ -162,9 +207,7 @@ function OrderDetailAdmin() {
         </div>
         <div className="space-y-4">
           <div className="rounded-lg border bg-background p-4 text-sm">
-            <h3 className="mb-2 text-xs font-semibold uppercase text-muted-foreground">
-              Shipping
-            </h3>
+            <h3 className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Shipping</h3>
             <div className="font-medium">{order.shippingAddress.fullName}</div>
             <div>{order.shippingAddress.phone}</div>
             <div>{order.shippingAddress.addressLine}</div>
@@ -179,9 +222,7 @@ function OrderDetailAdmin() {
             )}
           </div>
           <div className="rounded-lg border bg-background p-4 text-sm">
-            <h3 className="mb-2 text-xs font-semibold uppercase text-muted-foreground">
-              Payment
-            </h3>
+            <h3 className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Payment</h3>
             <div className="capitalize">{order.payment.method.replace(/_/g, " ")}</div>
             <div className="text-xs text-muted-foreground">
               Status: <span className="capitalize">{order.payment.status}</span>
@@ -190,26 +231,41 @@ function OrderDetailAdmin() {
         </div>
       </div>
 
+      {/* Update Status */}
       <div className="rounded-lg border bg-background p-4">
         <h2 className="mb-3 text-sm font-semibold">{t("admin.updateStatus")}</h2>
-        <div className="flex flex-wrap gap-2">
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value as OrderStatus)}
-            className="rounded-md border bg-background px-3 py-2 text-sm"
-          >
-            {STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-          <input
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="Note (optional)"
-            className="flex-1 min-w-[200px] rounded-md border bg-background px-3 py-2 text-sm"
-          />
+        <div className="flex flex-wrap gap-2 mb-3">
+          {STATUS_FLOW.map((s) => {
+            const valid = isValidTransition(toTracking(order.status), toTracking(s));
+            return (
+              <button
+                key={s}
+                onClick={() => valid && setStatus(s)}
+                disabled={!valid}
+                className={`rounded-md border px-3 py-2 text-xs font-semibold transition-all ${
+                  !valid
+                    ? "border-slate-100 text-slate-300 cursor-not-allowed"
+                    : status === s
+                      ? s === "cancelled"
+                        ? "border-rose-500 bg-rose-50 text-rose-600"
+                        : "border-primary bg-primary/5 text-primary"
+                      : s === "cancelled"
+                        ? "border-slate-200 text-slate-500 hover:border-rose-200"
+                        : "border-slate-200 text-slate-500 hover:border-slate-300"
+                }`}
+              >
+                {STATUS_LABELS[toTracking(s)] ?? s}
+              </button>
+            );
+          })}
+        </div>
+        <input
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="Note (optional)"
+          className="w-full mb-2 min-w-[200px] rounded-md border bg-background px-3 py-2 text-sm"
+        />
+        <div className="flex gap-2">
           <button
             onClick={save}
             disabled={saving || status === order.status}
@@ -217,7 +273,7 @@ function OrderDetailAdmin() {
           >
             {saving ? "Saving..." : "Save"}
           </button>
-          {order.status !== "cancelled" && (
+          {order.status !== "cancelled" && canCancel(toTracking(order.status)) && (
             <button
               onClick={cancel}
               disabled={saving}
@@ -234,19 +290,36 @@ function OrderDetailAdmin() {
         )}
       </div>
 
+      {/* Tracking History */}
       <div className="rounded-lg border bg-background p-4">
         <h2 className="mb-3 text-sm font-semibold">{t("admin.tracking")}</h2>
-        <ol className="space-y-2 text-sm">
-          {order.tracking.map((t, i) => (
-            <li key={i} className="flex items-start gap-3">
-              <span className="mt-1 h-2 w-2 rounded-full bg-primary" />
-              <div>
-                <div className="font-medium capitalize">{t.status}</div>
-                <div className="text-xs text-muted-foreground">{t.note}</div>
-                <div className="text-xs text-muted-foreground">{formatDateTime(t.at)}</div>
-              </div>
-            </li>
-          ))}
+        <ol className="space-y-3 text-sm">
+          {order.tracking
+            .slice()
+            .reverse()
+            .map((t, i) => {
+              const Icon = STATUS_ICONS[t.status] ?? Clock;
+              return (
+                <li key={i} className="flex items-start gap-3">
+                  <div
+                    className={`mt-0.5 grid h-7 w-7 place-items-center rounded-full ${
+                      t.status === "cancelled"
+                        ? "bg-rose-100 text-rose-600"
+                        : t.status === "delivered"
+                          ? "bg-emerald-100 text-emerald-600"
+                          : "bg-blue-100 text-blue-600"
+                    }`}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-medium capitalize">{t.status.replace(/_/g, " ")}</div>
+                    <div className="text-xs text-muted-foreground">{t.note}</div>
+                    <div className="text-xs text-muted-foreground">{formatDateTime(t.at)}</div>
+                  </div>
+                </li>
+              );
+            })}
         </ol>
       </div>
     </div>

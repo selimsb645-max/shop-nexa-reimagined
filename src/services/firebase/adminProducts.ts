@@ -51,13 +51,13 @@ function toProduct(id: string, d: Record<string, unknown>): Product & { approved
 }
 
 export async function listAllProductsAdmin(): Promise<(Product & { approved: boolean })[]> {
-  const snap = await getDocs(
-    query(collection(getDb(), PRODUCTS), orderBy("createdAt", "desc")),
-  );
+  const snap = await getDocs(query(collection(getDb(), PRODUCTS), orderBy("createdAt", "desc")));
   return snap.docs.map((d) => toProduct(d.id, d.data()));
 }
 
-export async function getProductAdmin(id: string): Promise<(Product & { approved: boolean }) | null> {
+export async function getProductAdmin(
+  id: string,
+): Promise<(Product & { approved: boolean }) | null> {
   const snap = await getDoc(doc(getDb(), PRODUCTS, id));
   return snap.exists() ? toProduct(snap.id, snap.data()) : null;
 }

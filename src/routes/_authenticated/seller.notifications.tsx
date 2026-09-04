@@ -1,20 +1,22 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import {
-  Bell, CheckCheck, Loader, Inbox,
-} from "lucide-react";
+import { Bell, CheckCheck, Loader, Inbox } from "lucide-react";
 import { SellerGate } from "@/components/seller/SellerGate";
 import {
-  listNotifications, markNotificationRead, markAllNotificationsRead,
+  listNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
 } from "@/services/firebase/sellers";
 import {
-  NOTIFICATION_TYPE_CONFIG, type SellerNotification, type SellerNotificationType,
+  NOTIFICATION_TYPE_CONFIG,
+  type SellerNotification,
+  type SellerNotificationType,
 } from "@/types/seller";
 
 export const Route = createFileRoute("/_authenticated/seller/notifications")({
   ssr: false,
   component: NotificationCenter,
-  head: () => ({ meta: [{ title: "Notifications — Shop Nexa Seller" }] }),
+  head: () => ({ meta: [{ title: "Notifications — Aventa Shop Seller" }] }),
 });
 
 const FILTER_TABS: { key: SellerNotificationType | "all"; label: string }[] = [
@@ -43,23 +45,29 @@ function Notifs({ sellerId }: { sellerId: string }) {
       try {
         const list = await listNotifications(sellerId);
         if (!cancelled) setNotifs(list);
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
       if (!cancelled) setLoading(false);
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [sellerId]);
 
-  const filtered = filter === "all"
-    ? notifs
-    : notifs.filter((n) => {
-        if (filter === "withdrawal_approved") return n.type === "withdrawal_approved" || n.type === "withdrawal_rejected";
-        return n.type === filter;
-      });
+  const filtered =
+    filter === "all"
+      ? notifs
+      : notifs.filter((n) => {
+          if (filter === "withdrawal_approved")
+            return n.type === "withdrawal_approved" || n.type === "withdrawal_rejected";
+          return n.type === filter;
+        });
 
   const unreadCount = notifs.filter((n) => !n.read).length;
 
   const handleMarkRead = async (id: string) => {
-    setNotifs((prev) => prev.map((n) => n.id === id ? { ...n, read: true } : n));
+    setNotifs((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
     await markNotificationRead(sellerId, id);
   };
 
@@ -104,9 +112,7 @@ function Notifs({ sellerId }: { sellerId: string }) {
               </span>
             )}
           </h1>
-          <p className="text-sm text-slate-500 mt-0.5">
-            Stay updated on your store activity
-          </p>
+          <p className="text-sm text-slate-500 mt-0.5">Stay updated on your store activity</p>
         </div>
         {unreadCount > 0 && (
           <button
@@ -150,8 +156,10 @@ function Notifs({ sellerId }: { sellerId: string }) {
                   !n.read ? "bg-orange-50/30" : ""
                 }`}
               >
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-lg"
-                  style={{ background: `${config.color}15` }}>
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-lg"
+                  style={{ background: `${config.color}15` }}
+                >
                   {config.icon}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -162,8 +170,10 @@ function Notifs({ sellerId }: { sellerId: string }) {
                   <p className="text-sm text-slate-500 line-clamp-2">{n.message}</p>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-[11px] text-slate-400">{timeAgo(n.createdAt)}</span>
-                    <span className="text-[11px] px-1.5 py-0.5 rounded font-medium"
-                      style={{ background: `${config.color}15`, color: config.color }}>
+                    <span
+                      className="text-[11px] px-1.5 py-0.5 rounded font-medium"
+                      style={{ background: `${config.color}15`, color: config.color }}
+                    >
                       {config.label}
                     </span>
                     {n.link && (

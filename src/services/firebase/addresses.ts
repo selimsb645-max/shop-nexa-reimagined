@@ -49,11 +49,7 @@ export async function getDefaultAddress(uid: string): Promise<Address | null> {
 
 export type AddressInput = Omit<Address, "id" | "createdAt" | "updatedAt">;
 
-export async function saveAddress(
-  uid: string,
-  input: AddressInput,
-  id?: string,
-): Promise<string> {
+export async function saveAddress(uid: string, input: AddressInput, id?: string): Promise<string> {
   const db = getDb();
   const ref = id ? doc(db, "users", uid, "addresses", id) : doc(path(uid));
   const exists = id ? (await getDoc(ref)).exists() : false;

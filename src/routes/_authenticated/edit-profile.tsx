@@ -71,7 +71,6 @@ function EditProfilePage() {
 
   return (
     <ServicePageLayout title={t("editProfile.title")} subtitle={t("editProfile.subtitle")}>
-
       <div className="mx-auto max-w-2xl px-4 py-4 sm:px-6">
         {/* Avatar section */}
         <div className="mb-6 flex flex-col items-center gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
@@ -96,7 +95,13 @@ function EditProfilePage() {
             >
               {uploading ? <Spinner /> : <Upload className="h-4 w-4" strokeWidth={2.5} />}
             </button>
-            <input ref={fileRef} type="file" accept="image/*" onChange={onFile} className="hidden" />
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              onChange={onFile}
+              className="hidden"
+            />
           </div>
           <p className="text-xs text-gray-500">{t("editProfile.changePhoto")}</p>
         </div>
@@ -107,7 +112,9 @@ function EditProfilePage() {
           className="space-y-5 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm"
         >
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">{t("editProfile.displayName")}</label>
+            <label className="mb-1.5 block text-sm font-medium text-gray-700">
+              {t("editProfile.displayName")}
+            </label>
             <input
               {...register("displayName")}
               className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
@@ -119,7 +126,9 @@ function EditProfilePage() {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">{t("editProfile.emailLabel")}</label>
+            <label className="mb-1.5 block text-sm font-medium text-gray-700">
+              {t("editProfile.emailLabel")}
+            </label>
             <input
               value={user.email ?? ""}
               readOnly
@@ -129,7 +138,9 @@ function EditProfilePage() {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">{t("editProfile.accountType")}</label>
+            <label className="mb-1.5 block text-sm font-medium text-gray-700">
+              {t("editProfile.accountType")}
+            </label>
             <input
               value={profile?.role ?? "customer"}
               readOnly

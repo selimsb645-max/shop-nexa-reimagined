@@ -14,8 +14,8 @@ export const Route = createFileRoute("/_authenticated/admin/homepage")({
 });
 
 function HomepageAdmin() {
-
-  const { t } = useI18n();  const { user } = useAuth();
+  const { t } = useI18n();
+  const { user } = useAuth();
   const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -36,11 +36,7 @@ function HomepageAdmin() {
     setSaving(true);
     try {
       await saveSiteSettings({ homepage: settings.homepage });
-      await logActivity(
-        { uid: user.uid, email: user.email },
-        "settings.update",
-        "homepage",
-      );
+      await logActivity({ uid: user.uid, email: user.email }, "settings.update", "homepage");
       toast.success(t("admin.homepageSaved"));
     } catch (err) {
       toast.error(mapFirebaseError(err));

@@ -1,5 +1,5 @@
 /**
- * Notification Service for Shop Nexa
+ * Notification Service for Aventa Shop
  *
  * Provider abstraction for SMS, WhatsApp, and future channels.
  * Order status notifications dispatched through this service.
@@ -190,7 +190,7 @@ const templates: Record<OrderEvent, (p: NotificationPayload) => string> = {
   OUT_FOR_DELIVERY: (p) =>
     `Your order #${p.orderId.slice(0, 8)} is out for delivery. Please keep your phone available.`,
   ORDER_DELIVERED: (p) =>
-    `Your order #${p.orderId.slice(0, 8)} has been delivered. Thank you for shopping with Shop Nexa!`,
+    `Your order #${p.orderId.slice(0, 8)} has been delivered. Thank you for shopping with Aventa Shop!`,
   ORDER_CANCELLED: (p) =>
     `Your order #${p.orderId.slice(0, 8)} has been cancelled. Contact support for assistance.`,
 };

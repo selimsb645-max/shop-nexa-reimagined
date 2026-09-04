@@ -8,8 +8,8 @@ export const Route = createFileRoute("/_authenticated/admin")({
 });
 
 function AdminLayout() {
-
-  const { t } = useI18n();  return (
+  const { t } = useI18n();
+  return (
     <AdminGate>
       <AdminShell>
         <Outlet />

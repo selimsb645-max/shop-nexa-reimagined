@@ -11,9 +11,7 @@ import type { Product } from "@/types/commerce";
 import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/seller/analytics")({
-  component: () => (
-    <SellerGate>{(profile) => <AnalyticsPage sellerId={profile.uid} />}</SellerGate>
-  ),
+  component: () => <SellerGate>{(profile) => <AnalyticsPage sellerId={profile.uid} />}</SellerGate>,
 });
 
 function AnalyticsPage({ sellerId }: { sellerId: string }) {
@@ -50,10 +48,7 @@ function AnalyticsPage({ sellerId }: { sellerId: string }) {
     const inRange = orders.filter((o) => o.createdAt >= since && o.status !== "cancelled");
     const revenue = inRange.reduce((s, o) => s + o.subtotal, 0);
     const orderCount = inRange.length;
-    const itemsSold = inRange.reduce(
-      (s, o) => s + o.items.reduce((n, i) => n + i.quantity, 0),
-      0,
-    );
+    const itemsSold = inRange.reduce((s, o) => s + o.items.reduce((n, i) => n + i.quantity, 0), 0);
     const avgOrder = orderCount ? revenue / orderCount : 0;
 
     // Sales by day
@@ -92,9 +87,7 @@ function AnalyticsPage({ sellerId }: { sellerId: string }) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">{t("seller.analytics")}</h1>
-          <p className="text-sm text-muted-foreground">
-            Sales performance and product insights
-          </p>
+          <p className="text-sm text-muted-foreground">Sales performance and product insights</p>
         </div>
         <div className="flex rounded-md border bg-background p-1 text-sm">
           {[7, 30, 90].map((n) => (
@@ -118,10 +111,26 @@ function AnalyticsPage({ sellerId }: { sellerId: string }) {
       ) : (
         <>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <Stat icon={<DollarSign className="h-5 w-5" />} label="Revenue" value={formatPrice(stats.revenue)} />
-            <Stat icon={<ShoppingBag className="h-5 w-5" />} label="Orders" value={String(stats.orderCount)} />
-            <Stat icon={<Package className="h-5 w-5" />} label="Items sold" value={String(stats.itemsSold)} />
-            <Stat icon={<TrendingUp className="h-5 w-5" />} label="Avg. order" value={formatPrice(stats.avgOrder)} />
+            <Stat
+              icon={<DollarSign className="h-5 w-5" />}
+              label="Revenue"
+              value={formatPrice(stats.revenue)}
+            />
+            <Stat
+              icon={<ShoppingBag className="h-5 w-5" />}
+              label="Orders"
+              value={String(stats.orderCount)}
+            />
+            <Stat
+              icon={<Package className="h-5 w-5" />}
+              label="Items sold"
+              value={String(stats.itemsSold)}
+            />
+            <Stat
+              icon={<TrendingUp className="h-5 w-5" />}
+              label="Avg. order"
+              value={formatPrice(stats.avgOrder)}
+            />
           </div>
 
           <div className="rounded-lg border bg-background p-5">

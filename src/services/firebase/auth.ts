@@ -94,10 +94,7 @@ export async function verifyResetCode(code: string): Promise<string> {
  * Complete the password reset by confirming a new password with Firebase.
  * Throws on failure (e.g. weak password or invalid code).
  */
-export async function completePasswordReset(
-  code: string,
-  newPassword: string,
-): Promise<void> {
+export async function completePasswordReset(code: string, newPassword: string): Promise<void> {
   const auth = getFirebaseAuth();
   await confirmPasswordReset(auth, code, newPassword);
 }

@@ -156,11 +156,7 @@ export async function setProductStatus(
   await updateDoc(doc(getDb(), PRODUCTS, id), { status, updatedAt: serverTimestamp() });
 }
 
-export async function setProductStock(
-  sellerId: string,
-  id: string,
-  stock: number,
-): Promise<void> {
+export async function setProductStock(sellerId: string, id: string, stock: number): Promise<void> {
   const existing = await getSellerProduct(sellerId, id);
   if (!existing) throw new Error("Product not found.");
   await updateDoc(doc(getDb(), PRODUCTS, id), {

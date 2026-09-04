@@ -8,7 +8,6 @@ export const CASHBACK_RATE = 0.01; // 1% of order total credited to wallet
 export const POINTS_PER_CURRENCY = 1; // 1 point per 1 currency unit spent
 export const POINTS_PER_CURRENCY_REDEEM = 100; // 100 points = 1 currency unit
 
-
 function walletCol(uid: string) {
   return collection(getDb(), "users", uid, "walletTx");
 }
@@ -72,6 +71,3 @@ export async function redeemPoints(_uid: string, points: number): Promise<number
   const result = await redeemRewardPoints({ data: { idToken, points } });
   return result.credit;
 }
-
-
-

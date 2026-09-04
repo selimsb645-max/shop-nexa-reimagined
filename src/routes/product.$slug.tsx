@@ -53,7 +53,13 @@ type ProductWithExtras = Product & {
   freeShipping?: boolean;
   shortDescription?: string;
   soldCount?: number;
-  seller?: { name: string; rating: number; responseTime: string; shipOnTime?: number; storeSlug?: string };
+  seller?: {
+    name: string;
+    rating: number;
+    responseTime: string;
+    shipOnTime?: number;
+    storeSlug?: string;
+  };
   discount?: number;
   inStock?: boolean;
   imageUrl?: string;
@@ -70,10 +76,6 @@ export const Route = createFileRoute("/product/$slug")({
 // ----------------------------------------------------------------------
 // Fallback / Mock Data Generator
 // ----------------------------------------------------------------------
-
-
-
-
 
 // ----------------------------------------------------------------------
 // Main Product Detail Page Component
@@ -113,7 +115,9 @@ export function ProductDetailPage() {
         const all = await listProducts();
         const matched = all.find((p) => p.slug === slug || p.id === slug);
         if (matched) return matched;
-      } catch (_) { /* ignore */ }
+      } catch (_) {
+        /* ignore */
+      }
 
       // Product not found - return null so UI shows proper "not found" state
       return null;
@@ -131,7 +135,9 @@ export function ProductDetailPage() {
         try {
           const list = await listProducts({ categorySlug: product?.categorySlug });
           if (list && list.length > 0) return list;
-        } catch (_) { /* ignore */ }
+        } catch (_) {
+          /* ignore */
+        }
       }
       return [] as Product[];
     },
@@ -143,7 +149,9 @@ export function ProductDetailPage() {
   const [selectedColor, setSelectedColor] = useState<string>("");
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [quantity, setQuantity] = useState<number>(1);
-  const [activeTab, setActiveTab] = useState<"description" | "specifications" | "reviews">("description");
+  const [activeTab, setActiveTab] = useState<"description" | "specifications" | "reviews">(
+    "description",
+  );
 
   // Image Zoom State
   const [isZoomed, setIsZoomed] = useState<boolean>(false);
@@ -167,7 +175,9 @@ export function ProductDetailPage() {
         if (!cancelled) setUserReviews([]);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [product?.id]);
   const [newComment, setNewComment] = useState<string>("");
   const [newTitle, setNewTitle] = useState<string>("");
@@ -191,13 +201,14 @@ export function ProductDetailPage() {
   const images = useMemo(() => {
     if (!product) return [];
     if (Array.isArray(product.images) && product.images.length > 0) {
-      return product.images.map((img) =>
-        typeof img === "string" ? img : ""
-      );
+      return product.images.map((img) => (typeof img === "string" ? img : ""));
     }
     if ((product as ProductWithExtras).imageUrl) return [(product as ProductWithExtras).imageUrl!];
-    if ((product as ProductWithExtras).thumbnail) return [(product as ProductWithExtras).thumbnail!];
-    return ["data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MDAgNjAwIj48cmVjdCB3aWR0aD0iNjAwIiBoZWlnaHQ9IjYwMCIgZmlsbD0iI2YzZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIyMCIgZmlsbD0iIzljYTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPlNob3AgTmV4YTwvdGV4dD48L3N2Zz4="];
+    if ((product as ProductWithExtras).thumbnail)
+      return [(product as ProductWithExtras).thumbnail!];
+    return [
+      "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MDAgNjAwIj48cmVjdCB3aWR0aD0iNjAwIiBoZWlnaHQ9IjYwMCIgZmlsbD0iI2YzZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIyMCIgZmlsbD0iIzljYTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPlNob3AgTmV4YTwvdGV4dD48L3N2Zz4=",
+    ];
   }, [product]);
 
   // Wishlist Check & Handler
@@ -214,11 +225,7 @@ export function ProductDetailPage() {
     if (typeof wishlistContext?.toggle === "function") {
       wishlistContext.toggle(product as any);
     }
-    toast.success(
-      isWishlisted
-        ? "Removed from wishlist"
-        : "Added to your Shop Nexa wishlist!"
-    );
+    toast.success(isWishlisted ? "Removed from wishlist" : "Added to your Aventa Shop wishlist!");
   };
 
   // Add To Cart Handler
@@ -238,18 +245,16 @@ export function ProductDetailPage() {
         cartContext.add(product as any, quantity);
       }
 
-      toast.success(
-        `Added ${quantity}x ${product.title || "item"} to cart!`,
-        {
-          description: selectedColor || selectedSize ? `Variant: ${selectedColor} ${selectedSize}` : undefined,
-          action: {
-            label: "View Cart",
-            onClick: () => navigate({ to: "/cart" }),
-          },
-        }
-      );
+      toast.success(`Added ${quantity}x ${product.title || "item"} to cart!`, {
+        description:
+          selectedColor || selectedSize ? `Variant: ${selectedColor} ${selectedSize}` : undefined,
+        action: {
+          label: "View Cart",
+          onClick: () => navigate({ to: "/cart" }),
+        },
+      });
     },
-    [cartContext, product, quantity, selectedColor, selectedSize, navigate]
+    [cartContext, product, quantity, selectedColor, selectedSize, navigate],
   );
 
   // Buy Now Handler
@@ -285,7 +290,7 @@ export function ProductDetailPage() {
 
   const handleShareWhatsApp = () => {
     const url = encodeURIComponent(globalThis.location.href);
-    const text = encodeURIComponent(`Check out ${product?.title} on Shop Nexa! `);
+    const text = encodeURIComponent(`Check out ${product?.title} on Aventa Shop! `);
     globalThis.open(`https://api.whatsapp.com/send?text=${text}${url}`, "_blank");
   };
 
@@ -309,7 +314,7 @@ export function ProductDetailPage() {
       await upsertReview({
         productId: product?.id ?? "",
         userId: user?.uid ?? "",
-        userName: user?.displayName || user?.email?.split("@")[0] || "Verified Nexa Buyer",
+        userName: user?.displayName || user?.email?.split("@")[0] || "Verified Buyer",
         userPhoto: user?.photoURL || null,
         rating: newRating,
         title: newTitle || "Verified Purchase Review",
@@ -327,7 +332,6 @@ export function ProductDetailPage() {
       setIsSubmittingReview(false);
     }
   };
-
 
   // Calculations
   const price = product?.price ?? 0;
@@ -398,7 +402,8 @@ export function ProductDetailPage() {
           </div>
           <h1 className="text-2xl font-bold text-[#1a1f3a] mb-2">Product Not Found</h1>
           <p className="text-slate-500 max-w-md mb-6">
-            The product you are looking for might have been removed, renamed, or is temporarily unavailable on Shop Nexa.
+            The product you are looking for might have been removed, renamed, or is temporarily
+            unavailable on Aventa Shop.
           </p>
           <div className="flex gap-4">
             <Link
@@ -424,7 +429,7 @@ export function ProductDetailPage() {
 
   // Seller Details Safe Defaults
   const sellerInfo = (product as ProductWithExtras).seller || {
-    name: (product as ProductWithExtras).brand || "Shop Nexa Verified Seller",
+    name: (product as ProductWithExtras).brand || "Aventa Shop Verified Seller",
     rating: 96,
     responseTime: "< 1 Hour",
     shipOnTime: 99,
@@ -465,7 +470,6 @@ export function ProductDetailPage() {
         {/* TWO COLUMN PRODUCT OVERVIEW CARD */}
         <div className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-slate-200/80 mb-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
-            
             {/* LEFT COLUMN: Image Gallery + Zoom + Share */}
             <div className="lg:col-span-5 flex flex-col">
               {/* Main Image Viewport with Hover Zoom */}
@@ -584,7 +588,7 @@ export function ProductDetailPage() {
                 {/* Brand / Store Tag */}
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-xs font-semibold uppercase tracking-wider text-[#f97316] bg-orange-50 px-2.5 py-0.5 rounded-full border border-orange-100">
-                    {(product as ProductWithExtras).brand || "Shop Nexa Exclusive"}
+                    {(product as ProductWithExtras).brand || "Aventa Shop Exclusive"}
                   </span>
                   {(product as ProductWithExtras).inStock !== false && (
                     <span className="text-xs text-emerald-600 font-medium flex items-center gap-1">
@@ -603,9 +607,7 @@ export function ProductDetailPage() {
                 <div className="flex flex-wrap items-center gap-3 text-xs md:text-sm mb-4 pb-4 border-b border-slate-100">
                   <div className="flex items-center gap-1 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
                     <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
-                    <span className="font-bold text-slate-800">
-                      {product.rating ?? 4.8}
-                    </span>
+                    <span className="font-bold text-slate-800">{product.rating ?? 4.8}</span>
                     <span className="text-slate-400">/5</span>
                   </div>
 
@@ -655,21 +657,24 @@ export function ProductDetailPage() {
                   </p>
                 )}
 
-                {(product as ProductWithExtras).features && (product as ProductWithExtras).features!.length > 0 && (
-                  <div className="mb-6">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
-                      Key Highlights
-                    </h4>
-                    <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs md:text-sm text-slate-700">
-                      {(product as ProductWithExtras).features!.map((feat: string, idx: number) => (
-                        <li key={idx} className="flex items-start gap-2">
-                          <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                          <span>{feat}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                {(product as ProductWithExtras).features &&
+                  (product as ProductWithExtras).features!.length > 0 && (
+                    <div className="mb-6">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                        Key Highlights
+                      </h4>
+                      <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs md:text-sm text-slate-700">
+                        {(product as ProductWithExtras).features!.map(
+                          (feat: string, idx: number) => (
+                            <li key={idx} className="flex items-start gap-2">
+                              <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                              <span>{feat}</span>
+                            </li>
+                          ),
+                        )}
+                      </ul>
+                    </div>
+                  )}
 
                 {/* COLOR VARIANT SELECTOR */}
                 {product.colors && product.colors.length > 0 && (
@@ -748,9 +753,7 @@ export function ProductDetailPage() {
                     </button>
                   </div>
                   {product.stock && (
-                    <span className="text-xs text-slate-400">
-                      ({product.stock} available)
-                    </span>
+                    <span className="text-xs text-slate-400">({product.stock} available)</span>
                   )}
                 </div>
 
@@ -781,36 +784,24 @@ export function ProductDetailPage() {
                 <div className="flex items-start gap-2.5">
                   <Truck className="w-5 h-5 text-[#f97316] shrink-0 mt-0.5" />
                   <div>
-                    <h5 className="text-xs font-bold text-slate-800">
-                      Fast Delivery
-                    </h5>
-                    <p className="text-[11px] text-slate-500">
-                      2 - 4 Days • Cash on Delivery
-                    </p>
+                    <h5 className="text-xs font-bold text-slate-800">Fast Delivery</h5>
+                    <p className="text-[11px] text-slate-500">2 - 4 Days • Cash on Delivery</p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-2.5">
                   <RotateCcw className="w-5 h-5 text-[#f97316] shrink-0 mt-0.5" />
                   <div>
-                    <h5 className="text-xs font-bold text-slate-800">
-                      7 Days Return
-                    </h5>
-                    <p className="text-[11px] text-slate-500">
-                      Easy change of mind returns
-                    </p>
+                    <h5 className="text-xs font-bold text-slate-800">7 Days Return</h5>
+                    <p className="text-[11px] text-slate-500">Easy change of mind returns</p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-2.5">
                   <ShieldCheck className="w-5 h-5 text-[#f97316] shrink-0 mt-0.5" />
                   <div>
-                    <h5 className="text-xs font-bold text-slate-800">
-                      100% Authentic
-                    </h5>
-                    <p className="text-[11px] text-slate-500">
-                      Warranty & Verified Genuine
-                    </p>
+                    <h5 className="text-xs font-bold text-slate-800">100% Authentic</h5>
+                    <p className="text-[11px] text-slate-500">Warranty & Verified Genuine</p>
                   </div>
                 </div>
               </div>
@@ -840,13 +831,15 @@ export function ProductDetailPage() {
                   Visit Store
                 </Link>
               </div>
-
             </div>
           </div>
         </div>
 
         {/* FULL WIDTH DETAILS TABBED SECTION */}
-        <div id="reviews" className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-slate-200/80 mb-10">
+        <div
+          id="reviews"
+          className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-slate-200/80 mb-10"
+        >
           {/* TAB HEADERS */}
           <div className="flex border-b border-slate-200 mb-6 overflow-x-auto scrollbar-none">
             <button
@@ -886,23 +879,24 @@ export function ProductDetailPage() {
             <div className="prose max-w-none text-slate-700 text-sm md:text-base leading-relaxed space-y-4">
               <p>{product.description}</p>
 
-              {(product as ProductWithExtras).features && (product as ProductWithExtras).features!.length > 0 && (
-                <div className="mt-6 bg-slate-50 p-5 rounded-2xl border border-slate-100">
-                  <h3 className="text-base font-bold text-[#1a1f3a] mb-3">
-                    Product Highlights & Benefits
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {(product as ProductWithExtras).features!.map((feat: string, i: number) => (
-                      <div key={i} className="flex items-start gap-2.5">
-                        <span className="w-5 h-5 rounded-full bg-orange-100 text-[#f97316] flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
-                          ✓
-                        </span>
-                        <span className="text-sm text-slate-700">{feat}</span>
-                      </div>
-                    ))}
+              {(product as ProductWithExtras).features &&
+                (product as ProductWithExtras).features!.length > 0 && (
+                  <div className="mt-6 bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                    <h3 className="text-base font-bold text-[#1a1f3a] mb-3">
+                      Product Highlights & Benefits
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {(product as ProductWithExtras).features!.map((feat: string, i: number) => (
+                        <div key={i} className="flex items-start gap-2.5">
+                          <span className="w-5 h-5 rounded-full bg-orange-100 text-[#f97316] flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
+                            ✓
+                          </span>
+                          <span className="text-sm text-slate-700">{feat}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
             </div>
           )}
 
@@ -911,17 +905,22 @@ export function ProductDetailPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm border-collapse">
                 <tbody>
-                  {(product.specifications || [
-                    { name: "Brand", value: (product as ProductWithExtras).brand || "Shop Nexa" },
-                    { name: "SKU", value: product.id },
-                    { name: "Category", value: product.categorySlug || "General" },
-                    { name: "In Stock", value: (product as ProductWithExtras).inStock ? "Yes" : "No" },
-                    { name: "Warranty", value: "1 Year Official Warranty" },
-                  ]).map((spec: { name: string; value: string | undefined }, idx: number) => (
-                    <tr
-                      key={idx}
-                      className={idx % 2 === 0 ? "bg-slate-50" : "bg-white"}
-                    >
+                  {(
+                    product.specifications || [
+                      {
+                        name: "Brand",
+                        value: (product as ProductWithExtras).brand || "Aventa Shop",
+                      },
+                      { name: "SKU", value: product.id },
+                      { name: "Category", value: product.categorySlug || "General" },
+                      {
+                        name: "In Stock",
+                        value: (product as ProductWithExtras).inStock ? "Yes" : "No",
+                      },
+                      { name: "Warranty", value: "1 Year Official Warranty" },
+                    ]
+                  ).map((spec: { name: string; value: string | undefined }, idx: number) => (
+                    <tr key={idx} className={idx % 2 === 0 ? "bg-slate-50" : "bg-white"}>
                       <td className="py-3 px-4 font-semibold text-slate-600 w-1/3 border-b border-slate-100">
                         {spec.name}
                       </td>
@@ -980,9 +979,7 @@ export function ProductDetailPage() {
                           style={{ width: `${row.pct}%` }}
                         />
                       </div>
-                      <span className="w-8 text-right text-slate-400 font-medium">
-                        {row.pct}%
-                      </span>
+                      <span className="w-8 text-right text-slate-400 font-medium">{row.pct}%</span>
                     </div>
                   ))}
                 </div>
@@ -1009,9 +1006,7 @@ export function ProductDetailPage() {
                       >
                         <Star
                           className={`w-6 h-6 ${
-                            star <= newRating
-                              ? "text-amber-400 fill-amber-400"
-                              : "text-slate-300"
+                            star <= newRating ? "text-amber-400 fill-amber-400" : "text-slate-300"
                           }`}
                         />
                       </button>
@@ -1055,7 +1050,10 @@ export function ProductDetailPage() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <img
-                          src={rev.userPhoto || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80"}
+                          src={
+                            rev.userPhoto ||
+                            "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80"
+                          }
                           alt={rev.userName}
                           className="w-9 h-9 rounded-full object-cover border border-slate-200"
                         />
@@ -1069,7 +1067,9 @@ export function ProductDetailPage() {
                             )}
                           </h5>
                           <span className="text-[11px] text-slate-400">
-                            {rev.createdAt ? new Date(rev.createdAt).toISOString().split("T")[0] : ""}
+                            {rev.createdAt
+                              ? new Date(rev.createdAt).toISOString().split("T")[0]
+                              : ""}
                           </span>
                         </div>
                       </div>
@@ -1079,9 +1079,7 @@ export function ProductDetailPage() {
                           <Star
                             key={s}
                             className={`w-3.5 h-3.5 ${
-                              s <= rev.rating
-                                ? "text-amber-400 fill-amber-400"
-                                : "text-slate-200"
+                              s <= rev.rating ? "text-amber-400 fill-amber-400" : "text-slate-200"
                             }`}
                           />
                         ))}
@@ -1089,9 +1087,7 @@ export function ProductDetailPage() {
                     </div>
 
                     {rev.title && (
-                      <h6 className="text-xs md:text-sm font-bold text-slate-800">
-                        {rev.title}
-                      </h6>
+                      <h6 className="text-xs md:text-sm font-bold text-slate-800">{rev.title}</h6>
                     )}
 
                     <p className="text-xs md:text-sm text-slate-600 leading-relaxed">
@@ -1100,7 +1096,8 @@ export function ProductDetailPage() {
 
                     <div className="pt-2 flex items-center gap-4 text-xs text-slate-400">
                       <button className="flex items-center gap-1 hover:text-[#f97316] transition">
-                        <ThumbsUp className="w-3.5 h-3.5" /> Helpful ({((rev as unknown) as { helpfulCount?: number }).helpfulCount || 0})
+                        <ThumbsUp className="w-3.5 h-3.5" /> Helpful (
+                        {(rev as unknown as { helpfulCount?: number }).helpfulCount || 0})
                       </button>
                     </div>
                   </div>
@@ -1154,11 +1151,9 @@ export function ProductDetailPage() {
           </h3>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
-            {relatedProducts.map(
-              (p) => (
-                <ProductCard key={p.id} product={p as Product} />
-              )
-            )}
+            {relatedProducts.map((p) => (
+              <ProductCard key={p.id} product={p as Product} />
+            ))}
           </div>
         </div>
       </main>

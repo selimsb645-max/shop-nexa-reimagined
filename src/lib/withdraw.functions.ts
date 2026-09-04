@@ -50,12 +50,8 @@ export const processWithdrawal = createServerFn({ method: "POST" })
 
     // TODO: verify uid has finance.withdrawals.process permission
     // For now, verify the user is an admin by checking their role
-    const token = await import("./firebase-admin.server").then((m) =>
-      m.getAccessToken(),
-    );
-    const projectId = await import("./firebase-admin.server").then((m) =>
-      m.getProjectId(),
-    );
+    const token = await import("./firebase-admin.server").then((m) => m.getAccessToken());
+    const projectId = await import("./firebase-admin.server").then((m) => m.getProjectId());
     const userRes = await fetch(
       `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${encodeURIComponent(uid)}`,
       { headers: { authorization: `Bearer ${token}` } },

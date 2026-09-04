@@ -1,5 +1,5 @@
 /**
- * Supported languages for Shop Nexa.
+ * Supported languages for Aventa Shop.
  * To add a new language, add it here and create a translation file in /src/i18n/locales/.
  */
 export type Locale = "en" | "bn";
@@ -521,7 +521,7 @@ export interface TranslationKeys {
   "settings.legal": string;
   "settings.termsConditions": string;
   "settings.privacyPolicy": string;
-  "settings.aboutShopNexa": string;
+  "settings.aboutShop": string;
   "settings.aboutHint": string;
 
   // Device info

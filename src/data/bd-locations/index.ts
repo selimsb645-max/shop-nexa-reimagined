@@ -19,7 +19,8 @@ export { unions, unionCount, type BDUnion };
 export { postOffices, postOfficeCount, type BDPostOffice };
 
 export const DATASET_VERSION = "1.0.0";
-export const DATASET_SOURCE = "nuhil/bangladesh-geocode + TanjidulIslamToha/bangladesh-postal-codes-database";
+export const DATASET_SOURCE =
+  "nuhil/bangladesh-geocode + TanjidulIslamToha/bangladesh-postal-codes-database";
 export const DATASET_SOURCE_URL = "https://github.com/nuhil/bangladesh-geocode";
 
 // ── Lookup helpers ──
@@ -61,7 +62,7 @@ export function getPostOfficesByThana(districtEn: string, thanaEn: string): BDPo
   return postOffices.filter(
     (p) =>
       p.districtEn.toLowerCase() === districtEn.toLowerCase() &&
-      p.thanaEn.toLowerCase() === thanaEn.toLowerCase()
+      p.thanaEn.toLowerCase() === thanaEn.toLowerCase(),
   );
 }
 
@@ -73,15 +74,12 @@ export function getPostOfficeByCode(postcode: string): BDPostOffice | undefined 
 // Upazilas and Thanas are NOT always the same entity. Some areas have
 // a Police Station (Thana) that differs from the administrative Upazila.
 // We cross-reference by name to find applicable post offices.
-export function getPostOfficesForUpazila(
-  districtEn: string,
-  upazilaEn: string
-): BDPostOffice[] {
+export function getPostOfficesForUpazila(districtEn: string, upazilaEn: string): BDPostOffice[] {
   // First try exact thana match with upazila name
   const exact = postOffices.filter(
     (p) =>
       p.districtEn.toLowerCase() === districtEn.toLowerCase() &&
-      p.thanaEn.toLowerCase() === upazilaEn.toLowerCase()
+      p.thanaEn.toLowerCase() === upazilaEn.toLowerCase(),
   );
   if (exact.length > 0) return exact;
 

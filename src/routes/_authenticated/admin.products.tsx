@@ -27,8 +27,8 @@ export const Route = createFileRoute("/_authenticated/admin/products")({
 type Row = Product & { approved: boolean };
 
 function ProductsAdmin() {
-
-  const { t } = useI18n();  const { user } = useAuth();
+  const { t } = useI18n();
+  const { user } = useAuth();
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
@@ -36,7 +36,17 @@ function ProductsAdmin() {
   const [approvalFilter, setApprovalFilter] = useState<"" | "approved" | "pending">("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkMode, setBulkMode] = useState<
-    "" | "price_set" | "price_inc_pct" | "price_dec_pct" | "stock_set" | "publish" | "draft" | "archive" | "approve" | "unapprove" | "delete"
+    | ""
+    | "price_set"
+    | "price_inc_pct"
+    | "price_dec_pct"
+    | "stock_set"
+    | "publish"
+    | "draft"
+    | "archive"
+    | "approve"
+    | "unapprove"
+    | "delete"
   >("");
   const [bulkValue, setBulkValue] = useState<string>("");
 
@@ -339,11 +349,7 @@ function ProductsAdmin() {
                         title={p.approved ? "Revoke approval" : "Approve"}
                         className="rounded-md border p-1.5 hover:bg-muted"
                       >
-                        {p.approved ? (
-                          <X className="h-4 w-4" />
-                        ) : (
-                          <Check className="h-4 w-4" />
-                        )}
+                        {p.approved ? <X className="h-4 w-4" /> : <Check className="h-4 w-4" />}
                       </button>
                       <Link
                         to="/admin/products/$id/edit"

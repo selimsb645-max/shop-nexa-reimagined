@@ -13,10 +13,7 @@ import type { Review } from "@/types/commerce";
 
 export async function listReviews(productId: string): Promise<Review[]> {
   const snap = await getDocs(
-    query(
-      collection(getDb(), "products", productId, "reviews"),
-      orderBy("createdAt", "desc"),
-    ),
+    query(collection(getDb(), "products", productId, "reviews"), orderBy("createdAt", "desc")),
   );
   return snap.docs.map((d) => {
     const data = d.data() as Record<string, unknown>;
@@ -32,7 +29,8 @@ export async function listReviews(productId: string): Promise<Review[]> {
       createdAt:
         typeof data.createdAt === "number"
           ? data.createdAt
-          : (data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? Date.now(),
+          : ((data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ??
+            Date.now()),
     };
   });
 }
@@ -104,6 +102,6 @@ export async function getMyReview(productId: string, userId: string): Promise<Re
     createdAt:
       typeof data.createdAt === "number"
         ? data.createdAt
-        : (data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? Date.now(),
+        : ((data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? Date.now()),
   };
 }

@@ -27,7 +27,6 @@ export function LoginForm() {
     if (!loading && user) navigate({ to: redirectTo, replace: true });
   }, [loading, user, navigate]);
 
-
   const onSubmit = async (values: LoginValues) => {
     if (!firebaseConfigured) {
       toast.error("Firebase is not configured yet. Add your .env keys.");
@@ -61,7 +60,6 @@ export function LoginForm() {
     }
   };
 
-
   return (
     <div className="space-y-4">
       <GoogleButton onClick={onGoogle} loading={googleLoading} />
@@ -94,7 +92,9 @@ export function LoginForm() {
             {...register("password")}
             className="w-full rounded-md border px-3 py-2.5 text-sm outline-none focus:border-primary"
           />
-          {errors.password && <p className="mt-1 text-xs text-destructive">{errors.password.message}</p>}
+          {errors.password && (
+            <p className="mt-1 text-xs text-destructive">{errors.password.message}</p>
+          )}
         </div>
         <button
           type="submit"

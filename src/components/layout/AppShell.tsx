@@ -40,8 +40,8 @@ export function AppShell({ children }: { children: ReactNode }) {
               <ShoppingCart className="h-5 w-5" />
             </div>
             <span className="text-xl font-bold">
-              <span className="text-primary">Shop</span>
-              <span className="text-accent">Nexa</span>
+              <span className="text-primary">Aventa</span>
+              <span className="text-accent">Shop</span>
             </span>
           </Link>
           <div className="ml-auto flex items-center gap-3 text-sm">
@@ -64,7 +64,11 @@ export function AppShell({ children }: { children: ReactNode }) {
             <NavItem to="/addresses" icon={<MapPin className="h-4 w-4" />} label="Address Book" />
             <NavItem to="/orders" icon={<Package className="h-4 w-4" />} label="Orders" />
             <NavItem to="/wishlist" icon={<Heart className="h-4 w-4" />} label="Wishlist" />
-            <NavItem to="/notifications" icon={<Bell className="h-4 w-4" />} label="Notifications" />
+            <NavItem
+              to="/notifications"
+              icon={<Bell className="h-4 w-4" />}
+              label="Notifications"
+            />
             <NavItem to="/messages" icon={<MessageCircle className="h-4 w-4" />} label="Inbox" />
             <NavItem to="/coupons" icon={<TicketPercent className="h-4 w-4" />} label="Coupons" />
             <NavItem to="/wallet" icon={<Wallet className="h-4 w-4" />} label="Wallet" />
@@ -72,7 +76,6 @@ export function AppShell({ children }: { children: ReactNode }) {
             <NavItem to="/referral" icon={<UserPlus className="h-4 w-4" />} label="Refer & Earn" />
             <NavItem to="/support" icon={<LifeBuoy className="h-4 w-4" />} label="Support" />
             <NavItem to="/settings" icon={<Settings className="h-4 w-4" />} label="Settings" />
-
           </nav>
         </aside>
         <main>{children}</main>

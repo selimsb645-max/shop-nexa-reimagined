@@ -10,11 +10,7 @@ import {
 } from "firebase/firestore";
 import { getDb, firebaseConfigured } from "./config";
 import { getSellerWalletBalance } from "./sellerWallet";
-import type {
-  WithdrawalMethod,
-  WithdrawalRequest,
-  WithdrawalStatus,
-} from "@/types/seller";
+import type { WithdrawalMethod, WithdrawalRequest, WithdrawalStatus } from "@/types/seller";
 
 const SELLERS = "sellers";
 const WITHDRAWALS = "withdrawals";
@@ -38,12 +34,12 @@ function mapWithdrawal(id: string, d: Record<string, unknown>): WithdrawalReques
     requestedAt:
       typeof r.requestedAt === "number"
         ? r.requestedAt
-        : ((r.requestedAt as unknown) as { toMillis?: () => number })?.toMillis?.() ?? nowMs(),
+        : ((r.requestedAt as unknown as { toMillis?: () => number })?.toMillis?.() ?? nowMs()),
     processedAt:
       r.processedAt != null
         ? typeof r.processedAt === "number"
           ? r.processedAt
-          : (r.processedAt as { toMillis?: () => number })?.toMillis?.() ?? null
+          : ((r.processedAt as { toMillis?: () => number })?.toMillis?.() ?? null)
         : null,
     note: (r.note as string | null) ?? null,
     txId: (r.txId as string | null) ?? null,
@@ -53,16 +49,10 @@ function mapWithdrawal(id: string, d: Record<string, unknown>): WithdrawalReques
 /**
  * List all withdrawal requests for a seller.
  */
-export async function listWithdrawals(
-  sellerId: string,
-  max = 100,
-): Promise<WithdrawalRequest[]> {
+export async function listWithdrawals(sellerId: string, max = 100): Promise<WithdrawalRequest[]> {
   if (!firebaseConfigured) return [];
   const snap = await getDocs(
-    query(
-      collection(getDb(), SELLERS, sellerId, WITHDRAWALS),
-      orderBy("requestedAt", "desc"),
-    ),
+    query(collection(getDb(), SELLERS, sellerId, WITHDRAWALS), orderBy("requestedAt", "desc")),
   );
   return snap.docs.slice(0, max).map((d) => mapWithdrawal(d.id, d.data()));
 }
@@ -97,26 +87,21 @@ export async function requestWithdrawal(
 
   const balance = await getSellerWalletBalance(sellerId);
   if (amount > balance) {
-    throw new Error(
-      `Insufficient balance. Available: $${balance.toFixed(2)}`,
-    );
+    throw new Error(`Insufficient balance. Available: $${balance.toFixed(2)}`);
   }
 
   // Create withdrawal request
-  const ref = await addDoc(
-    collection(getDb(), SELLERS, sellerId, WITHDRAWALS),
-    {
-      sellerId,
-      amount,
-      method,
-      destination,
-      status: "pending",
-      requestedAt: serverTimestamp(),
-      processedAt: null,
-      note: null,
-      txId: null,
-    },
-  );
+  const ref = await addDoc(collection(getDb(), SELLERS, sellerId, WITHDRAWALS), {
+    sellerId,
+    amount,
+    method,
+    destination,
+    status: "pending",
+    requestedAt: serverTimestamp(),
+    processedAt: null,
+    note: null,
+    txId: null,
+  });
 
   // Create pending walletTx (debit)
   await addDoc(collection(getDb(), SELLERS, sellerId, WALLET_TX), {

@@ -27,8 +27,7 @@ function mapUser(id: string, d: Record<string, unknown>): AdminUserRow {
     adminRole: (d.adminRole as AdminRole | null) ?? null,
     emailVerified: Boolean(d.emailVerified),
     blocked: Boolean(d.blocked),
-    createdAt:
-      typeof created === "number" ? created : created?.toMillis?.() ?? Date.now(),
+    createdAt: typeof created === "number" ? created : (created?.toMillis?.() ?? Date.now()),
     updatedAt: Date.now(),
   };
 }

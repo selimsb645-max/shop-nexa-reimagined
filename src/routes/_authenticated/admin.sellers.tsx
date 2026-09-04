@@ -15,8 +15,8 @@ export const Route = createFileRoute("/_authenticated/admin/sellers")({
 });
 
 function SellersAdmin() {
-
-  const { t } = useI18n();  const { user } = useAuth();
+  const { t } = useI18n();
+  const { user } = useAuth();
   const [sellers, setSellers] = useState<SellerProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
@@ -38,8 +38,7 @@ function SellersAdmin() {
     const term = q.trim().toLowerCase();
     return sellers.filter((s) => {
       if (filter && s.status !== filter) return false;
-      if (term && !`${s.shopName} ${s.email} ${s.phone}`.toLowerCase().includes(term))
-        return false;
+      if (term && !`${s.shopName} ${s.email} ${s.phone}`.toLowerCase().includes(term)) return false;
       return true;
     });
   }, [sellers, q, filter]);

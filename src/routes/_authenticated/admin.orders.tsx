@@ -12,8 +12,8 @@ export const Route = createFileRoute("/_authenticated/admin/orders")({
 });
 
 function OrdersAdmin() {
-
-  const { t } = useI18n();  const [rows, setRows] = useState<AdminOrderRow[]>([]);
+  const { t } = useI18n();
+  const [rows, setRows] = useState<AdminOrderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<"" | OrderStatus>("");
@@ -99,9 +99,7 @@ function OrdersAdmin() {
                   <td className="px-3 py-2 font-mono text-xs">#{o.id.slice(0, 8)}</td>
                   <td className="px-3 py-2">
                     <div className="text-sm">{o.shippingAddress.fullName || "—"}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {o.shippingAddress.phone}
-                    </div>
+                    <div className="text-xs text-muted-foreground">{o.shippingAddress.phone}</div>
                   </td>
                   <td className="px-3 py-2 text-xs">{o.items.length}</td>
                   <td className="px-3 py-2 font-medium">{formatPrice(o.total)}</td>

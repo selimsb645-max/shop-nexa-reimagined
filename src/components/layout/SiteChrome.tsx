@@ -42,7 +42,13 @@ export function WhatsAppFab() {
   const [bounce, setBounce] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const startRef = useRef<{ px: number; py: number; ox: number; oy: number; moved: boolean } | null>(null);
+  const startRef = useRef<{
+    px: number;
+    py: number;
+    ox: number;
+    oy: number;
+    moved: boolean;
+  } | null>(null);
   const longPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Restore saved position (or default) after mount so SSR markup stays stable.
@@ -142,7 +148,9 @@ export function WhatsAppFab() {
       style={{
         left: pos.x,
         top: pos.y,
-        transition: dragging ? "none" : "left 260ms cubic-bezier(0.34,1.56,0.64,1), top 260ms ease-out",
+        transition: dragging
+          ? "none"
+          : "left 260ms cubic-bezier(0.34,1.56,0.64,1), top 260ms ease-out",
       }}
     >
       {menuOpen && (
@@ -153,17 +161,31 @@ export function WhatsAppFab() {
         >
           <div className="flex items-center justify-between border-b px-3 py-2 text-xs font-semibold text-muted-foreground">
             Quick actions
-            <button onClick={() => setMenuOpen(false)} aria-label="Close quick actions" className="rounded p-1 hover:bg-muted">
+            <button
+              onClick={() => setMenuOpen(false)}
+              aria-label="Close quick actions"
+              className="rounded p-1 hover:bg-muted"
+            >
               <X className="h-3.5 w-3.5" />
             </button>
           </div>
-          <a href={WHATSAPP} target="_blank" rel="noreferrer" className="flex min-h-12 items-center gap-2 px-3 text-sm hover:bg-muted">
+          <a
+            href={WHATSAPP}
+            target="_blank"
+            rel="noreferrer"
+            className="flex min-h-12 items-center gap-2 px-3 text-sm hover:bg-muted"
+          >
             <MessageCircle className="h-4 w-4 text-green-600" /> WhatsApp chat
           </a>
           <a href={PHONE} className="flex min-h-12 items-center gap-2 px-3 text-sm hover:bg-muted">
             <Phone className="h-4 w-4 text-primary" /> Call us
           </a>
-          <a href={FACEBOOK} target="_blank" rel="noreferrer" className="flex min-h-12 items-center gap-2 px-3 text-sm hover:bg-muted">
+          <a
+            href={FACEBOOK}
+            target="_blank"
+            rel="noreferrer"
+            className="flex min-h-12 items-center gap-2 px-3 text-sm hover:bg-muted"
+          >
             <Facebook className="h-4 w-4 text-blue-600" /> Facebook page
           </a>
         </div>

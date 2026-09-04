@@ -9,10 +9,7 @@ import { Spinner } from "@/components/common/Spinner";
 import { useAuth } from "@/context/AuthContext";
 import { updateSellerProfile } from "@/services/firebase/sellers";
 import { uploadShopLogo } from "@/services/firebase/storage";
-import {
-  sellerSettingsSchema,
-  type SellerSettingsValues,
-} from "@/utils/validation";
+import { sellerSettingsSchema, type SellerSettingsValues } from "@/utils/validation";
 import { mapFirebaseError } from "@/utils/errors";
 import type { SellerProfile } from "@/types/seller";
 import { useI18n } from "@/i18n";

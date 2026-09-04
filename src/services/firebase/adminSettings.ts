@@ -20,7 +20,7 @@ const SITE_DOC = "site";
 const BANNERS = "banners";
 
 export const DEFAULT_SETTINGS: SiteSettings = {
-  siteName: "ShopNexa",
+  siteName: "Aventa Shop",
   supportEmail: "support@shopnexa.app",
   supportPhone: "+1 234 567 8900",
   whatsappNumber: "01324997271",
@@ -35,8 +35,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   },
   homepage: {
     heroHeadline: "Shop Smarter. Live Better.",
-    heroSubheadline:
-      "Everything you need in one place. Top quality products at unbeatable prices.",
+    heroSubheadline: "Everything you need in one place. Top quality products at unbeatable prices.",
     heroCtaLabel: "Shop Now",
     heroCtaLink: "/shop",
     featuredCategorySlugs: [],
@@ -79,8 +78,7 @@ function mapBanner(id: string, d: Record<string, unknown>): Banner {
     position: (d.position as Banner["position"]) ?? "hero",
     active: Boolean(d.active),
     order: Number(d.order ?? 0),
-    createdAt:
-      typeof created === "number" ? created : created?.toMillis?.() ?? Date.now(),
+    createdAt: typeof created === "number" ? created : (created?.toMillis?.() ?? Date.now()),
     updatedAt: typeof d.updatedAt === "number" ? d.updatedAt : Date.now(),
   };
 }

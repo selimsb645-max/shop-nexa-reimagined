@@ -28,7 +28,7 @@ export interface CustomerNotification {
 export interface MessageThread {
   id: string;
   subject: string;
-  participant: string; // "Shop Nexa Support" or seller shop name
+  participant: string; // "Aventa Shop Support" or seller shop name
   sellerId: string | null;
   lastMessage: string;
   lastAt: number;

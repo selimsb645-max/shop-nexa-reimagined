@@ -1,6 +1,6 @@
 /**
- * Shop Nexa — Admin: List All Withdrawal Requests
- * 
+ * Aventa Shop — Admin: List All Withdrawal Requests
+ *
  * Reads ALL withdrawal requests across ALL sellers using the Firebase client SDK.
  * This is used by the admin finance panel to show pending withdrawals.
  */
@@ -25,7 +25,11 @@ function nowMs() {
   return Date.now();
 }
 
-function mapWithdrawal(id: string, sellerId: string, data: Record<string, unknown>): AdminWithdrawalRow {
+function mapWithdrawal(
+  id: string,
+  sellerId: string,
+  data: Record<string, unknown>,
+): AdminWithdrawalRow {
   return {
     id,
     sellerId,
@@ -36,12 +40,12 @@ function mapWithdrawal(id: string, sellerId: string, data: Record<string, unknow
     requestedAt:
       typeof data.requestedAt === "number"
         ? data.requestedAt
-        : (data.requestedAt as { toMillis?: () => number })?.toMillis?.() ?? nowMs(),
+        : ((data.requestedAt as { toMillis?: () => number })?.toMillis?.() ?? nowMs()),
     processedAt:
       data.processedAt != null
         ? typeof data.processedAt === "number"
           ? data.processedAt
-          : (data.processedAt as { toMillis?: () => number })?.toMillis?.() ?? null
+          : ((data.processedAt as { toMillis?: () => number })?.toMillis?.() ?? null)
         : null,
     note: (data.note as string | null) ?? null,
     txId: (data.txId as string | null) ?? null,
@@ -56,10 +60,7 @@ export async function listAllWithdrawalRequests(_idToken: string): Promise<Admin
   if (!firebaseConfigured) return [];
 
   const snap = await getDocs(
-    query(
-      collectionGroup(getDb(), "withdrawals"),
-      orderBy("requestedAt", "desc"),
-    ),
+    query(collectionGroup(getDb(), "withdrawals"), orderBy("requestedAt", "desc")),
   );
 
   const results: AdminWithdrawalRow[] = [];

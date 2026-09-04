@@ -13,17 +13,22 @@ export const Route = createFileRoute("/verify-email")({
   component: VerifyPage,
   head: () => ({
     meta: [
-      { title: "Verify Your Email — ShopNexa" },
-      { name: "description", content: "Confirm your email address to activate your ShopNexa account." },
-      { property: "og:title", content: "Verify Your Email — ShopNexa" },
-      { property: "og:description", content: "Confirm your email address to activate your ShopNexa account." },
+      { title: "Verify Your Email — Aventa Shop" },
+      {
+        name: "description",
+        content: "Confirm your email address to activate your Aventa Shop account.",
+      },
+      { property: "og:title", content: "Verify Your Email — Aventa Shop" },
+      {
+        property: "og:description",
+        content: "Confirm your email address to activate your Aventa Shop account.",
+      },
       { property: "og:url", content: "https://shop-nexa.lovable.app/verify-email" },
       { name: "robots", content: "noindex" },
     ],
     links: [{ rel: "canonical", href: "https://shop-nexa.lovable.app/verify-email" }],
   }),
 });
-
 
 function VerifyPage() {
   const { user } = useAuth();
@@ -57,7 +62,11 @@ function VerifyPage() {
   return (
     <AuthLayout
       title="Verify your email"
-      subtitle={user?.email ? `We've sent a link to ${user.email}` : "Check your inbox for a verification link"}
+      subtitle={
+        user?.email
+          ? `We've sent a link to ${user.email}`
+          : "Check your inbox for a verification link"
+      }
       footer={
         <button
           onClick={async () => {

@@ -7,7 +7,10 @@ import {
   saveStructuredAddress,
 } from "@/services/firebase/structuredAddresses";
 import { AddressCard } from "@/components/address/AddressCard";
-import { StructuredAddressForm, type StructuredAddressFormValues } from "@/components/address/StructuredAddressForm";
+import {
+  StructuredAddressForm,
+  type StructuredAddressFormValues,
+} from "@/components/address/StructuredAddressForm";
 import type { StructuredAddress, DeliveryAddressSnapshot } from "@/types/address";
 import { toDeliverySnapshot } from "@/types/address";
 import { Plus, X, MapPin, ChevronRight } from "lucide-react";

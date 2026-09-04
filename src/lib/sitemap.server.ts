@@ -1,5 +1,5 @@
 /**
- * Dynamic Sitemap Generator for Shop Nexa
+ * Dynamic Sitemap Generator for Aventa Shop
  *
  * Server-side sitemap that reads from Firestore via the REST API
  * (same pattern as checkout.server.ts / promo.server.ts).

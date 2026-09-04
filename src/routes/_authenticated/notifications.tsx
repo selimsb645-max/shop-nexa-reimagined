@@ -45,7 +45,10 @@ function NotificationsPage() {
   };
 
   return (
-    <ServicePageLayout title={t("notifications.title")} subtitle={unread > 0 ? `${unread} unread` : "You're all caught up"}>
+    <ServicePageLayout
+      title={t("notifications.title")}
+      subtitle={unread > 0 ? `${unread} unread` : "You're all caught up"}
+    >
       {unread > 0 && (
         <div className="mb-4 flex justify-end">
           <button
@@ -66,7 +69,9 @@ function NotificationsPage() {
           <span className="grid h-14 w-14 place-items-center rounded-full bg-orange-50 text-[#f57224]">
             <Bell className="h-7 w-7" />
           </span>
-          <h3 className="mt-4 text-base font-bold text-slate-800">{t("notifications.empty")} yet</h3>
+          <h3 className="mt-4 text-base font-bold text-slate-800">
+            {t("notifications.empty")} yet
+          </h3>
           <p className="mt-1 max-w-xs text-sm text-slate-500">
             Order updates, cashback and offers will show up here.
           </p>
@@ -77,9 +82,7 @@ function NotificationsPage() {
             <div
               key={n.id}
               className={`rounded-2xl border p-4 shadow-sm transition ${
-                n.read
-                  ? "border-gray-100 bg-white"
-                  : "border-orange-200 bg-orange-50/40"
+                n.read ? "border-gray-100 bg-white" : "border-orange-200 bg-orange-50/40"
               }`}
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -122,7 +125,10 @@ function NotificationsPage() {
                 </div>
               </div>
               {n.link && (
-                <Link to={n.link} className="mt-3 inline-block text-xs font-bold text-[#f57224] hover:underline">
+                <Link
+                  to={n.link}
+                  className="mt-3 inline-block text-xs font-bold text-[#f57224] hover:underline"
+                >
                   View details
                 </Link>
               )}

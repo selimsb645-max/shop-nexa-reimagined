@@ -12,51 +12,130 @@ import {
   CreditCard,
   Wallet,
 } from "lucide-react";
+import { SITE } from "@/config/site";
+
+/** A footer link section. */
+function FooterSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <h3 className="text-base font-bold text-[#0f172a] uppercase tracking-wider mb-4 border-b-2 border-[#f97316] pb-1 inline-block">
+        {title}
+      </h3>
+      <ul className="space-y-2.5 text-sm">{children}</ul>
+    </div>
+  );
+}
+
+function FooterLink({ to, children }: { to: string; children: React.ReactNode }) {
+  return (
+    <li>
+      <Link to={to} className="text-slate-600 hover:text-[#f97316] transition-colors duration-200">
+        {children}
+      </Link>
+    </li>
+  );
+}
 
 export function SiteFooter() {
   return (
     <footer className="w-full font-sans text-slate-800 border-t border-slate-200">
       {/* Main Multi-Column Section - Light Gray Background #f4f4f4 */}
       <div className="bg-[#f4f4f4] py-10 px-4 sm:px-6 lg:px-12">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {/* Column 1: Customer Care */}
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-8">
+          {/* Column 1: Brand & Contact */}
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="bg-[#0f172a] px-3 py-1.5 rounded-lg font-bold text-lg flex items-center gap-2 border border-slate-700">
+                <ShoppingCart className="w-5 h-5 text-[#f97316]" />
+                <span className="text-white font-extrabold tracking-tight">
+                  AVENTA <span className="text-[#f97316]">SHOP</span>
+                </span>
+              </div>
+            </div>
+            <p className="text-xs text-slate-600 mb-4 leading-relaxed">
+              Bangladesh&apos;s leading e-commerce marketplace for authentic electronics, lifestyle
+              products, and everyday essentials.
+            </p>
+
+            <ul className="space-y-2.5 text-xs text-slate-700">
+              <li className="flex items-center gap-2">
+                <Phone className="w-4 h-4 text-[#f97316] shrink-0" />
+                <a
+                  href={`tel:${SITE.supportPhone}`}
+                  className="hover:text-[#f97316] font-medium transition-colors"
+                >
+                  {SITE.supportPhone}
+                </a>
+              </li>
+              <li className="flex items-center gap-2">
+                <Mail className="w-4 h-4 text-[#f97316] shrink-0" />
+                <a
+                  href={`mailto:${SITE.supportEmail}`}
+                  className="hover:text-[#f97316] font-medium transition-colors"
+                >
+                  {SITE.supportEmail}
+                </a>
+              </li>
+              <li className="flex items-start gap-2">
+                <MapPin className="w-4 h-4 text-[#f97316] shrink-0 mt-0.5" />
+                <span>Dhaka, Bangladesh</span>
+              </li>
+            </ul>
+
+            <div className="mt-4 pt-3 border-t border-slate-200 flex flex-wrap gap-2">
+              <a
+                href={`https://wa.me/${SITE.whatsappNumber}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg font-medium transition-colors shadow-sm"
+              >
+                <span>WhatsApp Support</span>
+              </a>
+            </div>
+          </div>
+
+          {/* Column 2: Aventa Shop */}
+          <FooterSection title="Aventa Shop">
+            <FooterLink to="/about-us">About Us</FooterLink>
+            <FooterLink to="/blog">Aventa Shop Blog</FooterLink>
+            <FooterLink to="/mart">Aventa Shop Mart</FooterLink>
+            <FooterLink to="/contact-us">Contact Us</FooterLink>
+          </FooterSection>
+
+          {/* Column 3: Customer Service */}
+          <FooterSection title="Customer Service">
+            <FooterLink to="/help-center">Help Center</FooterLink>
+            <FooterLink to="/how-to-buy">How to Buy</FooterLink>
+            <FooterLink to="/track-order">Track Order</FooterLink>
+            <FooterLink to="/returns-refunds">Returns &amp; Refunds</FooterLink>
+          </FooterSection>
+
+          {/* Column 4: Sell & Earn */}
+          <FooterSection title="Sell & Earn">
+            <FooterLink to="/become-a-seller">Become a Seller</FooterLink>
+            <FooterLink to="/affiliate">Affiliate Program</FooterLink>
+          </FooterSection>
+
+          {/* Column 5: Payments & Legal */}
           <div>
             <h3 className="text-base font-bold text-[#0f172a] uppercase tracking-wider mb-4 border-b-2 border-[#f97316] pb-1 inline-block">
-              Customer Care
+              Payments
             </h3>
             <ul className="space-y-2.5 text-sm">
               <li>
                 <Link
-                  to="/help-center"
-                  className="text-slate-600 hover:text-[#f97316] transition-colors duration-200 flex items-center gap-1.5"
-                >
-                  Help Center
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/how-to-buy"
+                  to="/digital-payments"
                   className="text-slate-600 hover:text-[#f97316] transition-colors duration-200"
                 >
-                  How to Buy
+                  Digital Payments
                 </Link>
               </li>
-              <li>
-                <Link
-                  to="/returns"
-                  className="text-slate-600 hover:text-[#f97316] transition-colors duration-200"
-                >
-                  Returns &amp; Refunds
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/contact"
-                  className="text-slate-600 hover:text-[#f97316] transition-colors duration-200"
-                >
-                  Contact Us
-                </Link>
-              </li>
+            </ul>
+
+            <h3 className="mt-6 text-base font-bold text-[#0f172a] uppercase tracking-wider mb-4 border-b-2 border-[#f97316] pb-1 inline-block">
+              Legal
+            </h3>
+            <ul className="space-y-2.5 text-sm">
               <li>
                 <Link
                   to="/terms"
@@ -67,81 +146,16 @@ export function SiteFooter() {
               </li>
               <li>
                 <Link
-                  to="/track-orders"
-                  className="text-slate-600 hover:text-[#f97316] transition-colors duration-200"
-                >
-                  Track Order
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Column 2: Shop Nexa */}
-          <div>
-            <h3 className="text-base font-bold text-[#0f172a] uppercase tracking-wider mb-4 border-b-2 border-[#f97316] pb-1 inline-block">
-              Shop Nexa
-            </h3>
-            <ul className="space-y-2.5 text-sm">
-              <li>
-                <Link
-                  to="/about"
-                  className="text-slate-600 hover:text-[#f97316] transition-colors duration-200"
-                >
-                  About Us
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/digital-payments"
-                  className="text-slate-600 hover:text-[#f97316] transition-colors duration-200"
-                >
-                  Digital Payments
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/blog"
-                  className="text-slate-600 hover:text-[#f97316] transition-colors duration-200"
-                >
-                  Shop Nexa Blog
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/privacy"
+                  to="/privacy-policy"
                   className="text-slate-600 hover:text-[#f97316] transition-colors duration-200"
                 >
                   Privacy Policy
                 </Link>
               </li>
-              <li>
-                <Link
-                  to="/seller"
-                  className="text-slate-600 hover:text-[#f97316] transition-colors duration-200"
-                >
-                  Become a Seller
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/affiliate"
-                  className="text-slate-600 hover:text-[#f97316] transition-colors duration-200"
-                >
-                  Affiliate Program
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/mart"
-                  className="text-slate-600 hover:text-[#f97316] transition-colors duration-200"
-                >
-                  Shop Nexa Mart
-                </Link>
-              </li>
             </ul>
           </div>
 
-          {/* Column 3: App Download */}
+          {/* Column 6: App Download */}
           <div>
             <h3 className="text-base font-bold text-[#0f172a] uppercase tracking-wider mb-4 border-b-2 border-[#f97316] pb-1 inline-block">
               App Download
@@ -155,9 +169,7 @@ export function SiteFooter() {
                   <p className="text-xs font-semibold uppercase text-[#f97316] tracking-wide">
                     Happy Shopping
                   </p>
-                  <p className="text-sm font-bold text-slate-800">
-                    Download Shop Nexa App
-                  </p>
+                  <p className="text-sm font-bold text-slate-800">Download Aventa Shop App</p>
                 </div>
               </div>
 
@@ -224,9 +236,7 @@ export function SiteFooter() {
                       <p className="text-[8px] uppercase font-medium text-slate-300">
                         Download on the
                       </p>
-                      <p className="text-xs font-semibold text-white">
-                        App Store
-                      </p>
+                      <p className="text-xs font-semibold text-white">App Store</p>
                     </div>
                   </a>
 
@@ -240,68 +250,12 @@ export function SiteFooter() {
                       <path d="M3.609 1.814L13.792 12 3.61 22.186a1.98 1.98 0 01-.61-1.428V3.242c0-.53.223-1.037.61-1.428zM15.206 13.414l2.586 2.586-11.455 6.613 8.869-9.199zm0-2.828L6.337 1.387l11.455 6.613-2.586 2.586zm1.414 1.414l3.83-2.212c.732-.423.732-1.11 0-1.533l-3.83-2.212-2.828 2.828 2.828 2.828z" />
                     </svg>
                     <div className="text-left leading-tight">
-                      <p className="text-[8px] uppercase font-medium text-slate-300">
-                        GET IT ON
-                      </p>
-                      <p className="text-xs font-semibold text-white">
-                        Google Play
-                      </p>
+                      <p className="text-[8px] uppercase font-medium text-slate-300">GET IT ON</p>
+                      <p className="text-xs font-semibold text-white">Google Play</p>
                     </div>
                   </a>
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Column 4: Contact & Brand Info */}
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="bg-[#0f172a] text-[#f97316] px-3 py-1.5 rounded-lg font-bold text-lg flex items-center gap-2 border border-slate-700">
-                <ShoppingCart className="w-5 h-5 text-[#f97316]" />
-                <span className="text-white font-extrabold tracking-tight">
-                  SHOP <span className="text-[#f97316]">NEXA</span>
-                </span>
-              </div>
-            </div>
-            <p className="text-xs text-slate-600 mb-4 leading-relaxed">
-              Bangladesh&apos;s leading e-commerce marketplace for authentic electronics, lifestyle products, and everyday essentials.
-            </p>
-
-            <ul className="space-y-2.5 text-xs text-slate-700">
-              <li className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-[#f97316] shrink-0" />
-                <a
-                  href="tel:+8801324997271"
-                  className="hover:text-[#f97316] font-medium transition-colors"
-                >
-                  +880 1324 997 271
-                </a>
-              </li>
-              <li className="flex items-center gap-2">
-                <Mail className="w-4 h-4 text-[#f97316] shrink-0" />
-                <a
-                  href="mailto:support@shopnexa.com"
-                  className="hover:text-[#f97316] font-medium transition-colors"
-                >
-                  support@shopnexa.com
-                </a>
-              </li>
-              <li className="flex items-start gap-2">
-                <MapPin className="w-4 h-4 text-[#f97316] shrink-0 mt-0.5" />
-                <span>Dhaka, Bangladesh</span>
-              </li>
-            </ul>
-
-            {/* Direct Contact Links */}
-            <div className="mt-4 pt-3 border-t border-slate-200 flex flex-wrap gap-2">
-              <a
-                href="https://wa.me/8801324997271"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg font-medium transition-colors shadow-sm"
-              >
-                <span>WhatsApp Support</span>
-              </a>
             </div>
           </div>
         </div>
@@ -362,7 +316,7 @@ export function SiteFooter() {
               <div className="inline-flex items-center gap-2 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700 text-xs text-slate-300">
                 <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0" />
                 <div className="text-left leading-tight">
-                  <p className="font-semibold text-slate-100">Verified by Shop Nexa</p>
+                  <p className="font-semibold text-slate-100">Verified by Aventa Shop</p>
                   <p className="text-[10px] text-slate-400">256-Bit SSL Secured Checkout</p>
                 </div>
               </div>
@@ -378,7 +332,7 @@ export function SiteFooter() {
                   href="https://www.facebook.com/profile.php?id=61592089432837"
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label="Shop Nexa Facebook Page"
+                  aria-label="Aventa Shop Facebook Page"
                   className="w-9 h-9 bg-slate-800 hover:bg-[#f97316] text-slate-300 hover:text-white rounded-full flex items-center justify-center transition-all duration-200 border border-slate-700"
                 >
                   <Facebook className="w-4 h-4" />
@@ -386,7 +340,7 @@ export function SiteFooter() {
                 <a
                   href="#"
                   onClick={(e) => e.preventDefault()}
-                  aria-label="Shop Nexa YouTube"
+                  aria-label="Aventa Shop YouTube"
                   className="w-9 h-9 bg-slate-800 hover:bg-[#f97316] text-slate-300 hover:text-white rounded-full flex items-center justify-center transition-all duration-200 border border-slate-700"
                 >
                   <Youtube className="w-4 h-4" />
@@ -394,7 +348,7 @@ export function SiteFooter() {
                 <a
                   href="#"
                   onClick={(e) => e.preventDefault()}
-                  aria-label="Shop Nexa Instagram"
+                  aria-label="Aventa Shop Instagram"
                   className="w-9 h-9 bg-slate-800 hover:bg-[#f97316] text-slate-300 hover:text-white rounded-full flex items-center justify-center transition-all duration-200 border border-slate-700"
                 >
                   <Instagram className="w-4 h-4" />
@@ -402,7 +356,7 @@ export function SiteFooter() {
                 <a
                   href="#"
                   onClick={(e) => e.preventDefault()}
-                  aria-label="Shop Nexa Twitter"
+                  aria-label="Aventa Shop Twitter"
                   className="w-9 h-9 bg-slate-800 hover:bg-[#f97316] text-slate-300 hover:text-white rounded-full flex items-center justify-center transition-all duration-200 border border-slate-700"
                 >
                   <Twitter className="w-4 h-4" />
@@ -413,7 +367,7 @@ export function SiteFooter() {
 
           {/* Copyright Row */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-xs text-slate-400 pt-2">
-            <p>© 2026 Shop Nexa. All Rights Reserved.</p>
+            <p>© 2026 Aventa Shop. All Rights Reserved.</p>
           </div>
         </div>
       </div>

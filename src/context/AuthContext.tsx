@@ -1,8 +1,20 @@
-import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { onAuthStateChanged, type User } from "firebase/auth";
 import { firebaseConfigured, getFirebaseAuth } from "@/services/firebase/config";
 import { ensureUserProfile } from "@/services/firebase/firestore";
-import { createSession, updateSessionActivity, removeCurrentSession } from "@/services/firebase/sessions";
+import {
+  createSession,
+  updateSessionActivity,
+  removeCurrentSession,
+} from "@/services/firebase/sessions";
 import type { AppUserProfile } from "@/types/user";
 
 interface AuthContextValue {
@@ -60,9 +72,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Periodically update lastActiveAt (every 5 minutes)
   useEffect(() => {
     if (!user?.uid) return;
-    const interval = setInterval(() => {
-      updateSessionActivity(user.uid).catch(() => {});
-    }, 5 * 60 * 1000); // 5 minutes
+    const interval = setInterval(
+      () => {
+        updateSessionActivity(user.uid).catch(() => {});
+      },
+      5 * 60 * 1000,
+    ); // 5 minutes
     return () => clearInterval(interval);
   }, [user?.uid]);
 

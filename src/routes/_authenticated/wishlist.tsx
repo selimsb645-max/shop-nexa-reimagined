@@ -34,7 +34,7 @@ function WishlistPage() {
     }
   };
 
-  const handleAddToCart = async (item: typeof items[number]) => {
+  const handleAddToCart = async (item: (typeof items)[number]) => {
     add(
       {
         id: item.productId,
@@ -69,7 +69,10 @@ function WishlistPage() {
   };
 
   return (
-    <ServicePageLayout title={t("wishlist.title")} subtitle={`${items.length} ${items.length === 1 ? t("account.savedItem") : t("account.savedItems")}`}>
+    <ServicePageLayout
+      title={t("wishlist.title")}
+      subtitle={`${items.length} ${items.length === 1 ? t("account.savedItem") : t("account.savedItems")}`}
+    >
       {loading ? (
         <div className="py-20 text-center">
           <Loader className="mx-auto h-8 w-8 animate-spin text-slate-300" />
@@ -80,9 +83,7 @@ function WishlistPage() {
             <Heart className="h-7 w-7" />
           </span>
           <h3 className="mt-4 text-base font-bold text-slate-800">{t("wishlist.empty")}</h3>
-          <p className="mt-1 max-w-xs text-sm text-slate-500">
-            {t("wishlist.emptyHint")}
-          </p>
+          <p className="mt-1 max-w-xs text-sm text-slate-500">{t("wishlist.emptyHint")}</p>
           <Link
             to="/shop"
             className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#f57224] px-6 py-3 text-sm font-bold text-white shadow-md transition hover:bg-orange-600 active:scale-95"
@@ -117,7 +118,9 @@ function WishlistPage() {
                   >
                     {item.title}
                   </Link>
-                  <div className="mt-1 text-lg font-black text-[#f57224]">{formatPrice(item.price)}</div>
+                  <div className="mt-1 text-lg font-black text-[#f57224]">
+                    {formatPrice(item.price)}
+                  </div>
                 </div>
                 <button
                   onClick={() => void handleRemove(item.productId)}

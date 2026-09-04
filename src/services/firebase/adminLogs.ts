@@ -42,10 +42,7 @@ export async function listActivityLogs(max = 200): Promise<ActivityLog[]> {
       action: r.action as ActivityAction,
       target: String(r.target ?? ""),
       details: String(r.details ?? ""),
-      createdAt:
-        typeof created === "number"
-          ? created
-          : created?.toMillis?.() ?? Date.now(),
+      createdAt: typeof created === "number" ? created : (created?.toMillis?.() ?? Date.now()),
     } satisfies ActivityLog;
   });
 }

@@ -11,16 +11,28 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AboutUsRouteImport } from './routes/about-us'
+import { Route as AffiliateRouteImport } from './routes/affiliate'
+import { Route as BecomeASellerRouteImport } from './routes/become-a-seller'
+import { Route as BlogRouteImport } from './routes/blog'
 import { Route as CartRouteImport } from './routes/cart'
 import { Route as CompareRouteImport } from './routes/compare'
+import { Route as ContactUsRouteImport } from './routes/contact-us'
+import { Route as DigitalPaymentsRouteImport } from './routes/digital-payments'
 import { Route as FlashSalesRouteImport } from './routes/flash-sales'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as HelpCenterRouteImport } from './routes/help-center'
+import { Route as HowToBuyRouteImport } from './routes/how-to-buy'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as MartRouteImport } from './routes/mart'
+import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as ReturnsRefundsRouteImport } from './routes/returns-refunds'
 import { Route as ShopRouteImport } from './routes/shop'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as TrackOrderRouteImport } from './routes/track-order'
 import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedAddressesRouteImport } from './routes/_authenticated/addresses'
@@ -47,7 +59,9 @@ import { Route as AuthenticatedSupportRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedTrackOrdersRouteImport } from './routes/_authenticated/track-orders'
 import { Route as AuthenticatedWalletRouteImport } from './routes/_authenticated/wallet'
 import { Route as AuthenticatedWishlistRouteImport } from './routes/_authenticated/wishlist'
+import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as ProductSlugRouteImport } from './routes/product.$slug'
+import { Route as TrackTrackingIdRouteImport } from './routes/track.$trackingId'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminAnalyticsRouteImport } from './routes/_authenticated/admin.analytics'
 import { Route as AuthenticatedAdminBannersRouteImport } from './routes/_authenticated/admin.banners'
@@ -66,6 +80,7 @@ import { Route as AuthenticatedAdminSellersRouteImport } from './routes/_authent
 import { Route as AuthenticatedAdminSeoRouteImport } from './routes/_authenticated/admin.seo'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin.settings'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
+import { Route as AuthenticatedDeliveryDashboardRouteImport } from './routes/_authenticated/delivery/dashboard'
 import { Route as AuthenticatedOrderOrderIdRouteImport } from './routes/_authenticated/order.$orderId'
 import { Route as AuthenticatedOrdersStatusRouteImport } from './routes/_authenticated/orders_.$status'
 import { Route as AuthenticatedSellerIndexRouteImport } from './routes/_authenticated/seller.index'
@@ -95,6 +110,26 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AboutUsRoute = AboutUsRouteImport.update({
+  id: '/about-us',
+  path: '/about-us',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AffiliateRoute = AffiliateRouteImport.update({
+  id: '/affiliate',
+  path: '/affiliate',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BecomeASellerRoute = BecomeASellerRouteImport.update({
+  id: '/become-a-seller',
+  path: '/become-a-seller',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogRoute = BlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CartRoute = CartRouteImport.update({
   id: '/cart',
   path: '/cart',
@@ -103,6 +138,16 @@ const CartRoute = CartRouteImport.update({
 const CompareRoute = CompareRouteImport.update({
   id: '/compare',
   path: '/compare',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactUsRoute = ContactUsRouteImport.update({
+  id: '/contact-us',
+  path: '/contact-us',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DigitalPaymentsRoute = DigitalPaymentsRouteImport.update({
+  id: '/digital-payments',
+  path: '/digital-payments',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FlashSalesRoute = FlashSalesRouteImport.update({
@@ -120,9 +165,24 @@ const HelpCenterRoute = HelpCenterRouteImport.update({
   path: '/help-center',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HowToBuyRoute = HowToBuyRouteImport.update({
+  id: '/how-to-buy',
+  path: '/how-to-buy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MartRoute = MartRouteImport.update({
+  id: '/mart',
+  path: '/mart',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyPolicyRoute = PrivacyPolicyRouteImport.update({
+  id: '/privacy-policy',
+  path: '/privacy-policy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RegisterRoute = RegisterRouteImport.update({
@@ -135,6 +195,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReturnsRefundsRoute = ReturnsRefundsRouteImport.update({
+  id: '/returns-refunds',
+  path: '/returns-refunds',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ShopRoute = ShopRouteImport.update({
   id: '/shop',
   path: '/shop',
@@ -143,6 +208,16 @@ const ShopRoute = ShopRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrackOrderRoute = TrackOrderRouteImport.update({
+  id: '/track-order',
+  path: '/track-order',
   getParentRoute: () => rootRouteImport,
 } as any)
 const VerifyEmailRoute = VerifyEmailRouteImport.update({
@@ -281,9 +356,19 @@ const AuthenticatedWishlistRoute = AuthenticatedWishlistRouteImport.update({
   path: '/wishlist',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => BlogRoute,
+} as any)
 const ProductSlugRoute = ProductSlugRouteImport.update({
   id: '/product/$slug',
   path: '/product/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrackTrackingIdRoute = TrackTrackingIdRouteImport.update({
+  id: '/track/$trackingId',
+  path: '/track/$trackingId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
@@ -390,6 +475,12 @@ const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedDeliveryDashboardRoute =
+  AuthenticatedDeliveryDashboardRouteImport.update({
+    id: '/delivery/dashboard',
+    path: '/delivery/dashboard',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedOrderOrderIdRoute =
   AuthenticatedOrderOrderIdRouteImport.update({
     id: '/order/$orderId',
@@ -507,16 +598,28 @@ const AuthenticatedSellerProductsIdEditRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about-us': typeof AboutUsRoute
+  '/affiliate': typeof AffiliateRoute
+  '/become-a-seller': typeof BecomeASellerRoute
+  '/blog': typeof BlogRouteWithChildren
   '/cart': typeof CartRoute
   '/compare': typeof CompareRoute
+  '/contact-us': typeof ContactUsRoute
+  '/digital-payments': typeof DigitalPaymentsRoute
   '/flash-sales': typeof FlashSalesRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/help-center': typeof HelpCenterRoute
+  '/how-to-buy': typeof HowToBuyRoute
   '/login': typeof LoginRoute
+  '/mart': typeof MartRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/returns-refunds': typeof ReturnsRefundsRoute
   '/shop': typeof ShopRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
+  '/track-order': typeof TrackOrderRoute
   '/verify-email': typeof VerifyEmailRoute
   '/account': typeof AuthenticatedAccountRoute
   '/addresses': typeof AuthenticatedAddressesRoute
@@ -543,7 +646,9 @@ export interface FileRoutesByFullPath {
   '/track-orders': typeof AuthenticatedTrackOrdersRoute
   '/wallet': typeof AuthenticatedWalletRoute
   '/wishlist': typeof AuthenticatedWishlistRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/product/$slug': typeof ProductSlugRoute
+  '/track/$trackingId': typeof TrackTrackingIdRoute
   '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
   '/admin/banners': typeof AuthenticatedAdminBannersRoute
   '/admin/categories': typeof AuthenticatedAdminCategoriesRoute
@@ -561,6 +666,7 @@ export interface FileRoutesByFullPath {
   '/admin/seo': typeof AuthenticatedAdminSeoRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/delivery/dashboard': typeof AuthenticatedDeliveryDashboardRoute
   '/order/$orderId': typeof AuthenticatedOrderOrderIdRoute
   '/orders/$status': typeof AuthenticatedOrdersStatusRoute
   '/seller/analytics': typeof AuthenticatedSellerAnalyticsRoute
@@ -584,16 +690,28 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about-us': typeof AboutUsRoute
+  '/affiliate': typeof AffiliateRoute
+  '/become-a-seller': typeof BecomeASellerRoute
+  '/blog': typeof BlogRouteWithChildren
   '/cart': typeof CartRoute
   '/compare': typeof CompareRoute
+  '/contact-us': typeof ContactUsRoute
+  '/digital-payments': typeof DigitalPaymentsRoute
   '/flash-sales': typeof FlashSalesRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/help-center': typeof HelpCenterRoute
+  '/how-to-buy': typeof HowToBuyRoute
   '/login': typeof LoginRoute
+  '/mart': typeof MartRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/returns-refunds': typeof ReturnsRefundsRoute
   '/shop': typeof ShopRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
+  '/track-order': typeof TrackOrderRoute
   '/verify-email': typeof VerifyEmailRoute
   '/account': typeof AuthenticatedAccountRoute
   '/addresses': typeof AuthenticatedAddressesRoute
@@ -618,7 +736,9 @@ export interface FileRoutesByTo {
   '/track-orders': typeof AuthenticatedTrackOrdersRoute
   '/wallet': typeof AuthenticatedWalletRoute
   '/wishlist': typeof AuthenticatedWishlistRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/product/$slug': typeof ProductSlugRoute
+  '/track/$trackingId': typeof TrackTrackingIdRoute
   '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
   '/admin/banners': typeof AuthenticatedAdminBannersRoute
   '/admin/categories': typeof AuthenticatedAdminCategoriesRoute
@@ -636,6 +756,7 @@ export interface FileRoutesByTo {
   '/admin/seo': typeof AuthenticatedAdminSeoRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/delivery/dashboard': typeof AuthenticatedDeliveryDashboardRoute
   '/order/$orderId': typeof AuthenticatedOrderOrderIdRoute
   '/orders/$status': typeof AuthenticatedOrdersStatusRoute
   '/seller/analytics': typeof AuthenticatedSellerAnalyticsRoute
@@ -659,16 +780,28 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/about-us': typeof AboutUsRoute
+  '/affiliate': typeof AffiliateRoute
+  '/become-a-seller': typeof BecomeASellerRoute
+  '/blog': typeof BlogRouteWithChildren
   '/cart': typeof CartRoute
   '/compare': typeof CompareRoute
+  '/contact-us': typeof ContactUsRoute
+  '/digital-payments': typeof DigitalPaymentsRoute
   '/flash-sales': typeof FlashSalesRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/help-center': typeof HelpCenterRoute
+  '/how-to-buy': typeof HowToBuyRoute
   '/login': typeof LoginRoute
+  '/mart': typeof MartRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/returns-refunds': typeof ReturnsRefundsRoute
   '/shop': typeof ShopRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
+  '/track-order': typeof TrackOrderRoute
   '/verify-email': typeof VerifyEmailRoute
   '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/addresses': typeof AuthenticatedAddressesRoute
@@ -695,7 +828,9 @@ export interface FileRoutesById {
   '/_authenticated/track-orders': typeof AuthenticatedTrackOrdersRoute
   '/_authenticated/wallet': typeof AuthenticatedWalletRoute
   '/_authenticated/wishlist': typeof AuthenticatedWishlistRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/product/$slug': typeof ProductSlugRoute
+  '/track/$trackingId': typeof TrackTrackingIdRoute
   '/_authenticated/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
   '/_authenticated/admin/banners': typeof AuthenticatedAdminBannersRoute
   '/_authenticated/admin/categories': typeof AuthenticatedAdminCategoriesRoute
@@ -713,6 +848,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/seo': typeof AuthenticatedAdminSeoRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/_authenticated/delivery/dashboard': typeof AuthenticatedDeliveryDashboardRoute
   '/_authenticated/order/$orderId': typeof AuthenticatedOrderOrderIdRoute
   '/_authenticated/orders_/$status': typeof AuthenticatedOrdersStatusRoute
   '/_authenticated/seller/analytics': typeof AuthenticatedSellerAnalyticsRoute
@@ -738,16 +874,28 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/about-us'
+    | '/affiliate'
+    | '/become-a-seller'
+    | '/blog'
     | '/cart'
     | '/compare'
+    | '/contact-us'
+    | '/digital-payments'
     | '/flash-sales'
     | '/forgot-password'
     | '/help-center'
+    | '/how-to-buy'
     | '/login'
+    | '/mart'
+    | '/privacy-policy'
     | '/register'
     | '/reset-password'
+    | '/returns-refunds'
     | '/shop'
     | '/sitemap.xml'
+    | '/terms'
+    | '/track-order'
     | '/verify-email'
     | '/account'
     | '/addresses'
@@ -774,7 +922,9 @@ export interface FileRouteTypes {
     | '/track-orders'
     | '/wallet'
     | '/wishlist'
+    | '/blog/$slug'
     | '/product/$slug'
+    | '/track/$trackingId'
     | '/admin/analytics'
     | '/admin/banners'
     | '/admin/categories'
@@ -792,6 +942,7 @@ export interface FileRouteTypes {
     | '/admin/seo'
     | '/admin/settings'
     | '/admin/users'
+    | '/delivery/dashboard'
     | '/order/$orderId'
     | '/orders/$status'
     | '/seller/analytics'
@@ -815,16 +966,28 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/about-us'
+    | '/affiliate'
+    | '/become-a-seller'
+    | '/blog'
     | '/cart'
     | '/compare'
+    | '/contact-us'
+    | '/digital-payments'
     | '/flash-sales'
     | '/forgot-password'
     | '/help-center'
+    | '/how-to-buy'
     | '/login'
+    | '/mart'
+    | '/privacy-policy'
     | '/register'
     | '/reset-password'
+    | '/returns-refunds'
     | '/shop'
     | '/sitemap.xml'
+    | '/terms'
+    | '/track-order'
     | '/verify-email'
     | '/account'
     | '/addresses'
@@ -849,7 +1012,9 @@ export interface FileRouteTypes {
     | '/track-orders'
     | '/wallet'
     | '/wishlist'
+    | '/blog/$slug'
     | '/product/$slug'
+    | '/track/$trackingId'
     | '/admin/analytics'
     | '/admin/banners'
     | '/admin/categories'
@@ -867,6 +1032,7 @@ export interface FileRouteTypes {
     | '/admin/seo'
     | '/admin/settings'
     | '/admin/users'
+    | '/delivery/dashboard'
     | '/order/$orderId'
     | '/orders/$status'
     | '/seller/analytics'
@@ -889,16 +1055,28 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/about-us'
+    | '/affiliate'
+    | '/become-a-seller'
+    | '/blog'
     | '/cart'
     | '/compare'
+    | '/contact-us'
+    | '/digital-payments'
     | '/flash-sales'
     | '/forgot-password'
     | '/help-center'
+    | '/how-to-buy'
     | '/login'
+    | '/mart'
+    | '/privacy-policy'
     | '/register'
     | '/reset-password'
+    | '/returns-refunds'
     | '/shop'
     | '/sitemap.xml'
+    | '/terms'
+    | '/track-order'
     | '/verify-email'
     | '/_authenticated/account'
     | '/_authenticated/addresses'
@@ -925,7 +1103,9 @@ export interface FileRouteTypes {
     | '/_authenticated/track-orders'
     | '/_authenticated/wallet'
     | '/_authenticated/wishlist'
+    | '/blog/$slug'
     | '/product/$slug'
+    | '/track/$trackingId'
     | '/_authenticated/admin/analytics'
     | '/_authenticated/admin/banners'
     | '/_authenticated/admin/categories'
@@ -943,6 +1123,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/seo'
     | '/_authenticated/admin/settings'
     | '/_authenticated/admin/users'
+    | '/_authenticated/delivery/dashboard'
     | '/_authenticated/order/$orderId'
     | '/_authenticated/orders_/$status'
     | '/_authenticated/seller/analytics'
@@ -968,18 +1149,31 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AboutUsRoute: typeof AboutUsRoute
+  AffiliateRoute: typeof AffiliateRoute
+  BecomeASellerRoute: typeof BecomeASellerRoute
+  BlogRoute: typeof BlogRouteWithChildren
   CartRoute: typeof CartRoute
   CompareRoute: typeof CompareRoute
+  ContactUsRoute: typeof ContactUsRoute
+  DigitalPaymentsRoute: typeof DigitalPaymentsRoute
   FlashSalesRoute: typeof FlashSalesRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   HelpCenterRoute: typeof HelpCenterRoute
+  HowToBuyRoute: typeof HowToBuyRoute
   LoginRoute: typeof LoginRoute
+  MartRoute: typeof MartRoute
+  PrivacyPolicyRoute: typeof PrivacyPolicyRoute
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ReturnsRefundsRoute: typeof ReturnsRefundsRoute
   ShopRoute: typeof ShopRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  TermsRoute: typeof TermsRoute
+  TrackOrderRoute: typeof TrackOrderRoute
   VerifyEmailRoute: typeof VerifyEmailRoute
   ProductSlugRoute: typeof ProductSlugRoute
+  TrackTrackingIdRoute: typeof TrackTrackingIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -998,6 +1192,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/about-us': {
+      id: '/about-us'
+      path: '/about-us'
+      fullPath: '/about-us'
+      preLoaderRoute: typeof AboutUsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/affiliate': {
+      id: '/affiliate'
+      path: '/affiliate'
+      fullPath: '/affiliate'
+      preLoaderRoute: typeof AffiliateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/become-a-seller': {
+      id: '/become-a-seller'
+      path: '/become-a-seller'
+      fullPath: '/become-a-seller'
+      preLoaderRoute: typeof BecomeASellerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog': {
+      id: '/blog'
+      path: '/blog'
+      fullPath: '/blog'
+      preLoaderRoute: typeof BlogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/cart': {
       id: '/cart'
       path: '/cart'
@@ -1010,6 +1232,20 @@ declare module '@tanstack/react-router' {
       path: '/compare'
       fullPath: '/compare'
       preLoaderRoute: typeof CompareRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact-us': {
+      id: '/contact-us'
+      path: '/contact-us'
+      fullPath: '/contact-us'
+      preLoaderRoute: typeof ContactUsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/digital-payments': {
+      id: '/digital-payments'
+      path: '/digital-payments'
+      fullPath: '/digital-payments'
+      preLoaderRoute: typeof DigitalPaymentsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/flash-sales': {
@@ -1033,11 +1269,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HelpCenterRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/how-to-buy': {
+      id: '/how-to-buy'
+      path: '/how-to-buy'
+      fullPath: '/how-to-buy'
+      preLoaderRoute: typeof HowToBuyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mart': {
+      id: '/mart'
+      path: '/mart'
+      fullPath: '/mart'
+      preLoaderRoute: typeof MartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy-policy': {
+      id: '/privacy-policy'
+      path: '/privacy-policy'
+      fullPath: '/privacy-policy'
+      preLoaderRoute: typeof PrivacyPolicyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/register': {
@@ -1054,6 +1311,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/returns-refunds': {
+      id: '/returns-refunds'
+      path: '/returns-refunds'
+      fullPath: '/returns-refunds'
+      preLoaderRoute: typeof ReturnsRefundsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/shop': {
       id: '/shop'
       path: '/shop'
@@ -1066,6 +1330,20 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/track-order': {
+      id: '/track-order'
+      path: '/track-order'
+      fullPath: '/track-order'
+      preLoaderRoute: typeof TrackOrderRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/verify-email': {
@@ -1250,11 +1528,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedWishlistRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
+      parentRoute: typeof BlogRoute
+    }
     '/product/$slug': {
       id: '/product/$slug'
       path: '/product/$slug'
       fullPath: '/product/$slug'
       preLoaderRoute: typeof ProductSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/track/$trackingId': {
+      id: '/track/$trackingId'
+      path: '/track/$trackingId'
+      fullPath: '/track/$trackingId'
+      preLoaderRoute: typeof TrackTrackingIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin/': {
@@ -1382,6 +1674,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/users'
       preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/delivery/dashboard': {
+      id: '/_authenticated/delivery/dashboard'
+      path: '/delivery/dashboard'
+      fullPath: '/delivery/dashboard'
+      preLoaderRoute: typeof AuthenticatedDeliveryDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/order/$orderId': {
       id: '/_authenticated/order/$orderId'
@@ -1687,6 +1986,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTrackOrdersRoute: typeof AuthenticatedTrackOrdersRoute
   AuthenticatedWalletRoute: typeof AuthenticatedWalletRoute
   AuthenticatedWishlistRoute: typeof AuthenticatedWishlistRoute
+  AuthenticatedDeliveryDashboardRoute: typeof AuthenticatedDeliveryDashboardRoute
   AuthenticatedOrderOrderIdRoute: typeof AuthenticatedOrderOrderIdRoute
   AuthenticatedOrdersStatusRoute: typeof AuthenticatedOrdersStatusRoute
 }
@@ -1717,6 +2017,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTrackOrdersRoute: AuthenticatedTrackOrdersRoute,
   AuthenticatedWalletRoute: AuthenticatedWalletRoute,
   AuthenticatedWishlistRoute: AuthenticatedWishlistRoute,
+  AuthenticatedDeliveryDashboardRoute: AuthenticatedDeliveryDashboardRoute,
   AuthenticatedOrderOrderIdRoute: AuthenticatedOrderOrderIdRoute,
   AuthenticatedOrdersStatusRoute: AuthenticatedOrdersStatusRoute,
 }
@@ -1724,21 +2025,44 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface BlogRouteChildren {
+  BlogSlugRoute: typeof BlogSlugRoute
+}
+
+const BlogRouteChildren: BlogRouteChildren = {
+  BlogSlugRoute: BlogSlugRoute,
+}
+
+const BlogRouteWithChildren = BlogRoute._addFileChildren(BlogRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AboutUsRoute: AboutUsRoute,
+  AffiliateRoute: AffiliateRoute,
+  BecomeASellerRoute: BecomeASellerRoute,
+  BlogRoute: BlogRouteWithChildren,
   CartRoute: CartRoute,
   CompareRoute: CompareRoute,
+  ContactUsRoute: ContactUsRoute,
+  DigitalPaymentsRoute: DigitalPaymentsRoute,
   FlashSalesRoute: FlashSalesRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   HelpCenterRoute: HelpCenterRoute,
+  HowToBuyRoute: HowToBuyRoute,
   LoginRoute: LoginRoute,
+  MartRoute: MartRoute,
+  PrivacyPolicyRoute: PrivacyPolicyRoute,
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  ReturnsRefundsRoute: ReturnsRefundsRoute,
   ShopRoute: ShopRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  TermsRoute: TermsRoute,
+  TrackOrderRoute: TrackOrderRoute,
   VerifyEmailRoute: VerifyEmailRoute,
   ProductSlugRoute: ProductSlugRoute,
+  TrackTrackingIdRoute: TrackTrackingIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

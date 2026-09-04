@@ -11,8 +11,8 @@ export const Route = createFileRoute("/_authenticated/admin/logs")({
 });
 
 function LogsAdmin() {
-
-  const { t } = useI18n();  const [logs, setLogs] = useState<ActivityLog[]>([]);
+  const { t } = useI18n();
+  const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

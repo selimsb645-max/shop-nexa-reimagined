@@ -9,9 +9,7 @@ import type { SellerOrder, SellerOrderStatus } from "@/types/seller";
 import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/seller/orders/")({
-  component: () => (
-    <SellerGate>{(profile) => <OrdersPage sellerId={profile.uid} />}</SellerGate>
-  ),
+  component: () => <SellerGate>{(profile) => <OrdersPage sellerId={profile.uid} />}</SellerGate>,
 });
 
 const STATUS_OPTIONS: Array<{ v: "all" | SellerOrderStatus; label: string }> = [
@@ -142,9 +140,7 @@ function OrdersPage({ sellerId }: { sellerId: string }) {
                   <td className="px-4 py-3">
                     <StatusPill status={o.status} />
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {formatDateTime(o.createdAt)}
-                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">{formatDateTime(o.createdAt)}</td>
                 </tr>
               ))}
             </tbody>

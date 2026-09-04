@@ -35,9 +35,7 @@ export async function ensureUserProfile(user: User): Promise<AppUserProfile> {
     adminRole: (data.adminRole as AdminRole | null) ?? null,
     emailVerified: user.emailVerified,
     createdAt:
-      typeof data.createdAt === "number"
-        ? data.createdAt
-        : data.createdAt?.toMillis?.() ?? now,
+      typeof data.createdAt === "number" ? data.createdAt : (data.createdAt?.toMillis?.() ?? now),
     updatedAt: now,
   };
 }

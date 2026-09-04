@@ -14,7 +14,8 @@ import {
   LogOut,
   Shield,
   Home,
-MapPin} from "lucide-react";
+  MapPin,
+} from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { signOut } from "@/services/firebase/auth";
 import { toast } from "sonner";
@@ -39,8 +40,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
             </div>
             <div className="flex flex-col leading-tight">
               <span className="text-sm font-semibold">
-                <span className="text-primary">Shop</span>
-                <span className="text-accent">Nexa</span>{" "}
+                <span className="text-primary">Aventa</span>
+                <span className="text-accent">Shop</span>{" "}
                 <span className="text-muted-foreground">Admin</span>
               </span>
               <span className="text-xs text-muted-foreground">Super Admin Panel</span>
@@ -65,9 +66,18 @@ export function AdminShell({ children }: { children: ReactNode }) {
       <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 md:grid-cols-[240px_1fr]">
         <aside className="rounded-lg border bg-background p-3">
           <nav className="space-y-1 text-sm">
-            <AItem to="/admin" icon={<LayoutDashboard className="h-4 w-4" />} label="Dashboard" exact />
+            <AItem
+              to="/admin"
+              icon={<LayoutDashboard className="h-4 w-4" />}
+              label="Dashboard"
+              exact
+            />
             <AItem to="/admin/products" icon={<Package className="h-4 w-4" />} label="Products" />
-            <AItem to="/admin/categories" icon={<Layers className="h-4 w-4" />} label="Categories" />
+            <AItem
+              to="/admin/categories"
+              icon={<Layers className="h-4 w-4" />}
+              label="Categories"
+            />
             <AItem to="/admin/sellers" icon={<Store className="h-4 w-4" />} label="Sellers" />
             <AItem to="/admin/users" icon={<Users className="h-4 w-4" />} label="Users" />
             <AItem to="/admin/orders" icon={<ShoppingBag className="h-4 w-4" />} label="Orders" />

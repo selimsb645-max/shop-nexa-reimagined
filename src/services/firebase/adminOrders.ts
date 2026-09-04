@@ -45,8 +45,7 @@ function mapOrder(id: string, d: Record<string, unknown>): Order {
       country: "",
     },
     tracking: (d.tracking as Order["tracking"]) ?? [],
-    createdAt:
-      typeof created === "number" ? created : created?.toMillis?.() ?? nowMs,
+    createdAt: typeof created === "number" ? created : (created?.toMillis?.() ?? nowMs),
     updatedAt: typeof d.updatedAt === "number" ? d.updatedAt : nowMs,
   };
 }

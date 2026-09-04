@@ -26,7 +26,7 @@ function mapThread(id: string, d: Record<string, unknown>): MessageThread {
   return {
     id,
     subject: String(d.subject ?? "Conversation"),
-    participant: String(d.participant ?? "Shop Nexa Support"),
+    participant: String(d.participant ?? "Aventa Shop Support"),
     sellerId: (d.sellerId as string | null) ?? null,
     lastMessage: String(d.lastMessage ?? ""),
     lastAt: toMs(d.lastAt),
@@ -52,7 +52,12 @@ export async function listThreads(uid: string): Promise<MessageThread[]> {
 
 export async function listMessages(uid: string, threadId: string): Promise<ChatMessage[]> {
   const snap = await getDocs(
-    query(messagesCol(uid), where("threadId", "==", threadId), orderBy("createdAt", "asc"), limit(300)),
+    query(
+      messagesCol(uid),
+      where("threadId", "==", threadId),
+      orderBy("createdAt", "asc"),
+      limit(300),
+    ),
   );
   return snap.docs.map((d) => mapMessage(d.id, d.data() as Record<string, unknown>));
 }
@@ -64,7 +69,7 @@ export async function createThread(
   const ref = doc(threadsCol(uid));
   await setDoc(ref, {
     subject: input.subject,
-    participant: input.participant ?? "Shop Nexa Support",
+    participant: input.participant ?? "Aventa Shop Support",
     sellerId: input.sellerId ?? null,
     lastMessage: input.firstMessage,
     lastAt: serverTimestamp(),

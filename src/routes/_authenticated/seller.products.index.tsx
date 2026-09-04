@@ -15,9 +15,7 @@ import type { Product } from "@/types/commerce";
 import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/seller/products/")({
-  component: () => (
-    <SellerGate>{(profile) => <ProductsPage sellerId={profile.uid} />}</SellerGate>
-  ),
+  component: () => <SellerGate>{(profile) => <ProductsPage sellerId={profile.uid} />}</SellerGate>,
 });
 
 function ProductsPage({ sellerId }: { sellerId: string }) {
@@ -129,7 +127,7 @@ function ProductsPage({ sellerId }: { sellerId: string }) {
           </h2>
           <p className="mt-1 max-w-md text-sm text-muted-foreground">
             {products?.length === 0
-              ? "Add your first product to start selling on ShopNexa."
+              ? "Add your first product to start selling on Aventa Shop."
               : "Try clearing your search or status filter."}
           </p>
           {products?.length === 0 && (
@@ -177,11 +175,7 @@ function ProductsPage({ sellerId }: { sellerId: string }) {
                     <td className="px-4 py-3 text-right">
                       <span
                         className={
-                          p.stock === 0
-                            ? "text-destructive"
-                            : p.stock <= 5
-                              ? "text-orange-600"
-                              : ""
+                          p.stock === 0 ? "text-destructive" : p.stock <= 5 ? "text-orange-600" : ""
                         }
                       >
                         {p.stock}

@@ -31,6 +31,7 @@ import {
   DELIVERY_ZONES,
   type DeliveryZoneId,
 } from "@/data/bd-locations/deliveryZones";
+import { generateTrackingId } from "./tracking-utils";
 
 const POINTS_PER_CURRENCY_REDEEM = 100;
 const MAX_LINE_ITEMS = 100;
@@ -92,6 +93,7 @@ export interface PlaceOrderRequest {
 
 export interface PlaceOrderResult {
   orderId: string;
+  items: Array<{ name: string; quantity: number; price: number; image?: string }>;
   subtotal: number;
   discount: number;
   promoDiscount: number;
@@ -407,6 +409,17 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
         shippingAddress: req.shippingAddress,
         deliveryAddressSnapshot: req.deliveryAddressSnapshot ?? null,
         tracking: [{ status: "confirmed", note: "Order placed and auto-confirmed", at: nowMs }],
+        trackingId: generateTrackingId(),
+        deliveryInfo: {
+          deliveryAgentId: null,
+          deliveryAgentName: null,
+          deliveryAgentPhone: null,
+          assignedAt: null,
+          pickedUpAt: null,
+          outForDeliveryAt: null,
+          deliveredAt: null,
+          expectedDeliveryDate: null,
+        },
         createdAt: nowMs,
         updatedAt: nowMs,
       }),
@@ -592,6 +605,12 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
 
   return {
     orderId,
+    items: orderItems.map((i) => ({
+      name: i.title,
+      quantity: i.quantity,
+      price: i.price,
+      image: i.image,
+    })),
     subtotal,
     discount,
     promoDiscount,

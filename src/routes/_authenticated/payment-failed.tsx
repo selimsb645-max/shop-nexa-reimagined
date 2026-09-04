@@ -7,7 +7,7 @@ import { useI18n } from "@/i18n";
 export const Route = createFileRoute("/_authenticated/payment-failed")({
   ssr: false,
   component: PaymentFailedPage,
-  head: () => ({ meta: [{ title: "Payment Failed — ShopNexa" }] }),
+  head: () => ({ meta: [{ title: "Payment Failed — Aventa Shop" }] }),
 });
 
 function PaymentFailedPage() {

@@ -13,17 +13,15 @@ export const Route = createFileRoute("/_authenticated/admin/products/new")({
 });
 
 function NewProductAdmin() {
-
-  const { t } = useI18n();  const { user } = useAuth();
+  const { t } = useI18n();
+  const { user } = useAuth();
   const navigate = useNavigate();
   if (!user) return <Spinner />;
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">{t("admin.addProduct")}</h1>
-        <p className="text-sm text-muted-foreground">
-          Products created by admin are pre-approved.
-        </p>
+        <p className="text-sm text-muted-foreground">Products created by admin are pre-approved.</p>
       </div>
       <ProductForm
         sellerId={user.uid}
@@ -31,9 +29,7 @@ function NewProductAdmin() {
         onSubmit={async (v) => {
           try {
             const compareAt =
-              v.compareAtPrice === "" || v.compareAtPrice == null
-                ? null
-                : Number(v.compareAtPrice);
+              v.compareAtPrice === "" || v.compareAtPrice == null ? null : Number(v.compareAtPrice);
             const id = await createProductAdmin({
               title: v.title,
               slug: v.slug,

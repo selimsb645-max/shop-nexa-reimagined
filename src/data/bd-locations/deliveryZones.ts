@@ -1,5 +1,5 @@
 /**
- * Shop Nexa — Centralized Delivery Zone Configuration
+ * Aventa Shop — Centralized Delivery Zone Configuration
  *
  * Three delivery zones for Bangladesh:
  *   INSIDE_DHAKA   → ৳60  (Dhaka City Corporation / Metro)
@@ -115,19 +115,14 @@ export const DHAKA_SUBURB_UPAZILAS = new Set([
  * If the entire district is considered suburb (simpler matching).
  * Gazipur and Narayanganj districts are entirely suburb zone.
  */
-export const DHAKA_SUBURB_DISTRICTS = new Set([
-  "Gazipur",
-  "Narayanganj",
-]);
+export const DHAKA_SUBURB_DISTRICTS = new Set(["Gazipur", "Narayanganj"]);
 
 /**
  * Districts that are part of Dhaka district (id 47).
  * The Dhaka district has both city and non-city areas, so we
  * need to check thana/upazila level for Dhaka district.
  */
-export const DHAKA_DISTRICT_NAMES = new Set([
-  "Dhaka",
-]);
+export const DHAKA_DISTRICT_NAMES = new Set(["Dhaka"]);
 
 // ── Zone Detection Logic ──
 
@@ -152,34 +147,56 @@ export interface DeliveryLocationInput {
  *    c. Default for Dhaka district → INSIDE_DHAKA (city corp)
  * 3. Everything else → OUTSIDE_DHAKA
  */
-export function detectDeliveryZone(
-  location: DeliveryLocationInput,
-): { zone: DeliveryZoneId; charge: number; config: DeliveryZoneConfig } {
+export function detectDeliveryZone(location: DeliveryLocationInput): {
+  zone: DeliveryZoneId;
+  charge: number;
+  config: DeliveryZoneConfig;
+} {
   const district = (location.districtEn ?? "").trim();
   const upazila = (location.upazilaEn ?? "").trim();
   const thana = (location.thanaEn ?? "").trim();
 
   // Check suburb districts first (Gazipur, Narayanganj = entire district is suburb)
   if (DHAKA_SUBURB_DISTRICTS.has(district)) {
-    return { zone: "DHAKA_SUBURB", charge: DELIVERY_ZONES.DHAKA_SUBURB.charge, config: DELIVERY_ZONES.DHAKA_SUBURB };
+    return {
+      zone: "DHAKA_SUBURB",
+      charge: DELIVERY_ZONES.DHAKA_SUBURB.charge,
+      config: DELIVERY_ZONES.DHAKA_SUBURB,
+    };
   }
 
   // Dhaka district — need thana/upazila level matching
   if (DHAKA_DISTRICT_NAMES.has(district)) {
     // Check if thana is a Dhaka city thana
     if (DHAKA_CITY_THANAS.has(thana)) {
-      return { zone: "INSIDE_DHAKA", charge: DELIVERY_ZONES.INSIDE_DHAKA.charge, config: DELIVERY_ZONES.INSIDE_DHAKA };
+      return {
+        zone: "INSIDE_DHAKA",
+        charge: DELIVERY_ZONES.INSIDE_DHAKA.charge,
+        config: DELIVERY_ZONES.INSIDE_DHAKA,
+      };
     }
     // Check if upazila/thana is a suburb upazila
     if (DHAKA_SUBURB_UPAZILAS.has(upazila) || DHAKA_SUBURB_UPAZILAS.has(thana)) {
-      return { zone: "DHAKA_SUBURB", charge: DELIVERY_ZONES.DHAKA_SUBURB.charge, config: DELIVERY_ZONES.DHAKA_SUBURB };
+      return {
+        zone: "DHAKA_SUBURB",
+        charge: DELIVERY_ZONES.DHAKA_SUBURB.charge,
+        config: DELIVERY_ZONES.DHAKA_SUBURB,
+      };
     }
     // Default: if it's in Dhaka district but not in suburb list, treat as city
-    return { zone: "INSIDE_DHAKA", charge: DELIVERY_ZONES.INSIDE_DHAKA.charge, config: DELIVERY_ZONES.INSIDE_DHAKA };
+    return {
+      zone: "INSIDE_DHAKA",
+      charge: DELIVERY_ZONES.INSIDE_DHAKA.charge,
+      config: DELIVERY_ZONES.INSIDE_DHAKA,
+    };
   }
 
   // Everything else is outside Dhaka
-  return { zone: "OUTSIDE_DHAKA", charge: DELIVERY_ZONES.OUTSIDE_DHAKA.charge, config: DELIVERY_ZONES.OUTSIDE_DHAKA };
+  return {
+    zone: "OUTSIDE_DHAKA",
+    charge: DELIVERY_ZONES.OUTSIDE_DHAKA.charge,
+    config: DELIVERY_ZONES.OUTSIDE_DHAKA,
+  };
 }
 
 /**

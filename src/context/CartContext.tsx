@@ -166,8 +166,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<CartContextValue>(() => {
     const count = items.reduce((s, i) => s + i.quantity, 0);
-    const subtotal =
-      Math.round(items.reduce((s, i) => s + i.price * i.quantity, 0) * 100) / 100;
+    const subtotal = Math.round(items.reduce((s, i) => s + i.price * i.quantity, 0) * 100) / 100;
     return { items, count, subtotal, loading, add, updateQty, remove, clear };
   }, [items, loading, add, updateQty, remove, clear]);
 

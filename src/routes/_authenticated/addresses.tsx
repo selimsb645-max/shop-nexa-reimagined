@@ -13,7 +13,10 @@ import {
   setDefaultStructuredAddress,
 } from "@/services/firebase/structuredAddresses";
 import { AddressCard } from "@/components/address/AddressCard";
-import { StructuredAddressForm, type StructuredAddressFormValues } from "@/components/address/StructuredAddressForm";
+import {
+  StructuredAddressForm,
+  type StructuredAddressFormValues,
+} from "@/components/address/StructuredAddressForm";
 import type { StructuredAddress } from "@/types/address";
 
 export const Route = createFileRoute("/_authenticated/addresses")({
@@ -35,25 +38,29 @@ function AddressesPage() {
 
   const saveMutation = useMutation({
     mutationFn: (values: StructuredAddressFormValues) =>
-      saveStructuredAddress(user!.uid, {
-        label: values.label,
-        addressType: values.addressType,
-        fullName: values.fullName,
-        phone: values.phone,
-        alternativePhone: values.alternativePhone,
-        location: values.location,
-        house: values.house,
-        road: values.road,
-        block: values.block,
-        floor: values.floor,
-        landmark: values.landmark,
-        villageArea: values.villageArea,
-        detailedAddress: values.detailedAddress,
-        deliveryInstructions: values.deliveryInstructions,
-        latitude: null,
-        longitude: null,
-        isDefault: values.isDefault,
-      }, editing?.id),
+      saveStructuredAddress(
+        user!.uid,
+        {
+          label: values.label,
+          addressType: values.addressType,
+          fullName: values.fullName,
+          phone: values.phone,
+          alternativePhone: values.alternativePhone,
+          location: values.location,
+          house: values.house,
+          road: values.road,
+          block: values.block,
+          floor: values.floor,
+          landmark: values.landmark,
+          villageArea: values.villageArea,
+          detailedAddress: values.detailedAddress,
+          deliveryInstructions: values.deliveryInstructions,
+          latitude: null,
+          longitude: null,
+          isDefault: values.isDefault,
+        },
+        editing?.id,
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["structured-addresses"] });
       toast.success(editing ? "Address updated" : "Address saved");
@@ -84,7 +91,10 @@ function AddressesPage() {
       <div className="max-w-2xl mx-auto px-4 pb-24 space-y-4">
         {!showForm && (
           <button
-            onClick={() => { setEditing(null); setShowForm(true); }}
+            onClick={() => {
+              setEditing(null);
+              setShowForm(true);
+            }}
             className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border-2 border-dashed border-orange-300 text-orange-600 font-semibold text-sm hover:bg-orange-50 transition-colors"
           >
             <Plus className="w-5 h-5" />
@@ -100,30 +110,40 @@ function AddressesPage() {
                 {editing ? "Edit Address" : "New Address"}
               </h3>
               <button
-                onClick={() => { setShowForm(false); setEditing(null); }}
+                onClick={() => {
+                  setShowForm(false);
+                  setEditing(null);
+                }}
                 className="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center"
               >
                 <X className="w-4 h-4 text-slate-500" />
               </button>
             </div>
             <StructuredAddressForm
-              initialValues={editing ? {
-                label: editing.label,
-                addressType: editing.addressType,
-                fullName: editing.fullName,
-                phone: editing.phone,
-                alternativePhone: editing.alternativePhone,
-                location: editing.location,
-                house: editing.house,
-                road: editing.road,
-                block: editing.block,
-                floor: editing.floor,
-                landmark: editing.landmark,
-                deliveryInstructions: editing.deliveryInstructions,
-                isDefault: editing.isDefault,
-              } : undefined}
+              initialValues={
+                editing
+                  ? {
+                      label: editing.label,
+                      addressType: editing.addressType,
+                      fullName: editing.fullName,
+                      phone: editing.phone,
+                      alternativePhone: editing.alternativePhone,
+                      location: editing.location,
+                      house: editing.house,
+                      road: editing.road,
+                      block: editing.block,
+                      floor: editing.floor,
+                      landmark: editing.landmark,
+                      deliveryInstructions: editing.deliveryInstructions,
+                      isDefault: editing.isDefault,
+                    }
+                  : undefined
+              }
               onSubmit={(values) => saveMutation.mutate(values)}
-              onCancel={() => { setShowForm(false); setEditing(null); }}
+              onCancel={() => {
+                setShowForm(false);
+                setEditing(null);
+              }}
               submitLabel={editing ? "Update Address" : "Save Address"}
             />
           </div>
@@ -143,7 +163,10 @@ function AddressesPage() {
               <AddressCard
                 key={addr.id}
                 address={addr}
-                onEdit={() => { setEditing(addr); setShowForm(true); }}
+                onEdit={() => {
+                  setEditing(addr);
+                  setShowForm(true);
+                }}
                 onDelete={() => deleteMutation.mutate(addr.id)}
                 onSetDefault={() => defaultMutation.mutate(addr.id)}
               />

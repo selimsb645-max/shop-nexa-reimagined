@@ -24,7 +24,9 @@ const TRANSLATIONS: Record<Locale, TranslationKeys> = {
 
 // ---- Firestore settings sync (lazy import to avoid circular deps) ----
 
-async function fetchSettingsFromFirestore(uid: string): Promise<{ language: Locale; currency: Currency } | null> {
+async function fetchSettingsFromFirestore(
+  uid: string,
+): Promise<{ language: Locale; currency: Currency } | null> {
   try {
     const { getCustomerSettings } = await import("@/services/firebase/customerSettings");
     const s = await getCustomerSettings(uid);
@@ -34,7 +36,10 @@ async function fetchSettingsFromFirestore(uid: string): Promise<{ language: Loca
   }
 }
 
-async function saveSettingsToFirestore(uid: string, patch: { language?: Locale; currency?: Currency }): Promise<void> {
+async function saveSettingsToFirestore(
+  uid: string,
+  patch: { language?: Locale; currency?: Currency },
+): Promise<void> {
   try {
     const { saveCustomerSettings } = await import("@/services/firebase/customerSettings");
     await saveCustomerSettings(uid, patch);
@@ -166,5 +171,3 @@ export function useCurrencyFormat() {
     };
   }, [currency]);
 }
-
-

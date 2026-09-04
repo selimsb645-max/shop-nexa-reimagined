@@ -52,10 +52,7 @@ export async function deleteCategory(id: string): Promise<void> {
 
 export async function listSubcategoriesAdmin(categoryId: string): Promise<Subcategory[]> {
   const snap = await getDocs(
-    query(
-      collection(getDb(), COL, categoryId, "subcategories"),
-      orderBy("order", "asc"),
-    ),
+    query(collection(getDb(), COL, categoryId, "subcategories"), orderBy("order", "asc")),
   );
   return snap.docs.map((d) => ({
     id: d.id,
@@ -64,7 +61,10 @@ export async function listSubcategoriesAdmin(categoryId: string): Promise<Subcat
   }));
 }
 
-export async function createSubcategory(categoryId: string, input: SubcategoryInput): Promise<string> {
+export async function createSubcategory(
+  categoryId: string,
+  input: SubcategoryInput,
+): Promise<string> {
   const ref = doc(collection(getDb(), COL, categoryId, "subcategories"));
   await setDoc(ref, {
     ...input,

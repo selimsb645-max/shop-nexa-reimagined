@@ -30,8 +30,8 @@ const ERROR_MAP: Record<string, string> = {
   "not-found": "The requested resource was not found.",
   "already-exists": "This item already exists.",
   "resource-exhausted": "Resource limits exceeded. Please try again later.",
-  "unauthenticated": "Please sign in to continue.",
-  "unavailable": "Service temporarily unavailable. Please try again.",
+  unauthenticated: "Please sign in to continue.",
+  unavailable: "Service temporarily unavailable. Please try again.",
   "deadline-exceeded": "Request timed out. Please try again.",
   // Storage errors
   "storage/object-not-found": "File not found.",

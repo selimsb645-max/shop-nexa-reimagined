@@ -9,7 +9,6 @@ import {
   Settings,
   Bell,
   BarChart3,
-  Tag,
   DollarSign,
   Menu,
   X,
@@ -41,10 +40,7 @@ export function SellerShell({ children }: Props) {
     { to: "/seller", icon: LayoutDashboard, label: "Dashboard", exact: true },
     { to: "/seller/products", icon: Package, label: "Products" },
     { to: "/seller/orders", icon: ShoppingBag, label: "Orders" },
-    { to: "/seller/earnings", icon: DollarSign, label: "Earnings" },
-    { to: "/seller/wallet", icon: Wallet, label: "Wallet" },
-    { to: "/seller/coupons", icon: Tag, label: "Coupons" },
-    { to: "/seller/store", icon: Store, label: "Store" },
+    { to: "/seller/settlements", icon: DollarSign, label: "Earnings" },
     { to: "/seller/analytics", icon: BarChart3, label: "Analytics" },
     { to: "/seller/notifications", icon: Bell, label: "Notifications" },
     { to: "/seller/settings", icon: Settings, label: "Settings" },
@@ -54,7 +50,7 @@ export function SellerShell({ children }: Props) {
     { to: "/seller", icon: LayoutDashboard, label: "Home", exact: true },
     { to: "/seller/products", icon: Package, label: "Products" },
     { to: "/seller/orders", icon: ShoppingBag, label: "Orders" },
-    { to: "/seller/wallet", icon: Wallet, label: "Wallet" },
+    { to: "/seller/settlements", icon: Wallet, label: "Wallet" },
   ];
 
   const isActive = (to: string, exact?: boolean) => {
@@ -62,9 +58,7 @@ export function SellerShell({ children }: Props) {
     return location.pathname.startsWith(to);
   };
 
-  const statusConfig = profile
-    ? SELLER_STATUS_CONFIG[profile.status]
-    : null;
+  const statusConfig = profile ? SELLER_STATUS_CONFIG[profile.status] : null;
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans antialiased flex flex-col">
@@ -86,8 +80,8 @@ export function SellerShell({ children }: Props) {
                 </div>
                 <div className="hidden sm:block leading-tight">
                   <span className="text-sm font-bold">
-                    <span className="text-white">Shop</span>
-                    <span className="text-[#f57224]">Nexa</span>
+                    <span className="text-white">Aventa</span>
+                    <span className="text-[#f57224]">Shop</span>
                     <span className="text-slate-400 ml-1">Seller</span>
                   </span>
                   {profile?.shopName && (
@@ -110,7 +104,10 @@ export function SellerShell({ children }: Props) {
               )}
               {profile && (
                 <span className="hidden md:block text-xs text-slate-400">
-                  Balance: <span className="text-[#f57224] font-bold">${profile.availableBalance.toFixed(2)}</span>
+                  Balance:{" "}
+                  <span className="text-[#f57224] font-bold">
+                    ${profile.availableBalance.toFixed(2)}
+                  </span>
                 </span>
               )}
               <Link
@@ -188,9 +185,7 @@ export function SellerShell({ children }: Props) {
             key={tab.to}
             to={tab.to}
             className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg transition-colors ${
-              isActive(tab.to, tab.exact)
-                ? "text-[#f57224]"
-                : "text-slate-400"
+              isActive(tab.to, tab.exact) ? "text-[#f57224]" : "text-slate-400"
             }`}
           >
             <tab.icon className="w-5 h-5" />

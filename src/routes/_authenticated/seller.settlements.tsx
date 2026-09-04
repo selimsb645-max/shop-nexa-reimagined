@@ -1,6 +1,6 @@
 /**
- * Shop Nexa — Seller Settlement Dashboard Route
- * 
+ * Aventa Shop — Seller Settlement Dashboard Route
+ *
  * Route: /seller/settlements
  * Shows the seller's complete financial picture:
  * - Total Sales, Total Commission
@@ -44,8 +44,8 @@ import {
 export const Route = createFileRoute("/_authenticated/seller/settlements")({
   ssr: false,
   component: SellerSettlementsPage,
-  head: () => ({ meta: [{ title: "Settlements — Shop Nexa Seller" }] }),
-})
+  head: () => ({ meta: [{ title: "Settlements — Aventa Shop Seller" }] }),
+});
 
 function SellerSettlementsPage() {
   const { t } = useI18n();
@@ -55,7 +55,9 @@ function SellerSettlementsPage() {
   const [data, setData] = useState<SellerSettlementData | null>(null);
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState("");
-  const [withdrawMethod, setWithdrawMethod] = useState<"bank" | "bkash" | "nagad" | "rocket">("bkash");
+  const [withdrawMethod, setWithdrawMethod] = useState<"bank" | "bkash" | "nagad" | "rocket">(
+    "bkash",
+  );
   const [submitting, setSubmitting] = useState(false);
 
   async function loadData() {
@@ -265,30 +267,37 @@ function SellerSettlementsPage() {
                 No transactions yet
               </div>
             ) : (
-              data?.recentTransactions.map((tx: NonNullable<SellerSettlementData["recentTransactions"]>[number]) => (
-                <div key={tx.id} className="flex items-center gap-3 px-4 py-3">
-                  <div className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                    tx.amount > 0 ? "bg-green-100" : "bg-red-100"
-                  }`}>
-                    {tx.amount > 0 ? (
-                      <ArrowDownToLine className="h-4 w-4 text-green-600" />
-                    ) : (
-                      <ArrowDownToLine className="h-4 w-4 text-red-600 rotate-180" />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <div className="text-sm font-medium">{tx.note}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {new Date(tx.createdAt).toLocaleString()}
+              data?.recentTransactions.map(
+                (tx: NonNullable<SellerSettlementData["recentTransactions"]>[number]) => (
+                  <div key={tx.id} className="flex items-center gap-3 px-4 py-3">
+                    <div
+                      className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                        tx.amount > 0 ? "bg-green-100" : "bg-red-100"
+                      }`}
+                    >
+                      {tx.amount > 0 ? (
+                        <ArrowDownToLine className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <ArrowDownToLine className="h-4 w-4 text-red-600 rotate-180" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-sm font-medium">{tx.note}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {new Date(tx.createdAt).toLocaleString()}
+                      </div>
+                    </div>
+                    <div
+                      className={`text-sm font-semibold ${
+                        tx.amount > 0 ? "text-green-600" : "text-red-600"
+                      }`}
+                    >
+                      {tx.amount > 0 ? "+" : ""}
+                      {formatPrice(Math.abs(tx.amount))}
                     </div>
                   </div>
-                  <div className={`text-sm font-semibold ${
-                    tx.amount > 0 ? "text-green-600" : "text-red-600"
-                  }`}>
-                    {tx.amount > 0 ? "+" : ""}{formatPrice(Math.abs(tx.amount))}
-                  </div>
-                </div>
-              ))
+                ),
+              )
             )}
           </div>
         </div>
@@ -309,7 +318,17 @@ function SellerSettlementsPage() {
   );
 }
 
-function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string; color: string }) {
+function StatCard({
+  icon,
+  label,
+  value,
+  color,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  color: string;
+}) {
   return (
     <div className="rounded-xl border bg-card p-4">
       <div className="flex items-center gap-2 mb-2">

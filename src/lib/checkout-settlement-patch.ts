@@ -1,19 +1,19 @@
 /**
  * PATCH: checkout.server.ts — Settlement Integration
- * 
+ *
  * This file shows the changes needed in the existing checkout.server.ts
  * to integrate the settlement architecture.
- * 
+ *
  * In the "Seller mirrors + notifications" section (currently around line 380+),
  * replace the seller order write with settlement-enabled writes.
- * 
+ *
  * Also add the settlement pending ledger entry for each seller.
  */
 
 // ====================================================================
 // INTEGRATION INSTRUCTIONS:
 // ====================================================================
-// 
+//
 // In checkout.server.ts, REPLACE this block:
 //
 //   for (const [sid, sItems] of itemsBySeller.entries()) {
@@ -32,7 +32,7 @@
 //   for (const [sid, sItems] of itemsBySeller.entries()) {
 //     const sellerSubtotal = round2(sItems.reduce((s, it) => s + it.subtotal, 0));
 //     const commissionRate = sellerCommissionRates.get(sid) ?? 0.08;
-//     
+//
 //     // Compute full settlement breakdown
 //     const settlement = computeSellerSettlement({
 //       sellerId: sid,
@@ -44,7 +44,7 @@
 //       commissionRate,
 //       nowMs,
 //     });
-//     
+//
 //     // Seller order mirror WITH settlement data
 //     writes.push(buildSellerOrderWrite({
 //       projectId,
@@ -60,7 +60,7 @@
 //       shippingAddress: req.shippingAddress,
 //       nowMs,
 //     }));
-//     
+//
 //     // Immutable settlement ledger: pending entry
 //     writes.push(buildSettlementPendingTxWrite({
 //       projectId,
@@ -69,7 +69,7 @@
 //       sellerEarnings: settlement.sellerNetEarnings,
 //       nowMs,
 //     }));
-//     
+//
 //     // Seller notification
 //     writes.push({
 //       update: {

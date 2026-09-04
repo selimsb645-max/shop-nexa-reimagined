@@ -14,11 +14,8 @@ type LovableEvents = {
 
 declare global {
   var __lovableEvents: LovableEvents | undefined;
-  var __lovableReportRuntimeError: ((payload: {
-    message: string;
-    stack?: string;
-    filename?: string;
-  }) => void) | undefined;
+  var __lovableReportRuntimeError:
+    ((payload: { message: string; stack?: string; filename?: string }) => void) | undefined;
   interface Window {
     __lovableEvents?: LovableEvents;
     __lovableReportRuntimeError?: (payload: {

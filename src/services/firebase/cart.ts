@@ -21,8 +21,8 @@ export async function listCart(uid: string): Promise<CartItem[]> {
         addedAt:
           typeof data.addedAt === "number"
             ? data.addedAt
-            : (data.addedAt as { toMillis?: () => number } | undefined)?.toMillis?.() ??
-              Date.now(),
+            : ((data.addedAt as { toMillis?: () => number } | undefined)?.toMillis?.() ??
+              Date.now()),
         title: String(data.title ?? ""),
         image: String(data.image ?? ""),
         price: Number(data.price ?? 0),
@@ -33,11 +33,7 @@ export async function listCart(uid: string): Promise<CartItem[]> {
     .sort((a, b) => b.addedAt - a.addedAt);
 }
 
-export async function setCartItem(
-  uid: string,
-  product: Product,
-  quantity: number,
-): Promise<void> {
+export async function setCartItem(uid: string, product: Product, quantity: number): Promise<void> {
   if (quantity <= 0) {
     await deleteDoc(doc(getDb(), "users", uid, "cart", product.id));
     return;

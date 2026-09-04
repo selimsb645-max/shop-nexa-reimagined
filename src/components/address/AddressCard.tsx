@@ -32,14 +32,17 @@ export function AddressCard({
     loc.postOfficeEn && `- ${loc.postOfficeEn}`,
     `${loc.districtEn} - ${loc.postalCode}`,
     loc.divisionEn,
-  ].filter(Boolean).join(" ");
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <div
       className={`relative rounded-2xl border-2 transition-all cursor-pointer overflow-hidden
-        ${selected
-          ? "border-orange-400 bg-orange-50/30 ring-2 ring-orange-100"
-          : "border-slate-200 bg-white hover:border-orange-200"
+        ${
+          selected
+            ? "border-orange-400 bg-orange-50/30 ring-2 ring-orange-100"
+            : "border-slate-200 bg-white hover:border-orange-200"
         }`}
       onClick={onSelect}
     >
@@ -52,7 +55,8 @@ export function AddressCard({
       <div className={`p-4 ${compact ? "py-3" : "py-4"}`}>
         {/* Header */}
         <div className="flex items-start gap-3 mb-3">
-          <div className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-lg
+          <div
+            className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-lg
             ${address.isDefault ? "bg-orange-100" : "bg-slate-100"}`}
           >
             {meta.icon}
@@ -84,16 +88,12 @@ export function AddressCard({
         {/* Location */}
         <div className="ml-[52px]">
           {address.villageArea && (
-            <div className="text-sm text-slate-700 font-semibold mb-1">
-              {address.villageArea}
-            </div>
+            <div className="text-sm text-slate-700 font-semibold mb-1">{address.villageArea}</div>
           )}
           <div className="text-sm text-slate-600 font-medium mb-1">
             {address.detailedAddress || `${address.house}, ${address.road}`}
           </div>
-          <div className="text-xs text-slate-400 leading-relaxed">
-            {locationText}
-          </div>
+          <div className="text-xs text-slate-400 leading-relaxed">{locationText}</div>
           <div className="text-xs text-slate-300 mt-0.5">Bangladesh</div>
         </div>
 
@@ -102,7 +102,10 @@ export function AddressCard({
           <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-50">
             {!address.isDefault && onSetDefault && (
               <button
-                onClick={(e) => { e.stopPropagation(); onSetDefault(); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSetDefault();
+                }}
                 className="flex items-center gap-1 text-xs text-slate-500 hover:text-orange-600 transition-colors"
               >
                 <Star className="w-3.5 h-3.5" />
@@ -111,7 +114,10 @@ export function AddressCard({
             )}
             {onEdit && (
               <button
-                onClick={(e) => { e.stopPropagation(); onEdit(); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit();
+                }}
                 className="flex items-center gap-1 text-xs text-slate-500 hover:text-blue-600 transition-colors ml-auto"
               >
                 <Pencil className="w-3.5 h-3.5" />
@@ -120,7 +126,10 @@ export function AddressCard({
             )}
             {onDelete && (
               <button
-                onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete();
+                }}
                 className="flex items-center gap-1 text-xs text-slate-500 hover:text-red-500 transition-colors"
               >
                 <Trash2 className="w-3.5 h-3.5" />

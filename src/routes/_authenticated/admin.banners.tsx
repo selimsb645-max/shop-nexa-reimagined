@@ -32,8 +32,8 @@ const emptyForm = {
 };
 
 function BannersAdmin() {
-
-  const { t } = useI18n();  const { user } = useAuth();
+  const { t } = useI18n();
+  const { user } = useAuth();
   const [banners, setBanners] = useState<Banner[]>([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(emptyForm);
@@ -141,9 +141,7 @@ function BannersAdmin() {
           />
           <select
             value={form.position}
-            onChange={(e) =>
-              setForm({ ...form, position: e.target.value as Banner["position"] })
-            }
+            onChange={(e) => setForm({ ...form, position: e.target.value as Banner["position"] })}
             className="rounded-md border bg-background px-3 py-2 text-sm"
           >
             <option value="hero">{t("admin.hero")}</option>
@@ -165,7 +163,11 @@ function BannersAdmin() {
             disabled={uploading}
             className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted"
           >
-            {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageUp className="h-4 w-4" />}
+            {uploading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <ImageUp className="h-4 w-4" />
+            )}
             Upload image
           </button>
           <input

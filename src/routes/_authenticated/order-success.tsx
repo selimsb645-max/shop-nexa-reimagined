@@ -27,7 +27,7 @@ import { useI18n } from "@/i18n";
 export const Route = createFileRoute("/_authenticated/order-success")({
   ssr: false,
   component: OrderSuccessPage,
-  head: () => ({ meta: [{ title: "Order Confirmed — Shop Nexa" }] }),
+  head: () => ({ meta: [{ title: "Order Confirmed — Aventa Shop" }] }),
   validateSearch: (s: Record<string, unknown>): { orderId?: string } => ({
     orderId: typeof s.orderId === "string" ? s.orderId : undefined,
   }),
@@ -48,11 +48,11 @@ function OrderSuccessPage() {
   const navigate = useNavigate();
   const search = Route.useSearch();
   const orderId = search.orderId || "";
-interface OrderData {
-  status?: string;
-  total?: number;
-  payment?: { method?: string };
-}
+  interface OrderData {
+    status?: string;
+    total?: number;
+    payment?: { method?: string };
+  }
 
   const [order, setOrder] = useState<OrderData | null>(null);
   const [_loading, setLoading] = useState(true);
@@ -93,9 +93,7 @@ interface OrderData {
   })();
 
   // Current timeline step
-  const currentStepIndex = order
-    ? TIMELINE_STEPS.findIndex((s) => s.status === order.status)
-    : 0;
+  const currentStepIndex = order ? TIMELINE_STEPS.findIndex((s) => s.status === order.status) : 0;
   const activeStep = currentStepIndex >= 0 ? currentStepIndex : 0;
 
   return (
@@ -117,8 +115,8 @@ interface OrderData {
             Order Placed Successfully!
           </h1>
           <p className="mt-2 text-sm text-slate-500 max-w-md">
-            Thank you for shopping with Shop Nexa. Your order is being processed
-            and will be delivered soon.
+            Thank you for shopping with Aventa Shop. Your order is being processed and will be
+            delivered soon.
           </p>
         </div>
 
@@ -131,9 +129,7 @@ interface OrderData {
                 <p className="text-[10px] uppercase text-slate-300 font-medium tracking-wide">
                   Order ID
                 </p>
-                <p className="text-lg font-bold tracking-wide">
-                  #{orderId || "N/A"}
-                </p>
+                <p className="text-lg font-bold tracking-wide">#{orderId || "N/A"}</p>
               </div>
               <button
                 onClick={handleCopyId}
@@ -162,9 +158,7 @@ interface OrderData {
               </div>
               <div>
                 <p className="text-xs text-slate-500">{t("orderSuccess.estimatedDelivery")}</p>
-                <p className="text-lg font-bold text-[#0f172a]">
-                  {estimatedDelivery}
-                </p>
+                <p className="text-lg font-bold text-[#0f172a]">{estimatedDelivery}</p>
                 <p className="text-xs text-slate-400">
                   You'll get tracking updates via notification
                 </p>
@@ -189,10 +183,10 @@ interface OrderData {
                   {order.payment?.method === "cash_on_delivery"
                     ? "Cash on Delivery"
                     : order.payment?.method === "card"
-                    ? "Card"
-                    : order.payment?.method === "mobile_banking"
-                    ? "Mobile Banking"
-                    : order.payment?.method || "COD"}
+                      ? "Card"
+                      : order.payment?.method === "mobile_banking"
+                        ? "Mobile Banking"
+                        : order.payment?.method || "COD"}
                 </span>
               </div>
             )}
@@ -204,7 +198,7 @@ interface OrderData {
                 <p className="text-xs text-slate-600">
                   You'll earn{" "}
                   <span className="font-bold text-[#f57224]">
-                    +{Math.floor((order.total || 0))} reward points
+                    +{Math.floor(order.total || 0)} reward points
                   </span>{" "}
                   and{" "}
                   <span className="font-bold text-[#f57224]">
@@ -235,9 +229,7 @@ interface OrderData {
                 <div key={step.status} className="relative flex items-center gap-3 mb-5 last:mb-0">
                   <div
                     className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 z-10 transition-all ${
-                      isDone
-                        ? "bg-[#f57224] text-white"
-                        : "bg-slate-100 text-slate-300"
+                      isDone ? "bg-[#f57224] text-white" : "bg-slate-100 text-slate-300"
                     } ${isActive ? "ring-4 ring-orange-100" : ""}`}
                   >
                     <Icon className="w-4 h-4" />
@@ -251,9 +243,7 @@ interface OrderData {
                       {step.label}
                     </p>
                     {isActive && (
-                      <p className="text-xs text-[#f57224] font-medium">
-                        Current status
-                      </p>
+                      <p className="text-xs text-[#f57224] font-medium">Current status</p>
                     )}
                   </div>
                 </div>
@@ -265,9 +255,7 @@ interface OrderData {
         {/* Action buttons */}
         <div className="flex flex-col sm:flex-row gap-3">
           <button
-            onClick={() =>
-              navigate({ to: "/track-orders" })
-            }
+            onClick={() => navigate({ to: "/track-orders" })}
             className="flex-1 flex items-center justify-center gap-2 bg-[#0f172a] hover:bg-slate-800 text-white font-bold py-3.5 px-6 rounded-xl transition-all shadow-md text-sm"
           >
             <Truck className="w-4 h-4" />
@@ -287,9 +275,8 @@ interface OrderData {
         <div className="mt-5 flex items-start gap-2 text-xs text-slate-400 bg-slate-50 rounded-lg p-3">
           <MapPin className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
           <p>
-            Your order will be delivered to your registered address. For any
-            changes, contact Shop Nexa Support within 1 hour of placing the
-            order.
+            Your order will be delivered to your registered address. For any changes, contact Aventa
+            Shop Support within 1 hour of placing the order.
           </p>
         </div>
       </main>

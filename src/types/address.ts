@@ -13,10 +13,13 @@
 // (matches reference: Home / Office / Other, single-row radio selector).
 export type AddressType = "HOME" | "OFFICE" | "OTHER";
 
-export const ADDRESS_TYPE_META: Record<AddressType, { labelEn: string; labelBn: string; icon: string }> = {
-  HOME:   { labelEn: "Home",   labelBn: "বাসা / বাড়ি", icon: "🏠" },
-  OFFICE: { labelEn: "Office", labelBn: "অফিস",         icon: "🏢" },
-  OTHER:  { labelEn: "Other",  labelBn: "অন্যান্য",      icon: "📍" },
+export const ADDRESS_TYPE_META: Record<
+  AddressType,
+  { labelEn: string; labelBn: string; icon: string }
+> = {
+  HOME: { labelEn: "Home", labelBn: "বাসা / বাড়ি", icon: "🏠" },
+  OFFICE: { labelEn: "Office", labelBn: "অফিস", icon: "🏢" },
+  OTHER: { labelEn: "Other", labelBn: "অন্যান্য", icon: "📍" },
 };
 
 export type LocationType =

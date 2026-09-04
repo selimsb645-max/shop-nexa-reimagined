@@ -49,7 +49,6 @@ import type { PaymentMethod, Coupon, CartItem, Product } from "@/types/commerce"
 import { DELIVERY_ZONES, type DeliveryZoneId } from "@/data/bd-locations/deliveryZones";
 import { useI18n } from "@/i18n";
 
-
 type EnrichedCartItem = {
   id: string;
   productId: string;
@@ -66,10 +65,8 @@ type EnrichedCartItem = {
 export const Route = createFileRoute("/_authenticated/checkout")({
   ssr: false,
   component: CheckoutPage,
-  head: () => ({ meta: [{ title: "Checkout — Shop Nexa" }] }),
+  head: () => ({ meta: [{ title: "Checkout — Aventa Shop" }] }),
 });
-
-
 
 // ----------------------------------------------------------------------
 // Reward Points Conversion (from wallet service)
@@ -89,9 +86,7 @@ function CheckoutPage() {
   const cartItems = cartContext?.items ?? [];
 
   // ---- Fetch product details for seller info ----
-  const productIds = cartItems
-    .map((i: CartItem) => i.productId)
-    .filter(Boolean);
+  const productIds = cartItems.map((i: CartItem) => i.productId).filter(Boolean);
   const { data: productDetails = {} } = useQuery({
     queryKey: ["checkout-products", productIds],
     queryFn: async () => {
@@ -105,7 +100,7 @@ function CheckoutPage() {
           } catch (e) {
             console.warn("Failed to fetch product:", pid);
           }
-        })
+        }),
       );
       return results;
     },
@@ -129,14 +124,14 @@ function CheckoutPage() {
             const profile = await getSellerProfile(sid);
             if (profile) {
               results[sid] = {
-                shopName: profile.shopName || "Shop Nexa",
+                shopName: profile.shopName || "Aventa Shop",
                 verified: profile.status === "approved",
               };
             }
           } catch (e) {
             console.warn("Failed to fetch seller:", sid);
           }
-        })
+        }),
       );
       return results;
     },
@@ -160,7 +155,7 @@ function CheckoutPage() {
         quantity: Number(item.quantity || 1),
         stock: item.stock || product?.stock || 0,
         originalPrice: product?.compareAtPrice ? Number(product.compareAtPrice) : undefined,
-        sellerName: sellerInfo?.shopName || "Shop Nexa",
+        sellerName: sellerInfo?.shopName || "Aventa Shop",
         sellerVerified: sellerInfo?.verified ?? false,
       } satisfies EnrichedCartItem;
     });
@@ -178,7 +173,8 @@ function CheckoutPage() {
 
   // ---- Addresses (Structured) ----
   const [selectedAddressId, setSelectedAddressId] = useState<string>("");
-  const [deliveryAddressSnapshot, setDeliveryAddressSnapshot] = useState<DeliveryAddressSnapshot | null>(null);
+  const [deliveryAddressSnapshot, setDeliveryAddressSnapshot] =
+    useState<DeliveryAddressSnapshot | null>(null);
 
   // ---- Delivery Zone (auto-detected) ----
   const deliveryZoneInfo = useMemo(
@@ -213,9 +209,7 @@ function CheckoutPage() {
   const [useRewardPoints, setUseRewardPoints] = useState(false);
   const [rewardPointsToUse, setRewardPointsToUse] = useState(0);
   const maxRewardPoints = Math.min(rewardPoints, 5000);
-  const rewardDiscount = useRewardPoints
-    ? rewardPointsToUse / POINTS_PER_CURRENCY_REDEEM
-    : 0;
+  const rewardDiscount = useRewardPoints ? rewardPointsToUse / POINTS_PER_CURRENCY_REDEEM : 0;
 
   // ---- Wallet ----
   const { data: walletBalance = 0 } = useQuery({
@@ -227,9 +221,7 @@ function CheckoutPage() {
   const [useWallet, setUseWallet] = useState(false);
 
   // ---- Payment Method ----
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
-    "cash_on_delivery"
-  );
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash_on_delivery");
 
   // ---- Terms ----
   const [agreeTerms, setAgreeTerms] = useState(false);
@@ -239,12 +231,8 @@ function CheckoutPage() {
 
   // ---- Calculations ----
   const itemsSubtotal = useMemo(
-    () =>
-      enrichedItems.reduce(
-        (acc: number, i: EnrichedCartItem) => acc + i.price * i.quantity,
-        0
-      ),
-    [enrichedItems]
+    () => enrichedItems.reduce((acc: number, i: EnrichedCartItem) => acc + i.price * i.quantity, 0),
+    [enrichedItems],
   );
 
   const couponDiscount = appliedCoupon?.discount || 0;
@@ -351,8 +339,6 @@ function CheckoutPage() {
 
   // ---- Address snapshot is handled by CheckoutAddressSelector ----
 
-
-
   // ---- Place Order ----
   // ---- Start verification (replaces direct order placement) ----
   const handleStartVerification = () => {
@@ -418,9 +404,7 @@ function CheckoutPage() {
         search: { orderId },
       });
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Could not place order"
-      );
+      toast.error(err instanceof Error ? err.message : "Could not place order");
       setVerificationStep(false);
       setVerificationSessionId(null);
     } finally {
@@ -459,9 +443,7 @@ function CheckoutPage() {
             <div className="mx-auto w-20 h-20 rounded-full bg-orange-50 border-2 border-orange-100 flex items-center justify-center mb-5 text-[#f57224]">
               <ShoppingBag className="w-10 h-10 stroke-[1.5]" />
             </div>
-            <h2 className="text-xl font-bold text-[#0f172a] mb-2">
-              Your cart is empty
-            </h2>
+            <h2 className="text-xl font-bold text-[#0f172a] mb-2">Your cart is empty</h2>
             <p className="text-sm text-slate-500 mb-6">
               Add products to your cart before checking out.
             </p>
@@ -531,11 +513,7 @@ function CheckoutPage() {
             </CheckoutSection>
 
             {/* ---- 2. DELIVERY ZONE (Auto-detected) ---- */}
-            <CheckoutSection
-              number={2}
-              icon={<Truck className="w-4 h-4" />}
-              title="Delivery Zone"
-            >
+            <CheckoutSection number={2} icon={<Truck className="w-4 h-4" />} title="Delivery Zone">
               {deliveryAddressSnapshot ? (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-orange-50 to-amber-50 border-2 border-orange-200">
@@ -556,12 +534,17 @@ function CheckoutPage() {
                       <div className="text-lg font-black text-orange-600">
                         ৳{deliveryZoneConfig.charge}
                       </div>
-                      <div className="text-[10px] text-slate-400">{t("checkout.deliveryCharge")}</div>
+                      <div className="text-[10px] text-slate-400">
+                        {t("checkout.deliveryCharge")}
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-slate-500">
                     <Clock className="w-3.5 h-3.5" />
-                    <span>Estimated delivery: {deliveryZoneConfig.etaDays[0]}-{deliveryZoneConfig.etaDays[1]} days</span>
+                    <span>
+                      Estimated delivery: {deliveryZoneConfig.etaDays[0]}-
+                      {deliveryZoneConfig.etaDays[1]} days
+                    </span>
                   </div>
                 </div>
               ) : (
@@ -575,86 +558,69 @@ function CheckoutPage() {
             </CheckoutSection>
 
             {/* ---- 3. SELLER-WISE ORDER SPLIT ---- */}
-            <CheckoutSection
-              number={3}
-              icon={<Store className="w-4 h-4" />}
-              title="Order Items"
-            >
+            <CheckoutSection number={3} icon={<Store className="w-4 h-4" />} title="Order Items">
               <div className="space-y-4">
-                {Object.entries(sellerGroups).map(
-                  ([sellerName, sellerItems]) => (
-                    <div
-                      key={sellerName}
-                      className="border border-slate-200 rounded-xl overflow-hidden"
-                    >
-                      {/* Seller Header */}
-                      <div className="bg-slate-50/80 px-4 py-2.5 border-b border-slate-200/60 flex items-center gap-2">
-                        <Store className="w-4 h-4 text-[#0f172a]" />
-                        <span className="text-sm font-bold text-[#0f172a]">
-                          {sellerName}
+                {Object.entries(sellerGroups).map(([sellerName, sellerItems]) => (
+                  <div
+                    key={sellerName}
+                    className="border border-slate-200 rounded-xl overflow-hidden"
+                  >
+                    {/* Seller Header */}
+                    <div className="bg-slate-50/80 px-4 py-2.5 border-b border-slate-200/60 flex items-center gap-2">
+                      <Store className="w-4 h-4 text-[#0f172a]" />
+                      <span className="text-sm font-bold text-[#0f172a]">{sellerName}</span>
+                      {sellerItems[0]?.sellerVerified && (
+                        <span className="bg-amber-100 text-amber-800 text-[9px] font-bold px-1.5 py-0.2 rounded border border-amber-200">
+                          Verified
                         </span>
-                        {sellerItems[0]?.sellerVerified && (
-                          <span className="bg-amber-100 text-amber-800 text-[9px] font-bold px-1.5 py-0.2 rounded border border-amber-200">
-                            Verified
-                          </span>
-                        )}
-                      </div>
-                      {/* Items */}
-                      <div className="divide-y divide-slate-100">
-                        {sellerItems.map((item: EnrichedCartItem) => (
-                          <div
-                            key={item.id}
-                            className="flex items-center gap-3 p-3"
-                          >
-                            <div className="w-14 h-14 rounded-lg overflow-hidden bg-slate-100 flex-shrink-0">
-                              {item.image ? (
-                                <img
-                                  src={item.image}
-                                  alt={item.title}
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center">
-                                  <Package className="w-5 h-5 text-slate-300" />
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h4 className="text-xs sm:text-sm font-semibold text-slate-800 line-clamp-2">
-                                {item.title}
-                              </h4>
-                              <p className="text-xs text-slate-400 mt-0.5">
-                                Qty: {item.quantity}
-                                {item.originalPrice && item.originalPrice > item.price && (
-                                  <span className="ml-2 text-[#f57224] font-semibold">
-                                    {Math.round(
-                                      ((item.originalPrice - item.price) /
-                                        item.originalPrice) *
-                                        100
-                                    )}
-                                    % OFF
-                                  </span>
-                                )}
-                              </p>
-                            </div>
-                            <span className="text-sm font-bold text-[#0f172a] flex-shrink-0">
-                              {formatPrice(item.price * item.quantity)}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
+                      )}
                     </div>
-                  )
-                )}
+                    {/* Items */}
+                    <div className="divide-y divide-slate-100">
+                      {sellerItems.map((item: EnrichedCartItem) => (
+                        <div key={item.id} className="flex items-center gap-3 p-3">
+                          <div className="w-14 h-14 rounded-lg overflow-hidden bg-slate-100 flex-shrink-0">
+                            {item.image ? (
+                              <img
+                                src={item.image}
+                                alt={item.title}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <Package className="w-5 h-5 text-slate-300" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-xs sm:text-sm font-semibold text-slate-800 line-clamp-2">
+                              {item.title}
+                            </h4>
+                            <p className="text-xs text-slate-400 mt-0.5">
+                              Qty: {item.quantity}
+                              {item.originalPrice && item.originalPrice > item.price && (
+                                <span className="ml-2 text-[#f57224] font-semibold">
+                                  {Math.round(
+                                    ((item.originalPrice - item.price) / item.originalPrice) * 100,
+                                  )}
+                                  % OFF
+                                </span>
+                              )}
+                            </p>
+                          </div>
+                          <span className="text-sm font-bold text-[#0f172a] flex-shrink-0">
+                            {formatPrice(item.price * item.quantity)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
             </CheckoutSection>
 
             {/* ---- 4. VOUCHER ---- */}
-            <CheckoutSection
-              number={4}
-              icon={<Tag className="w-4 h-4" />}
-              title="Voucher / Coupon"
-            >
+            <CheckoutSection number={4} icon={<Tag className="w-4 h-4" />} title="Voucher / Coupon">
               {appliedCoupon ? (
                 <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-xl p-3">
                   <div className="flex items-center gap-2">
@@ -721,11 +687,7 @@ function CheckoutPage() {
             </CheckoutSection>
 
             {/* ---- PROMO CODE (NEXA####) ---- */}
-            <CheckoutSection
-              number={5}
-              icon={<Gift className="w-4 h-4" />}
-              title="Promo Code (NEXA)"
-            >
+            <CheckoutSection number={5} icon={<Gift className="w-4 h-4" />} title="Promo Code">
               {appliedPromoCode ? (
                 <div className="flex items-center justify-between bg-orange-50 border border-orange-200 rounded-xl p-3">
                   <div className="flex items-center gap-2">
@@ -734,9 +696,7 @@ function CheckoutPage() {
                       <span className="text-sm font-bold text-orange-700 font-mono tracking-wider">
                         {appliedPromoCode}
                       </span>
-                      <p className="text-xs text-orange-600">
-                        Will be validated at checkout
-                      </p>
+                      <p className="text-xs text-orange-600">Will be validated at checkout</p>
                     </div>
                   </div>
                   <button
@@ -759,7 +719,7 @@ function CheckoutPage() {
                         handleApplyPromo();
                       }
                     }}
-                    placeholder="Enter NEXA promo code"
+                    placeholder="Enter promo code"
                     className="flex-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#f57224] transition-colors uppercase font-mono"
                     maxLength={10}
                   />
@@ -783,11 +743,7 @@ function CheckoutPage() {
             </CheckoutSection>
 
             {/* ---- 5. REWARD POINTS ---- */}
-            <CheckoutSection
-              number={5}
-              icon={<Gift className="w-4 h-4" />}
-              title="Reward Points"
-            >
+            <CheckoutSection number={5} icon={<Gift className="w-4 h-4" />} title="Reward Points">
               {rewardPoints > 0 ? (
                 <div>
                   <div className="flex items-center justify-between mb-3">
@@ -818,9 +774,7 @@ function CheckoutPage() {
                       }}
                       className="w-4 h-4 accent-[#f57224] rounded"
                     />
-                    <span className="text-sm font-semibold text-slate-700">
-                      Use reward points
-                    </span>
+                    <span className="text-sm font-semibold text-slate-700">Use reward points</span>
                   </label>
                   {useRewardPoints && (
                     <div className="mt-2">
@@ -830,18 +784,14 @@ function CheckoutPage() {
                         max={maxRewardPoints}
                         step={100}
                         value={rewardPointsToUse}
-                        onChange={(e) =>
-                          setRewardPointsToUse(Number(e.target.value))
-                        }
+                        onChange={(e) => setRewardPointsToUse(Number(e.target.value))}
                         className="w-full accent-[#f57224]"
                       />
                       <div className="flex items-center justify-between mt-1 text-xs text-slate-500">
                         <span>0 pts</span>
                         <span className="font-bold text-[#f57224]">
                           {rewardPointsToUse.toLocaleString()} pts ={" "}
-                          {formatPrice(
-                            rewardPointsToUse / POINTS_PER_CURRENCY_REDEEM
-                          )}
+                          {formatPrice(rewardPointsToUse / POINTS_PER_CURRENCY_REDEEM)}
                         </span>
                         <span>{maxRewardPoints.toLocaleString()} pts</span>
                       </div>
@@ -851,9 +801,7 @@ function CheckoutPage() {
               ) : (
                 <div className="flex items-center gap-2 text-sm text-slate-400">
                   <Gift className="w-4 h-4" />
-                  <span>
-                    No reward points yet. Earn points with every purchase!
-                  </span>
+                  <span>No reward points yet. Earn points with every purchase!</span>
                 </div>
               )}
             </CheckoutSection>
@@ -862,7 +810,7 @@ function CheckoutPage() {
             <CheckoutSection
               number={6}
               icon={<Wallet className="w-4 h-4" />}
-              title="Shop Nexa Wallet"
+              title="Aventa Shop Wallet"
             >
               {walletBalance > 0 ? (
                 <div className="flex items-center justify-between">
@@ -870,9 +818,7 @@ function CheckoutPage() {
                     <Wallet className="w-4 h-4 text-[#f57224]" />
                     <span className="text-sm text-slate-700">
                       Balance:{" "}
-                      <span className="font-bold text-[#0f172a]">
-                        {formatPrice(walletBalance)}
-                      </span>
+                      <span className="font-bold text-[#0f172a]">{formatPrice(walletBalance)}</span>
                     </span>
                   </div>
                   <label className="flex items-center gap-2 cursor-pointer">
@@ -882,17 +828,13 @@ function CheckoutPage() {
                       onChange={(e) => setUseWallet(e.target.checked)}
                       className="w-4 h-4 accent-[#f57224] rounded"
                     />
-                    <span className="text-sm font-semibold text-slate-700">
-                      Use wallet
-                    </span>
+                    <span className="text-sm font-semibold text-slate-700">Use wallet</span>
                   </label>
                 </div>
               ) : (
                 <div className="flex items-center gap-2 text-sm text-slate-400">
                   <Wallet className="w-4 h-4" />
-                  <span>
-                    Wallet balance is zero. Earn cashback with every order!
-                  </span>
+                  <span>Wallet balance is zero. Earn cashback with every order!</span>
                 </div>
               )}
               {useWallet && walletBalance > 0 && (
@@ -971,20 +913,11 @@ function CheckoutPage() {
                   className="mt-0.5 w-5 h-5 accent-[#f57224] rounded border-slate-300"
                 />
                 <span className="text-xs text-slate-600 leading-relaxed">
-                  I agree to Shop Nexa's{" "}
-                  <span className="text-[#f57224] font-semibold">
-                    Terms & Conditions
-                  </span>
-                  ,{" "}
-                  <span className="text-[#f57224] font-semibold">
-                    Return Policy
-                  </span>
-                  , and{" "}
-                  <span className="text-[#f57224] font-semibold">
-                    Privacy Policy
-                  </span>
-                  . I confirm that the delivery address and order details are
-                  correct.
+                  I agree to Aventa Shop's{" "}
+                  <span className="text-[#f57224] font-semibold">Terms & Conditions</span>,{" "}
+                  <span className="text-[#f57224] font-semibold">Return Policy</span>, and{" "}
+                  <span className="text-[#f57224] font-semibold">Privacy Policy</span>. I confirm
+                  that the delivery address and order details are correct.
                 </span>
               </label>
             </CheckoutSection>
@@ -1001,17 +934,10 @@ function CheckoutPage() {
               {/* Items count */}
               <div className="space-y-2 mb-4">
                 {enrichedItems.slice(0, 5).map((item: EnrichedCartItem) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center gap-2.5 text-xs"
-                  >
+                  <div key={item.id} className="flex items-center gap-2.5 text-xs">
                     <div className="w-10 h-10 rounded-lg overflow-hidden bg-slate-100 flex-shrink-0">
                       {item.image ? (
-                        <img
-                          src={item.image}
-                          alt=""
-                          className="w-full h-full object-cover"
-                        />
+                        <img src={item.image} alt="" className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
                           <Package className="w-4 h-4 text-slate-300" />
@@ -1019,9 +945,7 @@ function CheckoutPage() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="line-clamp-1 font-medium text-slate-700">
-                        {item.title}
-                      </p>
+                      <p className="line-clamp-1 font-medium text-slate-700">{item.title}</p>
                       <p className="text-slate-400">x{item.quantity}</p>
                     </div>
                     <span className="font-semibold text-[#0f172a]">
@@ -1040,24 +964,18 @@ function CheckoutPage() {
               <div className="space-y-2.5 border-t border-slate-100 pt-4 text-sm">
                 <div className="flex justify-between">
                   <span className="text-slate-500">{t("checkout.productsTotal")}</span>
-                  <span className="font-semibold text-[#0f172a]">
-                    {formatPrice(itemsSubtotal)}
-                  </span>
+                  <span className="font-semibold text-[#0f172a]">{formatPrice(itemsSubtotal)}</span>
                 </div>
                 {couponDiscount > 0 && (
                   <div className="flex justify-between text-emerald-600">
                     <span>{t("checkout.voucherDiscount")}</span>
-                    <span className="font-semibold">
-                      -{formatPrice(couponDiscount)}
-                    </span>
+                    <span className="font-semibold">-{formatPrice(couponDiscount)}</span>
                   </div>
                 )}
                 {rewardDiscountValue > 0 && (
                   <div className="flex justify-between text-purple-600">
                     <span>{t("checkout.rewardPoints")}</span>
-                    <span className="font-semibold">
-                      -{formatPrice(rewardDiscountValue)}
-                    </span>
+                    <span className="font-semibold">-{formatPrice(rewardDiscountValue)}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
@@ -1069,9 +987,7 @@ function CheckoutPage() {
                   </span>
                   <span
                     className={`font-semibold ${
-                      deliveryCharge === 0
-                        ? "text-emerald-600"
-                        : "text-[#0f172a]"
+                      deliveryCharge === 0 ? "text-emerald-600" : "text-[#0f172a]"
                     }`}
                   >
                     {deliveryCharge === 0 ? "FREE" : formatPrice(deliveryCharge)}
@@ -1080,21 +996,15 @@ function CheckoutPage() {
                 {walletUsed > 0 && (
                   <div className="flex justify-between text-[#f57224]">
                     <span>{t("checkout.walletCredit")}</span>
-                    <span className="font-semibold">
-                      -{formatPrice(walletUsed)}
-                    </span>
+                    <span className="font-semibold">-{formatPrice(walletUsed)}</span>
                   </div>
                 )}
               </div>
 
               {/* Grand total */}
               <div className="flex justify-between items-baseline border-t border-slate-200 pt-4 mt-4">
-                <span className="text-base font-bold text-[#0f172a]">
-                  Grand Total
-                </span>
-                <span className="text-xl font-black text-[#f57224]">
-                  {formatPrice(grandTotal)}
-                </span>
+                <span className="text-base font-bold text-[#0f172a]">Grand Total</span>
+                <span className="text-xl font-black text-[#f57224]">{formatPrice(grandTotal)}</span>
               </div>
 
               {/* Estimated delivery */}
@@ -1102,9 +1012,7 @@ function CheckoutPage() {
                 <Clock className="w-4 h-4 text-slate-500 flex-shrink-0" />
                 <div>
                   <p className="text-xs text-slate-500">{t("checkout.estimatedDelivery")}</p>
-                  <p className="text-sm font-bold text-[#0f172a]">
-                    {estimatedDelivery}
-                  </p>
+                  <p className="text-sm font-bold text-[#0f172a]">{estimatedDelivery}</p>
                 </div>
               </div>
 
@@ -1143,21 +1051,15 @@ function CheckoutPage() {
               <div className="mt-5 pt-4 border-t border-slate-100 grid grid-cols-3 gap-2 text-center">
                 <div className="flex flex-col items-center gap-1">
                   <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                  <span className="text-[10px] text-slate-500 font-medium">
-                    Secure
-                  </span>
+                  <span className="text-[10px] text-slate-500 font-medium">Secure</span>
                 </div>
                 <div className="flex flex-col items-center gap-1">
                   <RotateCcw className="w-4 h-4 text-blue-600" />
-                  <span className="text-[10px] text-slate-500 font-medium">
-                    7-Day Returns
-                  </span>
+                  <span className="text-[10px] text-slate-500 font-medium">7-Day Returns</span>
                 </div>
                 <div className="flex flex-col items-center gap-1">
                   <Package className="w-4 h-4 text-[#f57224]" />
-                  <span className="text-[10px] text-slate-500 font-medium">
-                    Fast Delivery
-                  </span>
+                  <span className="text-[10px] text-slate-500 font-medium">Fast Delivery</span>
                 </div>
               </div>
             </div>
@@ -1174,9 +1076,7 @@ function CheckoutPage() {
           <span className="text-[10px] text-slate-500 block uppercase font-medium">
             Total ({enrichedItems.length} items)
           </span>
-          <span className="text-lg font-black text-[#f57224]">
-            {formatPrice(grandTotal)}
-          </span>
+          <span className="text-lg font-black text-[#f57224]">{formatPrice(grandTotal)}</span>
         </div>
         <button
           type="button"
@@ -1257,8 +1157,8 @@ function PaymentOption({
         !active
           ? "border-slate-100 bg-slate-50/50 opacity-60 cursor-not-allowed"
           : selected
-          ? "border-[#f57224] bg-orange-50/50 cursor-pointer"
-          : "border-slate-200 hover:border-slate-300 cursor-pointer"
+            ? "border-[#f57224] bg-orange-50/50 cursor-pointer"
+            : "border-slate-200 hover:border-slate-300 cursor-pointer"
       }`}
     >
       <div
@@ -1268,9 +1168,7 @@ function PaymentOption({
       >
         {selected && <Check className="w-3 h-3 text-white" />}
       </div>
-      <div className={selected ? "text-[#f57224]" : "text-slate-400"}>
-        {icon}
-      </div>
+      <div className={selected ? "text-[#f57224]" : "text-slate-400"}>{icon}</div>
       <div className="flex-1">
         <span className="text-sm font-bold text-[#0f172a]">{label}</span>
         <p className="text-xs text-slate-500">{desc}</p>
@@ -1305,9 +1203,7 @@ function FormInput({
 }) {
   return (
     <div>
-      <label className="mb-1 block text-xs font-medium text-slate-500">
-        {label}
-      </label>
+      <label className="mb-1 block text-xs font-medium text-slate-500">{label}</label>
       <input
         type="text"
         value={value}

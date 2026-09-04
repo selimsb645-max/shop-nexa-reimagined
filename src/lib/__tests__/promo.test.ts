@@ -1,5 +1,5 @@
 /**
- * Shop Nexa — Promo Code Test Suite
+ * Aventa Shop — Promo Code Test Suite
  *
  * Tests for the NEXA promo code generation system.
  * Run with: npx vitest run src/lib/__tests__/promo.test.ts
@@ -16,11 +16,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import {
-  generateCandidateCode,
-  PROMO_PREFIX,
-  PROMO_NUMERIC_LENGTH,
-} from "../promo.server";
+import { generateCandidateCode, PROMO_PREFIX, PROMO_NUMERIC_LENGTH } from "../promo.server";
 
 // ====================================================================
 // 1. Code Format Tests
@@ -125,8 +121,7 @@ describe("Promo Code Validation Rules (conceptual)", () => {
     if (promo.expiresAt > 0 && Date.now() > promo.expiresAt)
       return { valid: false, reason: "expired" };
     if (promo.usedCount >= promo.usageLimit) return { valid: false, reason: "used up" };
-    if (subtotal < promo.minimumOrderAmount)
-      return { valid: false, reason: "below minimum" };
+    if (subtotal < promo.minimumOrderAmount) return { valid: false, reason: "below minimum" };
     return { valid: true };
   }
 
@@ -159,31 +154,19 @@ describe("Promo Code Validation Rules (conceptual)", () => {
   });
 
   it("should reject an expired promo code", () => {
-    const result = validatePromo(
-      { ...basePromo, expiresAt: Date.now() - 1000 },
-      "user123",
-      100,
-    );
+    const result = validatePromo({ ...basePromo, expiresAt: Date.now() - 1000 }, "user123", 100);
     expect(result.valid).toBe(false);
     expect(result.reason).toBe("expired");
   });
 
   it("should reject a promo code that has reached usage limit", () => {
-    const result = validatePromo(
-      { ...basePromo, usedCount: 1, usageLimit: 1 },
-      "user123",
-      100,
-    );
+    const result = validatePromo({ ...basePromo, usedCount: 1, usageLimit: 1 }, "user123", 100);
     expect(result.valid).toBe(false);
     expect(result.reason).toBe("used up");
   });
 
   it("should reject when subtotal is below minimum order", () => {
-    const result = validatePromo(
-      { ...basePromo, minimumOrderAmount: 50 },
-      "user123",
-      30,
-    );
+    const result = validatePromo({ ...basePromo, minimumOrderAmount: 50 }, "user123", 30);
     expect(result.valid).toBe(false);
     expect(result.reason).toBe("below minimum");
   });
@@ -195,11 +178,7 @@ describe("Promo Code Validation Rules (conceptual)", () => {
   });
 
   it("should accept a multi-use code that hasn't reached limit", () => {
-    const result = validatePromo(
-      { ...basePromo, usageLimit: 5, usedCount: 3 },
-      "user123",
-      100,
-    );
+    const result = validatePromo({ ...basePromo, usageLimit: 5, usedCount: 3 }, "user123", 100);
     expect(result.valid).toBe(true);
   });
 });
@@ -214,10 +193,7 @@ describe("Discount Calculation", () => {
     discountValue: number,
     subtotal: number,
   ): number {
-    const raw =
-      discountType === "percent"
-        ? (subtotal * discountValue) / 100
-        : discountValue;
+    const raw = discountType === "percent" ? (subtotal * discountValue) / 100 : discountValue;
     return Math.min(subtotal, Math.round(raw * 100) / 100);
   }
 

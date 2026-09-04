@@ -345,7 +345,7 @@ export const en: TranslationKeys = {
   "admin.joined": "Joined",
   "admin.location": "Location",
   "admin.manageCategoriesDesc": "Manage categories and subcategories.",
-  "admin.managePromoCodes": "Manage NEXA promo codes",
+  "admin.managePromoCodes": "Manage promo codes",
   "admin.middle": "Middle",
   "admin.minOrderAmount": "Min Order Amount",
   "admin.minSubtotal": "Min subtotal",
@@ -418,7 +418,7 @@ export const en: TranslationKeys = {
   "admin.withdrawalApproved": "Withdrawal approved",
   "admin.withdrawalRejected": "Withdrawal rejected",
   "admin.withdrawalRequests": "Withdrawal Requests",
-  "promoCodes.welcome": "Welcome to Shop Nexa!",
+  "promoCodes.welcome": "Welcome to Aventa Shop!",
   "support.category": "Category",
   "support.none": "None",
   "account.referEarn": "Refer & Earn",
@@ -447,7 +447,7 @@ export const en: TranslationKeys = {
   "account.returnsRefunds": "Returns & Refunds",
   "account.returnsRefundsHint": "Manage return requests",
   "account.membershipGifts": "Membership & Gifts",
-  "account.nexaPrime": "Nexa Prime",
+  "account.nexaPrime": "Aventa Prime",
   "account.nexaPrimeHint": "Exclusive rewards & benefits",
   "account.giftCards": "Gift Cards",
   "account.giftCardsHint": "Buy & manage gift cards",
@@ -501,14 +501,14 @@ export const en: TranslationKeys = {
   "settings.smsOrderUpdates": "SMS Order Updates",
   "settings.smsOrderUpdatesHint": "Delivery alerts to your phone",
   "settings.pushNotifications": "In-App Notifications",
-  "settings.pushNotificationsHint": "Show alerts inside Shop Nexa",
+  "settings.pushNotificationsHint": "Show alerts inside Aventa Shop",
   "settings.savePreferences": "Save Preferences",
   "settings.saved": "Settings saved",
   "settings.saveError": "Could not save settings",
   "settings.legal": "Legal",
   "settings.termsConditions": "Terms & Conditions",
   "settings.privacyPolicy": "Privacy Policy",
-  "settings.aboutShopNexa": "About Shop Nexa",
+  "settings.aboutShop": "About Aventa Shop",
   "settings.aboutHint": "Smart Shopping, Better Life",
 
   // Device info
@@ -616,9 +616,9 @@ export const en: TranslationKeys = {
   "giftCards.buy": "Buy Gift Card",
   "giftCards.empty": "No gift cards",
   "giftCards.emptyHint": "Your purchased gift cards will appear here",
-  "membership.title": "Nexa Prime",
+  "membership.title": "Aventa Prime",
   "membership.subtitle": "Exclusive rewards and benefits",
-  "membership.join": "Join Nexa Prime",
+  "membership.join": "Join Aventa Prime",
   "membership.benefits": "Prime Benefits",
   "membership.current": "Current Membership",
   "membership.currentTier": "Current Tier",
@@ -676,19 +676,26 @@ export const en: TranslationKeys = {
   "support.noTickets": "You have no support tickets.",
   "support.faqTitle": "Frequently asked questions",
   "account.backHome": "Back to Home",
-  "account.becomeSeller": "Become a Seller on Shop Nexa",
+  "account.becomeSeller": "Become a Seller on Aventa Shop",
   "account.becomeSellerHint": "Start selling your products to thousands of customers",
   "orders.unknownStatus": "Unknown order status",
   "orders.backToAccount": "Back to Account",
   "messages.paymentMethod": "Method",
   "messages.paymentStatus": "Status",
-  "messages.aiWelcome": "Hi! I'm your AI Shopping Assistant. I can help you find products, track orders, suggest coupons, and more. How can I help today?",
-  "messages.aiTrackOrder": "To track your order, go to the Orders tab above and tap on any order to see real-time tracking updates. You can also visit the Track Orders page for live delivery tracking.",
-  "messages.aiCoupon": "You can find all available coupons on the Coupons page. We frequently offer flash sale discounts and promo codes. Check back often for new deals!",
-  "messages.aiFlashSale": "Flash sales are live on the Flash Sales page! These are limited-time deals with significant discounts. Act fast before they end!",
-  "messages.aiReturn": "You can request a return from the Returns & Refunds page. We accept returns within 7 days of delivery for eligible products.",
-  "messages.aiProduct": "You can browse all products on the Shop page. Use the search bar at the top to find specific items, or filter by category to discover new products.",
-  "messages.aiDefault": "I'm here to help! You can ask me about orders, products, coupons, returns, flash sales, and more. What would you like to know?",
+  "messages.aiWelcome":
+    "Hi! I'm your AI Shopping Assistant. I can help you find products, track orders, suggest coupons, and more. How can I help today?",
+  "messages.aiTrackOrder":
+    "To track your order, go to the Orders tab above and tap on any order to see real-time tracking updates. You can also visit the Track Orders page for live delivery tracking.",
+  "messages.aiCoupon":
+    "You can find all available coupons on the Coupons page. We frequently offer flash sale discounts and promo codes. Check back often for new deals!",
+  "messages.aiFlashSale":
+    "Flash sales are live on the Flash Sales page! These are limited-time deals with significant discounts. Act fast before they end!",
+  "messages.aiReturn":
+    "You can request a return from the Returns & Refunds page. We accept returns within 7 days of delivery for eligible products.",
+  "messages.aiProduct":
+    "You can browse all products on the Shop page. Use the search bar at the top to find specific items, or filter by category to discover new products.",
+  "messages.aiDefault":
+    "I'm here to help! You can ask me about orders, products, coupons, returns, flash sales, and more. What would you like to know?",
   "messages.notifAllRead": "All notifications marked as read",
   "messages.notifMarkAllRead": "Mark all read",
   "messages.filterAll": "All",
@@ -792,7 +799,7 @@ export const en: TranslationKeys = {
 
   // Misc
   "misc.version": "Version 1.0.0",
-  "misc.tagline": "Shop Nexa — Smart Shopping, Better Life",
+  "misc.tagline": "Aventa Shop — Smart Shopping, Better Life",
   "admin.manageUsersDesc": "Manage buyers, sellers and admins.",
   "seller.applicationSubmitted": "Application Submitted!",
   "checkout.backToCart": "Back to Cart",
@@ -814,5 +821,4 @@ export const en: TranslationKeys = {
   "seller.updateStatus": "Update status",
   "checkout.voucherDiscount": "Voucher Discount",
   "checkout.walletCredit": "Wallet Credit",
-
 };

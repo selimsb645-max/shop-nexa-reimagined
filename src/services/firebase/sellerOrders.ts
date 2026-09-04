@@ -9,7 +9,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { getDb } from "./config";
-import type { SellerOrder, SellerOrderStatus , ShippingInfo } from "@/types/seller";
+import type { SellerOrder, SellerOrderStatus, ShippingInfo } from "@/types/seller";
 import { markOrderDelivered } from "@/lib/settlement.functions";
 
 const SELLERS = "sellers";
@@ -60,10 +60,7 @@ function mapOrder(id: string, d: Record<string, unknown>): SellerOrder {
 
 export async function listSellerOrders(sellerId: string): Promise<SellerOrder[]> {
   const snap = await getDocs(
-    query(
-      collection(getDb(), SELLERS, sellerId, ORDERS),
-      orderBy("createdAt", "desc"),
-    ),
+    query(collection(getDb(), SELLERS, sellerId, ORDERS), orderBy("createdAt", "desc")),
   );
   return snap.docs.map((d) => mapOrder(d.id, d.data()));
 }
@@ -117,10 +114,7 @@ export async function updateSellerOrderStatus(
     trackingNote = `Shipped via ${courierInfo.name}${courierInfo.trackingNumber ? ` (Tracking: ${courierInfo.trackingNumber})` : ""}`;
   }
 
-  const tracking = [
-    ...existingTracking,
-    { status, note: trackingNote, at: ts },
-  ];
+  const tracking = [...existingTracking, { status, note: trackingNote, at: ts }];
 
   const sellerUpdate: Record<string, unknown> = {
     status,

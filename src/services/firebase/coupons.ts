@@ -3,12 +3,7 @@ import { getDb } from "./config";
 import type { Coupon } from "@/types/commerce";
 
 export class CouponError extends Error {
-  code:
-    | "not_found"
-    | "inactive"
-    | "expired"
-    | "min_subtotal"
-    | "usage_limit";
+  code: "not_found" | "inactive" | "expired" | "min_subtotal" | "usage_limit";
   constructor(code: CouponError["code"], msg: string) {
     super(msg);
     this.code = code;
@@ -30,10 +25,7 @@ export async function validateCoupon(code: string, subtotal: number): Promise<Co
   if (c.expiresAt && Date.now() > c.expiresAt)
     throw new CouponError("expired", "This coupon has expired");
   if (c.minSubtotal && subtotal < c.minSubtotal)
-    throw new CouponError(
-      "min_subtotal",
-      `Minimum order of $${c.minSubtotal.toFixed(2)} required`,
-    );
+    throw new CouponError("min_subtotal", `Minimum order of $${c.minSubtotal.toFixed(2)} required`);
   if (c.usageLimit != null && c.uses >= c.usageLimit)
     throw new CouponError("usage_limit", "Coupon usage limit reached");
 
@@ -47,4 +39,3 @@ export async function validateCoupon(code: string, subtotal: number): Promise<Co
 // Coupon `uses` is incremented only by the trusted server-side checkout, so
 // there is intentionally no client-side increment helper here. `validateCoupon`
 // above is a read-only preview; the server revalidates the coupon at checkout.
-

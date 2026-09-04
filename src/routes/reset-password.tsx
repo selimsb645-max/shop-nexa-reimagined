@@ -16,10 +16,10 @@ export const Route = createFileRoute("/reset-password")({
   component: ResetPasswordPage,
   head: () => ({
     meta: [
-      { title: "Reset Password — ShopNexa" },
+      { title: "Reset Password — Aventa Shop" },
       {
         name: "description",
-        content: "Set a new password for your ShopNexa account.",
+        content: "Set a new password for your Aventa Shop account.",
       },
       { name: "robots", content: "noindex" },
     ],
@@ -40,9 +40,7 @@ function ResetPasswordPage() {
   useEffect(() => {
     if (!oobCode) {
       setStatus("error");
-      setErrorMessage(
-        "This reset link is incomplete. Please request a new password reset email.",
-      );
+      setErrorMessage("This reset link is incomplete. Please request a new password reset email.");
       return;
     }
 
@@ -117,8 +115,7 @@ function ResetPasswordPage() {
         <div className="flex flex-col items-center gap-4 py-4">
           <CheckCircle2 className="h-12 w-12 text-green-500" />
           <p className="text-center text-sm text-muted-foreground">
-            Your password has been successfully updated. You can now log in with your
-            new password.
+            Your password has been successfully updated. You can now log in with your new password.
           </p>
         </div>
         <Link
@@ -132,11 +129,7 @@ function ResetPasswordPage() {
   }
 
   return (
-    <ResetForm
-      oobCode={oobCode!}
-      userEmail={userEmail}
-      onSuccess={() => setStatus("success")}
-    />
+    <ResetForm oobCode={oobCode!} userEmail={userEmail} onSuccess={() => setStatus("success")} />
   );
 }
 
@@ -171,9 +164,7 @@ function ResetForm({
     <AuthLayout
       title="Set a new password"
       subtitle={
-        userEmail
-          ? `Enter a new password for ${userEmail}`
-          : "Enter your new password below"
+        userEmail ? `Enter a new password for ${userEmail}` : "Enter your new password below"
       }
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
@@ -193,11 +184,7 @@ function ResetForm({
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               tabIndex={-1}
             >
-              {showPassword ? (
-                <EyeOff className="h-4 w-4" />
-              ) : (
-                <Eye className="h-4 w-4" />
-              )}
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
           {errors.password && (
@@ -221,17 +208,11 @@ function ResetForm({
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               tabIndex={-1}
             >
-              {showConfirm ? (
-                <EyeOff className="h-4 w-4" />
-              ) : (
-                <Eye className="h-4 w-4" />
-              )}
+              {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
           {errors.confirmPassword && (
-            <p className="mt-1 text-xs text-destructive">
-              {errors.confirmPassword.message}
-            </p>
+            <p className="mt-1 text-xs text-destructive">{errors.confirmPassword.message}</p>
           )}
         </div>
 

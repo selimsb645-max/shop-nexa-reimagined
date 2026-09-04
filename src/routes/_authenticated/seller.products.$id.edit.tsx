@@ -4,18 +4,13 @@ import { toast } from "sonner";
 import { SellerGate } from "@/components/seller/SellerGate";
 import { ProductForm, parseCsv } from "@/components/seller/ProductForm";
 import { Spinner } from "@/components/common/Spinner";
-import {
-  getSellerProduct,
-  updateSellerProduct,
-} from "@/services/firebase/sellerProducts";
+import { getSellerProduct, updateSellerProduct } from "@/services/firebase/sellerProducts";
 import { mapFirebaseError } from "@/utils/errors";
 import type { Product } from "@/types/commerce";
 import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/seller/products/$id/edit")({
-  component: () => (
-    <SellerGate>{(profile) => <EditProduct sellerId={profile.uid} />}</SellerGate>
-  ),
+  component: () => <SellerGate>{(profile) => <EditProduct sellerId={profile.uid} />}</SellerGate>,
 });
 
 function EditProduct({ sellerId }: { sellerId: string }) {
@@ -71,9 +66,7 @@ function EditProduct({ sellerId }: { sellerId: string }) {
         onSubmit={async (v) => {
           try {
             const compareAt =
-              v.compareAtPrice === "" || v.compareAtPrice == null
-                ? null
-                : Number(v.compareAtPrice);
+              v.compareAtPrice === "" || v.compareAtPrice == null ? null : Number(v.compareAtPrice);
             await updateSellerProduct(sellerId, product.id, {
               title: v.title,
               slug: v.slug,

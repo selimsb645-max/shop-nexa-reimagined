@@ -12,8 +12,10 @@ import {
 } from "firebase/firestore";
 import { getDb } from "./config";
 
-export type ReturnStatus = "pending" | "approved" | "rejected" | "picked_up" | "refunded" | "cancelled";
-export type ReturnReason = "damaged" | "wrong_item" | "not_as_described" | "changed_mind" | "quality_issue" | "other";
+export type ReturnStatus =
+  "pending" | "approved" | "rejected" | "picked_up" | "refunded" | "cancelled";
+export type ReturnReason =
+  "damaged" | "wrong_item" | "not_as_described" | "changed_mind" | "quality_issue" | "other";
 
 export interface ReturnRequest {
   id: string;
@@ -59,11 +61,7 @@ export async function createReturnRequest(
 export async function listUserReturns(uid: string): Promise<ReturnRequest[]> {
   const db = getDb();
   const snap = await getDocs(
-    query(
-      collection(db, "returns"),
-      where("userId", "==", uid),
-      orderBy("createdAt", "desc"),
-    ),
+    query(collection(db, "returns"), where("userId", "==", uid), orderBy("createdAt", "desc")),
   );
   return snap.docs.map((d) => {
     const data = d.data() as Record<string, unknown>;
@@ -82,11 +80,13 @@ export async function listUserReturns(uid: string): Promise<ReturnRequest[]> {
       createdAt:
         typeof data.createdAt === "number"
           ? data.createdAt
-          : (data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? Date.now(),
+          : ((data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ??
+            Date.now()),
       updatedAt:
         typeof data.updatedAt === "number"
           ? data.updatedAt
-          : (data.updatedAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? Date.now(),
+          : ((data.updatedAt as { toMillis?: () => number } | undefined)?.toMillis?.() ??
+            Date.now()),
     };
   });
 }
@@ -111,11 +111,11 @@ export async function getReturnRequest(id: string): Promise<ReturnRequest | null
     createdAt:
       typeof data.createdAt === "number"
         ? data.createdAt
-        : (data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? Date.now(),
+        : ((data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? Date.now()),
     updatedAt:
       typeof data.updatedAt === "number"
         ? data.updatedAt
-        : (data.updatedAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? Date.now(),
+        : ((data.updatedAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? Date.now()),
   };
 }
 
