@@ -29,10 +29,13 @@ export async function validateCoupon(code: string, subtotal: number): Promise<Co
   if (c.usageLimit != null && c.uses >= c.usageLimit)
     throw new CouponError("usage_limit", "Coupon usage limit reached");
 
-  const discount =
-    c.type === "percent"
-      ? Math.min(subtotal, subtotal * (c.value / 100))
-      : Math.min(subtotal, c.value);
+  let discount = c.type === "percent" ? subtotal * (c.value / 100) : c.value;
+  // Cap at maxDiscount if specified (percent type only)
+  if (c.maxDiscount != null) {
+    discount = Math.min(discount, c.maxDiscount);
+  }
+  // Cap at subtotal
+  discount = Math.min(subtotal, discount);
   return { coupon: c, discount: Math.round(discount * 100) / 100 };
 }
 

@@ -160,6 +160,99 @@ function SettingsAdmin() {
           Save COD
         </button>
       </section>
+
+      <section className="rounded-lg border bg-background p-4 space-y-3">
+        <h2 className="text-sm font-semibold">Tax / VAT</h2>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={s.tax.enabled}
+            onChange={(e) => setS({ ...s, tax: { ...s.tax, enabled: e.target.checked } })}
+          />
+          Enable tax/VAT on checkout
+        </label>
+        <div className="grid gap-3 md:grid-cols-2">
+          <Num
+            label="Tax rate (%)"
+            value={s.tax.rate}
+            onChange={(v) => setS({ ...s, tax: { ...s.tax, rate: Math.min(Math.max(v, 0), 100) } })}
+          />
+          <Text
+            label="Tax label (e.g. VAT, Tax, GST)"
+            value={s.tax.label}
+            onChange={(v) => setS({ ...s, tax: { ...s.tax, label: v } })}
+          />
+        </div>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={s.tax.perProductOverride}
+            onChange={(e) => setS({ ...s, tax: { ...s.tax, perProductOverride: e.target.checked } })}
+          />
+          Allow per-product tax rate override (uses product tax field when set)
+        </label>
+        <button
+          onClick={() => save("tax", { tax: s.tax })}
+          disabled={saving}
+          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+        >
+          Save tax settings
+        </button>
+      </section>
+
+      <section className="rounded-lg border bg-background p-4 space-y-3">
+        <h2 className="text-sm font-semibold">Commission / Platform Fee</h2>
+        <p className="text-xs text-muted-foreground">
+          Configure the default platform commission rate applied to new sellers.
+          Individual seller rates can be overridden from the seller management page.
+        </p>
+        <div className="grid gap-3 md:grid-cols-3">
+          <Num
+            label="Default commission rate (%)"
+            value={s.commission.defaultRate}
+            onChange={(v) => setS({ ...s, commission: { ...s.commission, defaultRate: Math.min(Math.max(v, 0), 100) } })}
+          />
+          <Num
+            label="Min withdrawal amount"
+            value={s.commission.minWithdrawalAmount}
+            onChange={(v) => setS({ ...s, commission: { ...s.commission, minWithdrawalAmount: Math.max(v, 0) } })}
+          />
+          <Num
+            label="Settlement hold period (days)"
+            value={s.commission.holdPeriodDays}
+            onChange={(v) => setS({ ...s, commission: { ...s.commission, holdPeriodDays: Math.max(v, 0) } })}
+          />
+        </div>
+        <button
+          onClick={() => save("commission", { commission: s.commission })}
+          disabled={saving}
+          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+        >
+          Save commission settings
+        </button>
+      </section>
+
+      <section className="rounded-lg border bg-background p-4 space-y-3">
+        <h2 className="text-sm font-semibold">Inventory / Stock Alerts</h2>
+        <p className="text-xs text-muted-foreground">
+          Set the stock threshold below which low-stock notifications are sent
+          to sellers and admins automatically (after order placement or manual stock updates).
+        </p>
+        <div className="grid gap-3 md:grid-cols-2">
+          <Num
+            label="Low stock alert threshold"
+            value={s.inventory.alertThreshold}
+            onChange={(v) => setS({ ...s, inventory: { ...s.inventory, alertThreshold: Math.max(1, Math.floor(v)) } })}
+          />
+        </div>
+        <button
+          onClick={() => save("inventory", { inventory: s.inventory })}
+          disabled={saving}
+          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+        >
+          Save inventory settings
+        </button>
+      </section>
     </div>
   );
 }

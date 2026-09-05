@@ -53,6 +53,7 @@ export function ProductForm({ sellerId, initial, onSubmit, submitLabel }: Props)
       colors: initial?.colors?.join(", ") ?? "",
       sizes: initial?.sizes?.join(", ") ?? "",
       featured: initial?.featured ?? false,
+      freeDelivery: initial?.freeDelivery ?? false,
       status: initial?.status ?? "draft",
     }),
     [initial],
@@ -213,6 +214,12 @@ export function ProductForm({ sellerId, initial, onSubmit, submitLabel }: Props)
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" {...register("featured")} /> Featured product
             </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" {...register("freeDelivery")} /> Free Delivery
+            </label>
+            <p className="text-[11px] text-muted-foreground">
+              Free Delivery ON = you (seller) pay the delivery-zone charge. When OFF, the customer pays it.
+            </p>
           </div>
           <div className="space-y-3 rounded-lg border bg-background p-5">
             <h2 className="text-sm font-semibold text-muted-foreground">Pricing</h2>

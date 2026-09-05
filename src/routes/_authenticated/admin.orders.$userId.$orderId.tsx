@@ -19,6 +19,7 @@ import {
   updateOrderStatusAdmin,
 } from "@/services/firebase/adminOrders";
 import { logActivity } from "@/services/firebase/adminLogs";
+import { pushNotification } from "@/services/firebase/notifications";
 import { useAuth } from "@/context/AuthContext";
 import { Spinner } from "@/components/common/Spinner";
 import { formatPrice, formatDateTime } from "@/utils/format";
@@ -96,6 +97,29 @@ function OrderDetailAdmin() {
     setSaving(true);
     try {
       await updateOrderStatusAdmin(userId, orderId, status, note);
+
+      // Send in-app notification to customer
+      try {
+        const statusLabels: Record<string, string> = {
+          confirmed: "Order Confirmed",
+          processing: "Order Processing",
+          shipped: "Order Shipped",
+          out_for_delivery: "Out for Delivery",
+          delivered: "Order Delivered",
+          cancelled: "Order Cancelled",
+          refunded: "Refund Processed",
+        };
+        const label = statusLabels[status] || `Order ${status}`;
+        await pushNotification(userId, {
+          type: "order",
+          title: label,
+          message: `Your order #${orderId.slice(-8)} has been ${status}.`,
+          link: "/orders",
+        });
+      } catch {
+        // Non-critical — don't block order update
+      }
+
       await logActivity(
         { uid: user.uid, email: user.email },
         "order.status_update",
@@ -199,6 +223,61 @@ function OrderDetailAdmin() {
               <span className="text-muted-foreground">{t("admin.shipping")}</span>
               <span>{formatPrice(order.shipping)}</span>
             </div>
+            {order.deliverySnapshot && (
+              <div className="mt-2 rounded-md bg-muted/30 p-3 text-xs space-y-1">
+                <div className="font-semibold text-muted-foreground mb-1">Delivery Zone Breakdown</div>
+                <div className="flex justify-between">
+                  <span>Zone</span>
+                  <span>{order.deliverySnapshot.zoneName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Zone Charge</span>
+                  <span>{formatPrice(order.deliverySnapshot.zoneCharge)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Customer Paid</span>
+                  <span className="font-medium">{formatPrice(order.deliverySnapshot.customerDeliveryCharge)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Seller Absorbed</span>
+                  <span className="font-medium text-orange-600">{formatPrice(order.deliverySnapshot.sellerDeliveryCharge)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>ETA</span>
+                  <span>{order.deliverySnapshot.etaDays[0]}–{order.deliverySnapshot.etaDays[1]} days</span>
+                </div>
+                {order.deliverySnapshot.deliveryLines && order.deliverySnapshot.deliveryLines.length > 0 && (
+                  <div className="mt-2 pt-2 border-t border-border/40 space-y-1">
+                    <div className="font-semibold text-muted-foreground mb-1">Per-Product Delivery</div>
+                    {order.deliverySnapshot.deliveryLines.map((dl) => {
+                      const item = order.items?.find((i) => i.productId === dl.productId);
+                      return (
+                        <div key={dl.productId} className="flex justify-between">
+                          <span className="truncate max-w-[60%]">{item?.title ?? dl.productId}</span>
+                          <span className={dl.freeDelivery ? "text-green-600" : "text-muted-foreground"}>
+                            {dl.freeDelivery ? "FREE" : formatPrice(dl.customerDeliveryCharge)}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+            {!!order.tax && order.tax > 0 && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">
+                  {order.taxLabel || "Tax"}
+                </span>
+                <span>+{formatPrice(order.tax)}</span>
+              </div>
+            )}
+            {!!order.platformFee && order.platformFee > 0 && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Platform Fee</span>
+                <span>{formatPrice(order.platformFee)}</span>
+              </div>
+            )}
             <div className="flex justify-between font-semibold">
               <span>{t("admin.total")}</span>
               <span>{formatPrice(order.total)}</span>

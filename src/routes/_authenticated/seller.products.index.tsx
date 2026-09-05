@@ -127,7 +127,7 @@ function ProductsPage({ sellerId }: { sellerId: string }) {
           </h2>
           <p className="mt-1 max-w-md text-sm text-muted-foreground">
             {products?.length === 0
-              ? "Add your first product to start selling on Aventa Shop."
+              ? "Add your first product to start selling on AVENTA SHOP."
               : "Try clearing your search or status filter."}
           </p>
           {products?.length === 0 && (
@@ -140,7 +140,7 @@ function ProductsPage({ sellerId }: { sellerId: string }) {
           )}
         </div>
       ) : (
-        <div className="overflow-hidden rounded-lg border bg-background">
+        <div className="overflow-x-auto rounded-lg border bg-background">
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-xs uppercase text-muted-foreground">
               <tr>
@@ -160,7 +160,7 @@ function ProductsPage({ sellerId }: { sellerId: string }) {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <img
-                          src={p.images[0] || "/placeholder.svg"}
+                          src={p.images[0] || "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5jcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMzAwIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YzZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzljYTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg=="}
                           alt=""
                           className="h-10 w-10 rounded-md object-cover"
                         />

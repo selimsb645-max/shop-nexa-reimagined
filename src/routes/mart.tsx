@@ -1,109 +1,150 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ShoppingBag, Sparkles, ArrowRight, Zap, Star, Store } from "lucide-react";
-import { PublicInfoLayout, InfoCard, InfoHeading } from "@/components/common/PublicInfoLayout";
+import { BackButton } from "@/components/common/BackButton";
+import { SiteHeader } from "@/components/layout/SiteHeader";
+import { SiteFooter } from "@/components/layout/SiteFooter";
+import {
+  ShoppingCart,
+  Truck,
+  Clock,
+  ShieldCheck,
+  Store,
+  Leaf,
+  Apple,
+  Package,
+  CheckCircle2,
+} from "lucide-react";
+import { buildMetaTags } from "@/lib/seo";
 
 export const Route = createFileRoute("/mart")({
-  ssr: false,
+  ssr: true,
   component: MartPage,
   head: () => ({
-    meta: [
-      { title: "Aventa Shop Mart — Curated Essentials" },
-      {
-        name: "description",
-        content:
-          "Aventa Shop Mart — hand-picked everyday essentials, best sellers and deals across the marketplace.",
-      },
-    ],
+    meta: buildMetaTags({
+      title: "AVENTA SHOP Mart — Daily Groceries & Essentials Delivery",
+      description: "AVENTA SHOP Mart delivers fresh groceries, daily essentials, and household items to your doorstep. Same-day delivery in Dhaka, fast nationwide shipping across Bangladesh.",
+      path: "/mart",
+      type: "website",
+    }),
   }),
 });
 
-const MART_SECTIONS = [
-  {
-    icon: <Sparkles className="h-6 w-6 text-orange-500" />,
-    title: "New Arrivals",
-    text: "Fresh products added to the marketplace every week.",
-    to: "/shop",
-    params: {},
-  },
-  {
-    icon: <Star className="h-6 w-6 text-orange-500" />,
-    title: "Best Sellers",
-    text: "The products customers keep coming back for.",
-    to: "/shop",
-    params: {},
-  },
-  {
-    icon: <Zap className="h-6 w-6 text-orange-500" />,
-    title: "Deals",
-    text: "Limited-time offers and flash sale picks.",
-    to: "/flash-sales",
-    params: {},
-  },
+const MART_CATEGORIES = [
+  { icon: <Apple className="h-6 w-6" />, title: "Fresh Produce", description: "Fruits, vegetables, and farm-fresh items delivered daily from local markets." },
+  { icon: <Leaf className="h-6 w-6" />, title: "Groceries & Staples", description: "Rice, dal, oil, spices, and all your kitchen essentials at competitive prices." },
+  { icon: <Package className="h-6 w-6" />, title: "Household Items", description: "Cleaning supplies, toiletries, and everyday household products you need." },
+  { icon: <ShoppingCart className="h-6 w-6" />, title: "Snacks & Beverages", description: "Chips, biscuits, tea, coffee, juices, and your favorite snacks stocked fresh." },
+];
+
+const MART_FEATURES = [
+  { icon: <Clock className="h-5 w-5" />, title: "Same-Day Delivery", description: "Order before 2 PM and get your groceries delivered the same day within Dhaka city limits." },
+  { icon: <Truck className="h-5 w-5" />, title: "Fast Nationwide Shipping", description: "Outside Dhaka? Get your non-perishable groceries delivered within 2-3 business days." },
+  { icon: <ShieldCheck className="h-5 w-5" />, title: "Freshness Guarantee", description: "Not happy with the freshness of your produce? Return it for a full refund — no questions asked." },
+  { icon: <CheckCircle2 className="h-5 w-5" />, title: "Quality Checked", description: "Every item is checked for quality and expiry date before packing and shipping." },
+];
+
+const HOW_MART_WORKS = [
+  { step: "1", title: "Browse & Select", description: "Shop from thousands of grocery and daily essential products on AVENTA SHOP Mart." },
+  { step: "2", title: "Choose Delivery Slot", description: "Pick a convenient delivery slot during checkout. Same-day slots available for Dhaka." },
+  { step: "3", title: "Get It Delivered", description: "Your order is carefully packed and delivered to your doorstep at your chosen time." },
 ];
 
 function MartPage() {
   return (
-    <PublicInfoLayout title="Aventa Shop Mart" subtitle="Curated picks for everyday life">
-      {/* Hero */}
-      <InfoCard className="mb-4 bg-gradient-to-br from-slate-900 to-slate-800 text-white">
-        <div className="flex flex-col items-start gap-4">
-          <span className="rounded-full bg-orange-500/20 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-orange-300">
-            Curated Store
-          </span>
-          <h2 className="text-xl font-bold sm:text-2xl">Hand-picked products, marketplace trust</h2>
-          <p className="text-sm leading-relaxed text-white/80">
-            Aventa Shop Mart brings together the best of the marketplace — everyday essentials,
-            popular picks and great deals, all in one curated section. Every Mart product is sold
-            and shipped by verified sellers with full order tracking and buyer protection.
+    <div className="min-h-screen bg-background">
+      <SiteHeader />
+      <main className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
+        <div className="mb-4">
+          <BackButton fallbackTo="/" label="Back" />
+        </div>
+
+        {/* Hero */}
+        <div className="mb-8 rounded-2xl bg-gradient-to-r from-green-600 to-green-700 p-8 text-white">
+          <div className="flex items-center gap-3">
+            <Store className="h-8 w-8" />
+            <h1 className="text-2xl font-bold">AVENTA SHOP Mart</h1>
+          </div>
+          <p className="mt-2 text-green-50">
+            Your daily groceries and essentials delivered fresh to your doorstep. From farm produce
+            to household supplies — shop everything you need in one place. Same-day delivery
+            available in Dhaka.
+          </p>
+        </div>
+
+        {/* Categories */}
+        <h2 className="mb-4 text-xl font-bold text-foreground">What You Can Buy on Mart</h2>
+        <div className="mb-8 grid gap-4 sm:grid-cols-2">
+          {MART_CATEGORIES.map((cat, i) => (
+            <div key={i} className="flex gap-4 rounded-2xl border bg-background p-5 shadow-sm">
+              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-green-50 text-green-600">
+                {cat.icon}
+              </span>
+              <div>
+                <h3 className="text-base font-semibold text-foreground">{cat.title}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">{cat.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* How It Works */}
+        <h2 className="mb-4 text-xl font-bold text-foreground">How Mart Works</h2>
+        <div className="mb-8 space-y-4">
+          {HOW_MART_WORKS.map((item, i) => (
+            <div key={i} className="flex gap-4 rounded-2xl border bg-background p-5 shadow-sm">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
+                {item.step}
+              </span>
+              <div>
+                <h3 className="text-base font-semibold text-foreground">{item.title}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">{item.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Features */}
+        <h2 className="mb-4 text-xl font-bold text-foreground">Why Shop on Mart?</h2>
+        <div className="mb-8 grid gap-4 sm:grid-cols-2">
+          {MART_FEATURES.map((feature, i) => (
+            <div key={i} className="flex gap-3 rounded-2xl border bg-background p-5 shadow-sm">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-green-50 text-green-600">
+                {feature.icon}
+              </span>
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">{feature.title}</h3>
+                <p className="mt-0.5 text-xs text-muted-foreground">{feature.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Delivery Zones */}
+        <div className="mb-8 rounded-2xl border border-blue-100 bg-blue-50 p-5">
+          <h2 className="mb-3 text-lg font-semibold text-foreground">Delivery Coverage</h2>
+          <ol className="space-y-2 text-sm text-muted-foreground">
+            <li>1. Dhaka city: Same-day delivery for orders placed before 2 PM.</li>
+            <li>2. Dhaka suburbs (Savar, Gazipur, Narayanganj): Next-day delivery.</li>
+            <li>3. All 64 districts: 2-3 business days for non-perishable items only.</li>
+            <li>4. Fresh produce and perishables are available only in Dhaka and nearby areas.</li>
+            <li>5. Free delivery on Mart orders above ৳800 within Dhaka city.</li>
+          </ol>
+        </div>
+
+        {/* CTA */}
+        <div className="rounded-2xl bg-primary/5 p-6 text-center">
+          <h2 className="text-lg font-semibold text-foreground">Need groceries today?</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Order before 2 PM for same-day delivery in Dhaka.
           </p>
           <Link
             to="/shop"
-            className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-6 py-3 text-sm font-bold text-white transition hover:bg-orange-600 active:scale-[0.98]"
+            className="mt-4 inline-flex items-center justify-center rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
           >
-            <ShoppingBag className="h-4 w-4" /> Shop Mart Picks
+            Shop Mart
           </Link>
         </div>
-      </InfoCard>
-
-      {/* Sections */}
-      <div className="mb-4 grid gap-3 sm:grid-cols-3">
-        {MART_SECTIONS.map((s) => (
-          <Link
-            key={s.title}
-            to={s.to}
-            className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:border-orange-200 hover:shadow-md"
-          >
-            <div className="mb-3">{s.icon}</div>
-            <h3 className="text-sm font-bold text-slate-800">{s.title}</h3>
-            <p className="mt-1 text-xs leading-relaxed text-slate-500">{s.text}</p>
-            <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-orange-500">
-              Browse <ArrowRight className="h-3.5 w-3.5" />
-            </span>
-          </Link>
-        ))}
-      </div>
-
-      {/* What makes it Mart */}
-      <InfoCard className="mb-4">
-        <InfoHeading icon={<Store className="h-5 w-5 text-orange-500" />}>
-          What is Aventa Shop Mart?
-        </InfoHeading>
-        <p className="text-sm leading-relaxed text-slate-600">
-          The main marketplace lists products from every verified seller. Mart is our curated layer
-          on top — a selection focused on everyday essentials: grocery and home goods, personal
-          care, and dependable best sellers. No confusion, just good products you can trust, backed
-          by the same secure checkout, delivery tracking and return policy as the rest of Aventa
-          Shop.
-        </p>
-      </InfoCard>
-
-      {/* CTA */}
-      <Link
-        to="/shop"
-        className="flex items-center justify-center gap-2 rounded-2xl bg-orange-500 px-6 py-4 text-sm font-bold text-white shadow-sm transition hover:bg-orange-600 active:scale-[0.98]"
-      >
-        <ShoppingBag className="h-5 w-5" /> Browse All Products
-      </Link>
-    </PublicInfoLayout>
+      </main>
+      <SiteFooter />
+    </div>
   );
 }

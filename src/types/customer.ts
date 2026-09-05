@@ -28,7 +28,7 @@ export interface CustomerNotification {
 export interface MessageThread {
   id: string;
   subject: string;
-  participant: string; // "Aventa Shop Support" or seller shop name
+  participant: string; // "AVENTA SHOP Support" or seller shop name
   sellerId: string | null;
   lastMessage: string;
   lastAt: number;
@@ -114,3 +114,29 @@ export const DEFAULT_SETTINGS: CustomerSettings = {
   language: "en",
   updatedAt: 0,
 };
+
+// ------------------------------------------------------------------
+// Seller Conversation (top-level shared collection)
+// ------------------------------------------------------------------
+export interface SellerConversation {
+  id: string;
+  customerId: string;
+  sellerId: string;
+  customerName: string;
+  sellerShopName: string;
+  subject: string;
+  lastMessage: string;
+  lastAt: number;
+  customerUnread: number;
+  sellerUnread: number;
+  createdAt: number;
+}
+
+export interface ConversationMessage {
+  id: string;
+  conversationId: string;
+  from: "customer" | "seller";
+  senderId: string;
+  body: string;
+  createdAt: number;
+}

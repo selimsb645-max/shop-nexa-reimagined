@@ -1,8 +1,8 @@
-# Aventa Shop
+# AVENTA SHOP
 
-> Aventa Shop is an online marketplace for electronics, fashion, grocery, beauty and home products, with flash sales, verified sellers and free delivery over $50.
+> AVENTA SHOP is an online marketplace for electronics, fashion, grocery, beauty and home products, with flash sales, verified sellers and free delivery over $50.
 
-Aventa Shop lets shoppers browse thousands of products across categories, compare items, follow flash sales and buy from approved sellers.
+AVENTA SHOP lets shoppers browse thousands of products across categories, compare items, follow flash sales and buy from approved sellers.
 
 ## Pages
 

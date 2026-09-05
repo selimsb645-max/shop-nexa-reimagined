@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo, Component, type ReactNode } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -33,11 +33,15 @@ import {
   Loader,
   Pin,
   ChevronRight,
+  Heart,
 } from "lucide-react";
 import { ServicePageLayout } from "@/components/common/ServicePageLayout";
 import { useAuth } from "@/context/AuthContext";
 import { useI18n } from "@/i18n/I18nContext";
 import { firebaseConfigured } from "@/services/firebase/config";
+import { subscribeActiveAnnouncements } from "@/services/firebase/adminAnnouncements";
+import type { Announcement } from "@/types/admin";
+import { Spinner } from "@/components/common/Spinner";
 import { onSnapshot, collection, query, where, orderBy, limit } from "firebase/firestore";
 import { getDb } from "@/services/firebase/config";
 import {
@@ -46,7 +50,7 @@ import {
   createThread,
   sendMessage,
   markThreadRead,
-  countUnreadMessages,
+  dedupeThreads,
 } from "@/services/firebase/messages";
 import {
   listNotifications,
@@ -57,31 +61,114 @@ import {
 import {
   listTickets,
   createTicket,
-  listTicketMessages,
   replyToTicket,
 } from "@/services/firebase/support";
 import { listOrders } from "@/services/firebase/orders";
+import { seedInbox } from "@/services/firebase/seedInbox";
 import { formatPrice, formatDate } from "@/utils/format";
-import type { MessageThread, ChatMessage } from "@/types/customer";
+import type { MessageThread, ChatMessage, SellerConversation, ConversationMessage } from "@/types/customer";
+import { getProductById } from "@/services/firebase/products";
+import {
+  createSellerConversation,
+  subscribeConversationMessages,
+  customerSendMessage,
+  subscribeCustomerConversations,
+  findConversationByThreadId,
+} from "@/services/firebase/sellerConversations";
+import { sendAIMessage } from "@/services/firebase/aiAssistant";
 
 type TicketMessage = { id: string; body: string; from: "support" | "customer"; createdAt: number };
 import type { CustomerNotification, NotificationType } from "@/types/customer";
-import type { SupportTicket } from "@/types/customer";
+import type { SupportTicket, TicketStatus } from "@/types/customer";
 import type { Order } from "@/types/commerce";
 
 export const Route = createFileRoute("/_authenticated/messages")({
   ssr: false,
   component: CommunicationCenter,
+  errorComponent: MessagesRouteError,
   head: () => ({
     meta: [
-      { title: "Communication Center — Aventa Shop" },
-      {
-        name: "description",
-        content: "Your communication hub for orders, chats, support, and notifications.",
-      },
+      { title: "Communication Center — AVENTA SHOP" },
+      { name: "description", content: "Your communication hub for orders, chats, support, and notifications." },
     ],
   }),
 });
+
+/**
+ * Route-level error boundary for the messages page.
+ * Catches crashes from ChatView, TicketChatView, etc. so that a single
+ * conversation failing to load doesn't take down the entire page with
+ * the generic root "This page didn't load" error.
+ */
+function MessagesRouteError({ error, reset }: { error: Error; reset: () => void }) {
+  console.error("[messages] route error:", error);
+  return (
+    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4">
+      <div className="text-center">
+        <h2 className="text-lg font-semibold">Something went wrong</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {error.message || "Failed to load this conversation."}
+        </p>
+      </div>
+      <div className="flex gap-2">
+        <button
+          onClick={() => reset()}
+          className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+        >
+          Try again
+        </button>
+        <Link
+          to="/messages"
+          className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-muted"
+          onClick={() => reset()}
+        >
+          Back to inbox
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Wraps a component in an error boundary so individual chat views
+ * don't crash the entire messages page.
+ */
+class ChatBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  state: { hasError: boolean; error: Error | null } = { hasError: false, error: null };
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error) {
+    console.error("[messages] chat boundary caught:", error);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex h-full flex-col items-center justify-center gap-4 p-4">
+          <div className="text-center">
+            <h2 className="text-lg font-semibold">This conversation could not load</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {this.state.error?.message || "An unexpected error occurred."}
+            </p>
+          </div>
+          <button
+            onClick={() => this.setState({ hasError: false, error: null })}
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          >
+            Retry
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 type Tab = "inbox" | "orders" | "sellers" | "support" | "ai" | "notifications" | "announcements";
 type FilterType = "all" | "unread" | "orders" | "support" | "sellers" | "archived";
@@ -120,12 +207,6 @@ function CommunicationCenter() {
     enabled: !!user && firebaseConfigured,
   });
 
-  const unreadMsgQuery = useQuery({
-    queryKey: ["messages", "unread", user?.uid],
-    queryFn: () => countUnreadMessages(user!.uid),
-    enabled: !!user && firebaseConfigured,
-  });
-
   const ticketsQuery = useQuery({
     queryKey: ["tickets", user?.uid],
     queryFn: () => listTickets(user!.uid),
@@ -138,58 +219,124 @@ function CommunicationCenter() {
     enabled: !!user && firebaseConfigured,
   });
 
-  // If a thread is active, show the chat view
-  if (activeThreadId) {
-    return (
-      <ChatView
-        threadId={activeThreadId}
-        onBack={() => setActiveThreadId(null)}
-        userId={user!.uid}
-      />
+  // Realtime threads subscription (replaces 30s polling for live updates)
+  const [realtimeThreads, setRealtimeThreads] = useState<MessageThread[]>([]);
+  useEffect(() => {
+    if (!user?.uid || !firebaseConfigured) return;
+    const unsub = onSnapshot(
+      query(collection(getDb(), "users", user.uid, "threads"), orderBy("lastAt", "desc"), limit(50)),
+      (snap) => {
+        const mapped = snap.docs.map((d) => {
+          const data = d.data() as Record<string, unknown>;
+          return {
+            id: d.id,
+            subject: String(data.subject ?? "Conversation"),
+            participant: String(data.participant ?? "AVENTA SHOP Support"),
+            sellerId: (data.sellerId as string | null) ?? null,
+            lastMessage: String(data.lastMessage ?? ""),
+            lastAt: typeof data.lastAt === "number"
+              ? data.lastAt
+              : (data.lastAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? 0,
+            unread: Number(data.unread ?? 0),
+            createdAt: typeof data.createdAt === "number"
+              ? data.createdAt
+              : (data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? 0,
+          } as MessageThread;
+        });
+        setRealtimeThreads(dedupeThreads(mapped));
+      },
+      () => undefined,
     );
-  }
+    return () => unsub();
+  }, [user?.uid]);
 
-  // If a ticket is active, show ticket chat
-  if (activeTicketId) {
-    return (
-      <TicketChatView
-        ticketId={activeTicketId}
-        onBack={() => setActiveTicketId(null)}
-        userId={user!.uid}
-      />
+  // Realtime notifications subscription
+  const [realtimeNotifs, setRealtimeNotifs] = useState<CustomerNotification[]>([]);
+  useEffect(() => {
+    if (!user?.uid || !firebaseConfigured) return;
+    const unsub = onSnapshot(
+      query(collection(getDb(), "users", user.uid, "notifications"), orderBy("createdAt", "desc"), limit(60)),
+      (snap) => {
+        const mapped = snap.docs.map((d) => {
+          const data = d.data() as Record<string, unknown>;
+          return {
+            id: d.id,
+            type: (data.type as NotificationType) ?? "system",
+            title: String(data.title ?? ""),
+            message: String(data.message ?? ""),
+            link: (data.link as string | null) ?? null,
+            read: Boolean(data.read),
+            createdAt: typeof data.createdAt === "number"
+              ? data.createdAt
+              : (data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? 0,
+          } as CustomerNotification;
+        });
+        setRealtimeNotifs(mapped);
+      },
+      () => undefined,
     );
-  }
+    return () => unsub();
+  }, [user?.uid]);
 
-  // If an order is active, show order conversation
-  if (activeOrderId) {
-    const order = ordersQuery.data?.find((o) => o.id === activeOrderId);
-    if (order) {
-      return (
-        <OrderConversationView
-          order={order}
-          onBack={() => setActiveOrderId(null)}
-          onChatWithSeller={(threadId) => {
-            setActiveOrderId(null);
-            setActiveThreadId(threadId);
-          }}
-        />
-      );
+  // Realtime tickets subscription
+  const [realtimeTickets, setRealtimeTickets] = useState<SupportTicket[]>([]);
+  useEffect(() => {
+    if (!user?.uid || !firebaseConfigured) return;
+    const unsub = onSnapshot(
+      query(collection(getDb(), "users", user.uid, "tickets"), orderBy("createdAt", "desc"), limit(100)),
+      (snap) => {
+        const mapped = snap.docs.map((d) => {
+          const data = d.data() as Record<string, unknown>;
+          return {
+            id: d.id,
+            subject: String(data.subject ?? ""),
+            category: (data.category as SupportTicket["category"]) ?? "other",
+            orderId: (data.orderId as string | null) ?? null,
+            status: (data.status as TicketStatus) ?? "open",
+            lastMessage: String(data.lastMessage ?? ""),
+            createdAt: typeof data.createdAt === "number"
+              ? data.createdAt
+              : (data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? 0,
+            updatedAt: typeof data.updatedAt === "number"
+              ? data.updatedAt
+              : (data.updatedAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? 0,
+          } as SupportTicket;
+        });
+        setRealtimeTickets(mapped);
+      },
+      () => undefined,
+    );
+    return () => unsub();
+  }, [user?.uid]);
+
+  // Seed inbox with demo data for new users
+  useEffect(() => {
+    if (user?.uid && firebaseConfigured) {
+      seedInbox(user.uid).catch(() => undefined);
     }
-  }
+  }, [user?.uid]);
 
-  const threads = threadsQuery.data ?? [];
-  const notifications = notificationsQuery.data ?? [];
-  const tickets = ticketsQuery.data ?? [];
+  // Derived data — must be computed BEFORE any early returns so that
+  // hooks (useMemo) are always called in the same order on every render.
+  // Placing a hook after a conditional return violates the Rules of Hooks
+  // and causes React to crash with "This page didn't load".
+  // dedupeThreads collapses any conceptual duplicate conversations (e.g.
+  // two "AVENTA SHOP Support" welcome threads) so the list, the recent
+  // conversations preview, and the unread badge all agree on one entry.
+  const threads = dedupeThreads(realtimeThreads.length > 0 ? realtimeThreads : (threadsQuery.data ?? []));
+  const notifications = realtimeNotifs.length > 0 ? realtimeNotifs : (notificationsQuery.data ?? []);
+  const tickets = realtimeTickets.length > 0 ? realtimeTickets : (ticketsQuery.data ?? []);
   const orders = ordersQuery.data ?? [];
+  // Derived from the already-deduped threads list — avoids double-counting
+  // duplicate threads the way the separate countUnreadMessages() query could.
+  const unreadMsg = threads.reduce((sum, t) => sum + t.unread, 0);
 
-  // Filter threads
+  // Filter threads — useMemo MUST be called unconditionally (before early returns)
   const filteredThreads = useMemo(() => {
     let result = threads;
     if (activeFilter === "unread") result = result.filter((t) => t.unread > 0);
-    if (activeFilter === "orders")
-      result = result.filter((t) => t.subject.toLowerCase().includes("order"));
-    if (activeFilter === "support")
-      result = result.filter((t) => t.participant.includes("Support"));
+    if (activeFilter === "orders") result = result.filter((t) => t.subject.toLowerCase().includes("order"));
+    if (activeFilter === "support") result = result.filter((t) => t.participant.includes("Support"));
     if (activeFilter === "sellers") result = result.filter((t) => t.sellerId !== null);
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
@@ -203,96 +350,140 @@ function CommunicationCenter() {
     return result;
   }, [threads, activeFilter, searchQuery]);
 
-  return (
-    <ServicePageLayout
-      title={t("messages.titleMessages")}
-      subtitle="Your hub for orders, chats, support & notifications"
-    >
-      {/* Search bar */}
+  // Guard: if user is null (auth transition), reset active states
+  // to avoid crashing on user!.uid below.
+  if (!user?.uid && (activeThreadId || activeTicketId || activeOrderId)) {
+    setActiveThreadId(null);
+    setActiveTicketId(null);
+    setActiveOrderId(null);
+  }
 
-      {/* Search bar */}
-      <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search chats, orders, sellers, tickets..."
-          className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-[#f57224]"
+  // If a thread is active, show the chat view
+  if (activeThreadId && user?.uid) {
+    return (
+      <ChatBoundary>
+        <ChatView
+          threadId={activeThreadId}
+          onBack={() => setActiveThreadId(null)}
+          userId={user.uid}
         />
-        {searchQuery && (
-          <button
-            onClick={() => setSearchQuery("")}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
-          >
-            <XCircle className="h-4 w-4" />
-          </button>
-        )}
-      </div>
+      </ChatBoundary>
+    );
+  }
 
-      {/* Tab navigation */}
-      <TabBar
-        activeTab={activeTab}
-        onChange={setActiveTab}
-        unreadNotif={unreadNotifQuery.data ?? 0}
-        unreadMsg={unreadMsgQuery.data ?? 0}
-        ticketCount={tickets.length}
-      />
+  // If a ticket is active, show ticket chat
+  if (activeTicketId && user?.uid) {
+    return (
+      <ChatBoundary>
+        <TicketChatView
+          ticketId={activeTicketId}
+          onBack={() => setActiveTicketId(null)}
+          userId={user.uid}
+        />
+      </ChatBoundary>
+    );
+  }
 
-      {/* Content area */}
-      <div className="mt-4">
-        {activeTab === "inbox" && (
-          <InboxDashboard
-            threads={threads}
-            notifications={notifications}
-            tickets={tickets}
-            orders={orders}
-            unreadMsg={unreadMsgQuery.data ?? 0}
-            unreadNotif={unreadNotifQuery.data ?? 0}
-            onTabChange={setActiveTab}
-            onThreadClick={setActiveThreadId}
+  // If an order is active, show order conversation
+  if (activeOrderId) {
+    const order = ordersQuery.data?.find((o) => o.id === activeOrderId);
+    if (order) {
+      return (
+        <ChatBoundary>
+          <OrderConversationView
+            order={order}
+            onBack={() => setActiveOrderId(null)}
+            onChatWithSeller={(threadId) => {
+              setActiveOrderId(null);
+              setActiveThreadId(threadId);
+            }}
           />
-        )}
+        </ChatBoundary>
+      );
+    }
+  }
 
-        {activeTab === "orders" && (
-          <OrderConversations
-            orders={orders}
-            searchQuery={searchQuery}
-            onOrderClick={(id) => setActiveOrderId(id)}
+  return (
+    <ServicePageLayout title={t("messages.titleMessages")} subtitle="Your hub for orders, chats, support & notifications">
+        {/* Search bar */}
+
+        {/* Search bar */}
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search chats, orders, sellers, tickets..."
+            className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-[#f57224]"
           />
-        )}
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+            >
+              <XCircle className="h-4 w-4" />
+            </button>
+          )}
+        </div>
 
-        {activeTab === "sellers" && (
-          <SellerChats
-            threads={filteredThreads.filter((t) => t.sellerId !== null)}
-            searchQuery={searchQuery}
-            onThreadClick={setActiveThreadId}
-          />
-        )}
+        {/* Tab navigation */}
+        <TabBar activeTab={activeTab} onChange={setActiveTab} unreadNotif={unreadNotifQuery.data ?? 0} unreadMsg={unreadMsg} ticketCount={tickets.length} />
 
-        {activeTab === "support" && (
-          <SupportCenter
-            tickets={tickets}
-            searchQuery={searchQuery}
-            onTicketClick={setActiveTicketId}
-            userId={user!.uid}
-          />
-        )}
+        {/* Content area */}
+        <div className="mt-4">
+          {activeTab === "inbox" && (
+            <InboxDashboard
+              threads={threads}
+              notifications={notifications}
+              tickets={tickets}
+              orders={orders}
+              unreadMsg={unreadMsg}
+              unreadNotif={unreadNotifQuery.data ?? 0}
+              onTabChange={setActiveTab}
+              onThreadClick={setActiveThreadId}
+            />
+          )}
 
-        {activeTab === "ai" && <AIAssistant />}
+          {activeTab === "orders" && (
+            <OrderConversations
+              orders={orders}
+              searchQuery={searchQuery}
+              onOrderClick={(id) => setActiveOrderId(id)}
+            />
+          )}
 
-        {activeTab === "notifications" && (
-          <NotificationCenter
-            notifications={notifications}
-            searchQuery={searchQuery}
-            onMarkRead={(id) => markNotificationRead(user!.uid, id)}
-            onMarkAllRead={() => markAllNotificationsRead(user!.uid)}
-            userId={user!.uid}
-          />
-        )}
+          {activeTab === "sellers" && (
+            <SellerChats
+              threads={filteredThreads.filter((t) => t.sellerId !== null)}
+              searchQuery={searchQuery}
+              onThreadClick={setActiveThreadId}
+            />
+          )}
 
-        {activeTab === "announcements" && <AnnouncementCenter />}
-      </div>
+          {activeTab === "support" && (
+            <SupportCenter
+              tickets={tickets}
+              searchQuery={searchQuery}
+              onTicketClick={setActiveTicketId}
+              userId={user!.uid}
+            />
+          )}
+
+          {activeTab === "ai" && <AIAssistant />}
+
+          {activeTab === "notifications" && (
+            <NotificationCenter
+              notifications={notifications}
+              searchQuery={searchQuery}
+              onMarkRead={(id) => markNotificationRead(user!.uid, id)}
+              onMarkAllRead={() => markAllNotificationsRead(user!.uid)}
+              userId={user!.uid}
+            />
+          )}
+
+          {activeTab === "announcements" && <AnnouncementCenter />}
+        </div>
     </ServicePageLayout>
   );
 }
@@ -318,19 +509,9 @@ function TabBar({
     { id: "inbox", label: "Inbox", icon: <MessageCircle className="h-4 w-4" />, badge: unreadMsg },
     { id: "orders", label: "Orders", icon: <Package className="h-4 w-4" /> },
     { id: "sellers", label: "Sellers", icon: <Store className="h-4 w-4" /> },
-    {
-      id: "support",
-      label: "Support",
-      icon: <Headphones className="h-4 w-4" />,
-      badge: ticketCount,
-    },
+    { id: "support", label: "Support", icon: <Headphones className="h-4 w-4" />, badge: ticketCount },
     { id: "ai", label: "AI", icon: <Bot className="h-4 w-4" /> },
-    {
-      id: "notifications",
-      label: "Alerts",
-      icon: <Bell className="h-4 w-4" />,
-      badge: unreadNotif,
-    },
+    { id: "notifications", label: "Alerts", icon: <Bell className="h-4 w-4" />, badge: unreadNotif },
     { id: "announcements", label: "News", icon: <Megaphone className="h-4 w-4" /> },
   ];
 
@@ -352,11 +533,9 @@ function TabBar({
               {tab.icon}
               <span className="whitespace-nowrap">{tab.label}</span>
               {tab.badge !== undefined && tab.badge > 0 && (
-                <span
-                  className={`flex h-5 min-w-[20px] items-center justify-center rounded-full px-1 text-[10px] font-bold ${
-                    isActive ? "bg-white/25 text-white" : "bg-accent text-accent-foreground"
-                  }`}
-                >
+                <span className={`flex h-5 min-w-[20px] items-center justify-center rounded-full px-1 text-[10px] font-bold ${
+                  isActive ? "bg-white/25 text-white" : "bg-accent text-accent-foreground"
+                }`}>
                   {tab.badge > 99 ? "99+" : tab.badge}
                 </span>
               )}
@@ -403,9 +582,7 @@ function InboxDashboard({
       icon: <Package className="h-5 w-5" />,
       title: "Order Updates",
       count: activeOrders.length,
-      preview: activeOrders[0]
-        ? `Order #${activeOrders[0].id.slice(0, 8)} — ${activeOrders[0].status}`
-        : "No active orders",
+      preview: activeOrders[0] ? `Order #${activeOrders[0].id.slice(0, 8)} — ${activeOrders[0].status}` : "No active orders",
       time: activeOrders[0] ? formatRelativeTime(activeOrders[0].updatedAt) : "",
       color: "bg-blue-50 text-blue-600",
       priority: activeOrders.length > 0 ? "high" : "normal",
@@ -495,9 +672,7 @@ function InboxDashboard({
             )}
 
             <div className="flex items-start gap-3">
-              <span
-                className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl ${card.color}`}
-              >
+              <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl ${card.color}`}>
                 {card.icon}
               </span>
               <div className="min-w-0 flex-1">
@@ -523,9 +698,7 @@ function InboxDashboard({
       {/* Recent threads */}
       {threads.length > 0 && (
         <div>
-          <h3 className="mb-2 text-sm font-semibold text-muted-foreground">
-            {t("messages.recentConversations")}
-          </h3>
+          <h3 className="mb-2 text-sm font-semibold text-muted-foreground">{t("messages.recentConversations")}</h3>
           <div className="space-y-2">
             {threads.slice(0, 5).map((thread) => (
               <button
@@ -533,16 +706,10 @@ function InboxDashboard({
                 onClick={() => onThreadClick(thread.id)}
                 className="flex w-full items-center gap-3 rounded-xl border bg-background p-3 text-left shadow-sm transition hover:shadow-md active:scale-[0.98]"
               >
-                <span
-                  className={`grid h-10 w-10 shrink-0 place-items-center rounded-full ${
-                    thread.sellerId ? "bg-purple-100 text-purple-600" : "bg-primary/10 text-primary"
-                  }`}
-                >
-                  {thread.sellerId ? (
-                    <Store className="h-5 w-5" />
-                  ) : (
-                    <Headphones className="h-5 w-5" />
-                  )}
+                <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-full ${
+                  thread.sellerId ? "bg-purple-100 text-purple-600" : "bg-primary/10 text-primary"
+                }`}>
+                  {thread.sellerId ? <Store className="h-5 w-5" /> : <Headphones className="h-5 w-5" />}
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
@@ -586,18 +753,13 @@ function OrderConversations({
     const q = searchQuery.toLowerCase();
     return orders.filter(
       (o) =>
-        o.id.toLowerCase().includes(q) || o.items.some((i) => i.title.toLowerCase().includes(q)),
+        o.id.toLowerCase().includes(q) ||
+        o.items.some((i) => i.title.toLowerCase().includes(q)),
     );
   }, [orders, searchQuery]);
 
   if (orders.length === 0) {
-    return (
-      <EmptyState
-        icon={<Package className="h-12 w-12" />}
-        title={t("messages.titleNoOrders")}
-        subtitle={t("messages.titleOrderConvos")}
-      />
-    );
+    return <EmptyState icon={<Package className="h-12 w-12" />} title={t("messages.titleNoOrders")} subtitle={t("messages.titleOrderConvos")} />;
   }
 
   return (
@@ -631,21 +793,15 @@ function OrderConversations({
               <OrderStatusBadge status={order.status} />
             </div>
             <p className="mt-0.5 truncate text-xs text-muted-foreground">
-              {order.items.length} item{order.items.length === 1 ? "" : "s"} •{" "}
-              {formatPrice(order.total)}
+              {order.items.length} item{order.items.length === 1 ? "" : "s"} • {formatPrice(order.total)}
             </p>
             <div className="mt-1 flex items-center gap-3">
               <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                <Truck className="h-3 w-3" />{" "}
-                {order.tracking.length > 0
-                  ? order.tracking[order.tracking.length - 1].note
-                  : "Awaiting shipment"}
+                <Truck className="h-3 w-3" /> {order.tracking.length > 0 ? order.tracking[order.tracking.length - 1].note : "Awaiting shipment"}
               </span>
-              <span
-                className={`flex items-center gap-1 text-[10px] ${
-                  order.payment.status === "paid" ? "text-green-500" : "text-orange-500"
-                }`}
-              >
+              <span className={`flex items-center gap-1 text-[10px] ${
+                order.payment.status === "paid" ? "text-green-500" : "text-orange-500"
+              }`}>
                 <Wallet className="h-3 w-3" /> {order.payment.status}
               </span>
             </div>
@@ -699,9 +855,7 @@ function OrderConversationView({
   });
 
   const orderThread = threadsQuery.data?.find(
-    (t) =>
-      t.subject.toLowerCase().includes(order.id.toLowerCase()) ||
-      t.subject.toLowerCase().includes(order.id.slice(0, 8).toLowerCase()),
+    (t) => t.subject.toLowerCase().includes(order.id.toLowerCase()) || t.subject.toLowerCase().includes(order.id.slice(0, 8).toLowerCase()),
   );
 
   const startOrderChat = async () => {
@@ -709,22 +863,52 @@ function OrderConversationView({
       onChatWithSeller(orderThread.id);
       return;
     }
+
+    // Look up the product's sellerId from the first item
+    let sellerId: string | null = null;
+    let sellerShopName = "Seller";
+    if (order.items.length > 0) {
+      try {
+        const product = await getProductById(order.items[0].productId);
+        if (product?.sellerId) {
+          sellerId = product.sellerId;
+        }
+      } catch { /* ignore — product may not be found */ }
+    }
+
+    // Create the personal thread (existing system)
     const threadId = await createThread(user!.uid, {
       subject: `Order #${order.id.slice(0, 8)}`,
-      participant: "Aventa Shop Support",
+      participant: sellerId ? sellerShopName : "AVENTA SHOP Support",
+      sellerId: sellerId,
       firstMessage: `I have a question about order #${order.id.slice(0, 8)}`,
     });
     await queryClient.invalidateQueries({ queryKey: ["threads"] });
+
+    // Also create a shared conversation (for seller inbox)
+    if (sellerId && user) {
+      try {
+        const idToken = await user.getIdToken();
+        await createSellerConversation({
+          idToken,
+          sellerId,
+          subject: `Order #${order.id.slice(0, 8)}`,
+          firstMessage: `I have a question about order #${order.id.slice(0, 8)}`,
+          threadId,
+          sellerShopName,
+        });
+      } catch (err) {
+        console.warn("Failed to create seller conversation:", err);
+      }
+    }
+
     onChatWithSeller(threadId);
   };
 
   return (
-    <ServicePageLayout
-      title={`Order #${order.id.slice(0, 8)}`}
-      subtitle="Order conversation & details"
-      backTo="/messages"
-    >
+    <ServicePageLayout title={`Order #${order.id.slice(0, 8)}`} subtitle="Order conversation & details" backTo="/messages">
       <div className="mx-auto w-full max-w-3xl">
+
         {/* Order header */}
         <div className="mb-4 rounded-2xl border bg-background p-5 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
@@ -738,20 +922,11 @@ function OrderConversationView({
           {/* Items */}
           <div className="space-y-2">
             {order.items.map((item) => (
-              <div
-                key={item.productId}
-                className="flex items-center gap-3 rounded-xl bg-muted/30 p-3"
-              >
-                <img
-                  src={item.image}
-                  alt={item.title}
-                  className="h-14 w-14 rounded-lg object-cover"
-                />
+              <div key={item.productId} className="flex items-center gap-3 rounded-xl bg-muted/30 p-3">
+                <img src={item.image} alt={item.title} className="h-14 w-14 rounded-lg object-cover" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{item.title}</p>
-                  <p className="text-xs text-muted-foreground">
-                    Qty: {item.quantity} • {formatPrice(item.price)}
-                  </p>
+                  <p className="text-xs text-muted-foreground">Qty: {item.quantity} • {formatPrice(item.price)}</p>
                 </div>
                 <span className="text-sm font-semibold">{formatPrice(item.subtotal)}</span>
               </div>
@@ -800,9 +975,7 @@ function OrderConversationView({
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{t("messages.paymentStatus")}</span>
-                <span
-                  className={`font-medium ${order.payment.status === "paid" ? "text-green-500" : "text-orange-500"}`}
-                >
+                <span className={`font-medium ${order.payment.status === "paid" ? "text-green-500" : "text-orange-500"}`}>
                   {order.payment.status}
                 </span>
               </div>
@@ -903,9 +1076,7 @@ function SellerChats({
             </div>
             <div className="flex items-center gap-2">
               <Star className="h-3 w-3 fill-orange-400 text-orange-400" />
-              <span className="text-[10px] text-muted-foreground">
-                4.{Math.floor(Math.random() * 9)} rating • Responds in ~2h
-              </span>
+              <span className="text-[10px] text-muted-foreground">4.{Math.floor(Math.random() * 9)} rating • Responds in ~2h</span>
             </div>
             <p className="mt-1 truncate text-xs text-muted-foreground">{thread.lastMessage}</p>
           </div>
@@ -944,12 +1115,7 @@ function SupportCenter({
 
   const createMutation = useMutation({
     mutationFn: () =>
-      createTicket(userId, {
-        subject: subject.trim(),
-        category,
-        orderId: null,
-        message: message.trim(),
-      }),
+      createTicket(userId, { subject: subject.trim(), category, orderId: null, message: message.trim() }),
     onSuccess: () => {
       toast.success(t("messages.ticketCreated"));
       queryClient.invalidateQueries({ queryKey: ["tickets"] });
@@ -963,59 +1129,21 @@ function SupportCenter({
   const filtered = useMemo(() => {
     if (!searchQuery) return tickets;
     const q = searchQuery.toLowerCase();
-    return tickets.filter(
-      (t) => t.subject.toLowerCase().includes(q) || t.lastMessage.toLowerCase().includes(q),
-    );
+    return tickets.filter((t) => t.subject.toLowerCase().includes(q) || t.lastMessage.toLowerCase().includes(q));
   }, [tickets, searchQuery]);
 
   const supportOptions = [
-    {
-      icon: <MessageCircle className="h-5 w-5" />,
-      title: "Live Chat",
-      desc: "Chat with our team",
-      color: "bg-green-50 text-green-600",
-    },
-    {
-      icon: <Plus className="h-5 w-5" />,
-      title: "Create Ticket",
-      desc: "Open a support ticket",
-      color: "bg-blue-50 text-blue-600",
-    },
-    {
-      icon: <Bot className="h-5 w-5" />,
-      title: "AI Assistant",
-      desc: "Get instant answers",
-      color: "bg-indigo-50 text-indigo-600",
-    },
-    {
-      icon: <Megaphone className="h-5 w-5" />,
-      title: "FAQ",
-      desc: "Common questions",
-      color: "bg-orange-50 text-orange-600",
-    },
+    { icon: <MessageCircle className="h-5 w-5" />, title: "Live Chat", desc: "Chat with our team", color: "bg-green-50 text-green-600" },
+    { icon: <Plus className="h-5 w-5" />, title: "Create Ticket", desc: "Open a support ticket", color: "bg-blue-50 text-blue-600" },
+    { icon: <Bot className="h-5 w-5" />, title: "AI Assistant", desc: "Get instant answers", color: "bg-indigo-50 text-indigo-600" },
+    { icon: <Megaphone className="h-5 w-5" />, title: "FAQ", desc: "Common questions", color: "bg-orange-50 text-orange-600" },
   ];
 
   const statusConfig: Record<string, { color: string; label: string; icon: React.ReactNode }> = {
-    open: {
-      color: "bg-green-100 text-green-700",
-      label: "Open",
-      icon: <CheckCircle2 className="h-3 w-3" />,
-    },
-    pending: {
-      color: "bg-orange-100 text-orange-700",
-      label: "Pending",
-      icon: <Clock className="h-3 w-3" />,
-    },
-    resolved: {
-      color: "bg-blue-100 text-blue-700",
-      label: "Resolved",
-      icon: <CheckCircle2 className="h-3 w-3" />,
-    },
-    closed: {
-      color: "bg-gray-100 text-gray-600",
-      label: "Closed",
-      icon: <XCircle className="h-3 w-3" />,
-    },
+    open: { color: "bg-green-100 text-green-700", label: "Open", icon: <CheckCircle2 className="h-3 w-3" /> },
+    pending: { color: "bg-orange-100 text-orange-700", label: "Pending", icon: <Clock className="h-3 w-3" /> },
+    resolved: { color: "bg-blue-100 text-blue-700", label: "Resolved", icon: <CheckCircle2 className="h-3 w-3" /> },
+    closed: { color: "bg-gray-100 text-gray-600", label: "Closed", icon: <XCircle className="h-3 w-3" /> },
   };
 
   return (
@@ -1025,12 +1153,10 @@ function SupportCenter({
         {supportOptions.map((opt) => (
           <button
             key={opt.title}
-            onClick={() => (opt.title === "Create Ticket" ? setShowForm(true) : undefined)}
+            onClick={() => opt.title === "Create Ticket" ? setShowForm(true) : undefined}
             className="flex flex-col items-center gap-2 rounded-2xl border bg-background p-4 text-center shadow-sm transition hover:shadow-md active:scale-[0.98]"
           >
-            <span className={`grid h-12 w-12 place-items-center rounded-xl ${opt.color}`}>
-              {opt.icon}
-            </span>
+            <span className={`grid h-12 w-12 place-items-center rounded-xl ${opt.color}`}>{opt.icon}</span>
             <span className="text-xs font-semibold">{opt.title}</span>
             <span className="text-[10px] text-muted-foreground">{opt.desc}</span>
           </button>
@@ -1075,10 +1201,7 @@ function SupportCenter({
               >
                 {createMutation.isPending && <Loader className="h-4 w-4" />} Submit Ticket
               </button>
-              <button
-                onClick={() => setShowForm(false)}
-                className="rounded-lg border px-4 py-2.5 text-sm font-medium hover:bg-muted"
-              >
+              <button onClick={() => setShowForm(false)} className="rounded-lg border px-4 py-2.5 text-sm font-medium hover:bg-muted">
                 Cancel
               </button>
             </div>
@@ -1088,15 +1211,9 @@ function SupportCenter({
 
       {/* Existing tickets */}
       <div>
-        <h3 className="mb-2 text-sm font-semibold text-muted-foreground">
-          {t("messages.yourTickets")}
-        </h3>
+        <h3 className="mb-2 text-sm font-semibold text-muted-foreground">{t("messages.yourTickets")}</h3>
         {filtered.length === 0 ? (
-          <EmptyState
-            icon={<Headphones className="h-10 w-10" />}
-            title={t("messages.titleNoTickets")}
-            subtitle={t("messages.titleCreateTicket")}
-          />
+          <EmptyState icon={<Headphones className="h-10 w-10" />} title={t("messages.titleNoTickets")} subtitle={t("messages.titleCreateTicket")} />
         ) : (
           <div className="space-y-2">
             {filtered.map((ticket) => {
@@ -1112,16 +1229,10 @@ function SupportCenter({
                   </span>
                   <div className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium">{ticket.subject}</span>
-                    <span className="block truncate text-xs text-muted-foreground">
-                      {ticket.lastMessage}
-                    </span>
-                    <span className="mt-1 block text-[10px] text-muted-foreground">
-                      {formatRelativeTime(ticket.updatedAt)}
-                    </span>
+                    <span className="block truncate text-xs text-muted-foreground">{ticket.lastMessage}</span>
+                    <span className="mt-1 block text-[10px] text-muted-foreground">{formatRelativeTime(ticket.updatedAt)}</span>
                   </div>
-                  <span
-                    className={`flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold ${sc.color}`}
-                  >
+                  <span className={`flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold ${sc.color}`}>
                     {sc.icon} {sc.label}
                   </span>
                   <ChevronRight className="h-4 w-4 text-muted-foreground/30 transition-transform group-hover:translate-x-1" />
@@ -1141,6 +1252,7 @@ function SupportCenter({
 
 function AIAssistant() {
   const { t } = useI18n();
+  const { user } = useAuth();
   const [messages, setMessages] = useState<{ role: "user" | "ai"; text: string }[]>([
     { role: "ai", text: t("messages.aiWelcome") },
   ]);
@@ -1159,26 +1271,37 @@ function AIAssistant() {
     { icon: <Zap className="h-4 w-4" />, label: "Flash sales" },
   ];
 
-  const handleSend = () => {
-    if (!input.trim() || loading) return;
+  const handleSend = async () => {
+    if (!input.trim() || loading || !user) return;
     const userMsg = input.trim();
     setMessages((prev) => [...prev, { role: "user", text: userMsg }]);
     setInput("");
     setLoading(true);
 
-    // Simple AI response logic (connect to backend in production)
-    const aiResponse = generateAIResponse(userMsg, t);
-    setTimeout(() => {
-      setMessages((prev) => [...prev, { role: "ai", text: aiResponse }]);
+    try {
+      // Build conversation history for context (map "ai" → "assistant" for the API)
+      const history = messages
+        .filter((m) => m.text)
+        .map((m) => ({
+          role: m.role === "ai" ? "assistant" as const : "user" as const,
+          content: m.text,
+        }));
+
+      const idToken = await user.getIdToken();
+      const result = await sendAIMessage(idToken, userMsg, history);
+      setMessages((prev) => [...prev, { role: "ai", text: result.reply }]);
+    } catch (err) {
+      const errMsg = err instanceof Error && err.message
+        ? err.message
+        : "Something went wrong. Please try again.";
+      setMessages((prev) => [...prev, { role: "ai", text: errMsg }]);
+    } finally {
       setLoading(false);
-    }, 800);
+    }
   };
 
   return (
-    <div
-      className="flex flex-col rounded-2xl border bg-background shadow-sm"
-      style={{ minHeight: "60vh" }}
-    >
+    <div className="flex flex-col rounded-2xl border bg-background shadow-sm" style={{ minHeight: "60vh" }}>
       {/* Header */}
       <div className="flex items-center gap-3 border-b p-4">
         <span className="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
@@ -1194,13 +1317,11 @@ function AIAssistant() {
       <div className="flex-1 space-y-3 overflow-y-auto p-4">
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-            <div
-              className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm ${
-                msg.role === "user"
-                  ? "rounded-br-md bg-primary text-primary-foreground"
-                  : "rounded-bl-md bg-muted"
-              }`}
-            >
+            <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm ${
+              msg.role === "user"
+                ? "rounded-br-md bg-primary text-primary-foreground"
+                : "rounded-bl-md bg-muted"
+            }`}>
               {msg.text}
             </div>
           </div>
@@ -1208,18 +1329,9 @@ function AIAssistant() {
         {loading && (
           <div className="flex justify-start">
             <div className="flex gap-1 rounded-2xl rounded-bl-md bg-muted px-4 py-3">
-              <span
-                className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/50"
-                style={{ animationDelay: "0ms" }}
-              />
-              <span
-                className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/50"
-                style={{ animationDelay: "150ms" }}
-              />
-              <span
-                className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/50"
-                style={{ animationDelay: "300ms" }}
-              />
+              <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/50" style={{ animationDelay: "0ms" }} />
+              <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/50" style={{ animationDelay: "150ms" }} />
+              <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/50" style={{ animationDelay: "300ms" }} />
             </div>
           </div>
         )}
@@ -1263,26 +1375,6 @@ function AIAssistant() {
   );
 }
 
-function generateAIResponse(query: string, t: (key: any) => string): string {
-  const q = query.toLowerCase();
-  if (q.includes("track") || q.includes("order")) {
-    return t("messages.aiTrackOrder");
-  }
-  if (q.includes("coupon") || q.includes("discount")) {
-    return t("messages.aiCoupon");
-  }
-  if (q.includes("flash") || q.includes("sale")) {
-    return t("messages.aiFlashSale");
-  }
-  if (q.includes("return") || q.includes("refund")) {
-    return t("messages.aiReturn");
-  }
-  if (q.includes("product") || q.includes("find") || q.includes("search")) {
-    return t("messages.aiProduct");
-  }
-  return t("messages.aiDefault");
-}
-
 // ═══════════════════════════════════════════════════════════════
 // NOTIFICATION CENTER
 // ═══════════════════════════════════════════════════════════════
@@ -1323,9 +1415,7 @@ function NotificationCenter({
     if (filter !== "all") result = result.filter((n) => n.type === filter);
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      result = result.filter(
-        (n) => n.title.toLowerCase().includes(q) || n.message.toLowerCase().includes(q),
-      );
+      result = result.filter((n) => n.title.toLowerCase().includes(q) || n.message.toLowerCase().includes(q));
     }
     return result;
   }, [notifications, filter, searchQuery]);
@@ -1359,21 +1449,14 @@ function NotificationCenter({
           ))}
         </div>
         {unreadCount > 0 && (
-          <button
-            onClick={handleMarkAll}
-            className="flex shrink-0 items-center gap-1 text-xs font-medium text-primary hover:underline"
-          >
+          <button onClick={handleMarkAll} className="flex shrink-0 items-center gap-1 text-xs font-medium text-primary hover:underline">
             <CheckCheck className="h-3.5 w-3.5" /> Mark all read
           </button>
         )}
       </div>
 
       {filtered.length === 0 ? (
-        <EmptyState
-          icon={<Bell className="h-12 w-12" />}
-          title={t("messages.titleNoNotifs")}
-          subtitle="You're all caught up!"
-        />
+        <EmptyState icon={<Bell className="h-12 w-12" />} title={t("messages.titleNoNotifs")} subtitle="You're all caught up!" />
       ) : (
         <div className="space-y-2">
           {filtered.map((notif) => {
@@ -1386,9 +1469,7 @@ function NotificationCenter({
                   notif.read ? "bg-background" : "bg-primary/5 border-primary/20"
                 }`}
               >
-                <span
-                  className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${config.color}`}
-                >
+                <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${config.color}`}>
                   {config.icon}
                 </span>
                 <div className="min-w-0 flex-1">
@@ -1397,9 +1478,7 @@ function NotificationCenter({
                     {!notif.read && <span className="h-2 w-2 shrink-0 rounded-full bg-accent" />}
                   </div>
                   <p className="mt-0.5 text-xs text-muted-foreground">{notif.message}</p>
-                  <span className="mt-1 block text-[10px] text-muted-foreground/60">
-                    {formatRelativeTime(notif.createdAt)}
-                  </span>
+                  <span className="mt-1 block text-[10px] text-muted-foreground/60">{formatRelativeTime(notif.createdAt)}</span>
                 </div>
                 {notif.link && (
                   <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground/30" />
@@ -1417,72 +1496,85 @@ function NotificationCenter({
 // ANNOUNCEMENT CENTER
 // ═══════════════════════════════════════════════════════════════
 
+// Icon mapping from string names to components
+const ANNOUNCEMENT_ICONS: Record<string, React.ReactNode> = {
+  Zap: <Zap className="h-8 w-8" />,
+  Store: <Store className="h-8 w-8" />,
+  Sparkles: <Sparkles className="h-8 w-8" />,
+  Gift: <Gift className="h-8 w-8" />,
+  AlertCircle: <AlertCircle className="h-8 w-8" />,
+  Megaphone: <Megaphone className="h-8 w-8" />,
+  Star: <Star className="h-8 w-8" />,
+  Heart: <Heart className="h-8 w-8" />,
+};
+
 function AnnouncementCenter() {
-  const announcements = [
-    {
-      title: "Mega Flash Sale",
-      desc: "Up to 70% off on electronics, fashion & more!",
-      gradient: "from-orange-500 to-red-500",
-      icon: <Zap className="h-8 w-8" />,
-      cta: "Shop Now",
-      link: "/flash-sales",
-    },
-    {
-      title: "New Seller Programs",
-      desc: "Join Aventa Shop as a seller and reach millions of customers",
-      gradient: "from-blue-500 to-indigo-600",
-      icon: <Store className="h-8 w-8" />,
-      cta: "Become a Seller",
-      link: "/seller/register",
-    },
-    {
-      title: "Aventa Prime Membership",
-      desc: "Free shipping, exclusive deals & 3x reward points",
-      gradient: "from-purple-500 to-pink-600",
-      icon: <Sparkles className="h-8 w-8" />,
-      cta: "Join Now",
-      link: "/membership",
-    },
-    {
-      title: "Gift Cards Available",
-      desc: "Perfect gifts for any occasion — starting from ৳500",
-      gradient: "from-green-500 to-teal-600",
-      icon: <Gift className="h-8 w-8" />,
-      cta: "Buy Gift Card",
-      link: "/gift-cards",
-    },
-    {
-      title: "System Maintenance",
-      desc: "Scheduled maintenance on Aug 10, 2:00 AM - 4:00 AM BST",
-      gradient: "from-gray-600 to-gray-800",
-      icon: <AlertCircle className="h-8 w-8" />,
-      cta: null,
-      link: null,
-    },
-  ];
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!firebaseConfigured) {
+      setLoading(false);
+      return;
+    }
+    // Real-time listener for published, active announcements
+    let unsub: () => void = () => {};
+    try {
+      unsub = subscribeActiveAnnouncements(
+        (items) => {
+          setAnnouncements(items);
+          setLoading(false);
+        },
+        () => {
+          // On error (e.g. missing Firestore index), stop loading
+          setLoading(false);
+        },
+      );
+    } catch {
+      setLoading(false);
+    }
+    return () => unsub();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+        <Spinner /> Loading announcements…
+      </div>
+    );
+  }
+
+  if (announcements.length === 0) {
+    return (
+      <div className="rounded-2xl border bg-background p-8 text-center text-sm text-muted-foreground">
+        <Megaphone className="mx-auto mb-2 h-8 w-8 opacity-40" />
+        No active announcements right now. Check back soon!
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3">
-      {announcements.map((ann, i) => (
+      {announcements.map((ann) => (
         <div
-          key={i}
+          key={ann.id}
           className={`relative overflow-hidden rounded-2xl bg-gradient-to-r ${ann.gradient} p-5 text-white shadow-lg`}
         >
           <div className="absolute -right-4 -top-4 h-20 w-20 rounded-full bg-white/10" />
           <div className="absolute -bottom-6 -left-6 h-24 w-24 rounded-full bg-white/5" />
           <div className="relative z-10 flex items-center gap-4">
             <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-white/15 backdrop-blur">
-              {ann.icon}
+              {ANNOUNCEMENT_ICONS[ann.icon] ?? <Megaphone className="h-8 w-8" />}
             </span>
             <div className="min-w-0 flex-1">
               <h3 className="text-base font-bold">{ann.title}</h3>
-              <p className="mt-0.5 text-sm opacity-90">{ann.desc}</p>
-              {ann.cta && ann.link && (
+              <p className="mt-0.5 text-sm opacity-90">{ann.message}</p>
+              {ann.ctaLabel && ann.ctaLink && (
                 <Link
-                  to={ann.link}
+                  to={ann.ctaLink}
                   className="mt-2 inline-flex items-center gap-1 rounded-full bg-white/20 px-3 py-1 text-xs font-semibold backdrop-blur transition hover:bg-white/30"
                 >
-                  {ann.cta} <ChevronRight className="h-3 w-3" />
+                  {ann.ctaLabel} <ChevronRight className="h-3 w-3" />
                 </Link>
               )}
             </div>
@@ -1497,15 +1589,7 @@ function AnnouncementCenter() {
 // PREMIUM CHAT VIEW
 // ═══════════════════════════════════════════════════════════════
 
-function ChatView({
-  threadId,
-  onBack,
-  userId,
-}: {
-  threadId: string;
-  onBack: () => void;
-  userId: string;
-}) {
+function ChatView({ threadId, onBack, userId }: { threadId: string; onBack: () => void; userId: string }) {
   const { t } = useI18n();
   const [draft, setDraft] = useState("");
   const [showEmoji, setShowEmoji] = useState(false);
@@ -1538,12 +1622,10 @@ function ChatView({
             id: d.id,
             threadId: String(data.threadId ?? ""),
             body: String(data.body ?? ""),
-            from: data.from === "support" ? ("support" as const) : ("customer" as const),
-            createdAt:
-              typeof data.createdAt === "number"
-                ? data.createdAt
-                : ((data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ??
-                  Date.now()),
+            from: data.from === "support" ? "support" as const : "customer" as const,
+            createdAt: typeof data.createdAt === "number"
+              ? data.createdAt
+              : (data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? Date.now(),
           };
         });
         setMessages(mapped);
@@ -1568,7 +1650,22 @@ function ChatView({
   const activeThread = thread.data?.find((t) => t.id === threadId);
 
   const sendMutation = useMutation({
-    mutationFn: () => sendMessage(userId, threadId, draft.trim()),
+    mutationFn: async () => {
+      // Send via existing personal thread (backward compat)
+      await sendMessage(userId, threadId, draft.trim());
+
+      // If this is a seller thread, also sync to shared conversation
+      if (activeThread?.sellerId) {
+        try {
+          const conv = await findConversationByThreadId(userId, threadId);
+          if (conv) {
+            await customerSendMessage(conv.id, userId, draft.trim(), threadId);
+          }
+        } catch (err) {
+          console.warn("Failed to sync message to conversation:", err);
+        }
+      }
+    },
     onSuccess: () => {
       setDraft("");
       queryClient.invalidateQueries({ queryKey: ["messages", userId, threadId] });
@@ -1592,16 +1689,10 @@ function ChatView({
         <button onClick={onBack} className="rounded-full p-1.5 hover:bg-muted">
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <span
-          className={`grid h-10 w-10 place-items-center rounded-full ${
-            activeThread?.sellerId ? "bg-purple-100 text-purple-600" : "bg-primary/10 text-primary"
-          }`}
-        >
-          {activeThread?.sellerId ? (
-            <Store className="h-5 w-5" />
-          ) : (
-            <Headphones className="h-5 w-5" />
-          )}
+        <span className={`grid h-10 w-10 place-items-center rounded-full ${
+          activeThread?.sellerId ? "bg-purple-100 text-purple-600" : "bg-primary/10 text-primary"
+        }`}>
+          {activeThread?.sellerId ? <Store className="h-5 w-5" /> : <Headphones className="h-5 w-5" />}
         </span>
         <div className="min-w-0 flex-1">
           <h3 className="truncate text-sm font-semibold">{activeThread?.participant ?? "Chat"}</h3>
@@ -1637,21 +1728,15 @@ function ChatView({
               const isMe = msg.from === "customer";
               return (
                 <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
-                  <div
-                    className={`max-w-[75%] ${isMe ? "items-end" : "items-start"} flex flex-col`}
-                  >
-                    <div
-                      className={`relative rounded-2xl px-4 py-2.5 text-sm shadow-sm ${
-                        isMe
-                          ? "rounded-br-md bg-primary text-primary-foreground"
-                          : "rounded-bl-md bg-background"
-                      }`}
-                    >
+                  <div className={`max-w-[75%] ${isMe ? "items-end" : "items-start"} flex flex-col`}>
+                    <div className={`relative rounded-2xl px-4 py-2.5 text-sm shadow-sm ${
+                      isMe
+                        ? "rounded-br-md bg-primary text-primary-foreground"
+                        : "rounded-bl-md bg-background"
+                    }`}>
                       {msg.body}
                     </div>
-                    <div
-                      className={`mt-0.5 flex items-center gap-1 px-1 text-[10px] text-muted-foreground`}
-                    >
+                    <div className={`mt-0.5 flex items-center gap-1 px-1 text-[10px] text-muted-foreground`}>
                       {formatRelativeTime(msg.createdAt)}
                       {isMe && <CheckCheck className="h-3 w-3 text-blue-400" />}
                     </div>
@@ -1685,10 +1770,7 @@ function ChatView({
           {emojis.map((emoji) => (
             <button
               key={emoji}
-              onClick={() => {
-                setDraft((prev) => prev + emoji);
-                setShowEmoji(false);
-              }}
+              onClick={() => { setDraft((prev) => prev + emoji); setShowEmoji(false); }}
               className="rounded-lg p-1.5 text-lg transition hover:bg-muted"
             >
               {emoji}
@@ -1702,10 +1784,7 @@ function ChatView({
         <button className="grid h-9 w-9 shrink-0 place-items-center rounded-full hover:bg-muted">
           <Paperclip className="h-5 w-5 text-muted-foreground" />
         </button>
-        <button
-          onClick={() => setShowEmoji(!showEmoji)}
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-full hover:bg-muted"
-        >
+        <button onClick={() => setShowEmoji(!showEmoji)} className="grid h-9 w-9 shrink-0 place-items-center rounded-full hover:bg-muted">
           <Smile className={`h-5 w-5 ${showEmoji ? "text-primary" : "text-muted-foreground"}`} />
         </button>
         <input
@@ -1735,15 +1814,7 @@ function ChatView({
 // TICKET CHAT VIEW
 // ═══════════════════════════════════════════════════════════════
 
-function TicketChatView({
-  ticketId,
-  onBack,
-  userId,
-}: {
-  ticketId: string;
-  onBack: () => void;
-  userId: string;
-}) {
+function TicketChatView({ ticketId, onBack, userId }: { ticketId: string; onBack: () => void; userId: string }) {
   const { t } = useI18n();
   const [draft, setDraft] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
@@ -1773,12 +1844,10 @@ function TicketChatView({
           return {
             id: d.id,
             body: String(data.body ?? ""),
-            from: data.from === "support" ? ("support" as const) : ("customer" as const),
-            createdAt:
-              typeof data.createdAt === "number"
-                ? data.createdAt
-                : ((data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ??
-                  Date.now()),
+            from: data.from === "support" ? "support" as const : "customer" as const,
+            createdAt: typeof data.createdAt === "number"
+              ? data.createdAt
+              : (data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? Date.now(),
           };
         });
         setMessages(mapped);
@@ -1842,17 +1911,11 @@ function TicketChatView({
             const isMe = msg.from === "customer";
             return (
               <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
-                <div
-                  className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-sm shadow-sm ${
-                    isMe
-                      ? "rounded-br-md bg-primary text-primary-foreground"
-                      : "rounded-bl-md bg-background"
-                  }`}
-                >
+                <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-sm shadow-sm ${
+                  isMe ? "rounded-br-md bg-primary text-primary-foreground" : "rounded-bl-md bg-background"
+                }`}>
                   {msg.body}
-                  <div
-                    className={`mt-0.5 text-[10px] ${isMe ? "text-primary-foreground/60" : "text-muted-foreground"}`}
-                  >
+                  <div className={`mt-0.5 text-[10px] ${isMe ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
                     {formatRelativeTime(msg.createdAt)}
                   </div>
                 </div>
@@ -1889,15 +1952,7 @@ function TicketChatView({
 // SHARED HELPERS
 // ═══════════════════════════════════════════════════════════════
 
-function EmptyState({
-  icon,
-  title,
-  subtitle,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  subtitle: string;
-}) {
+function EmptyState({ icon, title, subtitle }: { icon: React.ReactNode; title: string; subtitle: string }) {
   return (
     <div className="flex flex-col items-center justify-center rounded-2xl border bg-muted/30 py-16 text-center">
       <span className="mb-3 text-muted-foreground/40">{icon}</span>

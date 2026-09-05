@@ -1,151 +1,101 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-  UserPlus,
-  LogIn,
-  Search,
-  Eye,
-  ShoppingCart,
-  CreditCard,
-  MapPin,
-  Wallet,
-  PackageCheck,
-  Truck,
-  Home,
-  HelpCircle,
-  Mail,
-  ArrowRight,
-} from "lucide-react";
-import { PublicInfoLayout, InfoCard, InfoHeading } from "@/components/common/PublicInfoLayout";
+import { createFileRoute } from "@tanstack/react-router";
+import { BackButton } from "@/components/common/BackButton";
+import { SiteHeader } from "@/components/layout/SiteHeader";
+import { SiteFooter } from "@/components/layout/SiteFooter";
+import { ShoppingCart, Search, CreditCard, Truck, PackageCheck } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { buildMetaTags } from "@/lib/seo";
 
 export const Route = createFileRoute("/how-to-buy")({
-  ssr: false,
+  ssr: true,
   component: HowToBuyPage,
   head: () => ({
-    meta: [
-      { title: "How to Buy — Aventa Shop" },
-      {
-        name: "description",
-        content:
-          "A step-by-step guide to shopping on Aventa Shop — from account creation to receiving your order.",
-      },
-    ],
+    meta: buildMetaTags({
+      title: "How to Buy on AVENTA SHOP — Shopping Guide",
+      description: "Learn how to shop on AVENTA SHOP — search products, add to cart, checkout securely, and get your products delivered fast. Complete step-by-step buying guide.",
+      path: "/how-to-buy",
+      type: "website",
+    }),
   }),
 });
 
 const STEPS = [
   {
-    icon: <UserPlus className="h-5 w-5" />,
-    title: "Create an Account",
-    text: "Sign up with your email or Google account. It takes less than a minute.",
+    icon: <Search className="h-6 w-6" />,
+    title: "Search & Browse",
+    description: "Browse categories or use the search bar to find products. Filter by price, brand, and ratings to find exactly what you need.",
   },
   {
-    icon: <LogIn className="h-5 w-5" />,
-    title: "Log In",
-    text: "Sign in to your account to access your cart, wishlist and orders.",
-  },
-  {
-    icon: <Search className="h-5 w-5" />,
-    title: "Find Your Product",
-    text: "Browse categories or use search to find exactly what you need.",
-  },
-  {
-    icon: <Eye className="h-5 w-5" />,
-    title: "Check Product Details",
-    text: "Read the description, compare prices and check seller ratings and reviews.",
-  },
-  {
-    icon: <ShoppingCart className="h-5 w-5" />,
+    icon: <ShoppingCart className="h-6 w-6" />,
     title: "Add to Cart",
-    text: "Add products to your cart — you can keep shopping or checkout right away.",
+    description: "Click 'Add to Cart' on any product. You can continue shopping or go to your cart to review items before checkout.",
   },
   {
-    icon: <CreditCard className="h-5 w-5" />,
-    title: "Checkout",
-    text: "Review your order, apply coupons, and confirm the items in your cart.",
+    icon: <CreditCard className="h-6 w-6" />,
+    title: "Checkout & Payment",
+    description: "Select your delivery address, choose a payment method (Cash on Delivery, Card, or Mobile Banking), and place your order.",
   },
   {
-    icon: <MapPin className="h-5 w-5" />,
-    title: "Enter Delivery Information",
-    text: "Choose a saved address or add a new one with your district and phone number.",
-  },
-  {
-    icon: <Wallet className="h-5 w-5" />,
-    title: "Choose Payment Method",
-    text: "Pay online, with wallet balance, or choose cash on delivery if available.",
-  },
-  {
-    icon: <PackageCheck className="h-5 w-5" />,
-    title: "Place Order",
-    text: "Confirm your order — you'll get an order ID and tracking number.",
-  },
-  {
-    icon: <Truck className="h-5 w-5" />,
+    icon: <Truck className="h-6 w-6" />,
     title: "Track Your Order",
-    text: "Follow your order in real time from packing to out for delivery.",
+    description: "Once your order is confirmed, you can track its status in real-time from 'Track Orders' in your account.",
   },
   {
-    icon: <Home className="h-5 w-5" />,
-    title: "Receive Your Product",
-    text: "Check the package on delivery, then enjoy — and rate your experience!",
+    icon: <PackageCheck className="h-6 w-6" />,
+    title: "Receive & Enjoy",
+    description: "Get your products delivered to your doorstep. Enjoy quality products at unbeatable prices from AVENTA SHOP.",
   },
 ];
 
 function HowToBuyPage() {
   return (
-    <PublicInfoLayout title="How to Buy" subtitle="Shopping on Aventa Shop in easy steps">
-      <InfoCard className="mb-4">
-        <InfoHeading>From Sign Up to Delivery</InfoHeading>
-        <p className="text-sm leading-relaxed text-slate-600">
-          New to online shopping? No problem. Here's the complete journey — from creating your
-          account to receiving your product at your door.
+    <div className="min-h-screen bg-background">
+      <SiteHeader />
+      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
+        <div className="mb-4">
+          <BackButton fallbackTo="/" label="Back" />
+        </div>
+        <h1 className="mb-2 text-2xl font-bold text-foreground">How to Buy on AVENTA SHOP</h1>
+        <p className="mb-6 text-sm text-muted-foreground">
+          Shopping on AVENTA SHOP is easy. Follow these simple steps to get started.
         </p>
-      </InfoCard>
 
-      {/* Steps */}
-      <div className="mb-4 grid gap-3 sm:grid-cols-2">
-        {STEPS.map((s, i) => (
-          <div
-            key={s.title}
-            className="flex items-start gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm"
+        <div className="space-y-4">
+          {STEPS.map((step, i) => (
+            <div
+              key={i}
+              className="flex gap-4 rounded-2xl border bg-background p-5 shadow-sm"
+            >
+              <div className="flex flex-col items-center">
+                <span className="grid h-12 w-12 place-items-center rounded-xl bg-primary/10 text-primary">
+                  {step.icon}
+                </span>
+                {i < STEPS.length - 1 && (
+                  <span className="mt-2 w-px flex-1 bg-border" />
+                )}
+              </div>
+              <div className="flex-1">
+                <h3 className="text-base font-semibold text-foreground">
+                  {i + 1}. {step.title}
+                </h3>
+                <p className="mt-1 text-sm text-muted-foreground">{step.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-8 rounded-2xl bg-primary/5 p-6 text-center">
+          <h2 className="text-lg font-semibold text-foreground">Ready to start shopping?</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Explore thousands of products at unbeatable prices.</p>
+          <Link
+            to="/shop"
+            className="mt-4 inline-flex items-center justify-center rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
           >
-            <div className="relative shrink-0">
-              <span className="grid h-11 w-11 place-items-center rounded-full bg-orange-50 text-orange-500">
-                {s.icon}
-              </span>
-              <span className="absolute -right-1.5 -top-1.5 grid h-5 w-5 place-items-center rounded-full bg-orange-500 text-[10px] font-bold text-white">
-                {i + 1}
-              </span>
-            </div>
-            <div className="min-w-0">
-              <h3 className="text-sm font-bold text-slate-800">{s.title}</h3>
-              <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{s.text}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Help CTAs */}
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Link
-          to="/help-center"
-          className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-6 py-4 text-sm font-bold text-slate-700 shadow-sm transition hover:border-orange-300 hover:text-orange-600"
-        >
-          <HelpCircle className="h-5 w-5" /> Visit Help Center
-        </Link>
-        <Link
-          to="/contact-us"
-          className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-6 py-4 text-sm font-bold text-slate-700 shadow-sm transition hover:border-orange-300 hover:text-orange-600"
-        >
-          <Mail className="h-5 w-5" /> Contact Support
-        </Link>
-      </div>
-
-      <Link
-        to="/shop"
-        className="mt-4 flex items-center justify-center gap-2 rounded-2xl bg-orange-500 px-6 py-4 text-sm font-bold text-white shadow-sm transition hover:bg-orange-600 active:scale-[0.98]"
-      >
-        Ready to Shop <ArrowRight className="h-4 w-4" />
-      </Link>
-    </PublicInfoLayout>
+            Start Shopping
+          </Link>
+        </div>
+      </main>
+      <SiteFooter />
+    </div>
   );
 }

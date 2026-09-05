@@ -9,30 +9,23 @@ import {
   ChevronRight,
   HelpCircle,
 } from "lucide-react";
+import { BackButton } from "@/components/common/BackButton";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
-import { WhatsAppFab } from "@/components/layout/SiteChrome";
+import { buildMetaTags } from "@/lib/seo";
 
 export const Route = createFileRoute("/help-center")({
-  ssr: false,
+  ssr: true,
   component: HelpCenterPage,
   head: () => ({
-    meta: [
-      { title: "Help Center — Aventa Shop" },
-      {
-        name: "description",
-        content:
-          "Answers about Aventa Shop shipping, returns, payments, orders and account support.",
-      },
-      { property: "og:title", content: "Help Center — Aventa Shop" },
-      {
-        property: "og:description",
-        content: "Shipping, returns, payments and account support answers.",
-      },
-      { property: "og:url", content: "https://shop-nexa.lovable.app/help-center" },
-    ],
-    links: [{ rel: "canonical", href: "https://shop-nexa.lovable.app/help-center" }],
+    meta: buildMetaTags({
+      title: "Help Center — AVENTA SHOP Support & FAQ",
+      description: "Find answers about AVENTA SHOP shipping, returns, payments, orders, account support, and seller policies. Get help with your shopping experience.",
+      path: "/help-center",
+      type: "website",
+    }),
   }),
+
 });
 
 const HELP_CATEGORIES = [
@@ -40,49 +33,34 @@ const HELP_CATEGORIES = [
     icon: <MessageCircle className="h-6 w-6" />,
     title: "Orders & Delivery",
     description: "Track orders, delivery info, cancellations",
-    link: "/track-order",
+    link: "/support",
   },
   {
     icon: <Headphones className="h-6 w-6" />,
     title: "Returns & Refunds",
     description: "Return policy, refund status, exchanges",
-    link: "/returns-refunds",
+    link: "/returns-policy",
   },
   {
     icon: <Mail className="h-6 w-6" />,
     title: "Account & Security",
     description: "Login issues, password, verification",
-    link: "/settings",
+    link: "/account",
   },
   {
     icon: <ChevronRight className="h-6 w-6" />,
     title: "Payment & Wallet",
     description: "Payment methods, wallet balance, transactions",
-    link: "/digital-payments",
+    link: "/_authenticated/wallet",
   },
 ];
 
 const FAQS = [
-  {
-    q: "How can I track my order?",
-    a: "Go to Track Orders in your account to see real-time delivery tracking.",
-  },
-  {
-    q: "What is the return policy?",
-    a: "You can request a return within 7 days of delivery for eligible products.",
-  },
-  {
-    q: "How do I use my wallet balance?",
-    a: "Wallet balance can be used during checkout as a payment option.",
-  },
-  {
-    q: "How do I become a seller?",
-    a: "Visit 'Become a Seller' from your account to start the registration process.",
-  },
-  {
-    q: "How do I use coupons?",
-    a: "Go to the Coupons page to see available vouchers and apply them at checkout.",
-  },
+  { q: "How can I track my order?", a: "Go to Track Orders in your account to see real-time delivery tracking." },
+  { q: "What is the return policy?", a: "You can request a return within 7 days of delivery for eligible products." },
+  { q: "How do I use my wallet balance?", a: "Wallet balance can be used during checkout as a payment option." },
+  { q: "How do I become a seller?", a: "Visit 'Become a Seller' from your account to start the registration process." },
+  { q: "How do I use coupons?", a: "Go to the Coupons page to see available vouchers and apply them at checkout." },
 ];
 
 function HelpCenterPage() {
@@ -90,6 +68,9 @@ function HelpCenterPage() {
     <div className="min-h-screen bg-background">
       <SiteHeader />
       <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
+        <div className="mb-4">
+          <BackButton fallbackTo="/" label="Back" className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-200 active:scale-95" />
+        </div>
         <div className="mb-6 flex items-center gap-3">
           <Link to="/" className="text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-5 w-5" />
@@ -115,21 +96,7 @@ function HelpCenterPage() {
             </div>
             <ChevronRight className="h-5 w-5 text-muted-foreground" />
           </Link>
-          <a
-            href="https://wa.me/8801324997271"
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-3 rounded-2xl border bg-background p-4 shadow-sm transition hover:border-primary/40 hover:shadow-md"
-          >
-            <span className="grid h-12 w-12 place-items-center rounded-xl bg-green-100 text-green-600">
-              <Phone className="h-6 w-6" />
-            </span>
-            <div className="min-w-0 flex-1">
-              <h3 className="text-sm font-semibold">WhatsApp Us</h3>
-              <p className="text-xs text-muted-foreground">01324997271</p>
-            </div>
-            <ChevronRight className="h-5 w-5 text-muted-foreground" />
-          </a>
+
         </div>
 
         {/* Help categories */}
@@ -157,9 +124,7 @@ function HelpCenterPage() {
 
         {/* FAQs */}
         <div className="mb-6">
-          <h2 className="mb-3 text-sm font-semibold text-muted-foreground">
-            Frequently Asked Questions
-          </h2>
+          <h2 className="mb-3 text-sm font-semibold text-muted-foreground">Frequently Asked Questions</h2>
           <div className="space-y-2">
             {FAQS.map((faq, i) => (
               <details key={i} className="group rounded-xl border bg-background p-4 shadow-sm">
@@ -180,7 +145,6 @@ function HelpCenterPage() {
         </div>
       </main>
       <SiteFooter />
-      <WhatsAppFab />
-    </div>
+</div>
   );
 }

@@ -1,5 +1,5 @@
 /**
- * Transactional Email Service for Aventa Shop
+ * Transactional Email Service for AVENTA SHOP
  *
  * Provider abstraction: Mock, Resend, SendGrid.
  * Centralized sendTransactionalEmail() — no direct provider calls from app code.
@@ -38,11 +38,7 @@ export interface EmailProvider {
 class MockEmailProvider implements EmailProvider {
   name = "mock";
   async send(to: string, subject: string, html: string) {
-    if (typeof console !== "undefined") {
-      console.log(`\n[MOCK EMAIL] To: ${to}`);
-      console.log(`[MOCK EMAIL] Subject: ${subject}`);
-      console.log(`[MOCK EMAIL] HTML length: ${html.length} chars`);
-    }
+    if (import.meta.env?.DEV) console.log("[MOCK EMAIL] sent (dev only)");
     return { success: true, providerId: `mock_${Date.now()}` };
   }
 }
@@ -52,13 +48,13 @@ class ResendEmailProvider implements EmailProvider {
   name = "resend";
   async send(to: string, subject: string, html: string) {
     const apiKey = Deno.env.get("RESEND_API_KEY");
-    const fromEmail = Deno.env.get("EMAIL_FROM") ?? "noreply@shopnexa.app";
+    const fromEmail = Deno.env.get("EMAIL_FROM") ?? "noreply@aventa-shop.com";
     if (!apiKey) return { success: false, error: "RESEND_API_KEY not configured" };
     try {
       const res = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({ from: `Aventa Shop <${fromEmail}>`, to, subject, html }),
+        body: JSON.stringify({ from: `AVENTA SHOP <${fromEmail}>`, to, subject, html }),
       });
       if (!res.ok) {
         const text = await res.text().catch(() => "");
@@ -77,7 +73,7 @@ class SendGridEmailProvider implements EmailProvider {
   name = "sendgrid";
   async send(to: string, subject: string, html: string) {
     const apiKey = Deno.env.get("SENDGRID_API_KEY");
-    const fromEmail = Deno.env.get("EMAIL_FROM") ?? "noreply@shopnexa.app";
+    const fromEmail = Deno.env.get("EMAIL_FROM") ?? "noreply@aventa-shop.com";
     if (!apiKey) return { success: false, error: "SENDGRID_API_KEY not configured" };
     try {
       const res = await fetch("https://api.sendgrid.com/v3/mail/send", {
@@ -85,7 +81,7 @@ class SendGridEmailProvider implements EmailProvider {
         headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
         body: JSON.stringify({
           personalizations: [{ to: [{ email: to }] }],
-          from: { email: fromEmail, name: "Aventa Shop" },
+          from: { email: fromEmail, name: "AVENTA SHOP" },
           subject,
           content: [{ type: "text/html", value: html }],
         }),
@@ -107,6 +103,17 @@ let _provider: EmailProvider | null = null;
 function getEmailProvider(): EmailProvider {
   if (_provider) return _provider;
   const name = (typeof Deno !== "undefined" && Deno.env.get("EMAIL_PROVIDER")) ?? "mock";
+  const isProduction = typeof Deno !== "undefined" && Deno.env.get("NODE_ENV") === "production";
+
+  // PRODUCTION SAFETY: Never fall back to mock in production.
+  // If the env var is missing or "mock" in production, fail safely.
+  if (isProduction && (name === "mock" || !name)) {
+    throw new Error(
+      "Email provider is not configured for production. " +
+        "Set EMAIL_PROVIDER to 'resend' or 'sendgrid' and configure the API key.",
+    );
+  }
+
   switch (name) {
     case "resend":
       _provider = new ResendEmailProvider();
@@ -119,8 +126,7 @@ function getEmailProvider(): EmailProvider {
       _provider = new MockEmailProvider();
       break;
   }
-  if (typeof console !== "undefined")
-    console.log(`[EMAIL] Provider initialized: ${_provider.name}`);
+  
   return _provider;
 }
 
@@ -255,16 +261,14 @@ export async function sendTransactionalEmail(params: SendEmailParams): Promise<E
 
   // In-memory duplicate check
   if (_sentKeys.has(idempotencyKey)) {
-    if (typeof console !== "undefined")
-      console.log(`[EMAIL] Duplicate suppressed (in-memory): ${idempotencyKey}`);
+    
     return { delivered: true, provider: "cache", emailId, error: "duplicate_suppressed" };
   }
 
   // Firestore idempotency check
   const alreadySent = await checkIdempotency(idempotencyKey);
   if (alreadySent) {
-    if (typeof console !== "undefined")
-      console.log(`[EMAIL] Duplicate suppressed (firestore): ${idempotencyKey}`);
+    
     return { delivered: true, provider: "cache", emailId, error: "duplicate_suppressed" };
   }
 
@@ -305,8 +309,13 @@ export async function sendTransactionalEmail(params: SendEmailParams): Promise<E
     setTimeout(() => _sentKeys.delete(idempotencyKey), 10 * 60 * 1000);
   }
 
-  if (typeof console !== "undefined")
-    console.log(`[EMAIL] ${event} \u2192 ${recipient}: ${status} (${provider.name})`);
+  if (typeof console !== "undefined") {
+    if (result.success) {
+      console.log(`[EMAIL] Sent ${event} to ${recipient} (${emailId})`);
+    } else {
+      console.error(`[EMAIL] Failed to send ${event} to ${recipient}: ${result.error}`);
+    }
+  }
 
   return { delivered: result.success, provider: provider.name, emailId, error: result.error };
 }

@@ -47,7 +47,7 @@ function mapSeller(id: string, d: Record<string, unknown>): SellerProfile {
     termsAcceptedAt: (d.termsAcceptedAt as number | null) ?? null,
     submittedAt: (d.submittedAt as number | null) ?? null,
     approvedAt: (d.approvedAt as number | null) ?? null,
-    commissionRate: Number(d.commissionRate ?? 10),
+    commissionRate: Number(d.commissionRate ?? 0.08),
     totalEarnings: Number(d.totalEarnings ?? 0),
     availableBalance: Number(d.availableBalance ?? 0),
     pendingBalance: Number(d.pendingBalance ?? 0),
@@ -141,4 +141,46 @@ export async function setSellerStatus(
     read: false,
     createdAt: serverTimestamp(),
   });
+}
+
+// ====================================================================
+// Commission Rate Management
+// ====================================================================
+
+import { updateSellerCommissionRate, getSellerCommissionRate } from "@/lib/settlement.functions";
+
+/**
+ * Admin updates a seller's commission rate.
+ * Server verifies admin permissions and clamps the rate to [0, 1].
+ * Existing settlements are NOT affected — only new orders use the updated rate.
+ */
+export async function setSellerCommissionRate(input: {
+  idToken: string;
+  sellerId: string;
+  newRate: number; // e.g. 0.15 = 15%
+}): Promise<{ storedRate: number }> {
+  const result = await updateSellerCommissionRate({
+    data: {
+      idToken: input.idToken,
+      sellerId: input.sellerId,
+      newRate: input.newRate,
+    },
+  });
+  return { storedRate: result.storedRate };
+}
+
+/**
+ * Read a seller's current commission rate (admin or self).
+ */
+export async function fetchSellerCommissionRate(input: {
+  idToken: string;
+  sellerId: string;
+}): Promise<number> {
+  const result = await getSellerCommissionRate({
+    data: {
+      idToken: input.idToken,
+      sellerId: input.sellerId,
+    },
+  });
+  return result.rate;
 }

@@ -1,5 +1,5 @@
 /**
- * Centralized Currency Service for Aventa Shop.
+ * Centralized Currency Service for AVENTA SHOP.
  *
  * - Base currency: BDT (Bangladeshi Taka) — all product prices stored in BDT.
  * - Supports real-time conversion to USD via free exchange rate API.
@@ -104,17 +104,15 @@ export async function initExchangeRate(): Promise<void> {
     await fetchPromise;
     return;
   }
-  fetchPromise = fetchExchangeRate()
-    .then((rate) => {
-      cachedUsdToBdt = rate;
-      fetchPromise = null;
-      return rate;
-    })
-    .catch(() => {
-      cachedUsdToBdt = FALLBACK_RATE_USD_TO_BDT;
-      fetchPromise = null;
-      return FALLBACK_RATE_USD_TO_BDT;
-    });
+  fetchPromise = fetchExchangeRate().then((rate) => {
+    cachedUsdToBdt = rate;
+    fetchPromise = null;
+    return rate;
+  }).catch(() => {
+    cachedUsdToBdt = FALLBACK_RATE_USD_TO_BDT;
+    fetchPromise = null;
+    return FALLBACK_RATE_USD_TO_BDT;
+  });
   await fetchPromise;
 }
 

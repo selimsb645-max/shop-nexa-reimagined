@@ -20,8 +20,8 @@ const SITE_DOC = "site";
 const BANNERS = "banners";
 
 export const DEFAULT_SETTINGS: SiteSettings = {
-  siteName: "Aventa Shop",
-  supportEmail: "support@shopnexa.app",
+  siteName: "AVENTA SHOP",
+  supportEmail: "help.aventashop@gmail.com",
   supportPhone: "+1 234 567 8900",
   whatsappNumber: "01324997271",
   facebookUrl: "https://www.facebook.com/profile.php?id=61592089432837",
@@ -33,9 +33,60 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     maxOrder: 5000,
     note: "Cash on Delivery available for orders within our service areas.",
   },
+  tax: {
+    enabled: false,
+    rate: 0,
+    label: "VAT",
+    perProductOverride: true,
+  },
+  commission: {
+    defaultRate: 8,
+    minWithdrawalAmount: 1000,
+    holdPeriodDays: 7,
+  },
+  inventory: {
+    alertThreshold: 5,
+  },
+  deliveryZones: {
+    zones: [
+      {
+        id: "INSIDE_DHAKA",
+        labelEn: "Inside Dhaka City",
+        labelBn: "ঢাকা শহরে",
+        charge: 60,
+        etaDays: [1, 2],
+        description: "Dhaka City Corporation / Dhaka Metro area",
+        active: true,
+        priority: 1,
+      },
+      {
+        id: "DHAKA_SUBURB",
+        labelEn: "Dhaka Suburb",
+        labelBn: "ঢাকার আশেপাশে",
+        charge: 100,
+        etaDays: [2, 3],
+        description: "Savar, Ashulia, Keraniganj, Gazipur, Tongi, Narayanganj, etc.",
+        active: true,
+        priority: 2,
+      },
+      {
+        id: "OUTSIDE_DHAKA",
+        labelEn: "Outside Dhaka",
+        labelBn: "ঢাকার বাইরে",
+        charge: 170,
+        etaDays: [3, 5],
+        description: "Rest of Bangladesh",
+        active: true,
+        priority: 3,
+      },
+    ],
+    fallbackZoneId: "OUTSIDE_DHAKA",
+    noZoneBehavior: "fallback",
+  },
   homepage: {
     heroHeadline: "Shop Smarter. Live Better.",
-    heroSubheadline: "Everything you need in one place. Top quality products at unbeatable prices.",
+    heroSubheadline:
+      "Everything you need in one place. Top quality products at unbeatable prices.",
     heroCtaLabel: "Shop Now",
     heroCtaLink: "/shop",
     featuredCategorySlugs: [],
@@ -52,9 +103,33 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     ...d,
     shipping: { ...DEFAULT_SETTINGS.shipping, ...(d.shipping ?? {}) },
     cod: { ...DEFAULT_SETTINGS.cod, ...(d.cod ?? {}) },
+    tax: { ...DEFAULT_SETTINGS.tax, ...(d.tax ?? {}) },
     homepage: { ...DEFAULT_SETTINGS.homepage, ...(d.homepage ?? {}) },
+    deliveryZones: { ...DEFAULT_SETTINGS.deliveryZones, ...(d.deliveryZones ?? {}) },
     updatedAt: typeof d.updatedAt === "number" ? d.updatedAt : Date.now(),
   };
+}
+
+/**
+ * Reads a single setting value by dot-path (e.g. "inventory.alertThreshold").
+ * Returns the fallback if settings or the path don't exist.
+ */
+export async function getSiteSetting<T>(
+  path: string,
+  fallback: T,
+): Promise<T> {
+  try {
+    const settings = await getSiteSettings();
+    const parts = path.split(".");
+    let val: unknown = settings as unknown;
+    for (const p of parts) {
+      val = (val as Record<string, unknown>)?.[p];
+      if (val == null) return fallback;
+    }
+    return (val as T) ?? fallback;
+  } catch {
+    return fallback;
+  }
 }
 
 export async function saveSiteSettings(patch: Partial<SiteSettings>): Promise<void> {
@@ -78,7 +153,8 @@ function mapBanner(id: string, d: Record<string, unknown>): Banner {
     position: (d.position as Banner["position"]) ?? "hero",
     active: Boolean(d.active),
     order: Number(d.order ?? 0),
-    createdAt: typeof created === "number" ? created : (created?.toMillis?.() ?? Date.now()),
+    createdAt:
+      typeof created === "number" ? created : created?.toMillis?.() ?? Date.now(),
     updatedAt: typeof d.updatedAt === "number" ? d.updatedAt : Date.now(),
   };
 }

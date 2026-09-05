@@ -26,7 +26,6 @@ import {
 } from "lucide-react";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
-import { WhatsAppFab } from "@/components/layout/SiteChrome";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { formatDateTime, formatDate, formatPrice } from "@/utils/format";
 import {
@@ -436,7 +435,6 @@ function TrackingPage() {
         )}
       </main>
       <SiteFooter />
-      <WhatsAppFab />
       <MobileBottomNav />
     </div>
   );

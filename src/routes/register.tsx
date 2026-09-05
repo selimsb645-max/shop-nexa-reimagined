@@ -1,31 +1,30 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { RegisterForm } from "@/components/auth/RegisterForm";
+import { getSiteUrl } from "@/lib/seo";
 
 export const Route = createFileRoute("/register")({
   ssr: false,
   component: RegisterPage,
   head: () => ({
     meta: [
-      { title: "Create Account — Aventa Shop" },
-      {
-        name: "description",
-        content: "Create a free Aventa Shop account to shop deals, track orders and earn rewards.",
-      },
-      { property: "og:title", content: "Create Account — Aventa Shop" },
-      { property: "og:description", content: "Create a free Aventa Shop account." },
-      { property: "og:url", content: "https://shop-nexa.lovable.app/register" },
+      { title: "Create Account — AVENTA SHOP" },
+      { name: "description", content: "Create a free AVENTA SHOP account to shop deals, track orders and earn rewards." },
+      { property: "og:title", content: "Create Account — AVENTA SHOP" },
+      { property: "og:description", content: "Create a free AVENTA SHOP account." },
+      { property: "og:url", content: `${getSiteUrl()}/register` },
       { name: "robots", content: "noindex" },
     ],
-    links: [{ rel: "canonical", href: "https://shop-nexa.lovable.app/register" }],
+    links: [{ rel: "canonical", href: `${getSiteUrl()}/register` }],
   }),
 });
+
 
 function RegisterPage() {
   return (
     <AuthLayout
       title="Create your account"
-      subtitle="Shop smarter with Aventa Shop"
+      subtitle="Shop smarter with AVENTA SHOP"
       footer={
         <>
           Already have an account?{" "}

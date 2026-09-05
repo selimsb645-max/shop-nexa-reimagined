@@ -1,5 +1,4 @@
 import { Link } from "@tanstack/react-router";
-import { ShoppingCart } from "lucide-react";
 import type { ReactNode } from "react";
 
 export function AuthLayout({
@@ -18,13 +17,7 @@ export function AuthLayout({
       <header className="border-b bg-background">
         <div className="mx-auto flex max-w-7xl items-center px-4 py-4">
           <Link to="/" className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <ShoppingCart className="h-5 w-5" />
-            </div>
-            <span className="text-xl font-bold">
-              <span className="text-primary">Aventa</span>
-              <span className="text-accent">Shop</span>
-            </span>
+            <img src="/brand/aventa-shop-logo.png" alt="AVENTA SHOP" className="h-11 w-auto object-contain" />
           </Link>
         </div>
       </header>

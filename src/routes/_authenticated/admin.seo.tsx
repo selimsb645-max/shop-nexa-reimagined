@@ -1,6 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Search, BarChart3, TrendingUp, Eye, Loader } from "lucide-react";
+import {
+  ArrowLeft,
+  Search,
+  BarChart3,
+  TrendingUp,
+  Eye,
+  Loader,
+} from "lucide-react";
 import { listAllProducts } from "@/services/firebase/products";
 import { firebaseConfigured } from "@/services/firebase/config";
 import { useI18n } from "@/i18n";
@@ -8,12 +15,12 @@ import { useI18n } from "@/i18n";
 export const Route = createFileRoute("/_authenticated/admin/seo")({
   ssr: false,
   component: AdminSEOPage,
-  head: () => ({ meta: [{ title: "SEO Management — Aventa Shop Admin" }] }),
+  head: () => ({ meta: [{ title: "SEO Management — AVENTA SHOP Admin" }] }),
 });
 
 function AdminSEOPage() {
-  const { t } = useI18n();
-  const { data: products, isLoading } = useQuery({
+
+  const { t } = useI18n();  const { data: products, isLoading } = useQuery({
     queryKey: ["products", "all"],
     queryFn: listAllProducts,
     enabled: firebaseConfigured,
@@ -25,15 +32,15 @@ function AdminSEOPage() {
   const productsWithTags = allProducts.filter((p) => p.tags.length > 0);
   const productsWithComparePrice = allProducts.filter((p) => p.compareAtPrice !== null);
 
-  const seoScore =
-    allProducts.length > 0
-      ? Math.round(
-          (productsWithImages.length / allProducts.length) * 30 +
-            (productsWithDescriptions.length / allProducts.length) * 30 +
-            (productsWithTags.length / allProducts.length) * 20 +
-            (productsWithComparePrice.length / allProducts.length) * 20,
-        )
-      : 0;
+  const seoScore = allProducts.length > 0
+    ? Math.round(
+        (productsWithImages.length / allProducts.length) * 30 +
+          (productsWithDescriptions.length / allProducts.length) * 30 +
+          (productsWithTags.length / allProducts.length) * 20 +
+          (productsWithComparePrice.length / allProducts.length) * 20,
+      )
+    : 0;
+
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -52,20 +59,14 @@ function AdminSEOPage() {
         <div className="mb-6 rounded-2xl border bg-background p-6 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-semibold text-muted-foreground">
-                {t("admin.overallSeoScore")}
-              </h2>
+              <h2 className="text-sm font-semibold text-muted-foreground">{t("admin.overallSeoScore")}</h2>
               <p className="text-3xl font-bold">{seoScore}/100</p>
             </div>
-            <div
-              className={`grid h-16 w-16 place-items-center rounded-full text-2xl font-bold ${
-                seoScore >= 70
-                  ? "bg-green-100 text-green-600"
-                  : seoScore >= 40
-                    ? "bg-orange-100 text-orange-600"
-                    : "bg-red-100 text-red-600"
-              }`}
-            >
+            <div className={`grid h-16 w-16 place-items-center rounded-full text-2xl font-bold ${
+              seoScore >= 70 ? "bg-green-100 text-green-600"
+              : seoScore >= 40 ? "bg-orange-100 text-orange-600"
+              : "bg-red-100 text-red-600"
+            }`}>
               {seoScore >= 70 ? "A" : seoScore >= 40 ? "C" : "F"}
             </div>
           </div>
@@ -73,26 +74,10 @@ function AdminSEOPage() {
 
         {/* SEO Stats */}
         <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <StatCard
-            icon={<Eye className="h-5 w-5" />}
-            label="Has Images"
-            value={`${productsWithImages.length}/${allProducts.length}`}
-          />
-          <StatCard
-            icon={<BarChart3 className="h-5 w-5" />}
-            label="Has Descriptions"
-            value={`${productsWithDescriptions.length}/${allProducts.length}`}
-          />
-          <StatCard
-            icon={<Search className="h-5 w-5" />}
-            label="Has Tags"
-            value={`${productsWithTags.length}/${allProducts.length}`}
-          />
-          <StatCard
-            icon={<TrendingUp className="h-5 w-5" />}
-            label="Has Compare Price"
-            value={`${productsWithComparePrice.length}/${allProducts.length}`}
-          />
+          <StatCard icon={<Eye className="h-5 w-5" />} label="Has Images" value={`${productsWithImages.length}/${allProducts.length}`} />
+          <StatCard icon={<BarChart3 className="h-5 w-5" />} label="Has Descriptions" value={`${productsWithDescriptions.length}/${allProducts.length}`} />
+          <StatCard icon={<Search className="h-5 w-5" />} label="Has Tags" value={`${productsWithTags.length}/${allProducts.length}`} />
+          <StatCard icon={<TrendingUp className="h-5 w-5" />} label="Has Compare Price" value={`${productsWithComparePrice.length}/${allProducts.length}`} />
         </div>
 
         {/* Products SEO table */}
@@ -123,18 +108,12 @@ function AdminSEOPage() {
                   return (
                     <tr key={product.id} className="border-b text-sm last:border-b-0">
                       <td className="p-3">
-                        <Link
-                          to="/product/$slug"
-                          params={{ slug: product.slug }}
-                          className="truncate font-medium hover:text-primary"
-                        >
+                        <Link to="/product/$slug" params={{ slug: product.slug }} className="truncate font-medium hover:text-primary">
                           {product.title}
                         </Link>
                       </td>
                       <td className="p-3">
-                        <span
-                          className={product.images.length > 0 ? "text-green-500" : "text-red-500"}
-                        >
+                        <span className={product.images.length > 0 ? "text-green-500" : "text-red-500"}>
                           {product.images.length > 0 ? "✓" : "✗"}
                         </span>
                       </td>
@@ -142,15 +121,11 @@ function AdminSEOPage() {
                       <td className="p-3 text-muted-foreground">{product.tags.length}</td>
                       <td className="p-3 text-muted-foreground">{product.slug}</td>
                       <td className="p-3">
-                        <span
-                          className={`rounded-full px-2 py-1 text-xs font-medium ${
-                            score >= 80
-                              ? "bg-green-100 text-green-700"
-                              : score >= 50
-                                ? "bg-orange-100 text-orange-700"
-                                : "bg-red-100 text-red-700"
-                          }`}
-                        >
+                        <span className={`rounded-full px-2 py-1 text-xs font-medium ${
+                          score >= 80 ? "bg-green-100 text-green-700"
+                          : score >= 50 ? "bg-orange-100 text-orange-700"
+                          : "bg-red-100 text-red-700"
+                        }`}>
                           {score}
                         </span>
                       </td>

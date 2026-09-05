@@ -101,7 +101,6 @@ export async function applyReferralCode(input: {
       idToken,
       code: input.code,
       displayName: input.displayName,
-      referrerId,
     },
   });
 }

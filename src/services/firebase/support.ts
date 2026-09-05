@@ -8,7 +8,6 @@ import {
   serverTimestamp,
   setDoc,
   updateDoc,
-  where,
 } from "firebase/firestore";
 import { getDb } from "./config";
 import { toMs } from "./timestamps";
@@ -17,8 +16,8 @@ import type { SupportTicket, TicketMessage, TicketStatus } from "@/types/custome
 function ticketsCol(uid: string) {
   return collection(getDb(), "users", uid, "tickets");
 }
-function ticketMsgCol(uid: string) {
-  return collection(getDb(), "users", uid, "ticketMessages");
+function ticketMsgCol(uid: string, ticketId: string) {
+  return collection(getDb(), "users", uid, "tickets", ticketId, "messages");
 }
 
 function mapTicket(id: string, d: Record<string, unknown>): SupportTicket {
@@ -42,8 +41,7 @@ export async function listTickets(uid: string): Promise<SupportTicket[]> {
 export async function listTicketMessages(uid: string, ticketId: string): Promise<TicketMessage[]> {
   const snap = await getDocs(
     query(
-      ticketMsgCol(uid),
-      where("ticketId", "==", ticketId),
+      ticketMsgCol(uid, ticketId),
       orderBy("createdAt", "asc"),
       limit(200),
     ),
@@ -84,8 +82,7 @@ export async function createTicket(
 }
 
 export async function replyToTicket(uid: string, ticketId: string, body: string): Promise<void> {
-  await setDoc(doc(ticketMsgCol(uid)), {
-    ticketId,
+  await setDoc(doc(ticketMsgCol(uid, ticketId)), {
     body,
     from: "customer",
     createdAt: serverTimestamp(),

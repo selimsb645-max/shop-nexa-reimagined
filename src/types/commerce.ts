@@ -4,6 +4,8 @@ export interface Category {
   slug: string;
   image: string | null;
   order: number;
+  /** Category-level base commission rate (0-1, e.g. 0.0645 = 6.45%). Source: 50% of Daraz New Rate. */
+  commissionRate?: number | null;
 }
 
 export interface Subcategory {
@@ -12,19 +14,21 @@ export interface Subcategory {
   name: string;
   slug: string;
   order: number;
+  /** Subcategory commission override (0-1). Takes priority over category base rate. Source: 50% of Daraz New Rate. */
+  commissionRate?: number | null;
 }
 
 export interface Product {
   id: string;
   title: string;
   slug: string;
-  shortDescription: string; // NEW: short description for cards/previews
+  shortDescription: string;  // NEW: short description for cards/previews
   description: string;
-  brand: string | null; // NEW: product brand
+  brand: string | null;      // NEW: product brand
   price: number;
   compareAtPrice: number | null;
-  costPrice: number | null; // NEW: seller/admin only
-  tax: number; // NEW: tax percentage (0-100)
+  costPrice: number | null;  // NEW: seller/admin only
+  tax: number;               // NEW: tax percentage (0-100)
   images: string[];
   categoryId: string;
   categorySlug: string;
@@ -35,6 +39,7 @@ export interface Product {
   reviewCount: number;
   tags: string[];
   featured: boolean;
+  freeDelivery: boolean;  // Seller-controlled: true = seller pays zone charge, false = customer pays
   sellerId?: string | null;
   sku?: string | null;
   status?: "draft" | "published" | "archived";
@@ -61,6 +66,9 @@ export interface Review {
   title: string;
   comment: string;
   createdAt: number;
+  isApproved: boolean;
+  productTitle?: string;
+  productImage?: string;
 }
 
 export interface CartItem {
@@ -105,7 +113,12 @@ export interface PaymentInfo {
 }
 
 export type OrderStatus =
-  "pending" | "confirmed" | "processing" | "shipped" | "delivered" | "cancelled";
+  | "pending"
+  | "confirmed"
+  | "processing"
+  | "shipped"
+  | "delivered"
+  | "cancelled";
 
 export interface OrderItem {
   productId: string;
@@ -124,10 +137,10 @@ export interface TrackingEvent {
 }
 
 export interface CourierInfo {
-  name: string | null; // Courier company name (e.g. "Steadfast", "RedX")
+  name: string | null;        // Courier company name (e.g. "Steadfast", "RedX")
   trackingNumber: string | null; // Tracking number from courier
-  trackingUrl: string | null; // Optional URL to track on courier site
-  shippedAt: number | null; // Timestamp when handed to courier
+  trackingUrl: string | null;  // Optional URL to track on courier site
+  shippedAt: number | null;    // Timestamp when handed to courier
   estimatedDays: number | null; // Estimated delivery days
 }
 
@@ -138,16 +151,46 @@ export interface Order {
   subtotal: number;
   discount: number;
   shipping: number;
+  tax: number;
+  taxRate: number;
+  taxLabel: string;
   total: number;
+  platformFee: number;
+  promoDiscount: number;
+  rewardDiscount: number;
+  walletUsed: number;
   couponCode: string | null;
+  promoCode: string | null;
   status: OrderStatus;
   payment: PaymentInfo;
   shippingAddress: ShippingAddress;
   deliveryAddressSnapshot?: DeliveryAddressSnapshot | null;
   // Delivery zone snapshot (saved at checkout, never recalculated)
-  deliveryZone?: string | null; // "INSIDE_DHAKA" | "DHAKA_SUBURB" | "OUTSIDE_DHAKA"
-  deliveryZoneLabel?: string | null; // Human-readable label
-  deliveryCharge?: number | null; // Charge at time of order (BDT)
+  deliveryZone?: string | null;       // "INSIDE_DHAKA" | "DHAKA_SUBURB" | "OUTSIDE_DHAKA"
+  deliveryZoneId?: string | null;      // Zone ID at order time
+  deliveryZoneName?: string | null;    // Zone name at order time
+  deliveryZoneLabel?: string | null;  // Human-readable label
+  deliveryCharge?: number | null;     // Charge at time of order (BDT)
+  zoneCharge?: number | null;          // Admin-configured zone charge snapshot
+  customerDeliveryCharge?: number | null;  // What customer paid for delivery
+  sellerDeliveryCharge?: number | null;    // What seller(s) absorbed
+  deliverySnapshot?: {
+    zoneId: string;
+    zoneName: string;
+    zoneCharge: number;
+    customerDeliveryCharge: number;
+    sellerDeliveryCharge: number;
+    labelBn: string;
+    etaDays: [number, number];
+    deliveryLines?: Array<{
+      productId: string;
+      sellerId: string;
+      freeDelivery: boolean;
+      zoneCharge: number;
+      customerDeliveryCharge: number;
+      sellerAbsorbedCharge: number;
+    }>;
+  } | null;
   tracking: TrackingEvent[];
   courierInfo?: CourierInfo | null;
   createdAt: number;

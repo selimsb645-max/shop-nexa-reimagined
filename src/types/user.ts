@@ -30,6 +30,12 @@ export type AdminPermission =
   | "orders.view"
   | "orders.update"
   | "orders.cancel"
+  // Return & refund management
+  | "returns.view"
+  | "returns.review"
+  | "returns.approve"
+  | "returns.reject"
+  | "returns.refund"
   // Finance
   | "finance.view"
   | "finance.commissions"
@@ -72,6 +78,11 @@ export const ROLE_PERMISSIONS: Record<AdminRole, AdminPermission[]> = {
     "orders.view",
     "orders.update",
     "orders.cancel",
+    "returns.view",
+    "returns.review",
+    "returns.approve",
+    "returns.reject",
+    "returns.refund",
     "finance.view",
     "finance.commissions",
     "finance.withdrawals.process",
@@ -101,6 +112,11 @@ export const ROLE_PERMISSIONS: Record<AdminRole, AdminPermission[]> = {
     "products.approve",
     "orders.view",
     "orders.update",
+    "orders.cancel",
+    "returns.view",
+    "returns.review",
+    "returns.approve",
+    "returns.reject",
     "coupons.view",
     "coupons.create",
     "coupons.edit",
@@ -117,13 +133,16 @@ export const ROLE_PERMISSIONS: Record<AdminRole, AdminPermission[]> = {
     "finance.withdrawals.process",
     "finance.payouts",
     "orders.view",
+    "returns.view",
+    "returns.refund",
     "analytics.view",
     "sellers.view",
   ],
   support_admin: [
     "orders.view",
     "orders.update",
-    "orders.cancel",
+    "returns.view",
+    "returns.review",
     "sellers.view",
     "products.view",
     "users.view",

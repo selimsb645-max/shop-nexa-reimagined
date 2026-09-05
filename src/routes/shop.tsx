@@ -15,9 +15,10 @@ import {
   RotateCcw,
   PackageX,
 } from "lucide-react";
+import { BackButton } from "@/components/common/BackButton";
+import { buildMetaTags, collectionPageJsonLd, breadcrumbJsonLd, jsonLdScript } from "@/lib/seo";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
-import { WhatsAppFab } from "@/components/layout/SiteChrome";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { ProductCard } from "@/components/product/ProductCard";
 import { listCategories } from "@/services/firebase/categories";
@@ -82,18 +83,41 @@ export const Route = createFileRoute("/shop")({
             : undefined,
       color: typeof search.color === "string" ? search.color : undefined,
       freeDelivery:
-        search.freeDelivery === true || search.freeDelivery === "true" || search.freeDelivery === 1,
+        search.freeDelivery === true ||
+        search.freeDelivery === "true" ||
+        search.freeDelivery === 1,
       sort: typeof search.sort === "string" ? search.sort : "best-match",
     };
   },
   component: ShopPage,
   head: () => ({
-    meta: [
-      { title: "Shop & Categories — Aventa Shop" },
+    meta: buildMetaTags({
+      title: "Shop All Products & Categories — AVENTA SHOP",
+      description:
+        "Browse thousands of products across electronics, fashion, grocery, beauty and home essentials on AVENTA SHOP. Filter by price, brand, rating and category.",
+      path: "/shop",
+      type: "website",
+    }),
+    scripts: [
       {
-        name: "description",
-        content:
-          "Browse thousands of products, top brands, and exclusive discounts on Aventa Shop.",
+        type: "application/ld+json",
+        children: jsonLdScript(
+          collectionPageJsonLd({
+            name: "Shop All Products — AVENTA SHOP",
+            description:
+              "Browse thousands of products across electronics, fashion, grocery, beauty and home essentials on AVENTA SHOP.",
+            path: "/shop",
+          }),
+        ),
+      },
+      {
+        type: "application/ld+json",
+        children: jsonLdScript(
+          breadcrumbJsonLd([
+            { name: "Home", path: "/" },
+            { name: "Shop", path: "/shop" },
+          ]),
+        ),
       },
     ],
   }),
@@ -158,7 +182,7 @@ function getProductRating(p: Partial<Product>): number {
 // Helper to check if item is free delivery eligible
 function isProductFreeDelivery(p: Partial<Product>): boolean {
   const extP = p as ExtendedProduct;
-  if (extP.isFreeDelivery || extP.freeShipping || extP.isFreeShipping) {
+  if (extP.freeDelivery || extP.isFreeDelivery || extP.freeShipping || extP.isFreeShipping) {
     return true;
   }
   if (Array.isArray(p.tags) && p.tags.some((t) => t.toLowerCase().includes("free"))) {
@@ -177,27 +201,35 @@ function ShopPage() {
   // Sync state from search params
   const [searchInput, setSearchInput] = useState(searchParams.q || "");
   const [selectedCategories, setSelectedCategories] = useState<string[]>(
-    searchParams.category ? [searchParams.category] : [],
+    searchParams.category ? [searchParams.category] : []
   );
   const [selectedBrands, setSelectedBrands] = useState<string[]>(
-    searchParams.brand ? [searchParams.brand] : [],
+    searchParams.brand ? [searchParams.brand] : []
   );
   const [minPriceInput, setMinPriceInput] = useState<string>(
-    searchParams.minPrice ? String(searchParams.minPrice) : "",
+    searchParams.minPrice ? String(searchParams.minPrice) : ""
   );
   const [maxPriceInput, setMaxPriceInput] = useState<string>(
-    searchParams.maxPrice ? String(searchParams.maxPrice) : "",
+    searchParams.maxPrice ? String(searchParams.maxPrice) : ""
   );
-  const [appliedMinPrice, setAppliedMinPrice] = useState<number | undefined>(searchParams.minPrice);
-  const [appliedMaxPrice, setAppliedMaxPrice] = useState<number | undefined>(searchParams.maxPrice);
-  const [selectedRating, setSelectedRating] = useState<number | undefined>(searchParams.rating);
+  const [appliedMinPrice, setAppliedMinPrice] = useState<number | undefined>(
+    searchParams.minPrice
+  );
+  const [appliedMaxPrice, setAppliedMaxPrice] = useState<number | undefined>(
+    searchParams.maxPrice
+  );
+  const [selectedRating, setSelectedRating] = useState<number | undefined>(
+    searchParams.rating
+  );
   const [selectedColors, setSelectedColors] = useState<string[]>(
-    searchParams.color ? [searchParams.color] : [],
+    searchParams.color ? [searchParams.color] : []
   );
   const [freeDeliveryOnly, setFreeDeliveryOnly] = useState<boolean>(
-    Boolean(searchParams.freeDelivery),
+    Boolean(searchParams.freeDelivery)
   );
-  const [sortOption, setSortOption] = useState<string>(searchParams.sort || "best-match");
+  const [sortOption, setSortOption] = useState<string>(
+    searchParams.sort || "best-match"
+  );
 
   // UI States
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -481,28 +513,34 @@ function ShopPage() {
   // Category Toggle
   const toggleCategory = (catId: string) => {
     setSelectedCategories((prev) =>
-      prev.includes(catId) ? prev.filter((c) => c !== catId) : [...prev, catId],
+      prev.includes(catId) ? prev.filter((c) => c !== catId) : [...prev, catId]
     );
   };
 
   // Brand Toggle
   const toggleBrand = (brand: string) => {
     setSelectedBrands((prev) =>
-      prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand],
+      prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand]
     );
   };
 
   // Color Toggle
   const toggleColor = (colorName: string) => {
     setSelectedColors((prev) =>
-      prev.includes(colorName) ? prev.filter((c) => c !== colorName) : [...prev, colorName],
+      prev.includes(colorName)
+        ? prev.filter((c) => c !== colorName)
+        : [...prev, colorName]
     );
   };
 
   // Visible Categories & Brands lists
-  const visibleCategories = showMoreCategories ? categoryOptions : categoryOptions.slice(0, 6);
+  const visibleCategories = showMoreCategories
+    ? categoryOptions
+    : categoryOptions.slice(0, 6);
 
-  const visibleBrands = showMoreBrands ? dynamicBrands : dynamicBrands.slice(0, 8);
+  const visibleBrands = showMoreBrands
+    ? dynamicBrands
+    : dynamicBrands.slice(0, 8);
 
   return (
     <div className="min-h-screen bg-[#f5f5f5] text-slate-900 font-sans antialiased flex flex-col">
@@ -541,6 +579,9 @@ function ShopPage() {
 
       {/* Main Container */}
       <main className="max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 flex-1">
+        <div className="mb-3">
+          <BackButton fallbackTo="/" label="Back" className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-200 active:scale-95" />
+        </div>
         {/* Mobile Filter Toggle & Quick Bar */}
         <div className="lg:hidden mb-3 bg-white rounded-lg p-3 border border-slate-200 shadow-sm flex items-center justify-between gap-2">
           <button
@@ -557,18 +598,24 @@ function ShopPage() {
               <button
                 onClick={() => setViewMode("grid")}
                 className={`p-1.5 rounded ${
-                  viewMode === "grid" ? "bg-white text-orange-600 shadow-sm" : "text-slate-500"
+                  viewMode === "grid"
+                    ? "bg-white text-orange-600 shadow-sm"
+                    : "text-slate-500"
                 }`}
                 title="Grid View"
+                aria-label="Grid view"
               >
                 <LayoutGrid className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setViewMode("list")}
                 className={`p-1.5 rounded ${
-                  viewMode === "list" ? "bg-white text-orange-600 shadow-sm" : "text-slate-500"
+                  viewMode === "list"
+                    ? "bg-white text-orange-600 shadow-sm"
+                    : "text-slate-500"
                 }`}
                 title="List View"
+                aria-label="List view"
               >
                 <List className="w-4 h-4" />
               </button>
@@ -767,7 +814,9 @@ function ShopPage() {
                       return (
                         <button
                           key={stars}
-                          onClick={() => setSelectedRating(isSelected ? undefined : stars)}
+                          onClick={() =>
+                            setSelectedRating(isSelected ? undefined : stars)
+                          }
                           className={`w-full flex items-center justify-between text-xs py-1 px-1.5 rounded transition-colors ${
                             isSelected
                               ? "bg-orange-50 text-orange-600 font-bold"
@@ -779,7 +828,9 @@ function ShopPage() {
                               <Star
                                 key={i}
                                 className={`w-3.5 h-3.5 ${
-                                  i < stars ? "text-amber-400 fill-amber-400" : "text-slate-200"
+                                  i < stars
+                                    ? "text-amber-400 fill-amber-400"
+                                    : "text-slate-200"
                                 }`}
                               />
                             ))}
@@ -871,7 +922,9 @@ function ShopPage() {
                   )}
                 </h1>
                 <p className="text-xs text-slate-500">
-                  <span className="font-semibold text-slate-800">{filteredProducts.length}</span>{" "}
+                  <span className="font-semibold text-slate-800">
+                    {filteredProducts.length}
+                  </span>{" "}
                   items found
                 </p>
               </div>
@@ -879,7 +932,9 @@ function ShopPage() {
               {/* Controls (Sort & View Toggles for Desktop) */}
               <div className="hidden sm:flex items-center gap-3 self-end sm:self-auto">
                 <div className="flex items-center gap-2 text-xs">
-                  <span className="text-slate-500 font-medium whitespace-nowrap">Sort By:</span>
+                  <span className="text-slate-500 font-medium whitespace-nowrap">
+                    Sort By:
+                  </span>
                   <select
                     value={sortOption}
                     onChange={(e) => setSortOption(e.target.value)}
@@ -903,6 +958,7 @@ function ShopPage() {
                         : "text-slate-500 hover:text-slate-800"
                     }`}
                     title="Grid View"
+                aria-label="Grid view"
                   >
                     <LayoutGrid className="w-4 h-4" />
                   </button>
@@ -914,6 +970,7 @@ function ShopPage() {
                         : "text-slate-500 hover:text-slate-800"
                     }`}
                     title="List View"
+                aria-label="List view"
                   >
                     <List className="w-4 h-4" />
                   </button>
@@ -943,7 +1000,8 @@ function ShopPage() {
                     key={catId}
                     className="inline-flex items-center gap-1 bg-slate-100 border border-slate-200 text-slate-800 px-2.5 py-1 rounded-full font-medium"
                   >
-                    Category: {categoryOptions.find((c) => c.id === catId)?.name || catId}
+                    Category:{" "}
+                    {categoryOptions.find((c) => c.id === catId)?.name || catId}
                     <button
                       onClick={() => toggleCategory(catId)}
                       className="hover:text-red-600 ml-0.5"
@@ -959,7 +1017,10 @@ function ShopPage() {
                     className="inline-flex items-center gap-1 bg-slate-100 border border-slate-200 text-slate-800 px-2.5 py-1 rounded-full font-medium"
                   >
                     Brand: {b}
-                    <button onClick={() => toggleBrand(b)} className="hover:text-red-600 ml-0.5">
+                    <button
+                      onClick={() => toggleBrand(b)}
+                      className="hover:text-red-600 ml-0.5"
+                    >
                       <X className="w-3 h-3" />
                     </button>
                   </span>
@@ -1058,10 +1119,11 @@ function ShopPage() {
                 <div className="w-16 h-16 bg-orange-50 text-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
                   <PackageX className="w-8 h-8" />
                 </div>
-                <h2 className="text-lg font-bold text-slate-900 mb-1">No Products Found</h2>
+                <h2 className="text-lg font-bold text-slate-900 mb-1">
+                  No Products Found
+                </h2>
                 <p className="text-xs text-slate-500 max-w-md mx-auto mb-6">
-                  We couldn&apos;t find any products matching your current search parameters or
-                  filter criteria. Try resetting filters or searching with different keywords.
+                  We couldn&apos;t find any products matching your current search parameters or filter criteria. Try resetting filters or searching with different keywords.
                 </p>
                 <button
                   onClick={handleClearAll}
@@ -1089,8 +1151,13 @@ function ShopPage() {
                 <div className="pt-6 text-center space-y-3">
                   <p className="text-xs text-slate-500 font-medium">
                     Showing{" "}
-                    <span className="font-bold text-slate-900">{displayedProducts.length}</span> of{" "}
-                    <span className="font-bold text-slate-900">{filteredProducts.length}</span>{" "}
+                    <span className="font-bold text-slate-900">
+                      {displayedProducts.length}
+                    </span>{" "}
+                    of{" "}
+                    <span className="font-bold text-slate-900">
+                      {filteredProducts.length}
+                    </span>{" "}
                     products
                   </p>
 
@@ -1101,7 +1168,7 @@ function ShopPage() {
                       style={{
                         width: `${Math.min(
                           100,
-                          (displayedProducts.length / filteredProducts.length) * 100,
+                          (displayedProducts.length / filteredProducts.length) * 100
                         )}%`,
                       }}
                     />
@@ -1267,7 +1334,9 @@ function ShopPage() {
                           <Star
                             key={i}
                             className={`w-3.5 h-3.5 ${
-                              i < stars ? "text-amber-400 fill-amber-400" : "text-slate-200"
+                              i < stars
+                                ? "text-amber-400 fill-amber-400"
+                                : "text-slate-200"
                             }`}
                           />
                         ))}
@@ -1340,8 +1409,7 @@ function ShopPage() {
       )}
 
       {/* Floating Elements & Footers */}
-      <WhatsAppFab />
-      <SiteFooter />
+<SiteFooter />
       <MobileBottomNav />
     </div>
   );

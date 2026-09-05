@@ -9,7 +9,11 @@ import {
   Settings,
   Bell,
   BarChart3,
+  Tag,
   DollarSign,
+  MessageSquare,
+  TrendingUp,
+  Receipt,
   Menu,
   X,
   LogOut,
@@ -40,8 +44,14 @@ export function SellerShell({ children }: Props) {
     { to: "/seller", icon: LayoutDashboard, label: "Dashboard", exact: true },
     { to: "/seller/products", icon: Package, label: "Products" },
     { to: "/seller/orders", icon: ShoppingBag, label: "Orders" },
-    { to: "/seller/settlements", icon: DollarSign, label: "Earnings" },
+    { to: "/seller/messages", icon: MessageSquare, label: "Messages" },
+    { to: "/seller/earnings", icon: DollarSign, label: "Earnings" },
+    { to: "/seller/settlements", icon: Receipt, label: "Settlements" },
+    { to: "/seller/wallet", icon: Wallet, label: "Wallet" },
+    { to: "/seller/coupons", icon: Tag, label: "Coupons" },
+    { to: "/seller/store", icon: Store, label: "Store" },
     { to: "/seller/analytics", icon: BarChart3, label: "Analytics" },
+    { to: "/seller/insights", icon: TrendingUp, label: "Insights" },
     { to: "/seller/notifications", icon: Bell, label: "Notifications" },
     { to: "/seller/settings", icon: Settings, label: "Settings" },
   ];
@@ -50,7 +60,8 @@ export function SellerShell({ children }: Props) {
     { to: "/seller", icon: LayoutDashboard, label: "Home", exact: true },
     { to: "/seller/products", icon: Package, label: "Products" },
     { to: "/seller/orders", icon: ShoppingBag, label: "Orders" },
-    { to: "/seller/settlements", icon: Wallet, label: "Wallet" },
+    { to: "/seller/messages", icon: MessageSquare, label: "Messages" },
+    { to: "/seller/wallet", icon: Wallet, label: "Wallet" },
   ];
 
   const isActive = (to: string, exact?: boolean) => {
@@ -75,15 +86,11 @@ export function SellerShell({ children }: Props) {
                 {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
               <Link to="/" className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-[#f57224] rounded-lg flex items-center justify-center">
-                  <Store className="w-5 h-5 text-white" />
+                <div className="bg-white rounded-lg px-2 py-1">
+                  <img src="/brand/aventa-shop-logo.png" alt="AVENTA SHOP Seller" className="h-7 w-auto object-contain" />
                 </div>
                 <div className="hidden sm:block leading-tight">
-                  <span className="text-sm font-bold">
-                    <span className="text-white">Aventa</span>
-                    <span className="text-[#f57224]">Shop</span>
-                    <span className="text-slate-400 ml-1">Seller</span>
-                  </span>
+                  <span className="text-sm font-bold text-slate-400">Seller</span>
                   {profile?.shopName && (
                     <p className="text-[11px] text-slate-400">{profile.shopName}</p>
                   )}
@@ -184,7 +191,7 @@ export function SellerShell({ children }: Props) {
           <Link
             key={tab.to}
             to={tab.to}
-            className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg transition-colors ${
+            className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-colors ${
               isActive(tab.to, tab.exact) ? "text-[#f57224]" : "text-slate-400"
             }`}
           >
@@ -194,7 +201,13 @@ export function SellerShell({ children }: Props) {
         ))}
         <button
           onClick={() => setMobileMenuOpen(true)}
-          className="flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-slate-400"
+          className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-colors ${
+            !["/seller", "/seller/products", "/seller/orders", "/seller/wallet"].some((r) =>
+              isActive(r, r === "/seller"),
+            )
+              ? "text-[#f57224]"
+              : "text-slate-400"
+          }`}
         >
           <Menu className="w-5 h-5" />
           <span className="text-[10px] font-medium">More</span>

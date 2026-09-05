@@ -4,10 +4,38 @@ service cloud.firestore {
     function isSignedIn() { return request.auth != null; }
     function isSelf(uid) { return isSignedIn() && request.auth.uid == uid; }
 
+    // ───────────────────────────────────────────────────────────
+    // Admin helpers
+    // ───────────────────────────────────────────────────────────
+    // Reads the requester's user document once and caches the
+    // result so subsequent checks in the same request don't
+    // incur additional document reads.
+    //
+    // isAdmin()     — any authenticated, non-blocked admin role
+    // isSuperAdmin()— only the super_admin sub-role, non-blocked
+    //
+    // The blocked check ensures suspended admins cannot perform
+    // any admin operation, even if their role field is still
+    // "admin" in Firestore.
+    // ───────────────────────────────────────────────────────────
+
+    function adminDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
     function isAdmin() {
       return isSignedIn()
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+        && adminDoc().data.role == 'admin'
+        && (adminDoc().data.blocked == false || !('blocked' in adminDoc().data));
+    }
+
+    function isSuperAdmin() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && adminDoc().data.role == 'admin'
+        && adminDoc().data.adminRole == 'super_admin'
+        && (adminDoc().data.blocked == false || !('blocked' in adminDoc().data));
     }
 
     function isApprovedSeller() {
@@ -22,8 +50,84 @@ service cloud.firestore {
         && request.auth.uid in resource.data.sellerIds;
     }
 
+    // Step 22: Status transition validation (defense-in-depth)
+    // Enforces valid order status transitions at the Firestore rules level.
+    // Service layer also validates — this is the final boundary for client SDK.
+    function isValidOrderTransition(from, to) {
+      return from == to
+        || (from == 'pending' && to in ['confirmed', 'processing', 'cancelled'])
+        || (from == 'confirmed' && to in ['processing', 'cancelled'])
+        || (from == 'processing' && to in ['shipped', 'cancelled'])
+        || (from == 'shipped' && to in ['delivered', 'cancelled']);
+    }
+
+    function isTerminalStatus(status) {
+      return status == 'delivered' || status == 'cancelled';
+    }
+
+    function statusNotChanged() {
+      return !('status' in request.resource.data.diff(resource.data).affectedKeys());
+    }
+
+    function validStatusTransition() {
+      return statusNotChanged()
+        || ('status' in request.resource.data.diff(resource.data).affectedKeys()
+            && isValidOrderTransition(resource.data.status, request.resource.data.status));
+    }
+
+    // Seller order transitions include "returned" from "delivered"
+    function isValidSellerOrderTransition(from, to) {
+      return from == to
+        || (from == 'pending' && to in ['confirmed', 'processing', 'cancelled'])
+        || (from == 'confirmed' && to in ['processing', 'cancelled'])
+        || (from == 'processing' && to in ['shipped', 'cancelled'])
+        || (from == 'shipped' && to in ['delivered', 'cancelled'])
+        || (from == 'delivered' && to in ['returned']);
+    }
+
+    function validSellerStatusTransition() {
+      return statusNotChanged()
+        || ('status' in request.resource.data.diff(resource.data).affectedKeys()
+            && isValidSellerOrderTransition(resource.data.status, request.resource.data.status));
+    }
+
     function onlyChanges(allowed) {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowed);
+    }
+
+    // ───────────────────────────────────────────────────────────
+    // Financial field protection helpers
+    // ───────────────────────────────────────────────────────────
+    // These lists define server-controlled financial fields that
+    // must NEVER be writable via client SDK (admin or seller).
+    // All financial mutations go through server-side functions
+    // that use the Firebase Admin SDK, which bypasses these rules.
+    // ───────────────────────────────────────────────────────────
+
+    // Seller profile financial/payout fields — server-controlled only
+    function isSellerFinancialField(key) {
+      return key in [
+        'commissionRate', 'totalEarnings', 'availableBalance',
+        'pendingBalance', 'withdrawnTotal', 'bankInfo',
+        'verified', 'totalProducts', 'totalOrders',
+        'rating', 'ratingCount', 'followers',
+        'approvedAt', 'rejectionReason',
+        'email', 'uid', 'createdAt',
+        'storeSettings', 'warehouses', 'pickupPoints',
+        'supportedCurrencies', 'internationalShipping', 'crossBorderSeller'
+      ];
+    }
+
+    // Seller order financial/settlement fields — server-controlled only
+    function isSellerOrderFinancialField(key) {
+      return key in [
+        'settlement', 'earnings', 'commission', 'commissionRate',
+        'discountShare', 'shippingShare', 'taxShare', 'netSubtotal',
+        'sellerNetEarnings', 'sellerSubtotal', 'sellerDiscountShare',
+        'sellerShippingShare', 'sellerTaxShare', 'sellerNetSubtotal',
+        'subtotal', 'paymentStatus', 'paymentMethod', 'platformFee',
+        'deliverySnapshot'
+      ];
     }
 
     // PUBLIC MASTER DATA
@@ -47,9 +151,28 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    match /settings/{id} {
+
+    match /announcements/{id} {
       allow read: if true;
       allow write: if isAdmin();
+    }
+
+    // GIFT CARDS — client read-only (own cards), all writes server-side only
+    match /giftCards/{id} {
+      allow read: if isSignedIn() && resource.data.uid == request.auth.uid;
+      allow write: if false;
+    }
+
+    // SETTINGS — read is public; write is Super Admin only (settings.edit)
+    match /settings/{id} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    match /settings/{id}/notifications/{nid} {
+      allow read: if isAdmin();
+      allow create: if isAdmin() || isApprovedSeller();
+      allow update, delete: if isAdmin();
     }
 
     // PRODUCTS
@@ -70,16 +193,35 @@ service cloud.firestore {
                .hasAny(['approved', 'featured', 'rating', 'reviewCount', 'sellerId']));
 
       match /reviews/{rid} {
-        allow read: if true;
-        allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-        allow update, delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+        // Public can read approved reviews; review author can read their own; admins can read all
+        allow read: if isAdmin()
+          || (resource.data.isApproved == true)
+          || (isSignedIn() && resource.data.userId == request.auth.uid);
+        allow create: if isSignedIn()
+          && request.resource.data.userId == request.auth.uid
+          && request.resource.data.isApproved == false;
+        // Author can edit their review but cannot self-approve; admin can do anything
+        allow update: if isAdmin()
+          || (isSignedIn()
+            && resource.data.userId == request.auth.uid
+            && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isApproved', 'approvedAt']));
+        allow delete: if isAdmin();
       }
     }
 
     match /coupons/{code} {
       allow read: if true;
-      allow create, delete: if isAdmin();
-      allow update: if isAdmin();
+      allow create: if isAdmin()
+        || (isApprovedSeller()
+          && request.resource.data.sellerId == request.auth.uid
+          && request.resource.data.uses == 0);
+      allow update: if isAdmin()
+        || (isApprovedSeller()
+          && resource.data.sellerId == request.auth.uid
+          && request.resource.data.sellerId == resource.data.sellerId
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['active', 'updatedAt']));
+      allow delete: if isAdmin()
+        || (isApprovedSeller() && resource.data.sellerId == request.auth.uid);
     }
 
     match /promoCodes/{code} {
@@ -95,18 +237,71 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // ═══════════════════════════════════════════════════════════════
+    // RETURNS & REFUNDS (Return/Refund System)
+    // ═══════════════════════════════════════════════════════════════
+    // SECURITY:
+    // - Customer: read own returns, create with restricted fields only
+    // - Seller: read returns for own products
+    // - Admin: read all returns (returns.view permission)
+    // - NO client-side status/financial field mutations
+    // - ALL mutations via verified server functions (Admin SDK)
+    // - Financial fields are server-controlled only
+    // ═══════════════════════════════════════════════════════════════
+    match /returns/{returnId} {
+      allow read: if isSignedIn()
+        && (
+          (resource.data.customerId == request.auth.uid)
+          || (isApprovedSeller() && resource.data.sellerId == request.auth.uid)
+          || isAdmin()
+        );
+
+      allow create: if isSignedIn()
+        && request.resource.data.customerId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'orderId', 'customerId', 'productId', 'productTitle', 'productImage',
+          'quantity', 'reason', 'customerNote', 'images',
+          'status', 'requestedAt', 'createdAt', 'updatedAt'
+        ])
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+          'sellerId', 'itemPrice', 'itemSubtotal', 'discountAllocation',
+          'refundableAmount', 'approvedRefundAmount', 'refundedAmount',
+          'reviewNote', 'rejectionReason', 'processedBy', 'sellerId_reviewed',
+          'financeProcessedBy', 'reviewedAt', 'approvedAt', 'rejectedAt',
+          'pickedUpAt', 'refundApprovedAt', 'refundedAt', 'cancelledAt',
+          'settlementReversed', 'settlementReversalId'
+        ])
+        && request.resource.data.status == 'pending';
+
+      allow update: if false;
+      allow delete: if isSuperAdmin();
+
+      match /refundLedger/{entryId} {
+        allow read: if isAdmin();
+        allow write: if false;
+      }
+    }
+
     // USERS
 
     match /users/{uid} {
       allow read: if isSelf(uid) || isAdmin();
       allow create: if isSelf(uid)
         && (!('role' in request.resource.data) || request.resource.data.role == 'customer')
-        && (!('blocked' in request.resource.data) || request.resource.data.blocked == false);
-      allow update: if isAdmin() ||
+        && (!('blocked' in request.resource.data) || request.resource.data.blocked == false)
+        // SECURITY: New users cannot self-assign adminRole at signup
+        && (!('adminRole' in request.resource.data) || request.resource.data.adminRole == null);
+      // SECURITY: Only Super Admin can modify other users' profiles
+      // (admin.manage + users.edit permissions). Self can update
+      // own profile but CANNOT change role, adminRole, or blocked
+      // — prevents privilege escalation.
+      allow update: if isSuperAdmin() ||
         (isSelf(uid)
           && request.resource.data.role == resource.data.role
+          && (!('adminRole' in request.resource.data) || request.resource.data.adminRole == resource.data.adminRole)
           && (!('blocked' in request.resource.data) ? true : request.resource.data.blocked == resource.data.blocked));
-      allow delete: if isAdmin();
+      // SECURITY: Only Super Admin can delete users (users.delete)
+      allow delete: if isSuperAdmin();
 
       match /cart/{itemId} {
         allow read, write: if isSelf(uid) || isAdmin();
@@ -136,14 +331,45 @@ service cloud.firestore {
         allow write: if false;
       }
 
+      // FCM push notification tokens — user manages their own
+      match /fcmTokens/{tokenId} {
+        allow read: if isSelf(uid) || isAdmin();
+        allow create: if isSelf(uid);
+        allow delete: if isSelf(uid) || isAdmin();
+        allow update: if false;
+      }
+
       // Orders - buyer read, seller update fulfillment only, no client create
       match /orders/{orderId} {
         allow read: if isSelf(uid) || isAdmin();
         allow create: if false;
-        allow update: if isAdmin()
+        allow update: if
+          // ADMIN PATH: Admin can only update operational (non-financial) fields.
+          // Financial fields (payment, total, subtotal, discount, shipping, tax,
+          // platformFee, deliverySnapshot, etc.) are server-controlled and
+          // NEVER writable via client SDK — not even by admins.
+          (isAdmin()
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'status', 'tracking', 'courierInfo', 'updatedAt'
+            ])
+            // DEFENSE-IN-DEPTH: Block all financial fields even if they
+            // somehow appear in the whitelist above.
+            && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+              'payment', 'subtotal', 'discount', 'shipping', 'tax', 'taxRate',
+              'total', 'platformFee', 'promoDiscount', 'rewardDiscount',
+              'walletUsed', 'couponCode', 'promoCode', 'deliverySnapshot',
+              'deliveryCharge', 'zoneCharge', 'customerDeliveryCharge',
+              'sellerDeliveryCharge', 'deliveryZone', 'deliveryZoneId',
+              'deliveryZoneName', 'deliveryZoneLabel',
+              'items', 'userId', 'sellerIds', 'createdAt'
+            ])
+            // Step 22: Validate status transition
+            && validStatusTransition())
           || (isOrderSeller()
-            && onlyChanges(['status', 'tracking', 'courierInfo', 'updatedAt']));
-        allow delete: if isAdmin();
+            && onlyChanges(['status', 'tracking', 'courierInfo', 'updatedAt'])
+            && validStatusTransition());
+        // SECURITY: Only Super Admin can delete customer orders
+        allow delete: if isSuperAdmin();
       }
 
       match /walletTx/{txId} {
@@ -179,14 +405,67 @@ service cloud.firestore {
         allow update: if isSelf(uid);
       }
 
+      // AI request logs - server-created only, no client access
+      match /aiRequests/{reqId} {
+        allow read: if isAdmin();
+        allow write: if false;
+      }
+
       // Catch-all - CRITICAL: verificationSessions and notificationLogs
       // excluded to prevent bypassing their allow:if false rules
       match /{sub}/{docId} {
         allow read, write: if (isSelf(uid) || isAdmin())
           && !(sub in ['orders', 'walletTx', 'rewardTx', 'referrals',
                        'prefs', 'sessions', 'verificationSessions',
-                       'notificationLogs', 'emailLogs']);
+                       'notificationLogs', 'emailLogs', 'aiRequests']);
       }
+    }
+
+    // CONVERSATIONS — shared collection for customer-seller messaging
+    // Both participants (customer and seller) can read/write their own conversations
+    match /conversations/{convId} {
+      allow read: if isSignedIn()
+        && (
+          resource.data.customerId == request.auth.uid
+          || resource.data.sellerId == request.auth.uid
+          || isAdmin()
+        );
+      allow create: if isSignedIn()
+        && 'customerId' in request.resource.data
+        && 'sellerId' in request.resource.data
+        && (request.resource.data.customerId == request.auth.uid
+          || request.resource.data.sellerId == request.auth.uid);
+      allow update: if isSignedIn()
+        && (
+          resource.data.customerId == request.auth.uid
+          || resource.data.sellerId == request.auth.uid
+          || isAdmin()
+        )
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'lastMessage', 'lastAt', 'customerUnread', 'sellerUnread'
+        ]);
+      allow delete: if isAdmin();
+    }
+
+    match /conversations/{convId}/messages/{msgId} {
+      allow read: if isSignedIn()
+        && (
+          get(/databases/$(database)/documents/conversations/$(convId)).data.customerId == request.auth.uid
+          || get(/databases/$(database)/documents/conversations/$(convId)).data.sellerId == request.auth.uid
+          || isAdmin()
+        );
+      allow create: if isSignedIn()
+        && (
+          get(/databases/$(database)/documents/conversations/$(convId)).data.customerId == request.auth.uid
+          || get(/databases/$(database)/documents/conversations/$(convId)).data.sellerId == request.auth.uid
+        )
+        && request.resource.data.from in ['customer', 'seller'];
+      allow update: if isSignedIn()
+        && (
+          get(/databases/$(database)/documents/conversations/$(convId)).data.customerId == request.auth.uid
+          || get(/databases/$(database)/documents/conversations/$(convId)).data.sellerId == request.auth.uid
+        );
+      allow delete: if isAdmin();
     }
 
     // SELLERS
@@ -194,21 +473,92 @@ service cloud.firestore {
     match /sellers/{uid} {
       allow read: if isSelf(uid) || isAdmin();
       allow create: if isSelf(uid) && request.resource.data.status == 'draft';
-      allow update: if isAdmin()
+      allow update: if
+        // ADMIN PATH: Admin can only update operational (non-financial) fields.
+        // Financial fields (commissionRate, balances, bankInfo, etc.) are
+        // server-controlled via Admin SDK functions and are NEVER writable
+        // through client SDK — not even by admins.
+        (isAdmin()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'status', 'rejectionReason', 'updatedAt',
+            'shopName', 'shopSlug', 'description', 'logoUrl', 'bannerUrl',
+            'phone', 'addressLine', 'city', 'area', 'country', 'postalCode',
+            'business', 'identity',
+            'currentStep',
+            'termsAccepted', 'termsAcceptedAt',
+            'submittedAt'
+          ])
+          // DEFENSE-IN-DEPTH: Even within the whitelist, financial fields
+          // are explicitly blocked. This catches any accidental inclusion.
+          && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+            'commissionRate', 'totalEarnings', 'availableBalance',
+            'pendingBalance', 'withdrawnTotal', 'bankInfo',
+            'verified', 'approvedAt',
+            'totalProducts', 'totalOrders', 'rating', 'ratingCount',
+            'followers',
+            'email', 'uid', 'createdAt',
+            'storeSettings', 'warehouses', 'pickupPoints',
+            'supportedCurrencies', 'internationalShipping', 'crossBorderSeller'
+          ]))
         || (isSelf(uid)
           && (
             request.resource.data.status == resource.data.status
             || (resource.data.status == 'draft' && request.resource.data.status == 'pending_review')
             || (resource.data.status == 'need_documents' && request.resource.data.status == 'pending_review')
-          ));
-      allow delete: if isAdmin();
+          )
+          // SECURITY: Seller self-updates can ONLY touch seller-editable fields.
+          // System-controlled financial/status fields are protected.
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'shopName', 'shopSlug', 'description', 'logoUrl', 'bannerUrl',
+            'phone', 'addressLine', 'city', 'area', 'country', 'postalCode',
+            'business', 'identity', 'bankInfo',
+            'currentStep', 'updatedAt',
+            'termsAccepted', 'termsAcceptedAt',
+            'submittedAt',
+            'status'
+          ])
+          // Even within allowed fields, financial fields are NEVER writable by seller
+          && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+            'commissionRate', 'totalEarnings', 'availableBalance',
+            'pendingBalance', 'withdrawnTotal', 'verified',
+            'totalProducts', 'totalOrders', 'rating', 'ratingCount',
+            'followers', 'approvedAt', 'rejectionReason',
+            'email', 'uid', 'createdAt',
+            'storeSettings', 'warehouses', 'pickupPoints',
+            'supportedCurrencies', 'internationalShipping', 'crossBorderSeller'
+          ]));
+      // SECURITY: Only Super Admin can delete sellers (sellers.delete)
+      allow delete: if isSuperAdmin();
 
       // Seller orders - server-created, seller updates fulfillment only
-      // shipping allowed but shippingCharge protected within it
+      // Admin can update operational fields but NEVER financial/settlement fields
       match /orders/{orderId} {
         allow read: if isSelf(uid) || isAdmin();
         allow create: if false;
-        allow update: if isAdmin()
+        allow update: if
+          // ADMIN PATH: Admin can update operational fields only.
+          // Financial settlement fields are server-controlled and
+          // NEVER writable via client SDK — not even by admins.
+          (isAdmin()
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'status', 'tracking', 'shipping', 'updatedAt'
+            ])
+            // DEFENSE-IN-DEPTH: Block all financial/settlement fields
+            // even if they somehow appear in the whitelist above.
+            && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+              'settlement', 'earnings', 'commission', 'commissionRate',
+              'discountShare', 'shippingShare', 'taxShare', 'netSubtotal',
+              'sellerNetEarnings', 'sellerSubtotal', 'sellerDiscountShare',
+              'sellerShippingShare', 'sellerTaxShare', 'sellerNetSubtotal',
+              'subtotal', 'paymentStatus', 'paymentMethod', 'platformFee',
+              'deliverySnapshot'
+            ])
+            // Protect shippingCharge within shipping object
+            && (!('shipping' in request.resource.data.diff(resource.data).affectedKeys())
+                || (resource.data.shipping.shippingCharge
+                    == request.resource.data.shipping.shippingCharge))
+            // Step 22: Validate seller order status transition
+            && validSellerStatusTransition())
           || (isSelf(uid)
             && onlyChanges(['status', 'tracking', 'shipping', 'updatedAt'])
             && !request.resource.data.diff(resource.data).affectedKeys()
@@ -217,8 +567,11 @@ service cloud.firestore {
                           'subtotal', 'paymentStatus', 'paymentMethod'])
             && (!('shipping' in request.resource.data.diff(resource.data).affectedKeys())
                 || (resource.data.shipping.shippingCharge
-                    == request.resource.data.shipping.shippingCharge)));
-        allow delete: if isAdmin();
+                    == request.resource.data.shipping.shippingCharge))
+            // Step 22: Validate seller order status transition
+            && validSellerStatusTransition());
+        // SECURITY: Only Super Admin can delete seller order mirrors
+        allow delete: if isSuperAdmin();
       }
 
       match /settlementTx/{txId} {

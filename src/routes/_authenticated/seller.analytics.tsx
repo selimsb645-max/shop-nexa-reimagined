@@ -184,7 +184,7 @@ function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; va
       <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 text-primary">
         {icon}
       </div>
-      <div className="mt-3 text-2xl font-bold">{value}</div>
+      <div className="mt-3 text-2xl font-bold break-all">{value}</div>
       <div className="text-xs text-muted-foreground">{label}</div>
     </div>
   );

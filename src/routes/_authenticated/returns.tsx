@@ -23,6 +23,7 @@ import {
 } from "@/services/firebase/returns";
 import { listOrders } from "@/services/firebase/orders";
 import { firebaseConfigured } from "@/services/firebase/config";
+import { getFirebaseAuth } from "@/services/firebase/config";
 import { formatPrice } from "@/utils/format";
 import type { ReturnStatus } from "@/services/firebase/returns";
 
@@ -30,7 +31,7 @@ export const Route = createFileRoute("/_authenticated/returns")({
   ssr: false,
   component: ReturnsPage,
   head: () => ({
-    meta: [{ title: "Returns & Refunds — Aventa Shop" }],
+    meta: [{ title: "Returns & Refunds — AVENTA SHOP" }],
   }),
 });
 
@@ -46,6 +47,11 @@ const REASONS: { value: ReturnReason; label: string }[] = [
 const STATUS_CONFIG: Record<ReturnStatus, { icon: React.ReactNode; color: string; label: string }> =
   {
     pending: { icon: <Clock className="h-4 w-4" />, color: "text-orange-500", label: "Pending" },
+    under_review: {
+      icon: <Clock className="h-4 w-4" />,
+      color: "text-blue-500",
+      label: "Under Review",
+    },
     approved: {
       icon: <CheckCircle2 className="h-4 w-4" />,
       color: "text-green-500",
@@ -53,6 +59,11 @@ const STATUS_CONFIG: Record<ReturnStatus, { icon: React.ReactNode; color: string
     },
     rejected: { icon: <XCircle className="h-4 w-4" />, color: "text-red-500", label: "Rejected" },
     picked_up: { icon: <Truck className="h-4 w-4" />, color: "text-blue-500", label: "Picked Up" },
+    refund_approved: {
+      icon: <DollarSign className="h-4 w-4" />,
+      color: "text-purple-500",
+      label: "Refund Approved",
+    },
     refunded: {
       icon: <DollarSign className="h-4 w-4" />,
       color: "text-green-500",
@@ -96,15 +107,23 @@ function ReturnsPage() {
       const order = orders?.find((o) => o.id === selectedOrderId);
       const item = order?.items.find((i) => i.productId === selectedItemId);
       if (!order || !item) throw new Error("Select an order and product");
-      return await createReturnRequest(user!.uid, {
-        orderId: order.id,
-        productId: item.productId,
-        productTitle: item.title,
-        productImage: item.image,
-        reason,
-        description,
-        refundAmount: item.subtotal,
-      });
+      const auth = getFirebaseAuth();
+      const idToken = await auth.currentUser?.getIdToken();
+      if (!idToken) throw new Error("Authentication required");
+      return await createReturnRequest(
+        user!.uid,
+        {
+          orderId: order.id,
+          productId: item.productId,
+          productTitle: item.title,
+          productImage: item.image,
+          reason,
+          description,
+          refundAmount: item.subtotal, // Ignored by server — server calculates actual amount
+          quantity: 1,
+        },
+        idToken,
+      );
     },
     onSuccess: () => {
       toast.success(t("returns.returnSubmitted"));
@@ -253,8 +272,8 @@ function ReturnsPage() {
                     <p className="mt-1 text-xs text-muted-foreground">
                       Reason: {REASONS.find((r) => r.value === ret.reason)?.label ?? ret.reason}
                     </p>
-                    {ret.description && (
-                      <p className="mt-1 text-xs text-muted-foreground">{ret.description}</p>
+                    {ret.customerNote && (
+                      <p className="mt-1 text-xs text-muted-foreground">{ret.customerNote}</p>
                     )}
                     <div className="mt-2 flex items-center gap-3">
                       <span
@@ -263,7 +282,7 @@ function ReturnsPage() {
                         {config.icon} {config.label}
                       </span>
                       <span className="text-xs font-medium text-muted-foreground">
-                        Refund: {formatPrice(ret.refundAmount)}
+                        Refund: {formatPrice(ret.refundableAmount)}
                       </span>
                     </div>
                   </div>

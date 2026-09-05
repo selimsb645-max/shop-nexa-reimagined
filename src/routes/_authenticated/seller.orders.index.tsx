@@ -107,7 +107,7 @@ function OrdersPage({ sellerId }: { sellerId: string }) {
           </p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-lg border bg-background">
+        <div className="overflow-x-auto rounded-lg border bg-background">
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-xs uppercase text-muted-foreground">
               <tr>

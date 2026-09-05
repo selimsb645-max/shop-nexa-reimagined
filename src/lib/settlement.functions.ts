@@ -1,5 +1,5 @@
 /**
- * Aventa Shop — Settlement Server Functions
+ * AVENTA SHOP — Settlement Server Functions
  *
  * These are TanStack Start server functions that bridge the client to the
  * settlement server module. Each function:
@@ -109,7 +109,12 @@ export const processSettlementWithdrawal = createServerFn({ method: "POST" })
     if (!userRes.ok) throw new Error("Could not verify admin permissions.");
     const userDoc = await userRes.json();
     const role = userDoc.fields?.role?.stringValue ?? "customer";
-    if (role !== "admin") throw new Error("Only admins can process withdrawals.");
+    const adminRole = userDoc.fields?.adminRole?.stringValue ?? null;
+    // SECURITY: sub-role boundaries are enforced server side, not only in the UI.
+    // Only super_admin / finance_admin may move money.
+    if (role !== "admin" || (adminRole !== "super_admin" && adminRole !== "finance_admin")) {
+      throw new Error("Only finance admins can process withdrawals.");
+    }
 
     const result = await processWithdrawal({
       adminUid: uid,
@@ -181,7 +186,16 @@ export const reverseSettlement = createServerFn({ method: "POST" })
     if (!userRes.ok) throw new Error("Could not verify admin permissions.");
     const userDoc = await userRes.json();
     const role = userDoc.fields?.role?.stringValue ?? "customer";
+    const adminRole = userDoc.fields?.adminRole?.stringValue ?? null;
     if (role !== "admin") throw new Error("Only admins can reverse settlements.");
+    // Step 22: Least-privilege — only super_admin and admin can trigger
+    // settlement reversal (cancellation is a financial operation).
+    // support_admin, finance_admin, content_admin are NOT authorized.
+    if (adminRole !== "super_admin" && adminRole !== "admin") {
+      throw new Error(
+        "You do not have permission to reverse settlements. Only admins and super admins can cancel orders.",
+      );
+    }
 
     return reverseSellerSettlement({
       sellerId: data.sellerId,
@@ -210,9 +224,26 @@ export const markOrderDelivered = createServerFn({ method: "POST" })
 
     const { uid } = await verifyIdToken(data.idToken);
 
-    // Caller must be the seller or an admin
-    // The existing order status update handles permission checks.
-    // This function ONLY handles the settlement side effect.
+    // SECURITY: Verify that the caller's authenticated UID matches the
+    // sellerId in the request. This prevents a seller from triggering
+    // settlement transitions on another seller's orders (IDOR attack).
+    // Admins are allowed to call on behalf of any seller.
+    if (uid !== data.sellerId) {
+      // Check if caller is admin
+      const { getAccessToken, getProjectId } = await import("./firebase-admin.server");
+      const token = await getAccessToken();
+      const projectId = getProjectId();
+      const userRes = await fetch(
+        `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${encodeURIComponent(uid)}`,
+        { headers: { authorization: `Bearer ${token}` } },
+      );
+      if (!userRes.ok) throw new Error("Could not verify permissions.");
+      const userDoc = await userRes.json();
+      const role = userDoc.fields?.role?.stringValue ?? "customer";
+      if (role !== "admin") {
+        throw new Error("You can only mark your own orders as delivered.");
+      }
+    }
 
     const nowMs = Date.now();
     return markOrderDeliveredSettlement({
@@ -278,4 +309,63 @@ export const getSellerFinancials = createServerFn({ method: "POST" })
     const ledger = await readSettlementLedger(uid, 50);
 
     return { ...financials, recentTransactions: ledger };
+  });
+
+// ====================================================================
+// 8. ADMIN COMMISSION RATE UPDATE (admin action)
+// ====================================================================
+
+const updateCommissionSchema = z.object({
+  idToken: z.string().min(10),
+  sellerId: z.string().min(1).max(200),
+  newRate: z.number().min(0).max(1),
+});
+
+export const updateSellerCommissionRate = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => updateCommissionSchema.parse(data))
+  .handler(async ({ data }) => {
+    const { verifyIdToken, getAccessToken, getProjectId } = await import("./firebase-admin.server");
+
+    const { uid } = await verifyIdToken(data.idToken);
+
+    // Verify caller is admin
+    const token = await getAccessToken();
+    const projectId = getProjectId();
+    const userRes = await fetch(
+      `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${encodeURIComponent(uid)}`,
+      { headers: { authorization: `Bearer ${token}` } },
+    );
+    if (!userRes.ok) throw new Error("Could not verify admin permissions.");
+    const userDoc = await userRes.json();
+    const role = userDoc.fields?.role?.stringValue ?? "customer";
+    if (role !== "admin") throw new Error("Only admins can update commission rates.");
+
+    const { updateSellerCommissionRate: updateRate } = await import("./admin-commission.server");
+
+    const result = await updateRate(data.sellerId, data.newRate);
+
+    return { success: true, storedRate: result.storedRate };
+  });
+
+// ====================================================================
+// 9. READ SELLER COMMISSION RATE (admin or self)
+// ====================================================================
+
+const readCommissionSchema = z.object({
+  idToken: z.string().min(10),
+  sellerId: z.string().min(1).max(200),
+});
+
+export const getSellerCommissionRate = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => readCommissionSchema.parse(data))
+  .handler(async ({ data }) => {
+    const { verifyIdToken } = await import("./firebase-admin.server");
+
+    const { uid } = await verifyIdToken(data.idToken);
+
+    const { readSellerCommissionRate: readRate } = await import("./admin-commission.server");
+
+    const rate = await readRate(data.sellerId);
+
+    return { rate };
   });

@@ -77,7 +77,7 @@ export async function resetPassword(email: string): Promise<void> {
     url:
       typeof window !== "undefined"
         ? `${window.location.origin}/reset-password`
-        : "https://shopnexa.app/reset-password",
+        : "https://aventa-shop.com/reset-password",
   });
 }
 

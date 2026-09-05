@@ -1,5 +1,5 @@
 /**
- * Notification Service for Aventa Shop
+ * Notification Service for AVENTA SHOP
  *
  * Provider abstraction for SMS, WhatsApp, and future channels.
  * Order status notifications dispatched through this service.
@@ -53,11 +53,6 @@ export interface NotificationProvider {
 class MockNotificationProvider implements NotificationProvider {
   name = "mock";
   async send(payload: NotificationPayload): Promise<NotificationResult> {
-    if (typeof console !== "undefined") {
-      console.log(
-        `[MOCK NOTIFICATION] ${payload.event} → ${payload.phoneNumber}: ${payload.message}`,
-      );
-    }
     return { delivered: true, channel: this.name };
   }
 }
@@ -71,6 +66,7 @@ class SmsNotificationProvider implements NotificationProvider {
   async send(payload: NotificationPayload): Promise<NotificationResult> {
     const apiUrl = Deno.env.get("SMS_GATEWAY_URL");
     const apiKey = Deno.env.get("SMS_GATEWAY_API_KEY");
+    const deviceId = Deno.env.get("SMS_GATEWAY_DEVICE_ID");
     if (!apiUrl || !apiKey) {
       return { delivered: false, channel: this.name, error: "SMS gateway not configured" };
     }
@@ -79,11 +75,12 @@ class SmsNotificationProvider implements NotificationProvider {
         method: "POST",
         headers: {
           "content-type": "application/json",
-          authorization: `Bearer ${apiKey}`,
+          "x-api-key": apiKey,
         },
         body: JSON.stringify({
-          to: payload.phoneNumber,
+          recipients: [payload.phoneNumber],
           message: payload.message,
+          ...(deviceId ? { deviceId } : {}),
         }),
       });
       return {
@@ -190,7 +187,7 @@ const templates: Record<OrderEvent, (p: NotificationPayload) => string> = {
   OUT_FOR_DELIVERY: (p) =>
     `Your order #${p.orderId.slice(0, 8)} is out for delivery. Please keep your phone available.`,
   ORDER_DELIVERED: (p) =>
-    `Your order #${p.orderId.slice(0, 8)} has been delivered. Thank you for shopping with Aventa Shop!`,
+    `Your order #${p.orderId.slice(0, 8)} has been delivered. Thank you for shopping with AVENTA SHOP!`,
   ORDER_CANCELLED: (p) =>
     `Your order #${p.orderId.slice(0, 8)} has been cancelled. Contact support for assistance.`,
 };
@@ -208,11 +205,6 @@ export async function sendOrderNotification(
     event,
     message: templates[event](payload as NotificationPayload),
   };
-
-  // Log security event (no sensitive data)
-  if (typeof console !== "undefined") {
-    console.log(`[NOTIFICATION] ${event} for order ${payload.orderId}`);
-  }
 
   const provider = getNotificationProvider();
   try {

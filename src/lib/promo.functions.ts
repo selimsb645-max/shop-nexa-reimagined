@@ -1,5 +1,5 @@
 /**
- * Aventa Shop — Promo Code Server Functions
+ * AVENTA SHOP — Promo Code Server Functions
  *
  * TanStack Start server functions that bridge the client to the promo server
  * module. Each function:
@@ -63,9 +63,7 @@ export const listMyPromoCodes = createServerFn({ method: "POST" })
 const adminCreateSchema = z.object({
   idToken: z.string().min(10),
   targetUid: z.string().min(1).max(200),
-  campaignType: z
-    .enum(["first_order", "welcome", "campaign", "admin_issued"])
-    .default("admin_issued"),
+  campaignType: z.enum(["first_order", "welcome", "campaign", "admin_issued"]).default("admin_issued"),
   discountType: z.enum(["percent", "fixed"]).default("percent"),
   discountValue: z.number().min(0.01).max(100),
   minimumOrderAmount: z.number().min(0).max(100_000).default(0),

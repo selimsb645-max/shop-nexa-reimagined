@@ -7,28 +7,24 @@ import { mapFirebaseError } from "@/utils/errors";
 import { useState } from "react";
 import { Spinner } from "@/components/common/Spinner";
 import { MailCheck } from "lucide-react";
+import { getSiteUrl } from "@/lib/seo";
 
 export const Route = createFileRoute("/verify-email")({
   ssr: false,
   component: VerifyPage,
   head: () => ({
     meta: [
-      { title: "Verify Your Email — Aventa Shop" },
-      {
-        name: "description",
-        content: "Confirm your email address to activate your Aventa Shop account.",
-      },
-      { property: "og:title", content: "Verify Your Email — Aventa Shop" },
-      {
-        property: "og:description",
-        content: "Confirm your email address to activate your Aventa Shop account.",
-      },
-      { property: "og:url", content: "https://shop-nexa.lovable.app/verify-email" },
+      { title: "Verify Your Email — AVENTA SHOP" },
+      { name: "description", content: "Confirm your email address to activate your AVENTA SHOP account." },
+      { property: "og:title", content: "Verify Your Email — AVENTA SHOP" },
+      { property: "og:description", content: "Confirm your email address to activate your AVENTA SHOP account." },
+      { property: "og:url", content: `${getSiteUrl()}/verify-email` },
       { name: "robots", content: "noindex" },
     ],
-    links: [{ rel: "canonical", href: "https://shop-nexa.lovable.app/verify-email" }],
+    links: [{ rel: "canonical", href: `${getSiteUrl()}/verify-email` }],
   }),
 });
+
 
 function VerifyPage() {
   const { user } = useAuth();
@@ -62,11 +58,7 @@ function VerifyPage() {
   return (
     <AuthLayout
       title="Verify your email"
-      subtitle={
-        user?.email
-          ? `We've sent a link to ${user.email}`
-          : "Check your inbox for a verification link"
-      }
+      subtitle={user?.email ? `We've sent a link to ${user.email}` : "Check your inbox for a verification link"}
       footer={
         <button
           onClick={async () => {

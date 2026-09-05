@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -58,6 +59,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const { user, loading: authLoading } = useAuth();
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const itemsRef = useRef(items);
+  itemsRef.current = items;
 
   // Hydrate on mount / auth change
   useEffect(() => {
@@ -72,7 +75,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             await mergeGuestCart(user.uid, guest);
             saveGuest([]);
           } catch {
-            /* ignore */
+            /* ignore merge errors */
           }
         }
         try {
@@ -98,7 +101,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const add = useCallback(
     async (product: Product, quantity = 1) => {
-      const existing = items.find((i) => i.productId === product.id);
+      const existing = itemsRef.current.find((i) => i.productId === product.id);
       const nextQty = Math.max(1, Math.min(product.stock, (existing?.quantity ?? 0) + quantity));
       const updated: CartItem = {
         productId: product.id,
@@ -110,6 +113,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         slug: product.slug,
         stock: product.stock,
       };
+      const prevItems = itemsRef.current;
       setItems((prev) => {
         const others = prev.filter((i) => i.productId !== product.id);
         return [updated, ...others];
@@ -117,51 +121,80 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (user && firebaseConfigured) {
         try {
           await setCartItem(user.uid, product, nextQty);
-        } catch (e) {
-          toast.error("Could not update cart");
-          throw e;
+        } catch {
+          // Rollback optimistic update on failure
+          setItems(prevItems);
+          toast.error("Could not add item to cart. Please try again.");
+          return;
         }
       }
       toast.success(`${product.title} added to cart`);
     },
-    [items, user],
+    [user],
   );
 
   const updateQty = useCallback(
     async (productId: string, quantity: number) => {
-      const item = items.find((i) => i.productId === productId);
+      const item = itemsRef.current.find((i) => i.productId === productId);
       if (!item) return;
       const capped = Math.max(0, Math.min(item.stock || quantity, quantity));
+      const prevItems = itemsRef.current;
       setItems((prev) =>
         capped === 0
           ? prev.filter((i) => i.productId !== productId)
           : prev.map((i) => (i.productId === productId ? { ...i, quantity: capped } : i)),
       );
       if (user && firebaseConfigured) {
-        await updateCartQuantity(user.uid, productId, capped, {
-          title: item.title,
-          image: item.image,
-          price: item.price,
-          slug: item.slug,
-          stock: item.stock,
-        });
+        try {
+          await updateCartQuantity(user.uid, productId, capped, {
+            title: item.title,
+            image: item.image,
+            price: item.price,
+            slug: item.slug,
+            stock: item.stock,
+          });
+        } catch {
+          // Rollback optimistic update on failure
+          setItems(prevItems);
+          toast.error("Could not update quantity. Please try again.");
+        }
       }
     },
-    [items, user],
+    [user],
   );
 
   const remove = useCallback(
     async (productId: string) => {
+      const prevItems = itemsRef.current;
       setItems((prev) => prev.filter((i) => i.productId !== productId));
-      if (user && firebaseConfigured) await removeCartItem(user.uid, productId);
+      if (user && firebaseConfigured) {
+        try {
+          await removeCartItem(user.uid, productId);
+        } catch {
+          // Rollback optimistic update on failure
+          setItems(prevItems);
+          toast.error("Could not remove item. Please try again.");
+        }
+      }
     },
     [user],
   );
 
   const clear = useCallback(async () => {
+    const prevItems = itemsRef.current;
     setItems([]);
-    if (user && firebaseConfigured) await fbClearCart(user.uid);
-    else saveGuest([]);
+    if (user && firebaseConfigured) {
+      try {
+        await fbClearCart(user.uid);
+      } catch {
+        // Rollback optimistic update on failure
+        setItems(prevItems);
+        toast.error("Could not clear cart. Please try again.");
+        return;
+      }
+    } else {
+      saveGuest([]);
+    }
   }, [user]);
 
   const value = useMemo<CartContextValue>(() => {

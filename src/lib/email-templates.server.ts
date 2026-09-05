@@ -1,11 +1,11 @@
 /**
- * Transactional Email Templates for Aventa Shop
+ * Transactional Email Templates for AVENTA SHOP
  *
  * Reusable HTML email components + full event templates.
  * All HTML is email-client compatible: inline styles, table-based layout,
  * no JavaScript, mobile-responsive.
  *
- * Branding: Aventa Shop orange (#f97316) + slate neutrals.
+ * Branding: AVENTA SHOP orange (#f97316) + slate neutrals.
  * All links use SITE_URL from environment — never hard-coded.
  */
 
@@ -14,7 +14,7 @@
 /* ------------------------------------------------------------------ */
 
 function getSiteUrl(): string {
-  return (typeof Deno !== "undefined" && Deno.env.get("SITE_URL")) || "https://shopnexa.app";
+  return (typeof Deno !== "undefined" && Deno.env.get("SITE_URL")) || "https://aventa-shop.com";
 }
 
 function formatPrice(amount: number): string {
@@ -57,7 +57,7 @@ export function EmailLayout(title: string, bodyHtml: string): string {
 export function EmailHeader(): string {
   return `<tr>
 <td style="padding:24px 40px 20px 40px; background:linear-gradient(135deg,#f97316,#ea580c); text-align:center;" class="px">
-  <span style="font-size:22px; font-weight:700; color:#ffffff; letter-spacing:-0.5px;">Aventa Shop</span>
+  <span style="font-size:22px; font-weight:700; color:#ffffff; letter-spacing:-0.5px;">AVENTA SHOP</span>
 </td>
 </tr>`;
 }
@@ -67,14 +67,14 @@ export function EmailFooter(): string {
   return `<tr>
 <td style="padding:24px 40px; background:#f8fafc; border-top:1px solid #e2e8f0;" class="px">
   <p style="margin:0 0 8px 0; font-size:13px; color:#64748b; text-align:center;">
-    Aventa Shop \u2014 Your trusted marketplace
+    AVENTA SHOP \u2014 Your trusted marketplace
   </p>
   <p style="margin:0 0 12px 0; font-size:12px; color:#94a3b8; text-align:center;">
-    Need help? Visit our <a href="${siteUrl}/help-center" style="color:#f97316; text-decoration:none;">Help Center</a> or contact support@shopnexa.app
+    Need help? Visit our <a href="${siteUrl}/help-center" style="color:#f97316; text-decoration:none;">Help Center</a> or contact help.aventashop@gmail.com
   </p>
   <p style="margin:0; font-size:11px; color:#cbd5e1; text-align:center;">
-    \u00A9 ${new Date().getFullYear()} Aventa Shop. All rights reserved.<br>
-    This email was sent regarding your Aventa Shop account.
+    \u00A9 ${new Date().getFullYear()} AVENTA SHOP. All rights reserved.<br>
+    This email was sent regarding your AVENTA SHOP account.
   </p>
 </td>
 </tr>`;
@@ -177,6 +177,8 @@ export interface OrderEmailData {
   items: Array<{ name: string; quantity: number; price: number; image?: string }>;
   subtotal: number;
   discount: number;
+  tax: number;
+  taxLabel: string;
   deliveryFee: number;
   grandTotal: number;
   deliveryAddress: {
@@ -219,6 +221,9 @@ export function orderCreatedEmail(data: OrderEmailData): { subject: string; html
           ...(data.discount > 0
             ? [{ label: "Discount", value: `-${formatPrice(data.discount)}` }]
             : []),
+          ...(data.tax > 0
+            ? [{ label: data.taxLabel || "Tax", value: `+${formatPrice(data.tax)}` }]
+            : []),
           { label: "Delivery Fee", value: formatPrice(data.deliveryFee) },
         ],
         formatPrice(data.grandTotal),
@@ -231,7 +236,7 @@ export function orderCreatedEmail(data: OrderEmailData): { subject: string; html
     <tr><td style="padding:8px 40px;" class="px">${ActionButton("View Order", `${siteUrl}/orders/${data.orderId}`)}</td></tr>
     ${EmailFooter()}`;
   return {
-    subject: `Aventa Shop \u2014 Order #${shortId} Confirmed`,
+    subject: `AVENTA SHOP \u2014 Order #${shortId} Confirmed`,
     html: EmailLayout(`Order #${shortId} Confirmed`, body),
   };
 }
@@ -253,7 +258,7 @@ export function orderStatusEmail(
     ORDER_PROCESSING: "Your order is now being processed. Items are being packaged.",
     ORDER_SHIPPED: "Your order has been shipped! Track it in your orders page.",
     OUT_FOR_DELIVERY: "Your order is out for delivery. Please keep your phone available.",
-    ORDER_DELIVERED: "Your order has been delivered. Thank you for shopping with Aventa Shop!",
+    ORDER_DELIVERED: "Your order has been delivered. Thank you for shopping with AVENTA SHOP!",
     ORDER_CANCELLED: "Your order has been cancelled. Contact support for assistance.",
   };
   const statusLabels: Record<typeof event, string> = {
@@ -277,7 +282,7 @@ export function orderStatusEmail(
     ${EmailFooter()}`;
   const label = statusLabels[event];
   return {
-    subject: `Aventa Shop \u2014 Order #${shortId} ${label.charAt(0).toUpperCase() + label.slice(1)}`,
+    subject: `AVENTA SHOP \u2014 Order #${shortId} ${label.charAt(0).toUpperCase() + label.slice(1)}`,
     html: EmailLayout(`Order ${label}`, body),
   };
 }
@@ -290,7 +295,7 @@ export function passwordResetEmail(data: { recipientName: string; resetLink: str
     ${EmailHeader()}
     <tr><td style="padding:32px 40px 8px 40px;" class="px">
       <h1 style="margin:0; font-size:22px; font-weight:700; color:#1e293b;">Reset Your Password</h1>
-      <p style="margin:8px 0 0 0; font-size:15px; color:#64748b;">Hi ${data.recipientName}, we received a request to reset your Aventa Shop password.</p>
+      <p style="margin:8px 0 0 0; font-size:15px; color:#64748b;">Hi ${data.recipientName}, we received a request to reset your AVENTA SHOP password.</p>
     </td></tr>
     <tr><td style="padding:16px 40px 8px 40px;" class="px">
       <p style="margin:0; font-size:14px; color:#475569; line-height:1.6;">Click the button below to set a new password. This link will expire in 1 hour for security reasons.</p>
@@ -300,7 +305,7 @@ export function passwordResetEmail(data: { recipientName: string; resetLink: str
     <tr><td style="padding:0 40px 24px 40px;" class="px"><p style="margin:0; font-size:13px; color:#94a3b8;">Or copy this link: ${data.resetLink}</p></td></tr>
     ${EmailFooter()}`;
   return {
-    subject: "Aventa Shop \u2014 Reset Your Password",
+    subject: "AVENTA SHOP \u2014 Reset Your Password",
     html: EmailLayout("Reset Your Password", body),
   };
 }
@@ -339,11 +344,11 @@ export function withdrawalEmail(
       <tr><td style="padding:6px 0; font-size:14px; color:#64748b;">Status</td><td style="padding:6px 0; text-align:right;">${StatusBadge(statusMap[event])}</td></tr>
     </table>`)}
     <tr><td style="padding:8px 40px;" class="px">${ActionButton("View Dashboard", `${siteUrl}/seller/dashboard`)}</td></tr>
-    ${SecurityNotice("Never share your bank details or account credentials with anyone. Aventa Shop will never ask for your password.")}
+    ${SecurityNotice("Never share your bank details or account credentials with anyone. AVENTA SHOP will never ask for your password.")}
     ${EmailFooter()}`;
   const label = statusMap[event];
   return {
-    subject: `Aventa Shop \u2014 Withdrawal #${shortRef} ${label.charAt(0).toUpperCase() + label.slice(1)}`,
+    subject: `AVENTA SHOP \u2014 Withdrawal #${shortRef} ${label.charAt(0).toUpperCase() + label.slice(1)}`,
     html: EmailLayout(`Withdrawal ${label}`, body),
   };
 }

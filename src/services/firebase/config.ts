@@ -9,13 +9,18 @@ import {
 import { getFirestore, type Firestore } from "firebase/firestore";
 import { getStorage, type FirebaseStorage } from "firebase/storage";
 
+/**
+ * Firebase web config — these are PUBLIC values (safe to ship in client code).
+ * Firebase security is enforced via Security Rules, not by hiding these keys.
+ * https://firebase.google.com/docs/web/setup#config-object
+ */
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  apiKey: "AIzaSyCjPujDgUn2c1aLKWLMXTsV3rNM3Q2J1wQ",
+  authDomain: "studio-6202246915-3b319.firebaseapp.com",
+  projectId: "studio-6202246915-3b319",
+  storageBucket: "studio-6202246915-3b319.firebasestorage.app",
+  messagingSenderId: "763885455427",
+  appId: "1:763885455427:web:3bf184751c119a1760ecf6",
 };
 
 export const firebaseConfigured = Boolean(
@@ -27,7 +32,7 @@ let authInstance: Auth | null = null;
 let dbInstance: Firestore | null = null;
 let storageInstance: FirebaseStorage | null = null;
 
-function getApp(): FirebaseApp {
+export function getApp(): FirebaseApp {
   if (!firebaseConfigured) {
     throw new Error(
       "Firebase is not configured. Add your Firebase web config to a .env file (see .env.example).",

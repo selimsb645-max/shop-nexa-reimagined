@@ -1,6 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { DollarSign, ShoppingBag, Users, Store, Package, TrendingUp } from "lucide-react";
+import {
+  DollarSign,
+  ShoppingBag,
+  Users,
+  Store,
+  Package,
+  TrendingUp,
+} from "lucide-react";
 import { listAllOrders } from "@/services/firebase/adminOrders";
 import { listUsers } from "@/services/firebase/adminUsers";
 import { listAllSellers } from "@/services/firebase/adminSellers";
@@ -14,8 +21,8 @@ export const Route = createFileRoute("/_authenticated/admin/")({
 });
 
 function AdminDashboard() {
-  const { t } = useI18n();
-  const [loading, setLoading] = useState(true);
+
+  const { t } = useI18n();  const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalSales: 0,
     totalOrders: 0,
@@ -106,7 +113,9 @@ function AdminDashboard() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">{t("admin.dashboard")}</h1>
-        <p className="text-sm text-muted-foreground">Overview of your Aventa Shop marketplace.</p>
+        <p className="text-sm text-muted-foreground">
+          Overview of your AVENTA SHOP marketplace.
+        </p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {cards.map((c) => (
@@ -138,10 +147,10 @@ function AdminDashboard() {
             {recent.map((o) => (
               <div key={o.id} className="flex items-center gap-4 px-4 py-3 text-sm">
                 <div className="flex-1 truncate">
-                  <div className="font-medium">
-                    #{o.id.slice(0, 8)} · {o.buyer}
+                  <div className="font-medium">#{o.id.slice(0, 8)} · {o.buyer}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {formatDateTime(o.createdAt)}
                   </div>
-                  <div className="text-xs text-muted-foreground">{formatDateTime(o.createdAt)}</div>
                 </div>
                 <span className="rounded-full bg-muted px-2 py-0.5 text-xs capitalize">
                   {o.status}

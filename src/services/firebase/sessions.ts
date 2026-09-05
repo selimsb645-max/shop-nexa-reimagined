@@ -1,5 +1,5 @@
 /**
- * Session Management Service for Aventa Shop.
+ * Session Management Service for AVENTA SHOP.
  *
  * Tracks real user login sessions in Firestore. Each session records:
  * - Device/browser/OS info (parsed from userAgent)
@@ -70,9 +70,7 @@ interface ParsedUA {
   deviceType: string;
 }
 
-export function parseUserAgent(
-  ua: string = typeof navigator !== "undefined" ? navigator.userAgent : "",
-): ParsedUA {
+export function parseUserAgent(ua: string = typeof navigator !== "undefined" ? navigator.userAgent : ""): ParsedUA {
   const result: ParsedUA = {
     browser: "Unknown",
     os: "Unknown",
@@ -98,13 +96,16 @@ export function parseUserAgent(
   else if (/Mac OS X/.test(ua)) {
     const match = ua.match(/Mac OS X (\d+[._]\d+)/);
     result.os = match ? `macOS ${match[1].replace(/_/g, ".")}` : "macOS";
-  } else if (/Android (\d+)/.test(ua)) {
+  }
+  else if (/Android (\d+)/.test(ua)) {
     const match = ua.match(/Android (\d+)/);
     result.os = match ? `Android ${match[1]}` : "Android";
-  } else if (/iPhone OS|iOS/.test(ua)) {
+  }
+  else if (/iPhone OS|iOS/.test(ua)) {
     const match = ua.match(/OS (\d+_?\d*)/);
     result.os = match ? `iOS ${match[1].replace(/_/g, ".")}` : "iOS";
-  } else if (/CrOS/.test(ua)) result.os = "Chrome OS";
+  }
+  else if (/CrOS/.test(ua)) result.os = "Chrome OS";
   else if (/Linux/.test(ua)) result.os = "Linux";
 
   // Platform / Device type
@@ -148,21 +149,17 @@ export async function createSession(uid: string): Promise<void> {
   const parsed = parseUserAgent(ua);
   const now = Date.now();
 
-  await setDoc(
-    sessionDocRef(uid, sessionId),
-    {
-      sessionId,
-      uid,
-      userAgent: ua,
-      browser: parsed.browser,
-      os: parsed.os,
-      platform: parsed.platform,
-      deviceType: parsed.deviceType,
-      loginAt: serverTimestamp(),
-      lastActiveAt: serverTimestamp(),
-    },
-    { merge: true },
-  );
+  await setDoc(sessionDocRef(uid, sessionId), {
+    sessionId,
+    uid,
+    userAgent: ua,
+    browser: parsed.browser,
+    os: parsed.os,
+    platform: parsed.platform,
+    deviceType: parsed.deviceType,
+    loginAt: serverTimestamp(),
+    lastActiveAt: serverTimestamp(),
+  }, { merge: true });
 }
 
 /**
@@ -200,18 +197,8 @@ export async function getActiveSessions(uid: string): Promise<DeviceSession[]> {
       os: d.os ?? "Unknown",
       platform: d.platform ?? "Unknown",
       deviceType: d.deviceType ?? "Desktop",
-      loginAt:
-        d.loginAt instanceof Timestamp
-          ? d.loginAt.toMillis()
-          : typeof d.loginAt === "number"
-            ? d.loginAt
-            : 0,
-      lastActiveAt:
-        d.lastActiveAt instanceof Timestamp
-          ? d.lastActiveAt.toMillis()
-          : typeof d.lastActiveAt === "number"
-            ? d.lastActiveAt
-            : 0,
+      loginAt: d.loginAt instanceof Timestamp ? d.loginAt.toMillis() : typeof d.loginAt === "number" ? d.loginAt : 0,
+      lastActiveAt: d.lastActiveAt instanceof Timestamp ? d.lastActiveAt.toMillis() : typeof d.lastActiveAt === "number" ? d.lastActiveAt : 0,
       isCurrent: (d.sessionId ?? docSnap.id) === sessionId,
     });
   });
@@ -249,18 +236,8 @@ export function subscribeToSessions(
         os: d.os ?? "Unknown",
         platform: d.platform ?? "Unknown",
         deviceType: d.deviceType ?? "Desktop",
-        loginAt:
-          d.loginAt instanceof Timestamp
-            ? d.loginAt.toMillis()
-            : typeof d.loginAt === "number"
-              ? d.loginAt
-              : 0,
-        lastActiveAt:
-          d.lastActiveAt instanceof Timestamp
-            ? d.lastActiveAt.toMillis()
-            : typeof d.lastActiveAt === "number"
-              ? d.lastActiveAt
-              : 0,
+        loginAt: d.loginAt instanceof Timestamp ? d.loginAt.toMillis() : typeof d.loginAt === "number" ? d.loginAt : 0,
+        lastActiveAt: d.lastActiveAt instanceof Timestamp ? d.lastActiveAt.toMillis() : typeof d.lastActiveAt === "number" ? d.lastActiveAt : 0,
         isCurrent: (d.sessionId ?? docSnap.id) === sessionId,
       });
     });

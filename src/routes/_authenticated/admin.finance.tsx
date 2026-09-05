@@ -1,8 +1,8 @@
 /**
- * Aventa Shop — Admin Finance Panel Route
- *
+ * AVENTA SHOP — Admin Finance Panel Route
+ * 
  * Route: /admin/finance
- * Shows the complete financial overview for Aventa Shop:
+ * Shows the complete financial overview for AVENTA SHOP:
  * - Total Customer Payments
  * - Total Platform Revenue (commission)
  * - Total Seller Sales
@@ -42,12 +42,12 @@ import {
 export const Route = createFileRoute("/_authenticated/admin/finance")({
   ssr: false,
   component: AdminFinancePage,
-  head: () => ({ meta: [{ title: "Finance — Aventa Shop Admin" }] }),
-});
+  head: () => ({ meta: [{ title: "Finance — AVENTA SHOP Admin" }] }),
+})
 
 function AdminFinancePage() {
-  const { t } = useI18n();
-  const { user } = useAuth();
+
+  const { t } = useI18n();  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [overview, setOverview] = useState<AdminFinanceData | null>(null);
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
@@ -183,7 +183,7 @@ function AdminFinancePage() {
           <div className="flex flex-wrap items-center gap-2 text-sm">
             <FlowBox label="Customer" color="bg-blue-100 text-blue-700" />
             <FlowArrow />
-            <FlowBox label="Aventa Shop Gateway" color="bg-primary/10 text-primary" />
+            <FlowBox label="AVENTA SHOP Gateway" color="bg-primary/10 text-primary" />
             <FlowArrow />
             <FlowBox label="Order Paid" color="bg-green-100 text-green-700" />
             <FlowArrow />
@@ -243,9 +243,7 @@ function AdminFinancePage() {
                         </button>
                       </div>
                     ) : (
-                      <span
-                        className={`text-xs font-medium ${w.status === "completed" ? "text-green-600" : "text-red-600"}`}
-                      >
+                      <span className={`text-xs font-medium ${w.status === "completed" ? "text-green-600" : "text-red-600"}`}>
                         {w.status}
                       </span>
                     )}
@@ -260,17 +258,7 @@ function AdminFinancePage() {
   );
 }
 
-function FinanceCard({
-  icon,
-  label,
-  value,
-  color,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  color: string;
-}) {
+function FinanceCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string; color: string }) {
   return (
     <div className="rounded-xl border bg-card p-4">
       <div className="flex items-center gap-2 mb-2">
@@ -283,7 +271,11 @@ function FinanceCard({
 }
 
 function FlowBox({ label, color }: { label: string; color: string }) {
-  return <span className={`rounded-lg px-3 py-1.5 text-xs font-medium ${color}`}>{label}</span>;
+  return (
+    <span className={`rounded-lg px-3 py-1.5 text-xs font-medium ${color}`}>
+      {label}
+    </span>
+  );
 }
 
 function FlowArrow() {

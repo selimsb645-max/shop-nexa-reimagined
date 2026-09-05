@@ -29,6 +29,7 @@ import {
 import { ServicePageLayout } from "@/components/common/ServicePageLayout";
 import { Spinner } from "@/components/common/Spinner";
 import { useAuth } from "@/context/AuthContext";
+import { usePushNotifications } from "@/context/PushNotificationContext";
 import { useI18n } from "@/i18n/I18nContext";
 import { getCustomerSettings, saveCustomerSettings } from "@/services/firebase/customerSettings";
 import { resetPassword, signOut } from "@/services/firebase/auth";
@@ -186,14 +187,10 @@ function SettingsPage() {
               </span>
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-semibold text-gray-800">
-                  {user?.emailVerified
-                    ? t("settings.emailVerified")
-                    : t("settings.emailNotVerified")}
+                  {user?.emailVerified ? t("settings.emailVerified") : t("settings.emailNotVerified")}
                 </div>
                 <div className="truncate text-xs text-gray-500">
-                  {user?.emailVerified
-                    ? t("settings.emailVerifiedHint")
-                    : t("settings.emailNotVerifiedHint")}
+                  {user?.emailVerified ? t("settings.emailVerifiedHint") : t("settings.emailNotVerifiedHint")}
                 </div>
               </div>
             </div>
@@ -225,13 +222,7 @@ function SettingsPage() {
               checked={form.smsOrderUpdates}
               onToggle={toggle("smsOrderUpdates")}
             />
-            <DarazToggleRow
-              icon={<Bell className="h-5 w-5" />}
-              label={t("settings.pushNotifications")}
-              hint={t("settings.pushNotificationsHint")}
-              checked={form.pushNotifications}
-              onToggle={toggle("pushNotifications")}
-            />
+            <PushNotificationToggle />
           </div>
         </DarazCard>
 
@@ -291,9 +282,7 @@ function SettingsPage() {
                 <Lock className="h-5 w-5" strokeWidth={2} />
               </span>
               <div className="min-w-0 flex-1">
-                <div className="text-sm font-semibold text-gray-800">
-                  {t("settings.changePassword")}
-                </div>
+                <div className="text-sm font-semibold text-gray-800">{t("settings.changePassword")}</div>
                 <div className="truncate text-xs text-gray-500">
                   {t("settings.resetLinkHint")}: {user?.email}
                 </div>
@@ -350,38 +339,12 @@ function SettingsPage() {
         <DarazCard>
           <DarazCardHeader title="Quick Links" />
           <div className="divide-y divide-gray-100">
-            <DarazLinkRow
-              to="/addresses"
-              icon={<MapPin className="h-5 w-5" />}
-              label={t("account.addressBook")}
-              hint="Manage delivery addresses"
-            />
-            <DarazLinkRow
-              to="/wallet"
-              icon={<CreditCard className="h-5 w-5" />}
-              label={t("account.paymentWallet")}
-              hint="View balance & transactions"
-            />
-            <DarazLinkRow
-              to="/wishlist"
-              icon={<Heart className="h-5 w-5" />}
-              label={t("account.myWishlist")}
-              hint="Saved products"
-            />
-            <DarazLinkRow
-              to="/orders"
-              icon={<Package className="h-5 w-5" />}
-              label={t("account.myOrders")}
-              hint="Track & manage orders"
-            />
+            <DarazLinkRow to="/addresses" icon={<MapPin className="h-5 w-5" />} label={t("account.addressBook")} hint="Manage delivery addresses" />
+            <DarazLinkRow to="/wallet" icon={<CreditCard className="h-5 w-5" />} label={t("account.paymentWallet")} hint="View balance & transactions" />
+            <DarazLinkRow to="/wishlist" icon={<Heart className="h-5 w-5" />} label={t("account.myWishlist")} hint="Saved products" />
+            <DarazLinkRow to="/orders" icon={<Package className="h-5 w-5" />} label={t("account.myOrders")} hint="Track & manage orders" />
             {profile?.role !== "seller" && (
-              <DarazLinkRow
-                to="/seller.register"
-                icon={<Store className="h-5 w-5" />}
-                label="Become a Seller"
-                hint="Start selling on Aventa Shop"
-                highlight
-              />
+              <DarazLinkRow to="/seller.register" icon={<Store className="h-5 w-5" />} label="Become a Seller" hint="Start selling on AVENTA SHOP" highlight />
             )}
           </div>
         </DarazCard>
@@ -390,18 +353,8 @@ function SettingsPage() {
         <DarazCard>
           <DarazCardHeader title="Help & Support" />
           <div className="divide-y divide-gray-100">
-            <DarazLinkRow
-              to="/support"
-              icon={<Headphones className="h-5 w-5" />}
-              label={t("account.customerService")}
-              hint="Chat with our support team"
-            />
-            <DarazLinkRow
-              to="/support"
-              icon={<Info className="h-5 w-5" />}
-              label={t("settings.aboutShop")}
-              hint={t("settings.aboutHint")}
-            />
+            <DarazLinkRow to="/support" icon={<Headphones className="h-5 w-5" />} label={t("account.customerService")} hint="Chat with our support team" />
+            <DarazLinkRow to="/support" icon={<Info className="h-5 w-5" />} label={t("settings.aboutShopNexa")} hint={t("settings.aboutHint")} />
           </div>
         </DarazCard>
 
@@ -409,18 +362,8 @@ function SettingsPage() {
         <DarazCard>
           <DarazCardHeader title={t("settings.legal")} />
           <div className="divide-y divide-gray-100">
-            <DarazLinkRow
-              to="/support"
-              icon={<FileText className="h-5 w-5" />}
-              label={t("settings.termsConditions")}
-              hint="Read our policies"
-            />
-            <DarazLinkRow
-              to="/support"
-              icon={<Shield className="h-5 w-5" />}
-              label={t("settings.privacyPolicy")}
-              hint="How we handle your data"
-            />
+            <DarazLinkRow to="/support" icon={<FileText className="h-5 w-5" />} label={t("settings.termsConditions")} hint="Read our policies" />
+            <DarazLinkRow to="/support" icon={<Shield className="h-5 w-5" />} label={t("settings.privacyPolicy")} hint="How we handle your data" />
           </div>
         </DarazCard>
 
@@ -474,32 +417,31 @@ function SessionRow({
     });
   };
 
-  const deviceIcon =
-    session.deviceType === "Mobile" ? (
-      <Smartphone className="h-5 w-5" />
-    ) : session.deviceType === "Tablet" ? (
-      <Smartphone className="h-5 w-5" />
-    ) : (
-      <Monitor className="h-5 w-5" />
-    );
+  const deviceIcon = session.deviceType === "Mobile" ? (
+    <Smartphone className="h-5 w-5" />
+  ) : session.deviceType === "Tablet" ? (
+    <Smartphone className="h-5 w-5" />
+  ) : (
+    <Monitor className="h-5 w-5" />
+  );
 
   return (
-    <div
-      className={`rounded-xl border p-3 transition ${
-        session.isCurrent ? "border-green-200 bg-green-50/50" : "border-gray-100 bg-gray-50/30"
-      }`}
-    >
+    <div className={`rounded-xl border p-3 transition ${
+      session.isCurrent
+        ? "border-green-200 bg-green-50/50"
+        : "border-gray-100 bg-gray-50/30"
+    }`}>
       <div className="flex items-start gap-3">
-        <span
-          className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${
-            session.isCurrent ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-500"
-          }`}
-        >
+        <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${
+          session.isCurrent ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-500"
+        }`}>
           {deviceIcon}
         </span>
         <div className="min-w-0 flex-1 space-y-1">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-gray-800">{session.browser}</span>
+            <span className="text-sm font-semibold text-gray-800">
+              {session.browser}
+            </span>
             {session.isCurrent && (
               <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-[9px] font-bold text-green-600">
                 <CheckCircle2 className="h-2.5 w-2.5" />
@@ -621,5 +563,45 @@ function DarazLinkRow({
       </div>
       <ChevronRight className="h-4 w-4 shrink-0 text-gray-300" strokeWidth={2.5} />
     </Link>
+  );
+}
+
+
+function PushNotificationToggle() {
+  const { supported, permission, enabled, enable, disable } = usePushNotifications();
+  const { t } = useI18n();
+
+  if (!supported) {
+    return (
+      <div className="flex items-center gap-3 p-4 opacity-60">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-orange-50 text-orange-500">
+          <Bell className="h-5 w-5" strokeWidth={2} />
+        </span>
+        <div className="flex-1">
+          <div className="text-sm font-medium text-slate-800">{t("settings.pushNotifications")}</div>
+          <div className="text-xs text-slate-400">Push notifications are not supported on this device</div>
+        </div>
+      </div>
+    );
+  }
+
+  const isChecked = enabled || permission === "granted";
+
+  async function handleToggle() {
+    if (isChecked) {
+      await disable();
+    } else {
+      await enable();
+    }
+  }
+
+  return (
+    <DarazToggleRow
+      icon={<Bell className="h-5 w-5" />}
+      label={t("settings.pushNotifications")}
+      hint={isChecked ? "Enabled — you'll receive order updates on this device" : "Get order status updates as push notifications"}
+      checked={isChecked}
+      onToggle={handleToggle}
+    />
   );
 }

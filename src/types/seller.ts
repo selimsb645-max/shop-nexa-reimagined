@@ -1,5 +1,5 @@
 // ====================================================================
-// Aventa Shop Seller Types — Phase 2B Extended
+// AVENTA SHOP Seller Types — Phase 2B Extended
 // ====================================================================
 
 /**
@@ -179,7 +179,12 @@ export interface SellerProfile {
 // ----------------------------------------------------------------------
 // Seller Wallet Transactions
 // ----------------------------------------------------------------------
-export type SellerWalletTxType = "earning" | "withdrawal" | "adjustment" | "refund" | "bonus";
+export type SellerWalletTxType =
+  | "earning"
+  | "withdrawal"
+  | "adjustment"
+  | "refund"
+  | "bonus";
 
 export type SellerWalletTxStatus = "completed" | "pending" | "failed";
 
@@ -197,7 +202,11 @@ export interface SellerWalletTx {
 // Withdrawal Requests
 // ----------------------------------------------------------------------
 export type WithdrawalMethod = "bank" | "bkash" | "nagad" | "rocket";
-export type WithdrawalStatus = "pending" | "processing" | "completed" | "rejected";
+export type WithdrawalStatus =
+  | "pending"
+  | "processing"
+  | "completed"
+  | "rejected";
 
 export interface WithdrawalRequest {
   id: string;
@@ -216,7 +225,13 @@ export interface WithdrawalRequest {
 // Shipping / Courier (Future Multi-Courier Ready)
 // ----------------------------------------------------------------------
 export type CourierProvider =
-  "pathao" | "steadfast" | "redx" | "paperfly" | "sundarban" | "shopnexa_logistics" | "other";
+  | "pathao"
+  | "steadfast"
+  | "redx"
+  | "paperfly"
+  | "sundarban"
+  | "shopnexa_logistics"
+  | "other";
 
 export type ShippingStatus =
   | "pending"
@@ -284,7 +299,13 @@ export interface SellerOrderItem {
 }
 
 export type SellerOrderStatus =
-  "pending" | "confirmed" | "processing" | "shipped" | "delivered" | "cancelled" | "returned";
+  | "pending"
+  | "confirmed"
+  | "processing"
+  | "shipped"
+  | "delivered"
+  | "cancelled"
+  | "returned";
 
 export interface SellerOrderTracking {
   status: SellerOrderStatus;
@@ -303,6 +324,11 @@ export interface SellerOrder {
   status: SellerOrderStatus;
   commission: number;
   earnings: number;
+  discount: number;
+  tax: number;
+  taxLabel: string;
+  platformFee: number;
+  total: number;
   shipping: ShippingInfo;
   shippingAddress: {
     fullName: string;
@@ -332,7 +358,7 @@ export const COURIER_CONFIG: Record<
   redx: { label: "RedX", color: "#e63946", website: "https://redx.com.bd" },
   paperfly: { label: "Paperfly", color: "#2a9d8f", website: "https://paperfly.com.bd" },
   sundarban: { label: "Sundarban", color: "#f4a261", website: "https://sundarbanltd.com" },
-  shopnexa_logistics: { label: "Aventa Shop Logistics", color: "#f57224", website: "" },
+  shopnexa_logistics: { label: "AVENTA SHOP Logistics", color: "#f57224", website: "" },
   other: { label: "Other", color: "#6b7280", website: "" },
 };
 

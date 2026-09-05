@@ -1,5 +1,5 @@
 /**
- * Pocket Storefront design: compact Aventa Shop mobile utility, search, and drawer
+ * Pocket Storefront design: compact AVENTA SHOP mobile utility, search, and drawer
  * preserve desktop information hierarchy while prioritizing one-handed shopping.
  */
 import { useState } from "react";
@@ -43,10 +43,13 @@ export function TopBar({ className: _className = "" }: TopBarProps) {
 export function SiteHeader() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  
 
   const { count: cartCount } = useCart();
+  
 
   const { count: wishlistCount } = useWishlist();
+  
 
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
@@ -89,8 +92,8 @@ export function SiteHeader() {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate({
-        to: "/products",
-        search: { search: searchQuery.trim() },
+        to: "/shop",
+        search: { q: searchQuery.trim() },
       } as Record<string, unknown>);
     }
   };
@@ -109,14 +112,9 @@ export function SiteHeader() {
     <header className="sticky top-0 z-40 bg-white font-sans shadow-sm">
       <div className="bg-[#1455c6] px-3 py-1.5 text-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between text-[10px] font-semibold sm:px-4 sm:text-xs">
-          <span className="flex items-center gap-1.5">
-            <ShoppingCart className="h-3 w-3" />
-            Free delivery on orders over $50
-          </span>
-          <span className="hidden sm:inline">Welcome to Aventa Shop</span>
-          <span className="hidden sm:inline">
-            Track Order&nbsp;&nbsp;·&nbsp;&nbsp;Help &amp; Support
-          </span>
+          <span className="flex items-center gap-1.5"><ShoppingCart className="h-3 w-3" />Free delivery on orders over $50</span>
+          <span className="hidden sm:inline">Welcome to AVENTA SHOP</span>
+          <span className="hidden sm:inline">Track Order&nbsp;&nbsp;·&nbsp;&nbsp;Help &amp; Support</span>
         </div>
       </div>
       {/* Main Header Bar */}
@@ -124,17 +122,7 @@ export function SiteHeader() {
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 md:gap-8">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
-            <div className="rounded-xl bg-[#1455c6] p-1.5 text-white shadow-sm transition-colors group-hover:bg-[#0f459f] sm:p-2">
-              <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6 text-[#f57224]" />
-            </div>
-            <div className="flex items-baseline">
-              <span className="text-[#1455c6] font-extrabold text-xl sm:text-2xl tracking-tight">
-                Aventa
-              </span>
-              <span className="text-[#f57224] font-extrabold text-xl sm:text-2xl tracking-tight">
-                Shop
-              </span>
-            </div>
+            <img src="/brand/aventa-shop-logo.png" alt="AVENTA SHOP" className="h-10 sm:h-12 w-auto object-contain transition-transform group-hover:scale-105" />
           </Link>
 
           {/* Search Bar Center */}
@@ -147,7 +135,7 @@ export function SiteHeader() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search in Aventa Shop"
+                placeholder="Search in AVENTA SHOP"
                 className="w-full pl-4 pr-24 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#f57224]/30 focus:border-[#f57224] focus:bg-white transition-all text-slate-800 placeholder-slate-400"
               />
               <button
@@ -236,7 +224,9 @@ export function SiteHeader() {
                         <p className="text-xs font-semibold text-slate-800 truncate">
                           {user.displayName || "User"}
                         </p>
-                        <p className="text-[11px] text-slate-500 truncate">{user.email}</p>
+                        <p className="text-[11px] text-slate-500 truncate">
+                          {user.email}
+                        </p>
                       </div>
 
                       <Link
@@ -289,7 +279,7 @@ export function SiteHeader() {
                   ) : (
                     <div className="p-3">
                       <p className="text-xs text-slate-600 mb-2.5 text-center">
-                        Welcome to Aventa Shop!
+                        Welcome to AVENTA SHOP!
                       </p>
                       <Link
                         to="/login"
@@ -372,39 +362,28 @@ export function SiteHeader() {
                 className="absolute top-full left-0 w-64 bg-white border border-slate-200 shadow-xl rounded-b-lg py-2 z-50"
                 onMouseLeave={() => setIsCategoryOpen(false)}
               >
-                {categories.map(
-                  (
-                    cat:
-                      | {
-                          id?: string;
-                          name?: string;
-                          slug?: string;
-                          label?: string;
-                          title?: string;
-                        }
-                      | string,
-                    idx: number,
-                  ) => {
-                    const catName =
-                      typeof cat === "string" ? cat : cat.name || cat.title || "Category";
-                    const catSlug =
-                      typeof cat === "object" && cat.slug
-                        ? cat.slug
-                        : catName.toLowerCase().replace(/\s+/g, "-");
-                    return (
-                      <Link
-                        key={typeof cat === "object" ? cat.id || idx : idx}
-                        to="/shop"
-                        search={{ category: catSlug } as Record<string, string>}
-                        onClick={() => setIsCategoryOpen(false)}
-                        className="flex items-center justify-between px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 hover:text-[#f57224] transition-colors"
-                      >
-                        <span className="font-medium">{catName}</span>
-                        <ChevronDown className="w-3 h-3 text-slate-400 -rotate-90" />
-                      </Link>
-                    );
-                  },
-                )}
+                {categories.map((cat: { id?: string; name?: string; slug?: string; label?: string; title?: string } | string, idx: number) => {
+                  const catName =
+                    typeof cat === "string"
+                      ? cat
+                      : cat.name || cat.title || "Category";
+                  const catSlug =
+                    typeof cat === "object" && cat.slug
+                      ? cat.slug
+                      : catName.toLowerCase().replace(/\s+/g, "-");
+                  return (
+                    <Link
+                      key={typeof cat === "object" ? cat.id || idx : idx}
+                      to="/shop"
+                      search={{ category: catSlug } as Record<string, string>}
+                      onClick={() => setIsCategoryOpen(false)}
+                      className="flex items-center justify-between px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 hover:text-[#f57224] transition-colors"
+                    >
+                      <span className="font-medium">{catName}</span>
+                      <ChevronDown className="w-3 h-3 text-slate-400 -rotate-90" />
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -438,8 +417,7 @@ export function SiteHeader() {
             </Link>
 
             <Link
-              to="/shop"
-              search={{ sort: "price-asc" } as Record<string, string>}
+              to="/flash-sales"
               className="flex items-center gap-1.5 hover:text-[#f57224] transition-colors"
             >
               <Tag className="w-4 h-4 text-emerald-500" />
@@ -461,50 +439,34 @@ export function SiteHeader() {
       {isMobileMenuOpen && (
         <div className="space-y-4 border-b border-slate-200 bg-white px-4 py-4 shadow-lg md:hidden">
           <div className="flex items-center justify-between rounded-xl bg-blue-50 px-3 py-2.5">
-            <div className="flex items-center gap-2 text-xs font-semibold text-[#1455c6]">
-              <User className="h-4 w-4" />
-              {user ? user.displayName || "My Account" : "Hello, sign in to Aventa Shop"}
-            </div>
-            <Link
-              to={user ? "/account" : "/login"}
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="rounded-lg bg-[#1455c6] px-3 py-1.5 text-[10px] font-bold text-white"
-            >
-              {user ? "Account" : "Sign In"}
-            </Link>
+            <div className="flex items-center gap-2 text-xs font-semibold text-[#1455c6]"><User className="h-4 w-4" />{user ? user.displayName || "My Account" : "Hello, sign in to AVENTA SHOP"}</div>
+            <Link to={user ? "/account" : "/login"} onClick={() => setIsMobileMenuOpen(false)} className="rounded-lg bg-[#1455c6] px-3 py-1.5 text-[10px] font-bold text-white">{user ? "Account" : "Sign In"}</Link>
           </div>
           <div className="font-bold text-xs uppercase tracking-wider text-slate-400 border-b pb-1">
             Categories
           </div>
           <div className="grid grid-cols-2 gap-2 text-xs">
-            {categories
-              .slice(0, 6)
-              .map(
-                (
-                  cat:
-                    | { id?: string; name?: string; slug?: string; label?: string; title?: string }
-                    | string,
-                  idx: number,
-                ) => {
-                  const catName =
-                    typeof cat === "string" ? cat : cat.name || cat.title || "Category";
-                  const catSlug =
-                    typeof cat === "object" && cat.slug
-                      ? cat.slug
-                      : catName.toLowerCase().replace(/\s+/g, "-");
-                  return (
-                    <Link
-                      key={typeof cat === "object" ? cat.id || idx : idx}
-                      to="/shop"
-                      search={{ category: catSlug } as Record<string, string>}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className="rounded-lg bg-slate-50 px-2 py-2 text-center text-xs text-slate-700 transition-colors hover:bg-blue-50 hover:text-[#1455c6] truncate"
-                    >
-                      {catName}
-                    </Link>
-                  );
-                },
-              )}
+            {categories.slice(0, 6).map((cat: { id?: string; name?: string; slug?: string; label?: string; title?: string } | string, idx: number) => {
+              const catName =
+                typeof cat === "string"
+                  ? cat
+                  : cat.name || cat.title || "Category";
+              const catSlug =
+                typeof cat === "object" && cat.slug
+                  ? cat.slug
+                  : catName.toLowerCase().replace(/\s+/g, "-");
+              return (
+                <Link
+                  key={typeof cat === "object" ? cat.id || idx : idx}
+                  to="/shop"
+                  search={{ category: catSlug } as Record<string, string>}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="rounded-lg bg-slate-50 px-2 py-2 text-center text-xs text-slate-700 transition-colors hover:bg-blue-50 hover:text-[#1455c6] truncate"
+                >
+                  {catName}
+                </Link>
+              );
+            })}
           </div>
 
           <div className="font-bold text-xs uppercase tracking-wider text-slate-400 border-b pb-1 pt-2">
@@ -535,8 +497,7 @@ export function SiteHeader() {
               <Sparkles className="w-4 h-4 text-purple-500" /> New Arrivals
             </Link>
             <Link
-              to="/shop"
-              search={{ sort: "price-asc" } as Record<string, string>}
+              to="/flash-sales"
               onClick={() => setIsMobileMenuOpen(false)}
               className="flex items-center gap-2 text-slate-700 py-1"
             >

@@ -1,0 +1,149 @@
+{
+  "export_metadata": {
+    "project": "AVENTA SHOP",
+    "firebase_project_id": "studio-6202246915-3b319",
+    "firestore_collections_checked": [
+      "categories",
+      "categories/{categoryId}/subcategories"
+    ],
+    "export_method": "Firestore REST API (public read via API key — categories have allow read: if true in security rules)",
+    "export_date": "2026-08-27T04:55:00Z",
+    "auth_method": "Firebase Web API Key (no service account used, no private key exposed)",
+    "no_credentials_exposed": true,
+    "no_code_changes_made": true,
+    "no_database_changes_made": true
+  },
+  "summary": {
+    "total_live_categories": 0,
+    "total_live_subcategories": 0,
+    "max_hierarchy_depth": 0,
+    "duplicate_category_names": "N/A (no categories exist)",
+    "duplicate_slugs": "N/A (no categories exist)",
+    "orphaned_subcategories": "N/A (no subcategories exist)",
+    "products_referencing_missing_categories": "N/A (products collection is also empty)",
+    "category_hierarchy": "None — categories collection is empty in Firestore"
+  },
+  "firestore_verification": {
+    "categories_collection": {
+      "method": "Firestore REST API listDocuments + runQuery",
+      "url": "https://firestore.googleapis.com/v1/projects/studio-6202246915-3b319/databases/(default)/documents/categories",
+      "result": "EMPTY — 0 documents returned",
+      "runQuery_result": "EMPTY — query returned no documents"
+    },
+    "subcategories": {
+      "method": "Could not query (no parent category IDs exist to query subcollections)",
+      "result": "N/A — no parent categories exist"
+    },
+    "products_collection": {
+      "method": "Firestore REST API runQuery",
+      "result": "EMPTY — 0 documents returned"
+    },
+    "settings_site": {
+      "method": "Firestore REST API getDocument",
+      "result": "Document exists",
+      "commission_config": "NOT SET — no commission key in settings/site",
+      "top_level_keys": [
+        "siteName",
+        "supportEmail",
+        "cod",
+        "currency",
+        "whatsappNumber",
+        "supportPhone",
+        "updatedAt",
+        "facebookUrl"
+      ]
+    }
+  },
+  "categories": [],
+  "subcategories": [],
+  "code_fallback_analysis": {
+    "note": "Since Firestore has no categories, the app uses hardcoded fallback category lists from two source files",
+    "SiteHeader_tsx_fallback": [
+      {
+        "id": "electronics",
+        "name": "Electronics & Gadgets",
+        "slug": "electronics"
+      },
+      {
+        "id": "fashion",
+        "name": "Fashion & Apparel",
+        "slug": "fashion"
+      },
+      {
+        "id": "home-lifestyle",
+        "name": "Home & Lifestyle",
+        "slug": "home-lifestyle"
+      },
+      {
+        "id": "health-beauty",
+        "name": "Health & Beauty",
+        "slug": "health-beauty"
+      },
+      {
+        "id": "groceries",
+        "name": "Groceries & Pets",
+        "slug": "groceries"
+      },
+      {
+        "id": "sports-outdoor",
+        "name": "Sports & Outdoor",
+        "slug": "sports-outdoor"
+      },
+      {
+        "id": "automotive",
+        "name": "Automotive & Motorbike",
+        "slug": "automotive"
+      }
+    ],
+    "index_tsx_fallback": [
+      {
+        "id": "electronics",
+        "name": "Electronics",
+        "slug": "electronics"
+      },
+      {
+        "id": "fashion",
+        "name": "Fashion",
+        "slug": "fashion"
+      },
+      {
+        "id": "home-living",
+        "name": "Home & Living",
+        "slug": "home-living"
+      },
+      {
+        "id": "audio-acc",
+        "name": "Audio & Accessories",
+        "slug": "audio-accessories"
+      },
+      {
+        "id": "gaming",
+        "name": "Gaming & Tech",
+        "slug": "gaming"
+      },
+      {
+        "id": "groceries",
+        "name": "Fresh & Grocery",
+        "slug": "groceries"
+      },
+      {
+        "id": "mother-baby",
+        "name": "Mother & Baby",
+        "slug": "mother-baby"
+      },
+      {
+        "id": "offers-deals",
+        "name": "Special Offers",
+        "slug": "offers"
+      }
+    ],
+    "note_about_fallbacks": "These are hardcoded fallbacks used only when Firestore returns empty. They are NOT database records and have no Firestore document IDs, no createdAt/updatedAt timestamps, and no subcategories."
+  },
+  "current_commission_system": {
+    "type": "Seller-level flat rate (NOT category-based)",
+    "storage": "sellers/{uid}.commissionRate (per-seller field in Firestore)",
+    "global_default": "settings/site.commission.defaultRate (fallback 8%)",
+    "status": "settings/site has NO commission config set — system uses code default of 8%",
+    "category_commission": "DOES NOT EXIST — no category-wise commission system in code or database"
+  }
+}

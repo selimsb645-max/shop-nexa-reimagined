@@ -1,3 +1,14 @@
+export interface DeliveryZoneSetting {
+  id: string;
+  labelEn: string;
+  labelBn: string;
+  charge: number;
+  etaDays: [number, number];
+  description: string;
+  active: boolean;
+  priority: number;
+}
+
 export interface SiteSettings {
   siteName: string;
   supportEmail: string;
@@ -15,6 +26,34 @@ export interface SiteSettings {
     minOrder: number;
     maxOrder: number;
     note: string;
+  };
+  tax: {
+    enabled: boolean;
+    /** Global tax rate (percentage 0-100). Applied to subtotal after discounts. */
+    rate: number;
+    /** Tax label shown to customers (e.g. "VAT", "Tax", "GST") */
+    label: string;
+    /** Whether per-product tax overrides the global rate */
+    perProductOverride: boolean;
+  };
+  commission: {
+    /** Default platform commission rate (percentage 0-100) for new sellers */
+    defaultRate: number;
+    /** Minimum withdrawal amount in currency units */
+    minWithdrawalAmount: number;
+    /** Settlement hold period in days after delivery */
+    holdPeriodDays: number;
+  };
+  inventory: {
+    /** Stock level below which a low-stock alert is triggered */
+    alertThreshold: number;
+  };
+  deliveryZones: {
+    zones: DeliveryZoneSetting[];
+    /** Fallback when no zone matches customer address */
+    fallbackZoneId: string;
+    /** What to do when no zone matches: "block" = prevent checkout, "fallback" = use fallback zone */
+    noZoneBehavior: "block" | "fallback";
   };
   homepage: {
     heroHeadline: string;
@@ -40,10 +79,49 @@ export interface Banner {
   updatedAt: number;
 }
 
+// ═══════════════════════════════════════════════════════════════
+// ANNOUNCEMENTS
+// ═══════════════════════════════════════════════════════════════
+
+export type AnnouncementType = "promo" | "info" | "system" | "event";
+export type AnnouncementPriority = "low" | "normal" | "high" | "urgent";
+
+export interface Announcement {
+  id: string;
+  title: string;
+  message: string;
+  type: AnnouncementType;
+  priority: AnnouncementPriority;
+  /** Visual style for the card */
+  gradient: string;
+  /** Icon identifier (lucide icon name) */
+  icon: string;
+  /** CTA button label (null = no button) */
+  ctaLabel: string | null;
+  /** CTA link (null = no link) */
+  ctaLink: string | null;
+  /** Published status — only published=true AND within schedule shows to users */
+  published: boolean;
+  /** Schedule start (epoch ms). 0 = immediately */
+  startTime: number;
+  /** Schedule end (epoch ms). 0 = never expires */
+  endTime: number;
+  /** Display order (lower = first). Default 0 */
+  order: number;
+  createdAt: number;
+  updatedAt: number;
+  createdBy: string;
+}
+
 export type ActivityAction =
   | "user.block"
   | "user.unblock"
   | "user.role_change"
+  | "admin.create"
+  | "admin.update_role"
+  | "admin.suspend"
+  | "admin.reactivate"
+  | "admin.revoke"
   | "seller.approve"
   | "seller.reject"
   | "seller.suspend"
@@ -63,6 +141,17 @@ export type ActivityAction =
   | "banner.create"
   | "banner.update"
   | "banner.delete"
+  | "announcement.create"
+  | "announcement.update"
+  | "announcement.delete"
+  | "return.create"
+  | "return.review"
+  | "return.approve"
+  | "return.reject"
+  | "return.item_received"
+  | "return.refund_approved"
+  | "return.refund_processed"
+  | "return.cancel"
   | "order.status_update"
   | "order.cancel"
   | "settings.update";

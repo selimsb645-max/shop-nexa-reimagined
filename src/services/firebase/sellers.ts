@@ -370,6 +370,23 @@ export async function acceptTerms(uid: string): Promise<void> {
 // Profile Update (Seller can edit only store info, not financial data)
 // ====================================================================
 
+// Fields a seller is allowed to modify on their own profile.
+// System-controlled fields (commission, earnings, status, etc.) are excluded.
+const SELLER_EDITABLE_FIELDS = new Set([
+  "shopName",
+  "shopSlug",
+  "description",
+  "logoUrl",
+  "bannerUrl",
+  "phone",
+  "addressLine",
+  "city",
+  "area",
+  "country",
+  "postalCode",
+  "updatedAt",
+]);
+
 export async function updateSellerProfile(
   uid: string,
   patch: Partial<
@@ -391,6 +408,13 @@ export async function updateSellerProfile(
   const update: Record<string, unknown> = { ...patch, updatedAt: serverTimestamp() };
   if (patch.shopName) {
     update.shopSlug = slugify(patch.shopName) || uid;
+  }
+  // Defense-in-depth: strip any non-editable fields that might slip through.
+  // Firestore rules enforce this server-side, but we also validate here.
+  for (const key of Object.keys(update)) {
+    if (!SELLER_EDITABLE_FIELDS.has(key)) {
+      delete update[key];
+    }
   }
   await updateDoc(doc(getDb(), SELLERS, uid), update);
 }

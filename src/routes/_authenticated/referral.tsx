@@ -30,9 +30,7 @@ function ReferralPage() {
 
   useEffect(() => {
     if (!user) return;
-    void ensureReferralCode(user.uid)
-      .then(setCode)
-      .catch(() => undefined);
+    void ensureReferralCode(user.uid).then(setCode).catch(() => undefined);
   }, [user]);
 
   const referrals = useQuery({
@@ -62,8 +60,8 @@ function ReferralPage() {
     if (typeof navigator !== "undefined" && "share" in navigator) {
       try {
         await (navigator as Navigator & { share: (d: ShareData) => Promise<void> }).share({
-          title: "Aventa Shop",
-          text: `Shop with my Aventa Shop code ${code} and get ${REFERRAL_WELCOME_POINTS} bonus points.`,
+          title: "AVENTA SHOP",
+          text: `Shop with my AVENTA SHOP code ${code} and get ${REFERRAL_WELCOME_POINTS} bonus points.`,
           url: link,
         });
         return;
@@ -131,8 +129,7 @@ function ReferralPage() {
         </div>
         {referredBy.data ? (
           <p className="mt-2 text-sm text-slate-500">
-            You joined with code <span className="font-bold text-slate-700">{referredBy.data}</span>
-            .
+            You joined with code <span className="font-bold text-slate-700">{referredBy.data}</span>.
           </p>
         ) : (
           <div className="mt-3 flex flex-wrap gap-3">
@@ -157,8 +154,7 @@ function ReferralPage() {
       {/* Friends invited */}
       <div className="mt-4 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
         <div className="flex items-center gap-2 border-b border-gray-100 px-5 py-3.5 font-bold text-slate-800">
-          <Users className="h-4 w-4 text-[#f57224]" /> Friends you invited (
-          {referrals.data?.length ?? 0})
+          <Users className="h-4 w-4 text-[#f57224]" /> Friends you invited ({referrals.data?.length ?? 0})
         </div>
         {referrals.isLoading ? (
           <div className="py-16 text-center">

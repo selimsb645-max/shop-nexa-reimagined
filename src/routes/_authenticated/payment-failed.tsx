@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { XCircle, ArrowLeft } from "lucide-react";
+import { BackButton } from "@/components/common/BackButton";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { useI18n } from "@/i18n";
@@ -7,7 +8,7 @@ import { useI18n } from "@/i18n";
 export const Route = createFileRoute("/_authenticated/payment-failed")({
   ssr: false,
   component: PaymentFailedPage,
-  head: () => ({ meta: [{ title: "Payment Failed — Aventa Shop" }] }),
+  head: () => ({ meta: [{ title: "Payment Failed — AVENTA SHOP" }] }),
 });
 
 function PaymentFailedPage() {
@@ -16,6 +17,9 @@ function PaymentFailedPage() {
     <div className="min-h-screen bg-background">
       <SiteHeader />
       <main className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
+        <div className="mb-4">
+          <BackButton fallbackTo="/orders" label="Back" className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-200 active:scale-95" />
+        </div>
         <div className="flex flex-col items-center text-center">
           <div className="mb-4 grid h-20 w-20 place-items-center rounded-full bg-red-100">
             <XCircle className="h-12 w-12 text-red-500" />

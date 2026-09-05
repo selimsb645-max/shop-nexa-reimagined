@@ -57,6 +57,7 @@ function WishlistPage() {
         reviewCount: 0,
         tags: [],
         featured: false,
+        freeDelivery: false,
         sellerId: null,
         productIds: [],
         maxDiscount: null,

@@ -1,5 +1,5 @@
 /**
- * Aventa Shop — Server-Side Settlement Engine
+ * AVENTA SHOP — Server-Side Settlement Engine
  *
  * This module is the SINGLE source of truth for all seller settlement operations.
  * It runs exclusively on the server (via Deno/server functions) and uses the
@@ -40,6 +40,7 @@ import type {
   SellerSettlementBreakdown,
   SettlementTxEntry,
   SettlementTxType,
+  DeliveryLineItem,
 } from "@/types/settlement";
 
 function round2(n: number): number {
@@ -68,8 +69,17 @@ export function computeSellerSettlement(input: {
   orderSubtotal: number;
   orderDiscount: number;
   orderShipping: number;
+  orderTax: number;
   commissionRate: number;
   nowMs: number;
+  // Delivery zone snapshot (immutable per order)
+  zoneId?: string | null;
+  zoneName?: string | null;
+  zoneCharge?: number;
+  customerDeliveryCharge?: number;
+  sellerDeliveryCharge?: number;
+  freeDelivery?: boolean;
+  deliveryLines?: DeliveryLineItem[];
 }): SellerSettlementBreakdown {
   const {
     sellerId,
@@ -78,16 +88,36 @@ export function computeSellerSettlement(input: {
     orderSubtotal,
     orderDiscount,
     orderShipping,
-    commissionRate,
+    orderTax,
+    commissionRate: rawRate,
     nowMs,
+    zoneId = null,
+    zoneName = null,
+    zoneCharge = 0,
+    customerDeliveryCharge = 0,
+    sellerDeliveryCharge = 0,
+    freeDelivery = false,
+    deliveryLines = [],
   } = input;
+
+  // Defense-in-depth: clamp commission rate to [0, 1] to prevent invalid
+  // values (negative, >100%, NaN) from producing nonsensical financial results.
+  // The checkout server already clamps, but this guards against any other caller.
+  const commissionRate = Number.isFinite(rawRate)
+    ? Math.min(Math.max(rawRate, 0), 1)
+    : rawRate === Infinity
+      ? 1
+      : 0;
 
   // Pro-rata share of discount and shipping
   const sellerRatio = orderSubtotal > 0 ? sellerSubtotal / orderSubtotal : 0;
   const sellerDiscountShare = round2(orderDiscount * sellerRatio);
   const sellerShippingShare = round2(orderShipping * sellerRatio);
+  const sellerTaxShare = round2(orderTax * sellerRatio);
 
-  const sellerNetSubtotal = round2(sellerSubtotal - sellerDiscountShare + sellerShippingShare);
+  const sellerNetSubtotal = round2(
+    sellerSubtotal - sellerDiscountShare + sellerShippingShare + sellerTaxShare,
+  );
   const commissionAmount = round2(sellerSubtotal * commissionRate);
   const sellerNetEarnings = round2(sellerNetSubtotal - commissionAmount);
 
@@ -97,10 +127,19 @@ export function computeSellerSettlement(input: {
     sellerSubtotal,
     sellerDiscountShare,
     sellerShippingShare,
+    sellerTaxShare,
     sellerNetSubtotal,
     commissionRate,
     commissionAmount,
     sellerNetEarnings,
+    // Delivery zone snapshot (immutable)
+    zoneId,
+    zoneName,
+    zoneCharge,
+    customerDeliveryCharge,
+    sellerDeliveryCharge,
+    freeDelivery,
+    deliveryLines,
     settlementStatus: "pending",
     payoutStatus: "none",
     orderCreatedAt: nowMs,
@@ -139,9 +178,20 @@ export function buildSellerOrderWrite(input: {
   paymentMethod: string;
   paymentStatus: string;
   shippingAddress: Record<string, unknown>;
+  deliverySnapshot?: {
+    zoneId: string;
+    zoneName: string;
+    zoneCharge: number;
+    customerDeliveryCharge: number;
+    sellerDeliveryCharge: number;
+    freeDelivery: boolean;
+    labelBn: string;
+    etaDays: [number, number];
+    deliveryLines: DeliveryLineItem[];
+  };
   nowMs: number;
 }): FsWrite {
-  const { projectId, sellerId, orderId, settlement, ...rest } = input;
+  const { projectId, sellerId, orderId, settlement, deliverySnapshot, ...rest } = input;
   const s = settlement;
 
   return {
@@ -156,6 +206,7 @@ export function buildSellerOrderWrite(input: {
         subtotal: s.sellerSubtotal,
         discountShare: s.sellerDiscountShare,
         shippingShare: s.sellerShippingShare,
+        taxShare: s.sellerTaxShare,
         netSubtotal: s.sellerNetSubtotal,
         commissionRate: s.commissionRate,
         commission: s.commissionAmount,
@@ -180,6 +231,7 @@ export function buildSellerOrderWrite(input: {
           sellerSubtotal: s.sellerSubtotal,
           sellerDiscountShare: s.sellerDiscountShare,
           sellerShippingShare: s.sellerShippingShare,
+          sellerTaxShare: s.sellerTaxShare,
           sellerNetSubtotal: s.sellerNetSubtotal,
           commissionRate: s.commissionRate,
           commissionAmount: s.commissionAmount,
@@ -191,7 +243,17 @@ export function buildSellerOrderWrite(input: {
           payoutAt: s.payoutAt,
           payoutId: s.payoutId,
           reversalReason: s.reversalReason,
+          // Delivery zone snapshot (immutable per order)
+          zoneId: s.zoneId,
+          zoneName: s.zoneName,
+          zoneCharge: s.zoneCharge,
+          customerDeliveryCharge: s.customerDeliveryCharge,
+          sellerDeliveryCharge: s.sellerDeliveryCharge,
+          freeDelivery: s.freeDelivery,
+          deliveryLines: s.deliveryLines,
         },
+        // Delivery snapshot for admin finance visibility
+        deliverySnapshot: deliverySnapshot ?? null,
         tracking: [{ status: "confirmed", note: "Order auto-confirmed", at: rest.nowMs }],
         createdAt: rest.nowMs,
         updatedAt: rest.nowMs,
@@ -267,7 +329,23 @@ export async function markOrderDeliveredSettlement(input: {
     return { updated: false, eligibleDate: null };
   }
 
-  const eligibleDate = input.deliveredAt + SETTLEMENT_HOLD_DAYS * 24 * 60 * 60 * 1000;
+  // Read configurable hold period from site settings (fallback to default)
+  let holdDays = SETTLEMENT_HOLD_DAYS;
+  try {
+    const settingsDocPath = docPath(projectId, ["settings", "site"]);
+    const settingsDocs = await batchGetDocs(projectId, [settingsDocPath]);
+    const sDoc = settingsDocs.get(settingsDocPath);
+    if (sDoc?.exists) {
+      const commissionConfig = (sDoc.data as Record<string, unknown>)["commission"] as
+        { holdPeriodDays?: number } | undefined;
+      if (commissionConfig?.holdPeriodDays && commissionConfig.holdPeriodDays > 0) {
+        holdDays = commissionConfig.holdPeriodDays;
+      }
+    }
+  } catch {
+    // Use default
+  }
+  const eligibleDate = input.deliveredAt + holdDays * 24 * 60 * 60 * 1000;
   const nowMs = Date.now();
 
   const writes: FsWrite[] = [
@@ -301,7 +379,7 @@ export async function markOrderDeliveredSettlement(input: {
           amount: 0,
           sellerEarnings: Number(settlement.sellerNetEarnings ?? 0),
           settlementStatus: "hold" as SettlementStatus,
-          note: `Order delivered. Earnings in ${SETTLEMENT_HOLD_DAYS}-day hold period. Eligible: ${new Date(eligibleDate).toISOString()}`,
+          note: `Order delivered. Earnings in ${holdDays}-day hold period. Eligible: ${new Date(eligibleDate).toISOString()}`,
           createdBy: "system",
           createdAt: nowMs,
         }),
@@ -719,6 +797,7 @@ export async function requestSettlementWithdrawal(input: {
           processedAt: null,
           paidAt: null,
           txId: null,
+          pendingTxId: txId,
         }),
       },
       currentDocument: { exists: false },
@@ -786,7 +865,7 @@ export async function processSettlementWithdrawal(input: {
   action: "approve" | "reject";
   note?: string;
   txRef?: string; // Manual payout transaction reference (for approve)
-}): Promise<{ status: string; amount: number; method: string }> {
+}): Promise<{ status: string; amount?: number; method?: string }> {
   const projectId = getProjectId();
   const token = await getAccessToken();
 
@@ -831,21 +910,40 @@ export async function processSettlementWithdrawal(input: {
   ];
 
   if (input.action === "approve") {
-    // Completed walletTx
-    writes.push({
-      update: {
-        name: docPath(projectId, ["sellers", input.sellerId, WALLET_TX, newDocId()]),
-        fields: toFsFields({
-          type: "withdrawal",
-          amount: -amount,
-          orderId: null,
-          note: `Withdrawal completed #${input.withdrawalId.slice(0, 8)} via ${method}`,
-          status: "completed",
-          createdAt: nowMs,
-        }),
-      },
-      currentDocument: { exists: false },
-    });
+    // UPDATE the pending walletTx to "completed" (not create a new one —
+    // creating a new one would double-debit the seller's balance).
+    const pendingTxId = String(withdrawData.pendingTxId ?? "");
+    if (pendingTxId) {
+      writes.push({
+        update: {
+          name: docPath(projectId, ["sellers", input.sellerId, WALLET_TX, pendingTxId]),
+          fields: toFsFields({
+            status: "completed",
+            note: `Withdrawal completed #${input.withdrawalId.slice(0, 8)} via ${method}`,
+            updatedAt: nowMs,
+          }),
+        },
+        updateMask: {
+          fieldPaths: ["status", "note", "updatedAt"],
+        },
+      });
+    } else {
+      // Fallback: if no pendingTxId (legacy withdrawal), create completed walletTx
+      writes.push({
+        update: {
+          name: docPath(projectId, ["sellers", input.sellerId, WALLET_TX, newDocId()]),
+          fields: toFsFields({
+            type: "withdrawal",
+            amount: -amount,
+            orderId: null,
+            note: `Withdrawal completed #${input.withdrawalId.slice(0, 8)} via ${method}`,
+            status: "completed",
+            createdAt: nowMs,
+          }),
+        },
+        currentDocument: { exists: false },
+      });
+    }
 
     // Settlement ledger: payout completed
     writes.push({
@@ -865,21 +963,41 @@ export async function processSettlementWithdrawal(input: {
       currentDocument: { exists: false },
     });
   } else {
-    // Reversal walletTx (refund the pending debit)
-    writes.push({
-      update: {
-        name: docPath(projectId, ["sellers", input.sellerId, WALLET_TX, newDocId()]),
-        fields: toFsFields({
-          type: "adjustment",
-          amount,
-          orderId: null,
-          note: `Withdrawal rejected #${input.withdrawalId.slice(0, 8)}, funds reversed`,
-          status: "completed",
-          createdAt: nowMs,
-        }),
-      },
-      currentDocument: { exists: false },
-    });
+    // UPDATE the pending walletTx to "rejected" so it no longer reduces
+    // available balance. (Previously created a reversal entry, which worked
+    // but left a stale "pending" entry in the ledger.)
+    const pendingTxId = String(withdrawData.pendingTxId ?? "");
+    if (pendingTxId) {
+      writes.push({
+        update: {
+          name: docPath(projectId, ["sellers", input.sellerId, WALLET_TX, pendingTxId]),
+          fields: toFsFields({
+            status: "rejected",
+            note: `Withdrawal rejected #${input.withdrawalId.slice(0, 8)}`,
+            updatedAt: nowMs,
+          }),
+        },
+        updateMask: {
+          fieldPaths: ["status", "note", "updatedAt"],
+        },
+      });
+    } else {
+      // Fallback: create reversal walletTx for legacy withdrawals
+      writes.push({
+        update: {
+          name: docPath(projectId, ["sellers", input.sellerId, WALLET_TX, newDocId()]),
+          fields: toFsFields({
+            type: "adjustment",
+            amount,
+            orderId: null,
+            note: `Withdrawal rejected #${input.withdrawalId.slice(0, 8)}, funds reversed`,
+            status: "completed",
+            createdAt: nowMs,
+          }),
+        },
+        currentDocument: { exists: false },
+      });
+    }
 
     // Settlement ledger: payout reversal
     writes.push({
@@ -1273,6 +1391,10 @@ export async function readAdminFinanceOverview(): Promise<{
 // ====================================================================
 
 function baseUrl(projectId: string): string {
+  const emulatorHost = Deno.env.get("FIRESTORE_EMULATOR_HOST");
+  if (emulatorHost) {
+    return `http://${emulatorHost}/v1/projects/${projectId}/databases/(default)/documents`;
+  }
   return `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents`;
 }
 

@@ -17,6 +17,7 @@ import {
   DollarSign,
   Tag,
   ImagePlus,
+  Truck,
 } from "lucide-react";
 import { SellerGate } from "@/components/seller/SellerGate";
 import { createSellerProduct } from "@/services/firebase/sellerProducts";
@@ -32,7 +33,7 @@ export const Route = createFileRoute("/_authenticated/seller/products/new")({
   component: () => (
     <SellerGate>{(profile) => <AddProductPage sellerId={profile.uid} />}</SellerGate>
   ),
-  head: () => ({ meta: [{ title: "Add Product — Aventa Shop Seller" }] }),
+  head: () => ({ meta: [{ title: "Add Product — AVENTA SHOP Seller" }] }),
 });
 
 // ====================================================================
@@ -55,6 +56,7 @@ interface DraftState {
   sku: string;
   tags: string;
   images: string[];
+  freeDelivery: boolean;
 }
 
 const EMPTY_DRAFT: DraftState = {
@@ -72,6 +74,7 @@ const EMPTY_DRAFT: DraftState = {
   sku: "",
   tags: "",
   images: [],
+  freeDelivery: false,
 };
 
 // ====================================================================
@@ -250,6 +253,7 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
         colors: [],
         sizes: [],
         featured: false,
+        freeDelivery: form.freeDelivery,
         status,
       });
 
@@ -596,6 +600,35 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
           </Section>
         </div>
 
+          {/* Section 4: Delivery Charge Responsibility */}
+          <Section title="Delivery Charge Responsibility" icon={<Truck className="w-4 h-4 text-[#f57224]" />}>
+            <div className="space-y-3">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="deliveryCharge"
+                  checked={!form.freeDelivery}
+                  onChange={() => setForm((f) => ({ ...f, freeDelivery: false }))}
+                  className="w-4 h-4 accent-[#f57224]"
+                />
+                <span className="text-sm text-slate-700">Customer Pays Delivery Charge</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="deliveryCharge"
+                  checked={form.freeDelivery}
+                  onChange={() => setForm((f) => ({ ...f, freeDelivery: true }))}
+                  className="w-4 h-4 accent-[#f57224]"
+                />
+                <span className="text-sm text-slate-700">Seller Pays Delivery Charge (Free Delivery)</span>
+              </label>
+              <p className="text-xs text-slate-400">
+                Free Delivery ON = you (seller) pay the delivery-zone charge. When OFF, the customer pays it.
+              </p>
+            </div>
+          </Section>
+
         {/* Right: Images + Preview (1/3) */}
         <div className="space-y-5">
           {/* Image Upload */}
@@ -636,7 +669,7 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
                     <img src={url} alt="" className="w-full h-full object-cover" />
                     <button
                       onClick={() => removeImage(i)}
-                      className="absolute top-1 right-1 w-6 h-6 bg-rose-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute top-1 right-1 w-6 h-6 bg-rose-500 text-white rounded-full flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>

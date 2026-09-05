@@ -20,12 +20,14 @@ export interface CategoryInput {
   slug: string;
   image: string | null;
   order: number;
+  commissionRate?: number | null;
 }
 
 export interface SubcategoryInput {
   name: string;
   slug: string;
   order: number;
+  commissionRate?: number | null;
 }
 
 export async function listCategoriesAdmin(): Promise<Category[]> {

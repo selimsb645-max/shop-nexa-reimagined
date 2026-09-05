@@ -26,9 +26,9 @@ import {
   BadgePercent,
   HelpCircle,
 } from "lucide-react";
+import { BackButton } from "@/components/common/BackButton";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
-import { WhatsAppFab } from "@/components/layout/SiteChrome";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { formatPrice } from "@/utils/format";
 import { toast } from "sonner";
@@ -38,6 +38,7 @@ import { getSellerProfile } from "@/services/firebase/sellers";
 import { firebaseConfigured } from "@/services/firebase/config";
 import { validateCoupon, CouponError } from "@/services/firebase/coupons";
 import type { Product } from "@/types/commerce";
+import { buildMetaTags, breadcrumbJsonLd, jsonLdScript } from "@/lib/seo";
 
 // ----------------------------------------------------------------------
 // Route Definition
@@ -45,6 +46,26 @@ import type { Product } from "@/types/commerce";
 
 export const Route = createFileRoute("/cart")({
   component: CartPage,
+  head: () => ({
+    meta: buildMetaTags({
+      title: "Your Shopping Cart — AVENTA SHOP",
+      description:
+        "Review the items in your AVENTA SHOP cart, apply vouchers, check delivery charges and continue to secure checkout with cash on delivery or online payment.",
+      path: "/cart",
+      type: "website",
+    }),
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: jsonLdScript(
+          breadcrumbJsonLd([
+            { name: "Home", path: "/" },
+            { name: "Cart", path: "/cart" },
+          ]),
+        ),
+      },
+    ],
+  }),
 });
 
 // ----------------------------------------------------------------------
@@ -54,7 +75,6 @@ export const Route = createFileRoute("/cart")({
 export interface CartItemType {
   id: string;
   productId?: string;
-  slug?: string;
   title: string;
   price: number;
   originalPrice?: number;
@@ -66,6 +86,8 @@ export interface CartItemType {
   size?: string;
   quantity: number;
   stock?: number;
+  slug?: string;
+  addedAt?: number;
 }
 
 export interface CouponType {
@@ -81,6 +103,8 @@ export interface CouponType {
 // ----------------------------------------------------------------------
 
 // Coupons are fetched from Firestore (no hardcoded values)
+
+
 
 // ----------------------------------------------------------------------
 // Main Cart Page Component
@@ -103,7 +127,7 @@ export default function CartPage() {
       return rawContextItems.map((item, index: number) => ({
         id: String(item.productId || `item-${index}`),
         productId: String(item.productId || `prod-${index}`),
-        title: item.title || "Aventa Shop Product",
+        title: item.title || "AVENTA SHOP Product",
         price: Number(item.price || 0),
         originalPrice: undefined,
         image:
@@ -136,7 +160,7 @@ export default function CartPage() {
           } catch (e) {
             console.warn("Failed to fetch product:", pid, e);
           }
-        }),
+        })
       );
       return results;
     },
@@ -160,14 +184,14 @@ export default function CartPage() {
             const profile = await getSellerProfile(sid);
             if (profile) {
               results[sid] = {
-                shopName: profile.shopName || "Aventa Shop",
+                shopName: profile.shopName || "AVENTA SHOP",
                 verified: profile.status === "approved",
               };
             }
           } catch (e) {
             console.warn("Failed to fetch seller:", sid, e);
           }
-        }),
+        })
       );
       return results;
     },
@@ -184,11 +208,9 @@ export default function CartPage() {
       const sellerInfo = sellerId ? sellerProfiles[sellerId] : null;
       return {
         ...item,
-        seller: sellerInfo?.shopName || (sellerId ? "Aventa Shop" : "Aventa Shop"),
+        seller: sellerInfo?.shopName || (sellerId ? "AVENTA SHOP" : "AVENTA SHOP"),
         sellerRating: product?.rating,
-        originalPrice:
-          item.originalPrice ||
-          (product?.compareAtPrice ? Number(product.compareAtPrice) : undefined),
+        originalPrice: item.originalPrice || (product?.compareAtPrice ? Number(product.compareAtPrice) : undefined),
         stock: item.stock || product?.stock || 0,
         image: item.image || (product?.images?.[0] ?? ""),
         title: item.title || product?.title || "Product",
@@ -200,7 +222,7 @@ export default function CartPage() {
   const enrichedSellerGroups = useMemo(() => {
     const groups: { [key: string]: CartItemType[] } = {};
     enrichedItems.forEach((item) => {
-      const sellerName = item.seller || "Aventa Shop";
+      const sellerName = item.seller || "AVENTA SHOP";
       if (!groups[sellerName]) groups[sellerName] = [];
       groups[sellerName].push(item);
     });
@@ -209,14 +231,14 @@ export default function CartPage() {
 
   // Check if seller is verified from Firebase
   const isSellerVerified = (sellerName: string): boolean => {
-    const found = Object.values(sellerProfiles).find(
-      (s: { shopName: string; verified: boolean }) => s.shopName === sellerName,
-    );
+    const found = Object.values(sellerProfiles).find((s: { shopName: string; verified: boolean }) => s.shopName === sellerName);
     return found?.verified ?? false;
   };
 
   // Selected Item IDs for Checkout Calculation
-  const [selectedIds, setSelectedIds] = useState<string[]>(() => items.map((item) => item.id));
+  const [selectedIds, setSelectedIds] = useState<string[]>(() =>
+    items.map((item) => item.id)
+  );
 
   // Sync selectedIds if items list changes length
   useEffect(() => {
@@ -244,7 +266,7 @@ export default function CartPage() {
   const _sellerGroups = useMemo(() => {
     const groups: { [key: string]: CartItemType[] } = {};
     items.forEach((item) => {
-      const sellerName = item.seller || "Aventa Shop";
+      const sellerName = item.seller || "AVENTA SHOP";
       if (!groups[sellerName]) {
         groups[sellerName] = [];
       }
@@ -265,7 +287,10 @@ export default function CartPage() {
 
   // Selected Items Subtotal
   const itemsSubtotal = useMemo(() => {
-    return selectedItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
+    return selectedItems.reduce(
+      (acc, item) => acc + item.price * item.quantity,
+      0
+    );
   }, [selectedItems]);
 
   // Total Original Value (for calculating savings)
@@ -282,7 +307,8 @@ export default function CartPage() {
 
   // Shipping Fee Calculation
   const isFreeShipping = itemsSubtotal >= FREE_SHIPPING_THRESHOLD;
-  const shippingFee = selectedItems.length === 0 || isFreeShipping ? 0 : STANDARD_SHIPPING_FEE;
+  const shippingFee =
+    selectedItems.length === 0 || isFreeShipping ? 0 : STANDARD_SHIPPING_FEE;
 
   // Coupon Discount Calculation
   const couponDiscountAmount = useMemo(() => {
@@ -309,7 +335,8 @@ export default function CartPage() {
   }, [itemsSubtotal]);
 
   // Check if All Items in Cart are Selected
-  const isAllSelected = items.length > 0 && selectedIds.length === items.length;
+  const isAllSelected =
+    items.length > 0 && selectedIds.length === items.length;
 
   // Select / Deselect All Toggle
   const handleToggleSelectAll = () => {
@@ -336,7 +363,9 @@ export default function CartPage() {
   // Select / Deselect Seller Group
   const handleToggleSelectSellerGroup = (sellerItems: CartItemType[]) => {
     const sellerItemIds = sellerItems.map((i) => i.id);
-    const allSellerSelected = sellerItemIds.every((id) => selectedIds.includes(id));
+    const allSellerSelected = sellerItemIds.every((id) =>
+      selectedIds.includes(id)
+    );
 
     if (allSellerSelected) {
       setSelectedIds((prev) => prev.filter((id) => !sellerItemIds.includes(id)));
@@ -354,7 +383,9 @@ export default function CartPage() {
       cartContext.updateQty(id, newQty);
     }
 
-    setItems((prev) => prev.map((item) => (item.id === id ? { ...item, quantity: newQty } : item)));
+    setItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, quantity: newQty } : item))
+    );
   };
 
   // Single Item Remove
@@ -396,9 +427,28 @@ export default function CartPage() {
       wishlistContext.toggle({
         id: item.productId || item.id,
         title: item.title,
+        slug: item.slug || '',
+        shortDescription: '',
+        description: '',
+        brand: null,
         price: item.price,
+        compareAtPrice: null,
+        costPrice: null,
+        tax: 0,
         images: [item.image],
-      } as any);
+        categoryId: '',
+        categorySlug: '',
+        subcategoryId: null,
+        subcategorySlug: null,
+        stock: item.stock || 0,
+        rating: 0,
+        reviewCount: 0,
+        tags: [],
+        featured: false,
+        freeDelivery: false,
+        createdAt: item.addedAt || Date.now(),
+        updatedAt: Date.now(),
+      } as Product);
     }
 
     handleRemoveItem(item.id);
@@ -420,9 +470,28 @@ export default function CartPage() {
         wishlistContext.toggle({
           id: item.productId || item.id,
           title: item.title,
+          slug: item.slug || '',
+          shortDescription: '',
+          description: '',
+          brand: null,
           price: item.price,
+          compareAtPrice: null,
+          costPrice: null,
+          tax: 0,
           images: [item.image],
-        } as any);
+          categoryId: '',
+          categorySlug: '',
+          subcategoryId: null,
+          subcategorySlug: null,
+          stock: item.stock || 0,
+          rating: 0,
+          reviewCount: 0,
+          tags: [],
+          featured: false,
+        freeDelivery: false,
+          createdAt: item.addedAt || Date.now(),
+          updatedAt: Date.now(),
+        } as Product);
       }
     });
 
@@ -459,10 +528,9 @@ export default function CartPage() {
         discountType: result.coupon.type,
         value: result.coupon.value,
         minSubtotal: result.coupon.minSubtotal,
-        description:
-          result.coupon.type === "percent"
-            ? `${result.coupon.value}% OFF`
-            : `${formatPrice(result.coupon.value)} OFF`,
+        description: result.coupon.type === "percent"
+          ? `${result.coupon.value}% OFF`
+          : `${formatPrice(result.coupon.value)} OFF`,
       });
       setCouponCodeInput("");
       toast.success(`Voucher code "${result.coupon.code}" applied!`);
@@ -497,7 +565,9 @@ export default function CartPage() {
     }
 
     toast.success("Redirecting to checkout...", {
-      description: `${selectedTotalCount} items selected (${formatPrice(finalTotal)})`,
+      description: `${selectedTotalCount} items selected (${formatPrice(
+        finalTotal
+      )})`,
     });
 
     navigate({ to: "/checkout" });
@@ -510,11 +580,11 @@ export default function CartPage() {
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-4 md:px-6 py-4 md:py-8">
+        <div className="mb-3">
+          <BackButton fallbackTo="/" label="Back" className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-200 active:scale-95" />
+        </div>
         {/* Breadcrumb Navigation */}
-        <nav
-          aria-label="Breadcrumb"
-          className="mb-4 text-xs sm:text-sm text-slate-500 flex items-center gap-1.5"
-        >
+        <nav aria-label="Breadcrumb" className="mb-4 text-xs sm:text-sm text-slate-500 flex items-center gap-1.5">
           <Link to="/" className="hover:text-[#f57224] transition-colors">
             Home
           </Link>
@@ -539,8 +609,7 @@ export default function CartPage() {
               <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
                 {items.length > 0 ? (
                   <>
-                    You have <span className="font-semibold text-slate-800">{items.length}</span>{" "}
-                    {items.length === 1 ? "item" : "items"} in your cart
+                    You have <span className="font-semibold text-slate-800">{items.length}</span> {items.length === 1 ? "item" : "items"} in your cart
                   </>
                 ) : (
                   "Your cart is currently empty"
@@ -636,7 +705,9 @@ export default function CartPage() {
               {/* Items Grouped By Store / Seller */}
               {Object.entries(enrichedSellerGroups).map(([sellerName, sellerItems]) => {
                 const sellerItemIds = sellerItems.map((i) => i.id);
-                const isSellerAllSelected = sellerItemIds.every((id) => selectedIds.includes(id));
+                const isSellerAllSelected = sellerItemIds.every((id) =>
+                  selectedIds.includes(id)
+                );
 
                 return (
                   <div
@@ -649,7 +720,9 @@ export default function CartPage() {
                         <input
                           type="checkbox"
                           checked={isSellerAllSelected}
-                          onChange={() => handleToggleSelectSellerGroup(sellerItems)}
+                          onChange={() =>
+                            handleToggleSelectSellerGroup(sellerItems)
+                          }
                           className="w-4 h-4 text-[#f57224] rounded border-slate-300 focus:ring-[#f57224] cursor-pointer accent-[#f57224]"
                         />
                         <Store className="w-4 h-4 text-[#0f172a]" />
@@ -657,15 +730,13 @@ export default function CartPage() {
                           {sellerName}
                         </span>
                         {isSellerVerified(sellerName) && (
-                          <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-1.5 py-0.2 rounded border border-amber-200">
-                            Verified Seller
-                          </span>
+                          <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-1.5 py-0.2 rounded border border-amber-200">Verified Seller</span>
                         )}
                       </div>
 
                       <div className="flex items-center gap-1 text-xs text-emerald-700 font-medium">
                         <Truck className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">Fulfilled by Aventa Shop</span>
+                        <span className="hidden sm:inline">Fulfilled by AVENTA SHOP</span>
                       </div>
                     </div>
 
@@ -673,12 +744,13 @@ export default function CartPage() {
                     <div className="divide-y divide-slate-100">
                       {sellerItems.map((item) => {
                         const isItemSelected = selectedIds.includes(item.id);
-                        const discountPct =
-                          item.originalPrice && item.originalPrice > item.price
-                            ? Math.round(
-                                ((item.originalPrice - item.price) / item.originalPrice) * 100,
-                              )
-                            : 0;
+                        const discountPct = item.originalPrice && item.originalPrice > item.price
+                          ? Math.round(
+                              ((item.originalPrice - item.price) /
+                                item.originalPrice) *
+                                100
+                            )
+                          : 0;
 
                         return (
                           <div
@@ -700,7 +772,7 @@ export default function CartPage() {
                               <Link
                                 to="/product/$slug"
                                 params={{
-                                  slug: String(item.slug || item.productId || item.id),
+                                  slug: item.slug || String(item.id),
                                 }}
                                 className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden bg-slate-100 border border-slate-200 flex-shrink-0 group"
                               >
@@ -711,7 +783,7 @@ export default function CartPage() {
                                   onError={(e) => {
                                     (e.target as HTMLElement).setAttribute(
                                       "src",
-                                      "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNTAgMTUwIj48cmVjdCB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iI2YzZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzljYTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==",
+                                      "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNTAgMTUwIj48cmVjdCB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iI2YzZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzljYTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg=="
                                     );
                                   }}
                                 />
@@ -727,7 +799,7 @@ export default function CartPage() {
                                 <Link
                                   to="/product/$slug"
                                   params={{
-                                    slug: String(item.slug || item.productId || item.id),
+                                    slug: item.slug || String(item.id),
                                   }}
                                   className="text-xs sm:text-sm font-semibold text-slate-800 hover:text-[#f57224] line-clamp-2 leading-snug transition-colors"
                                 >
@@ -758,11 +830,12 @@ export default function CartPage() {
                                   <span className="text-base font-bold text-[#0f172a]">
                                     {formatPrice(item.price)}
                                   </span>
-                                  {item.originalPrice && item.originalPrice > item.price && (
-                                    <span className="text-xs text-slate-400 line-through">
-                                      {formatPrice(item.originalPrice)}
-                                    </span>
-                                  )}
+                                  {item.originalPrice &&
+                                    item.originalPrice > item.price && (
+                                      <span className="text-xs text-slate-400 line-through">
+                                        {formatPrice(item.originalPrice)}
+                                      </span>
+                                    )}
                                 </div>
                               </div>
                             </div>
@@ -773,7 +846,12 @@ export default function CartPage() {
                               <div className="flex items-center border border-slate-300 rounded-lg bg-white overflow-hidden shadow-sm">
                                 <button
                                   type="button"
-                                  onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                                  onClick={() =>
+                                    handleUpdateQuantity(
+                                      item.id,
+                                      item.quantity - 1
+                                    )
+                                  }
                                   disabled={item.quantity <= 1}
                                   className="w-8 h-8 flex items-center justify-center text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
                                   aria-label="Decrease quantity"
@@ -787,7 +865,12 @@ export default function CartPage() {
 
                                 <button
                                   type="button"
-                                  onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                                  onClick={() =>
+                                    handleUpdateQuantity(
+                                      item.id,
+                                      item.quantity + 1
+                                    )
+                                  }
                                   className="w-8 h-8 flex items-center justify-center text-slate-600 hover:bg-slate-100 transition-colors"
                                   aria-label="Increase quantity"
                                 >
@@ -813,7 +896,9 @@ export default function CartPage() {
 
                                   <button
                                     type="button"
-                                    onClick={() => handleRemoveItem(item.id, item.title)}
+                                    onClick={() =>
+                                      handleRemoveItem(item.id, item.title)
+                                    }
                                     title="Remove Item"
                                     className="p-1.5 text-slate-400 hover:text-rose-600 rounded-full hover:bg-slate-100 transition-colors"
                                   >
@@ -841,7 +926,7 @@ export default function CartPage() {
                 </Link>
 
                 <p className="text-xs text-slate-500 hidden sm:block">
-                  Need help? Contact Aventa Shop 24/7 Support
+                  Need help? Contact AVENTA SHOP 24/7 Support
                 </p>
               </div>
             </div>
@@ -852,9 +937,7 @@ export default function CartPage() {
               <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200/80">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <Truck
-                      className={`w-4 h-4 ${isFreeShipping ? "text-emerald-600" : "text-[#f57224]"}`}
-                    />
+                    <Truck className={`w-4 h-4 ${isFreeShipping ? "text-emerald-600" : "text-[#f57224]"}`} />
                     <span className="text-xs sm:text-sm font-bold text-[#0f172a]">
                       {isFreeShipping ? "Free Delivery Unlocked!" : "Free Delivery Progress"}
                     </span>
@@ -880,17 +963,11 @@ export default function CartPage() {
                 {isFreeShipping ? (
                   <p className="text-xs text-emerald-700 font-medium flex items-center gap-1.5">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                    <span>
-                      Your order qualifies for <strong>FREE Standard Delivery</strong>!
-                    </span>
+                    <span>Your order qualifies for <strong>FREE Standard Delivery</strong>!</span>
                   </p>
                 ) : (
                   <p className="text-xs text-slate-600">
-                    Add{" "}
-                    <strong className="text-[#f57224]">
-                      {formatPrice(amountNeededForFreeShipping)}
-                    </strong>{" "}
-                    more of items to get <strong className="text-[#0f172a]">FREE Delivery</strong>!
+                    Add <strong className="text-[#f57224]">{formatPrice(amountNeededForFreeShipping)}</strong> more of items to get <strong className="text-[#0f172a]">FREE Delivery</strong>!
                   </p>
                 )}
               </div>
@@ -899,7 +976,9 @@ export default function CartPage() {
               <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200/80">
                 <div className="flex items-center gap-2 mb-3">
                   <Tag className="w-4 h-4 text-[#f57224]" />
-                  <h3 className="text-sm font-bold text-[#0f172a]">Voucher / Promo Code</h3>
+                  <h3 className="text-sm font-bold text-[#0f172a]">
+                    Voucher / Promo Code
+                  </h3>
                 </div>
 
                 {/* Applied Coupon Display */}
@@ -957,7 +1036,9 @@ export default function CartPage() {
                     </div>
 
                     {couponError && (
-                      <p className="text-xs text-rose-600 font-medium">{couponError}</p>
+                      <p className="text-xs text-rose-600 font-medium">
+                        {couponError}
+                      </p>
                     )}
 
                     {/* Quick Voucher Chips */}
@@ -1024,7 +1105,9 @@ export default function CartPage() {
                   {appliedCoupon && (
                     <div className="flex items-center justify-between text-emerald-700">
                       <span>Voucher Discount</span>
-                      <span className="font-bold">-{formatPrice(couponDiscountAmount)}</span>
+                      <span className="font-bold">
+                        -{formatPrice(couponDiscountAmount)}
+                      </span>
                     </div>
                   )}
 
@@ -1032,15 +1115,21 @@ export default function CartPage() {
                   {totalDiscountSavings > 0 && (
                     <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium p-2.5 rounded-lg flex items-center justify-between">
                       <span>Total Savings on Products:</span>
-                      <span className="font-bold">{formatPrice(totalDiscountSavings)}</span>
+                      <span className="font-bold">
+                        {formatPrice(totalDiscountSavings)}
+                      </span>
                     </div>
                   )}
 
                   <div className="border-t border-slate-200 pt-3 mt-3">
                     <div className="flex items-baseline justify-between">
                       <div>
-                        <span className="text-base font-bold text-[#0f172a]">Total</span>
-                        <p className="text-[11px] text-slate-400">Inclusive of VAT & all taxes</p>
+                        <span className="text-base font-bold text-[#0f172a]">
+                          Total
+                        </span>
+                        <p className="text-[11px] text-slate-400">
+                          Inclusive of VAT & all taxes
+                        </p>
                       </div>
                       <span className="text-2xl font-black text-[#f57224] tracking-tight">
                         {formatPrice(finalTotal)}
@@ -1098,7 +1187,9 @@ export default function CartPage() {
                 <div className="flex items-start gap-3">
                   <ShieldCheck className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
                   <div>
-                    <h4 className="text-xs font-bold text-[#0f172a]">100% Secure Checkout</h4>
+                    <h4 className="text-xs font-bold text-[#0f172a]">
+                      100% Secure Checkout
+                    </h4>
                     <p className="text-[11px] text-slate-500">
                       256-bit encrypted transactions for ultimate protection
                     </p>
@@ -1108,7 +1199,9 @@ export default function CartPage() {
                 <div className="border-t border-slate-100 pt-2.5 flex items-start gap-3">
                   <RotateCcw className="w-5 h-5 text-[#f57224] flex-shrink-0 mt-0.5" />
                   <div>
-                    <h4 className="text-xs font-bold text-[#0f172a]">7-Day Easy Returns</h4>
+                    <h4 className="text-xs font-bold text-[#0f172a]">
+                      7-Day Easy Returns
+                    </h4>
                     <p className="text-[11px] text-slate-500">
                       Hassle-free replacement or full refund guarantee
                     </p>
@@ -1118,7 +1211,9 @@ export default function CartPage() {
                 <div className="border-t border-slate-100 pt-2.5 flex items-start gap-3">
                   <CheckCircle2 className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
                   <div>
-                    <h4 className="text-xs font-bold text-[#0f172a]">Verified Seller Products</h4>
+                    <h4 className="text-xs font-bold text-[#0f172a]">
+                      Verified Seller Products
+                    </h4>
                     <p className="text-[11px] text-slate-500">
                       Authentic products directly from brand partners
                     </p>
@@ -1143,8 +1238,7 @@ export default function CartPage() {
                 Your Shopping Cart is Empty
               </h2>
               <p className="text-sm text-slate-500 mb-6 max-w-md mx-auto leading-relaxed">
-                Looks like you haven't added anything to your cart yet. Explore our top daily deals,
-                flash sales, and trending electronics!
+                Looks like you haven't added anything to your cart yet. Explore our top daily deals, flash sales, and trending electronics!
               </p>
 
               <Link
@@ -1172,15 +1266,14 @@ export default function CartPage() {
 
       {/* Mobile Fixed Bottom Checkout Bar */}
       {items.length > 0 && selectedItems.length > 0 && (
-        <div
-          className="lg:hidden fixed bottom-[64px] left-0 right-0 bg-white border-t border-slate-200 p-3 px-4 shadow-lg z-40 flex items-center justify-between gap-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
-          style={{ bottom: "calc(64px + env(safe-area-inset-bottom, 0px))" }}
-        >
+        <div className="lg:hidden fixed bottom-[64px] left-0 right-0 bg-white border-t border-slate-200 p-3 px-4 shadow-lg z-40 flex items-center justify-between gap-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]" style={{ bottom: "calc(64px + env(safe-area-inset-bottom, 0px))" }}>
           <div>
             <span className="text-[10px] text-slate-500 block uppercase font-medium">
               Total ({selectedTotalCount} items)
             </span>
-            <span className="text-lg font-black text-[#f57224]">{formatPrice(finalTotal)}</span>
+            <span className="text-lg font-black text-[#f57224]">
+              {formatPrice(finalTotal)}
+            </span>
           </div>
 
           <button
@@ -1198,8 +1291,7 @@ export default function CartPage() {
       <SiteFooter />
 
       {/* Floating WhatsApp Fab & Mobile Bottom Navigation */}
-      <WhatsAppFab />
-      <MobileBottomNav />
+<MobileBottomNav />
     </div>
   );
 }

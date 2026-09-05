@@ -48,10 +48,15 @@ export const processWithdrawal = createServerFn({ method: "POST" })
 
     const { uid } = await verifyIdToken(data.idToken);
 
-    // TODO: verify uid has finance.withdrawals.process permission
-    // For now, verify the user is an admin by checking their role
-    const token = await import("./firebase-admin.server").then((m) => m.getAccessToken());
-    const projectId = await import("./firebase-admin.server").then((m) => m.getProjectId());
+    // SECURITY: verify the caller is an admin AND holds a finance-capable
+    // sub-role (finance.withdrawals.process). Sub-role checks must happen here,
+    // never only in client-side permission maps.
+    const token = await import("./firebase-admin.server").then((m) =>
+      m.getAccessToken(),
+    );
+    const projectId = await import("./firebase-admin.server").then((m) =>
+      m.getProjectId(),
+    );
     const userRes = await fetch(
       `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${encodeURIComponent(uid)}`,
       { headers: { authorization: `Bearer ${token}` } },
@@ -59,8 +64,9 @@ export const processWithdrawal = createServerFn({ method: "POST" })
     if (!userRes.ok) throw new Error("Could not verify admin permissions.");
     const userDoc = await userRes.json();
     const role = userDoc.fields?.role?.stringValue;
-    if (role !== "admin") {
-      throw new Error("Only admins can process withdrawals.");
+    const adminRole = userDoc.fields?.adminRole?.stringValue ?? null;
+    if (role !== "admin" || (adminRole !== "super_admin" && adminRole !== "finance_admin")) {
+      throw new Error("Only finance admins can process withdrawals.");
     }
 
     return processWithdrawalServer({

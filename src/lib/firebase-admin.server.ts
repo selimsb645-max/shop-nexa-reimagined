@@ -291,3 +291,165 @@ export function newDocId(): string {
   for (const b of bytes) id += chars[b % chars.length];
   return id;
 }
+
+/* ------------------------------------------------------------------ */
+/* Firestore REST transactions (optimistic concurrency)                */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Begin a read-write Firestore transaction.
+ * Returns the transaction ID needed for subsequent reads and commits.
+ */
+export async function beginTransaction(projectId: string): Promise<string> {
+  const token = await getAccessToken();
+  const res = await fetch(`${baseUrl(projectId)}:beginTransaction`, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${token}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({ options: { readWrite: {} } }),
+  });
+  if (!res.ok) throw new Error("Could not start a secure transaction. Please try again.");
+  const json = (await res.json()) as { transaction?: string };
+  if (!json.transaction) throw new Error("Could not start a secure transaction. Please try again.");
+  return json.transaction;
+}
+
+/**
+ * Read documents by full resource name *within* an active transaction.
+ * These reads create optimistic locks — if any read document is modified
+ * by another transaction before this one commits, the commit will fail
+ * with ABORTED and the caller should retry.
+ */
+export async function batchGetDocsWithTx(
+  projectId: string,
+  names: string[],
+  transaction: string,
+): Promise<Map<string, FetchedDoc>> {
+  const result = new Map<string, FetchedDoc>();
+  if (!names.length) return result;
+  const token = await getAccessToken();
+  const res = await fetch(`${baseUrl(projectId)}:batchGet`, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${token}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({ documents: Array.from(new Set(names)), transaction }),
+  });
+  if (!res.ok) throw new Error("Could not read data within the transaction. Please try again.");
+  const json = (await res.json()) as Array<{
+    found?: { name: string; fields?: Record<string, FsValue>; updateTime?: string };
+    missing?: string;
+  }>;
+  for (const entry of json) {
+    if (entry.found) {
+      result.set(entry.found.name, {
+        exists: true,
+        data: fromFsFields(entry.found.fields ?? {}),
+        updateTime: entry.found.updateTime ?? null,
+      });
+    } else if (entry.missing) {
+      result.set(entry.missing, { exists: false, data: {}, updateTime: null });
+    }
+  }
+  return result;
+}
+
+/**
+ * Commit writes *within* an active transaction.
+ * If any document read within this transaction has been modified by another
+ * transaction since this one started, the commit fails with an ABORTED error.
+ */
+export async function commitWithTx(
+  projectId: string,
+  writes: FsWrite[],
+  transaction: string,
+): Promise<boolean> {
+  const token = await getAccessToken();
+  const res = await fetch(`${baseUrl(projectId)}:commit`, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${token}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({ writes, transaction }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    // ABORTED = another transaction modified a document we read.
+    // Return false so the caller can retry the whole transaction.
+    if (res.status === 409 || text.includes("ABORTED") || text.includes("FAILED_PRECONDITION")) {
+      return false;
+    }
+    throw new Error("We could not complete your purchase. Please try again.");
+  }
+  return true;
+}
+
+/** Rollback a transaction (release locks without committing). */
+export async function rollbackTransaction(projectId: string, transaction: string): Promise<void> {
+  try {
+    const token = await getAccessToken();
+    await fetch(`${baseUrl(projectId)}:rollback`, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${token}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ transaction }),
+    });
+  } catch {
+    // Best-effort — transaction will expire on its own
+  }
+}
+
+/**
+ * Run a function inside a Firestore transaction with automatic retry.
+ *
+ * The callback receives a `read` function (for reading documents within the
+ * transaction) and must return the list of writes to commit. If the commit
+ * fails because a concurrent transaction modified a read document, the
+ * entire function (begin → read → callback → commit) is retried.
+ *
+ * This provides true serializable isolation for the read document set.
+ *
+ * @param projectId - Firestore project ID
+ * @param fn - callback that receives read function, returns writes array
+ * @param maxRetries - max retries on ABORTED (default 5)
+ */
+export async function runFirestoreTransaction(
+  projectId: string,
+  fn: (read: (names: string[]) => Promise<Map<string, FetchedDoc>>) => Promise<FsWrite[]>,
+  maxRetries = 5,
+): Promise<void> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const tx = await beginTransaction(projectId);
+    try {
+      const read = (names: string[]) => batchGetDocsWithTx(projectId, names, tx);
+      const writes = await fn(read);
+
+      // If the callback returns no writes, it means the transaction should
+      // be aborted (e.g., insufficient balance). Rollback and return.
+      if (writes.length === 0) {
+        await rollbackTransaction(projectId, tx);
+        return;
+      }
+
+      const committed = await commitWithTx(projectId, writes, tx);
+      if (committed) return; // Success!
+
+      // Commit was ABORTED — a concurrent transaction modified our reads.
+      // Retry from scratch.
+      lastError = new Error("Transaction conflict, retrying...");
+    } catch (err) {
+      await rollbackTransaction(projectId, tx);
+      throw err; // Non-retryable error
+    }
+  }
+
+  throw lastError ?? new Error("Transaction failed after multiple retries. Please try again.");
+}

@@ -1,174 +1,176 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { BackButton } from "@/components/common/BackButton";
+import { SiteHeader } from "@/components/layout/SiteHeader";
+import { SiteFooter } from "@/components/layout/SiteFooter";
 import {
-  Share2,
-  Link2,
   Users,
-  Percent,
-  BarChart3,
+  Share2,
+  TrendingUp,
   Wallet,
-  ShieldCheck,
-  Handshake,
-  ArrowRight,
-  Rocket,
+  CheckCircle2,
+  MousePointerClick,
+  Gift,
 } from "lucide-react";
-import { PublicInfoLayout, InfoCard, InfoHeading } from "@/components/common/PublicInfoLayout";
+import { buildMetaTags } from "@/lib/seo";
 
 export const Route = createFileRoute("/affiliate")({
-  ssr: false,
+  ssr: true,
   component: AffiliatePage,
   head: () => ({
-    meta: [
-      { title: "Affiliate Program — Aventa Shop" },
-      {
-        name: "description",
-        content: "Share Aventa Shop products and earn commission with the affiliate program.",
-      },
-    ],
+    meta: buildMetaTags({
+      title: "Affiliate Program — Earn Money with AVENTA SHOP",
+      description: "Join the AVENTA SHOP Affiliate Program and earn commission by sharing products you love. Get your unique referral link, track clicks, and withdraw earnings via bKash or bank transfer.",
+      path: "/affiliate",
+      type: "website",
+    }),
   }),
 });
 
 const HOW_IT_WORKS = [
   {
-    icon: <Handshake className="h-5 w-5" />,
-    label: "Join",
-    text: "Apply to the affiliate program",
+    icon: <Users className="h-6 w-6" />,
+    title: "1. Sign Up",
+    description:
+      "Register for the AVENTA SHOP Affiliate Program with your account. It's free to join — no minimum follower count or website required.",
   },
   {
-    icon: <Link2 className="h-5 w-5" />,
-    label: "Get Your Link",
-    text: "Receive your unique affiliate link",
+    icon: <Share2 className="h-6 w-6" />,
+    title: "2. Share Your Link",
+    description:
+      "Get your unique affiliate referral link. Share it on Facebook, YouTube, Instagram, WhatsApp groups, blogs, or anywhere your audience is.",
   },
   {
-    icon: <Share2 className="h-5 w-5" />,
-    label: "Share",
-    text: "Share products with your audience",
+    icon: <MousePointerClick className="h-6 w-6" />,
+    title: "3. Earn Commissions",
+    description:
+      "When someone clicks your link and makes a purchase within 30 days, you earn a commission on the sale. Track everything from your dashboard.",
   },
   {
-    icon: <Users className="h-5 w-5" />,
-    label: "Customers Purchase",
-    text: "People shop through your link",
+    icon: <Wallet className="h-6 w-6" />,
+    title: "4. Withdraw Earnings",
+    description:
+      "Once you reach the ৳500 minimum withdrawal threshold, cash out via bKash, Nagad, or bank transfer. Payments are processed within 3-5 business days.",
   },
-  {
-    icon: <Wallet className="h-5 w-5" />,
-    label: "Earn Commission",
-    text: "Get paid for qualifying sales",
-  },
+];
+
+const BENEFITS = [
+  { icon: <TrendingUp className="h-5 w-5" />, title: "Competitive Commissions", description: "Earn up to 10% commission on qualifying purchases, depending on the product category." },
+  { icon: <Gift className="h-5 w-5" />, title: "Bonus Rewards", description: "Top-performing affiliates get exclusive bonus payouts and early access to promotions." },
+  { icon: <CheckCircle2 className="h-5 w-5" />, title: "30-Day Cookie", description: "You get credit for any purchase made within 30 days of someone clicking your link." },
+  { icon: <Wallet className="h-5 w-5" />, title: "Easy Withdrawals", description: "Cash out earnings via bKash, Nagad, or bank transfer once you reach ৳500." },
+];
+
+const COMMISSION_RATES = [
+  { category: "Electronics & Gadgets", rate: "3% – 5%" },
+  { category: "Fashion & Apparel", rate: "6% – 8%" },
+  { category: "Beauty & Personal Care", rate: "8% – 10%" },
+  { category: "Home & Kitchen", rate: "5% – 7%" },
+  { category: "Groceries & Essentials", rate: "4% – 6%" },
+  { category: "Other Categories", rate: "5% – 10%" },
 ];
 
 function AffiliatePage() {
   return (
-    <PublicInfoLayout title="Affiliate Program" subtitle="Share Products. Earn Rewards.">
-      {/* Hero */}
-      <InfoCard className="mb-4 bg-gradient-to-br from-slate-900 to-slate-800 text-white">
-        <div className="flex flex-col items-start gap-4">
-          <span className="rounded-full bg-orange-500/20 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-orange-300">
-            Earn With Us
-          </span>
-          <h2 className="text-xl font-bold sm:text-2xl">Turn Your Audience Into Earnings</h2>
-          <p className="text-sm leading-relaxed text-white/80">
-            If you create content, run a community, or simply love recommending good products — the
-            Aventa Shop Affiliate Program lets you earn commission on sales you refer.
+    <div className="min-h-screen bg-background">
+      <SiteHeader />
+      <main className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
+        <div className="mb-4">
+          <BackButton fallbackTo="/" label="Back" />
+        </div>
+
+        {/* Hero */}
+        <div className="mb-8 rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 p-8 text-white">
+          <h1 className="text-2xl font-bold">AVENTA SHOP Affiliate Program</h1>
+          <p className="mt-2 text-orange-50">
+            Turn your influence into income. Share products you love with your audience and earn
+            commissions on every qualifying sale. Free to join, easy to start.
+          </p>
+        </div>
+
+        {/* How It Works */}
+        <h2 className="mb-4 text-xl font-bold text-foreground">How It Works</h2>
+        <div className="mb-8 space-y-4">
+          {HOW_IT_WORKS.map((step, i) => (
+            <div
+              key={i}
+              className="flex gap-4 rounded-2xl border bg-background p-5 shadow-sm"
+            >
+              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                {step.icon}
+              </span>
+              <div>
+                <h3 className="text-base font-semibold text-foreground">{step.title}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">{step.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Commission Rates */}
+        <h2 className="mb-4 text-xl font-bold text-foreground">Commission Rates by Category</h2>
+        <div className="mb-8 overflow-hidden rounded-2xl border bg-background shadow-sm">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b bg-muted/30">
+                <th className="px-5 py-3 text-left font-semibold text-foreground">Product Category</th>
+                <th className="px-5 py-3 text-right font-semibold text-foreground">Commission Rate</th>
+              </tr>
+            </thead>
+            <tbody>
+              {COMMISSION_RATES.map((row, i) => (
+                <tr key={i} className={i < COMMISSION_RATES.length - 1 ? "border-b" : ""}>
+                  <td className="px-5 py-3 text-muted-foreground">{row.category}</td>
+                  <td className="px-5 py-3 text-right font-medium text-primary">{row.rate}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Benefits */}
+        <h2 className="mb-4 text-xl font-bold text-foreground">Why Join?</h2>
+        <div className="mb-8 grid gap-4 sm:grid-cols-2">
+          {BENEFITS.map((benefit, i) => (
+            <div key={i} className="flex gap-3 rounded-2xl border bg-background p-5 shadow-sm">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-green-50 text-green-600">
+                {benefit.icon}
+              </span>
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">{benefit.title}</h3>
+                <p className="mt-0.5 text-xs text-muted-foreground">{benefit.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Rules */}
+        <div className="mb-8 rounded-2xl border border-blue-100 bg-blue-50 p-5">
+          <h2 className="mb-3 text-lg font-semibold text-foreground">Program Rules</h2>
+          <ol className="space-y-2 text-sm text-muted-foreground">
+            <li>1. Commissions apply only to completed (delivered and not returned) orders.</li>
+            <li>2. Self-referrals are not allowed — you cannot earn commission on your own purchases.</li>
+            <li>3. Minimum withdrawal amount is ৳500. Payments processed within 3-5 business days.</li>
+            <li>4. Cookie duration is 30 days from the first click.</li>
+            <li>5. AVENTA SHOP reserves the right to suspend accounts engaging in fraudulent or spammy referral practices.</li>
+            <li>6. Commission rates may change — current rates are always visible in your affiliate dashboard.</li>
+          </ol>
+        </div>
+
+        {/* CTA */}
+        <div className="rounded-2xl bg-primary/5 p-6 text-center">
+          <h2 className="text-lg font-semibold text-foreground">Ready to start earning?</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Join the affiliate program today — it's free and takes 2 minutes.
           </p>
           <Link
-            to="/contact-us"
-            className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-6 py-3 text-sm font-bold text-white transition hover:bg-orange-600 active:scale-[0.98]"
+            to="/register"
+            className="mt-4 inline-flex items-center justify-center rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
           >
-            <Rocket className="h-4 w-4" /> Join Affiliate Program
+            Become an Affiliate
           </Link>
         </div>
-      </InfoCard>
-
-      {/* How it works */}
-      <InfoCard className="mb-4">
-        <InfoHeading icon={<BarChart3 className="h-5 w-5 text-orange-500" />}>
-          How It Works
-        </InfoHeading>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          {HOW_IT_WORKS.map((s, i) => (
-            <div key={s.label} className="rounded-xl bg-slate-50 p-4 text-center">
-              <div className="mx-auto mb-2 grid h-10 w-10 place-items-center rounded-full bg-orange-50 text-orange-500">
-                {s.icon}
-              </div>
-              <p className="text-xs font-bold text-slate-800">
-                {i + 1}. {s.label}
-              </p>
-              <p className="mt-1 text-[11px] leading-snug text-slate-500">{s.text}</p>
-            </div>
-          ))}
-        </div>
-      </InfoCard>
-
-      {/* Benefits */}
-      <InfoCard className="mb-4">
-        <InfoHeading>Benefits</InfoHeading>
-        <div className="grid gap-3 sm:grid-cols-3">
-          {[
-            {
-              icon: <Percent className="h-6 w-6 text-orange-500" />,
-              title: "Commission on Sales",
-              text: "Earn a percentage of qualifying purchases made through your links.",
-            },
-            {
-              icon: <BarChart3 className="h-6 w-6 text-orange-500" />,
-              title: "Performance Tracking",
-              text: "See your clicks, orders and earnings in your affiliate dashboard.",
-            },
-            {
-              icon: <Wallet className="h-6 w-6 text-orange-500" />,
-              title: "Simple Payouts",
-              text: "Request a payout once you reach the minimum payout amount.",
-            },
-          ].map((b) => (
-            <div key={b.title} className="rounded-xl border border-slate-100 bg-slate-50 p-4">
-              <div className="mb-2">{b.icon}</div>
-              <h3 className="text-sm font-semibold text-slate-800">{b.title}</h3>
-              <p className="mt-1 text-xs leading-relaxed text-slate-500">{b.text}</p>
-            </div>
-          ))}
-        </div>
-      </InfoCard>
-
-      {/* Rules & eligibility */}
-      <div className="mb-4 grid gap-4 sm:grid-cols-2">
-        <InfoCard>
-          <InfoHeading icon={<Users className="h-5 w-5 text-orange-500" />}>
-            Eligible Products
-          </InfoHeading>
-          <p className="text-sm leading-relaxed text-slate-600">
-            Most marketplace products are eligible for affiliate commission. Commission rates vary
-            by product category and are confirmed when your affiliate account is approved.
-          </p>
-        </InfoCard>
-        <InfoCard>
-          <InfoHeading icon={<ShieldCheck className="h-5 w-5 text-orange-500" />}>
-            Affiliate Rules
-          </InfoHeading>
-          <ul className="space-y-1.5 text-sm text-slate-600">
-            <li>• No spam or misleading claims about products</li>
-            <li>• No fake orders or self-referrals to farm commission</li>
-            <li>• Commission is paid on delivered, non-returned orders only</li>
-            <li>• Violating the rules can end your affiliate account</li>
-          </ul>
-        </InfoCard>
-      </div>
-
-      {/* Status + CTA */}
-      <InfoCard className="mb-4 border-dashed">
-        <div className="flex flex-col items-center gap-2 text-center">
-          <p className="text-sm font-semibold text-slate-700">Affiliate Dashboard — Coming Soon</p>
-          <p className="text-xs leading-relaxed text-slate-500">
-            We're building a dedicated dashboard for tracking links, orders and payouts. For now,
-            affiliates receive monthly performance reports by email.
-          </p>
-        </div>
-      </InfoCard>
-
-      <Link
-        to="/contact-us"
-        className="flex items-center justify-center gap-2 rounded-2xl bg-orange-500 px-6 py-4 text-sm font-bold text-white shadow-sm transition hover:bg-orange-600 active:scale-[0.98]"
-      >
-        Apply Now <ArrowRight className="h-4 w-4" />
-      </Link>
-    </PublicInfoLayout>
+      </main>
+      <SiteFooter />
+    </div>
   );
 }

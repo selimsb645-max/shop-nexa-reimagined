@@ -1,3 +1,12 @@
+/**
+ * AVENTA SHOP — Seller Insights
+ *
+ * Route: /seller/insights
+ * Protected by SellerGate — only authenticated, approved sellers can access.
+ * Product data is seller-scoped via listSellerProducts(uid) which queries
+ * Firestore with where("sellerId", "==", uid) — never loads all marketplace products.
+ */
+
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -11,28 +20,30 @@ import {
   Loader,
   Crown,
 } from "lucide-react";
-import { listAllProducts } from "@/services/firebase/products";
-import { firebaseConfigured } from "@/services/firebase/config";
+import { listSellerProducts } from "@/services/firebase/sellerProducts";
+import { SellerGate } from "@/components/seller/SellerGate";
 import { formatPrice } from "@/utils/format";
+import type { SellerProfile } from "@/types/seller";
 import type { Product } from "@/types/commerce";
 import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/seller/insights")({
   ssr: false,
-  component: SellerInsightsPage,
-  head: () => ({ meta: [{ title: "Seller Insights — Aventa Shop" }] }),
+  component: () => <SellerGate>{(profile) => <SellerInsightsPage profile={profile} />}</SellerGate>,
+  head: () => ({ meta: [{ title: "Seller Insights — AVENTA SHOP" }] }),
 });
 
-function SellerInsightsPage() {
+function SellerInsightsPage({ profile }: { profile: SellerProfile }) {
   const { t } = useI18n();
+
+  // Seller-scoped query: Firestore WHERE sellerId == profile.uid
+  // Never loads all marketplace products — the query itself is filtered server-side.
   const { data: products, isLoading } = useQuery({
-    queryKey: ["products", "all"],
-    queryFn: listAllProducts,
-    enabled: firebaseConfigured,
+    queryKey: ["seller-products", profile.uid],
+    queryFn: () => listSellerProducts(profile.uid),
   });
 
-  // Filter to seller's products (would use sellerId in production)
-  const sellerProducts = (products ?? []).filter((p) => p.sellerId);
+  const sellerProducts = products ?? [];
   const totalProducts = sellerProducts.length;
   const totalStock = sellerProducts.reduce((sum, p) => sum + p.stock, 0);
   const totalValue = sellerProducts.reduce((sum, p) => sum + p.price * p.stock, 0);
@@ -45,8 +56,8 @@ function SellerInsightsPage() {
   const topSellers = [...sellerProducts].sort((a, b) => b.reviewCount - a.reviewCount).slice(0, 5);
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+    <div className="space-y-6">
+      <div>
         <div className="mb-6 flex items-center gap-3">
           <Link to="/seller" className="text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-5 w-5" />
@@ -178,7 +189,7 @@ function SellerInsightsPage() {
             </div>
           </div>
         )}
-      </main>
+      </div>
     </div>
   );
 }
@@ -198,7 +209,7 @@ function StatCard({
     <div className="rounded-2xl border bg-background p-4 shadow-sm">
       <div className={`mb-1 ${color}`}>{icon}</div>
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-lg font-bold">{value}</p>
+      <p className="text-lg font-bold break-all">{value}</p>
     </div>
   );
 }

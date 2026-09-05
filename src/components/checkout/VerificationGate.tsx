@@ -481,7 +481,7 @@ export function VerificationGate({
 
         <div className="flex items-center justify-center gap-2 mt-6 text-xs text-slate-400">
           <Lock className="w-3 h-3" />
-          <span>Secured by Aventa Shop verification</span>
+          <span>Secured by AVENTA SHOP verification</span>
         </div>
       </main>
     </div>

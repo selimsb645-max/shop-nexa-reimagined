@@ -29,4 +29,4 @@ Disallow: /my-reviews
 Disallow: /edit-profile
 Disallow: /track-orders
 
-Sitemap: https://shop-nexa.lovable.app/sitemap.xml
+Sitemap: https://aventa-shop.com/sitemap.xml

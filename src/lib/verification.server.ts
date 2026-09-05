@@ -1,5 +1,5 @@
 /**
- * Secure Checkout Verification System for Aventa Shop
+ * Secure Checkout Verification System for AVENTA SHOP
  *
  * Server-side OTP generation, hashing, session management,
  * rate limiting, and provider abstraction.
@@ -353,9 +353,6 @@ export interface VerificationProvider {
 class MockVerificationProvider implements VerificationProvider {
   name = "mock";
   async sendOtp(phone: string, otp: string) {
-    if (typeof console !== "undefined") {
-      console.log(`[MOCK OTP] ${phone}: ${otp}`);
-    }
     return { delivered: true, mock: true };
   }
 }
@@ -366,6 +363,7 @@ class SmsVerificationProvider implements VerificationProvider {
   async sendOtp(phone: string, otp: string) {
     const apiUrl = Deno.env.get("SMS_GATEWAY_URL");
     const apiKey = Deno.env.get("SMS_GATEWAY_API_KEY");
+    const deviceId = Deno.env.get("SMS_GATEWAY_DEVICE_ID");
     if (!apiUrl || !apiKey) {
       throw new Error("SMS gateway not configured");
     }
@@ -373,11 +371,12 @@ class SmsVerificationProvider implements VerificationProvider {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        authorization: `Bearer ${apiKey}`,
+        "x-api-key": apiKey,
       },
       body: JSON.stringify({
-        to: phone,
-        message: `Your Aventa Shop verification code is ${otp}. Valid for 5 minutes.`,
+        recipients: [phone],
+        message: `Your AVENTA SHOP verification code is ${otp}. Valid for 5 minutes.`,
+        ...(deviceId ? { deviceId } : {}),
       }),
     });
     return { delivered: res.ok };

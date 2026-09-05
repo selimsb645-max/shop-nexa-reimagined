@@ -1,5 +1,5 @@
 /**
- * Aventa Shop — Seller Settlement Dashboard Route
+ * AVENTA SHOP — Seller Settlement Dashboard Route
  *
  * Route: /seller/settlements
  * Shows the seller's complete financial picture:
@@ -24,6 +24,7 @@ import {
   type SellerSettlementData,
 } from "@/services/firebase/sellerSettlements";
 import { SellerShell } from "@/components/seller/SellerShell";
+import { SellerGate } from "@/components/seller/SellerGate";
 import { formatPrice } from "@/utils/format";
 import { toast } from "sonner";
 import { useI18n } from "@/i18n";
@@ -43,14 +44,19 @@ import {
 
 export const Route = createFileRoute("/_authenticated/seller/settlements")({
   ssr: false,
-  component: SellerSettlementsPage,
-  head: () => ({ meta: [{ title: "Settlements — Aventa Shop Seller" }] }),
+  component: () => (
+    <SellerGate>{(profile) => <SellerSettlementsPage profile={profile} />}</SellerGate>
+  ),
+  head: () => ({ meta: [{ title: "Settlements — AVENTA SHOP Seller" }] }),
 });
 
-function SellerSettlementsPage() {
+function SellerSettlementsPage({
+  profile: seller,
+}: {
+  profile: NonNullable<ReturnType<typeof useSellerProfile>["profile"]>;
+}) {
   const { t } = useI18n();
   const { user } = useAuth();
-  const { profile: seller } = useSellerProfile();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<SellerSettlementData | null>(null);
   const [showWithdraw, setShowWithdraw] = useState(false);
@@ -213,15 +219,15 @@ function SellerSettlementsPage() {
               <div>
                 <label className="text-sm font-medium">{t("seller.payoutMethod")}</label>
                 <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {[
-                    { id: "bkash", label: "bKash", icon: Smartphone },
-                    { id: "nagad", label: "Nagad", icon: Smartphone },
-                    { id: "rocket", label: "Rocket", icon: Smartphone },
-                    { id: "bank", label: "Bank", icon: Landmark },
-                  ].map((m) => (
+                  {([
+                    { id: "bkash" as const, label: "bKash", icon: Smartphone },
+                    { id: "nagad" as const, label: "Nagad", icon: Smartphone },
+                    { id: "rocket" as const, label: "Rocket", icon: Smartphone },
+                    { id: "bank" as const, label: "Bank", icon: Landmark },
+                  ] as const).map((m) => (
                     <button
                       key={m.id}
-                      onClick={() => setWithdrawMethod(m.id as any)}
+                      onClick={() => setWithdrawMethod(m.id)}
                       className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
                         withdrawMethod === m.id
                           ? "border-primary bg-primary/10 text-primary"
@@ -335,7 +341,7 @@ function StatCard({
         <span className={color}>{icon}</span>
         <span className="text-xs font-medium text-muted-foreground">{label}</span>
       </div>
-      <div className="text-xl font-bold">{value}</div>
+      <div className="text-xl font-bold break-all">{value}</div>
     </div>
   );
 }

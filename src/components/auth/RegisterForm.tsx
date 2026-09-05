@@ -18,10 +18,7 @@ import { useAuth } from "@/context/AuthContext";
  * Failures are non-blocking — we don't want promo code issues to break
  * the registration flow. The user can manually claim from /promo-codes.
  */
-async function tryGenerateWelcomePromo(user: {
-  uid: string;
-  getIdToken: () => Promise<string>;
-}): Promise<void> {
+async function tryGenerateWelcomePromo(user: { uid: string; getIdToken: () => Promise<string> }): Promise<void> {
   try {
     const idToken = await user.getIdToken();
     await generatePromoCode({ data: { idToken, campaignType: "welcome" } });
@@ -55,7 +52,7 @@ export function RegisterForm() {
       const authUser = await waitForAuthUser();
       // Auto-generate welcome promo code (non-blocking)
       await tryGenerateWelcomePromo(authUser);
-      toast.success("Account created! You got a welcome promo code — check My Promo Codes.");
+      toast.success("Account created! You got a welcome NEXA promo code — check My Promo Codes.");
       navigate({ to: "/", replace: true });
     } catch (err) {
       toast.error(mapFirebaseError(err));
@@ -73,7 +70,7 @@ export function RegisterForm() {
       const authUser = await waitForAuthUser();
       // Auto-generate welcome promo code for new Google users (non-blocking)
       await tryGenerateWelcomePromo(authUser);
-      toast.success("Welcome to Aventa Shop! Check My Promo Codes for your welcome discount.");
+      toast.success("Welcome to AVENTA SHOP! Check My Promo Codes for your welcome discount.");
       navigate({ to: "/", replace: true });
     } catch (err) {
       toast.error(mapFirebaseError(err));
@@ -81,6 +78,7 @@ export function RegisterForm() {
       setGoogleLoading(false);
     }
   };
+
 
   return (
     <div className="space-y-4">

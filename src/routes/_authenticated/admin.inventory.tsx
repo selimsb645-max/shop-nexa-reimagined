@@ -19,12 +19,12 @@ import { useI18n } from "@/i18n";
 export const Route = createFileRoute("/_authenticated/admin/inventory")({
   ssr: false,
   component: AdminInventoryPage,
-  head: () => ({ meta: [{ title: "Inventory Management — Aventa Shop Admin" }] }),
+  head: () => ({ meta: [{ title: "Inventory Management — AVENTA SHOP Admin" }] }),
 });
 
 function AdminInventoryPage() {
-  const { t } = useI18n();
-  const [filter, setFilter] = useState<"all" | "low" | "out">("all");
+
+  const { t } = useI18n();  const [filter, setFilter] = useState<"all" | "low" | "out">("all");
 
   const { data: products, isLoading } = useQuery({
     queryKey: ["products", "all"],
@@ -55,28 +55,10 @@ function AdminInventoryPage() {
 
         {/* Stats */}
         <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <StatCard
-            icon={<Package className="h-5 w-5" />}
-            label="Total Products"
-            value={String(allProducts.length)}
-          />
-          <StatCard
-            icon={<AlertTriangle className="h-5 w-5" />}
-            label="Low Stock"
-            value={String(lowStock.length)}
-            color="text-orange-500"
-          />
-          <StatCard
-            icon={<TrendingDown className="h-5 w-5" />}
-            label="Out of Stock"
-            value={String(outOfStock.length)}
-            color="text-red-500"
-          />
-          <StatCard
-            icon={<TrendingUp className="h-5 w-5" />}
-            label="Inventory Value"
-            value={formatPrice(totalValue)}
-          />
+          <StatCard icon={<Package className="h-5 w-5" />} label="Total Products" value={String(allProducts.length)} />
+          <StatCard icon={<AlertTriangle className="h-5 w-5" />} label="Low Stock" value={String(lowStock.length)} color="text-orange-500" />
+          <StatCard icon={<TrendingDown className="h-5 w-5" />} label="Out of Stock" value={String(outOfStock.length)} color="text-red-500" />
+          <StatCard icon={<TrendingUp className="h-5 w-5" />} label="Inventory Value" value={formatPrice(totalValue)} />
         </div>
 
         {/* Filter tabs */}
@@ -131,33 +113,21 @@ function AdminInventoryPage() {
                     </td>
                     <td className="p-3">{formatPrice(product.price)}</td>
                     <td className="p-3">
-                      <span
-                        className={`font-medium ${
-                          product.stock === 0
-                            ? "text-red-500"
-                            : product.stock <= 5
-                              ? "text-orange-500"
-                              : ""
-                        }`}
-                      >
+                      <span className={`font-medium ${
+                        product.stock === 0 ? "text-red-500" : product.stock <= 5 ? "text-orange-500" : ""
+                      }`}>
                         {product.stock}
                       </span>
                     </td>
                     <td className="p-3">
-                      <span
-                        className={`rounded-full px-2 py-1 text-xs font-medium ${
-                          product.stock === 0
-                            ? "bg-red-100 text-red-700"
-                            : product.stock <= 5
-                              ? "bg-orange-100 text-orange-700"
-                              : "bg-green-100 text-green-700"
-                        }`}
-                      >
-                        {product.stock === 0
-                          ? "Out of Stock"
+                      <span className={`rounded-full px-2 py-1 text-xs font-medium ${
+                        product.stock === 0
+                          ? "bg-red-100 text-red-700"
                           : product.stock <= 5
-                            ? "Low Stock"
-                            : "In Stock"}
+                            ? "bg-orange-100 text-orange-700"
+                            : "bg-green-100 text-green-700"
+                      }`}>
+                        {product.stock === 0 ? "Out of Stock" : product.stock <= 5 ? "Low Stock" : "In Stock"}
                       </span>
                     </td>
                     <td className="p-3 text-muted-foreground">{product.categorySlug}</td>
@@ -172,17 +142,7 @@ function AdminInventoryPage() {
   );
 }
 
-function StatCard({
-  icon,
-  label,
-  value,
-  color = "text-primary",
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  color?: string;
-}) {
+function StatCard({ icon, label, value, color = "text-primary" }: { icon: React.ReactNode; label: string; value: string; color?: string }) {
   return (
     <div className="rounded-2xl border bg-background p-4 shadow-sm">
       <div className={`mb-1 ${color}`}>{icon}</div>

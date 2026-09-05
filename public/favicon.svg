@@ -1,7 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
-  <!-- AVENTA SHOP favicon: orange rounded square, white "A" mark -->
-  <rect x="4" y="4" width="120" height="120" rx="26" fill="#f97316"/>
-  <polygon points="57,20 71,20 42,108 26,108" fill="#ffffff"/>
-  <polygon points="57,20 71,20 102,108 86,108" fill="#ffffff"/>
-  <polygon points="41,73 87,73 87,91 41,91" fill="#ffffff"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- AVENTA SHOP favicon SVG - derived from the official brand logo -->
+  <!-- Brand blue: #003070 (dominant color from official logo) -->
+  <!-- Theme orange: #f57224 (from manifest.json theme_color) -->
+  <rect width="512" height="512" fill="#ffffff" rx="64"/>
+
+  <!-- AVENTA text -->
+  <text x="256" y="180" font-size="118" font-weight="700"
+        text-anchor="middle" dominant-baseline="central"
+        font-family="Arial, Helvetica, sans-serif"
+        fill="#003070" letter-spacing="-2">AVENTA</text>
+
+  <!-- SHOP text - in brand orange -->
+  <text x="256" y="310" font-size="100" font-weight="700"
+        text-anchor="middle" dominant-baseline="central"
+        font-family="Arial, Helvetica, sans-serif"
+        fill="#f57224" letter-spacing="8">SHOP</text>
+
+  <!-- Decorative line under text -->
+  <rect x="176" y="370" width="160" height="4" rx="2" fill="#f57224"/>
 </svg>

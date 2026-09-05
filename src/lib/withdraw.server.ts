@@ -47,7 +47,7 @@ export async function requestWithdrawalServer(req: WithdrawRequest): Promise<Wit
 
   // Read wallet balance from Firestore ledger
   const walletRes = await fetch(
-    `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${encodeURIComponent(req.uid)}/walletTx:runQuery`,
+    `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/sellers/${encodeURIComponent(req.uid)}/walletTx:runQuery`,
     {
       method: "POST",
       headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },

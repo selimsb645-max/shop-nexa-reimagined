@@ -11,6 +11,10 @@ import {
 import { getDb } from "./config";
 import type { SellerOrder, SellerOrderStatus, ShippingInfo } from "@/types/seller";
 import { markOrderDelivered } from "@/lib/settlement.functions";
+import {
+  isValidSellerOrderStatusTransition,
+  transitionErrorMessage,
+} from "@/lib/order-transitions";
 
 const SELLERS = "sellers";
 const ORDERS = "orders";
@@ -29,6 +33,11 @@ function mapOrder(id: string, d: Record<string, unknown>): SellerOrder {
     buyerEmail: (r.buyerEmail as string | null) ?? null,
     items: (r.items as SellerOrder["items"]) ?? [],
     subtotal: Number(r.subtotal ?? 0),
+    discount: Number(r.discount ?? 0),
+    tax: Number(r.tax ?? 0),
+    taxLabel: String(r.taxLabel ?? "Tax"),
+    platformFee: Number(r.platformFee ?? 0),
+    total: Number(r.total ?? 0),
     commission: Number(r.commission ?? 0),
     earnings: Number(r.earnings ?? 0),
     shipping: (r.shipping as ShippingInfo) ?? {
@@ -88,6 +97,11 @@ export async function getSellerOrder(
  *
  * When status is "cancelled", the reversal is handled by the admin
  * via adminOrders.ts cancelOrderAdmin which calls reverseSettlement.
+ *
+ * SECURITY (Step 22):
+ * - isValidSellerOrderStatusTransition() called before any status write
+ * - Terminal states (delivered except returned, cancelled, returned) reject
+ * - Invalid transitions (e.g. delivered → processing) are rejected
  */
 export async function updateSellerOrderStatus(
   sellerId: string,
@@ -104,6 +118,11 @@ export async function updateSellerOrderStatus(
   // Guard: if already at this status, skip (idempotent at the order level)
   const currentStatus = String(snap.data().status ?? "pending");
   if (currentStatus === status) return;
+
+  // Step 22: Validate seller order status transition
+  if (!isValidSellerOrderStatusTransition(currentStatus, status)) {
+    throw new Error(transitionErrorMessage(currentStatus, status, true));
+  }
 
   const existingTracking = (snap.data().tracking as SellerOrder["tracking"]) ?? [];
   const ts = nowMs();

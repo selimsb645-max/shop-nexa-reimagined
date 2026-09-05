@@ -13,6 +13,7 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import { getDb } from "./config";
+import { getSiteSetting } from "./adminSettings";
 import type { Product } from "@/types/commerce";
 
 const PRODUCTS = "products";
@@ -39,6 +40,7 @@ function toProduct(id: string, d: Record<string, unknown>): Product & { approved
     reviewCount: Number(d.reviewCount ?? 0),
     tags: Array.isArray(d.tags) ? (d.tags as string[]) : [],
     featured: Boolean(d.featured),
+    freeDelivery: Boolean(d.freeDelivery ?? false),
     sellerId: d.sellerId ? String(d.sellerId) : null,
     sku: d.sku ? String(d.sku) : null,
     status: (d.status as "draft" | "published" | "archived") ?? "published",
@@ -71,10 +73,60 @@ export async function deleteProductAdmin(id: string): Promise<void> {
 }
 
 export async function updateProductAdmin(id: string, patch: Partial<Product>): Promise<void> {
+  // Read existing stock to detect decrease
+  let oldStock: number | null = null;
+  let sellerId: string | null = null;
+  let title = "Product";
+  if (patch.stock !== undefined) {
+    const existing = await getDoc(doc(getDb(), PRODUCTS, id));
+    if (existing.exists()) {
+      oldStock = Number(existing.data()?.stock ?? 0);
+      sellerId = (existing.data()?.sellerId as string | null) ?? null;
+      title = String(existing.data()?.title ?? "Product");
+    }
+  }
+
   await updateDoc(doc(getDb(), PRODUCTS, id), {
     ...patch,
     updatedAt: serverTimestamp(),
   });
+
+  // Low stock check — only if stock decreased
+  if (oldStock !== null && patch.stock !== undefined && patch.stock < oldStock) {
+    const newStock = Math.max(0, Math.floor(patch.stock));
+    if (newStock > 0) {
+      const threshold = await getSiteSetting("inventory.alertThreshold", 5);
+      if (newStock <= threshold) {
+        const db = getDb();
+        const now = Date.now();
+        // Admin notification
+        await addDoc(collection(db, "settings", "site", "notifications"), {
+          type: "stock_low",
+          title: "Low stock alert",
+          message: `${title}${sellerId ? ` (seller: ${sellerId.slice(0, 8)})` : ""} is running low — only ${newStock} left in stock.`,
+          link: "/admin/inventory",
+          read: false,
+          productId: id,
+          sellerId,
+          currentStock: newStock,
+          createdAt: now,
+        });
+        // Seller notification (if product has a seller)
+        if (sellerId) {
+          await addDoc(collection(db, "sellers", sellerId, "notifications"), {
+            type: "stock_low",
+            title: "Low stock alert",
+            message: `${title} is running low — only ${newStock} left in stock.`,
+            link: "/seller/products",
+            read: false,
+            productId: id,
+            currentStock: newStock,
+            createdAt: now,
+          });
+        }
+      }
+    }
+  }
 }
 
 export interface AdminProductInput {
@@ -94,6 +146,7 @@ export interface AdminProductInput {
   colors: string[];
   sizes: string[];
   featured: boolean;
+  freeDelivery: boolean;
   status: "draft" | "published" | "archived";
 }
 
