@@ -37,11 +37,7 @@ import { SellerGate } from "@/components/seller/SellerGate";
 
 export const Route = createFileRoute("/_authenticated/seller/returns")({
   ssr: false,
-  component: () => (
-    <SellerGate>
-      {() => <SellerReturnsPage />}
-    </SellerGate>
-  ),
+  component: () => <SellerGate>{() => <SellerReturnsPage />}</SellerGate>,
   head: () => ({
     meta: [{ title: "Returns — Seller — AVENTA SHOP" }],
   }),
