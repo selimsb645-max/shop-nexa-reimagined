@@ -38,6 +38,11 @@ import {
 } from "@/data/bd-locations/deliveryZones";
 import { deactivateExpiredCoupons } from "./coupon-expiry.functions";
 import { checkLowStockAndNotify } from "./stock-alert.server";
+import { reserveInventoryForOrder } from "./inventory.server";
+import {
+  advanceOrderStatus,
+  dispatchOrderEvent,
+} from "./orderWorkflow.server";
 
 const POINTS_PER_CURRENCY_REDEEM = 100;
 const MAX_LINE_ITEMS = 100;
@@ -318,9 +323,15 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
     if (!Number.isFinite(price) || price < 0) {
       throw new Error(`${title} has an invalid price and cannot be ordered.`);
     }
+    // Three-field inventory model (Prompt 03 §2): availability is
+    // stock − reserved − sold. Older product docs without the new
+    // fields behave exactly as before (missing → 0).
     const stock = Number(d["stock"] ?? 0);
+    const reserved = Number(d["reservedStock"] ?? 0);
+    const sold = Number(d["soldStock"] ?? 0);
+    const available = stock - reserved - sold;
     const qty = wanted.get(id)!;
-    if (stock < qty) throw new Error(`Not enough stock for ${title}.`);
+    if (available < qty) throw new Error(`Not enough stock for ${title}.`);
     const images = Array.isArray(d["images"]) ? (d["images"] as unknown[]) : [];
     lines.push({
       productId: id,
@@ -748,7 +759,7 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
         couponCode: appliedCoupon,
         promoCode: appliedPromo,
         promoDiscount: promoDiscount,
-        status: "confirmed",
+        status: "ORDER_CREATED",
         payment: {
           method: req.paymentMethod,
           status: paymentStatus,
@@ -758,7 +769,7 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
         },
         shippingAddress: req.shippingAddress,
         deliveryAddressSnapshot: req.deliveryAddressSnapshot ?? null,
-        tracking: [{ status: "confirmed", note: "Order placed and auto-confirmed", at: nowMs }],
+        tracking: [{ status: "pending", note: "Order placed", at: nowMs }],
         createdAt: nowMs,
         updatedAt: nowMs,
       }),
@@ -766,21 +777,11 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
     currentDocument: { exists: false },
   });
 
-  // Stock decrement, guarded by the version we read.
-  for (const l of lines) {
-    const name = docPath(projectId, ["products", l.productId]);
-    writes.push({
-      transform: {
-        document: name,
-        fieldTransforms: [{ fieldPath: "stock", increment: { integerValue: String(-l.quantity) } }],
-      },
-      ...(l.updateTime ? { currentDocument: { updateTime: l.updateTime } } : {}),
-    });
-    writes.push({
-      update: { name, fields: { updatedAt: toFsValue(nowMs) } },
-      updateMask: { fieldPaths: ["updatedAt"] },
-    });
-  }
+  // ── INVENTORY (Prompt 03 §2) ──
+  // Legacy immediate stock decrement REMOVED. Stock is now RESERVED
+  // race-condition-safely by the workflow processor after the order
+  // commits (inventory.server.ts — true Firestore transaction), so
+  // two simultaneous orders can never both take the last unit.
 
   // Coupon usage increment, guarded by the version we validated.
   if (appliedCoupon) {
@@ -936,22 +937,10 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
       }),
     );
 
-    // Seller notification
-    writes.push({
-      update: {
-        name: docPath(projectId, ["sellers", sid, "notifications", newDocId()]),
-        fields: toFsFields({
-          type: "order",
-          title: "New order received",
-          message: `Order #${orderId.slice(0, 8)} · ${sItems.length} item${
-            sItems.length > 1 ? "s" : ""
-          }`,
-          link: `/seller/orders/${orderId}`,
-          read: false,
-          createdAt: nowMs,
-        }),
-      },
-    });
+    // ── SELLER NOTIFICATION (Prompt 03 §3) ──
+    // Moved from an inline random-id write to the event-driven
+    // workflow processor (deterministic id → duplicate events can
+    // never double-notify a seller).
   }
 
   void nowIso;
@@ -982,6 +971,40 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
   }
 
   await commitWrites(projectId, writes);
+
+  // ─────────────────────────────────────────────────────────────
+  // ORDER WORKFLOW (Prompt 03 §3 + §7 — event-driven)
+  // ORDER_CREATED → PAYMENT_CONFIRMED → INVENTORY_RESERVED →
+  // SELLER_NOTIFIED, each emitting an immutable event and fanning
+  // out through the workflow processor. One branch failing never
+  // corrupts the order state; a failed reservation cancels the
+  // order CLEANLY (§7).
+  // ─────────────────────────────────────────────────────────────
+  const workflowCtx = {
+    customerId: req.uid,
+    sellerIds,
+    items: lines.map((l) => ({ productId: l.productId, quantity: l.quantity })),
+    total,
+  };
+
+  await dispatchOrderEvent(projectId, orderId, "ORDER_CREATED", workflowCtx);
+
+  await advanceOrderStatus(projectId, req.uid, orderId, "PAYMENT_CONFIRMED", "Payment confirmed");
+  await dispatchOrderEvent(projectId, orderId, "PAYMENT_CONFIRMED", workflowCtx);
+
+  // Concurrency-safe stock reservation (§2). Rare race loss → clean cancel.
+  const reservation = await reserveInventoryForOrder(projectId, orderId, workflowCtx.items);
+  if (!reservation.ok && reservation.state !== "reserved") {
+    await advanceOrderStatus(projectId, req.uid, orderId, "CANCELLED", `Cancelled: ${reservation.reason ?? "stock unavailable"}`);
+    await dispatchOrderEvent(projectId, orderId, "CANCELLED", workflowCtx);
+    throw new Error(reservation.reason ?? "Order could not be fulfilled — stock changed during checkout.");
+  }
+
+  await advanceOrderStatus(projectId, req.uid, orderId, "INVENTORY_RESERVED", "Stock reserved");
+  await dispatchOrderEvent(projectId, orderId, "INVENTORY_RESERVED", workflowCtx);
+
+  await advanceOrderStatus(projectId, req.uid, orderId, "SELLER_NOTIFIED", "Seller notified");
+  await dispatchOrderEvent(projectId, orderId, "SELLER_NOTIFIED", workflowCtx);
 
   // ── LOW STOCK ALERTS ──
   // After stock decrement, check if any product dropped to/below threshold.

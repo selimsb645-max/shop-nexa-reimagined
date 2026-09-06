@@ -95,16 +95,69 @@ service cloud.firestore {
     // Step 22: Status transition validation (defense-in-depth)
     // Enforces valid order status transitions at the Firestore rules level.
     // Service layer also validates — this is the final boundary for client SDK.
+    // ───────────────────────────────────────────────────────────
+    // Canonical Order State Machine (Implementation Prompt 03 §1)
+    // Legacy statuses are migrated first, so pre-upgrade orders keep
+    // flowing. Mirrors src/lib/orderStateMachine.ts exactly.
+    // ───────────────────────────────────────────────────────────
+    function migrateStatus(s) {
+      return s == 'pending' ? 'ORDER_CREATED'
+        : s == 'confirmed' ? 'PAYMENT_CONFIRMED'
+        : s == 'processing' ? 'PROCESSING'
+        : s == 'shipped' ? 'IN_TRANSIT'
+        : s == 'out_for_delivery' ? 'OUT_FOR_DELIVERY'
+        : s == 'delivered' ? 'DELIVERED'
+        : s == 'cancelled' ? 'CANCELLED'
+        : s == 'return_requested' ? 'RETURN_REQUESTED'
+        : s == 'returned' ? 'RETURNED'
+        : s == 'refund_pending' ? 'REFUND_PENDING'
+        : s == 'refunded' ? 'REFUNDED'
+        : s == 'delivery_failed' ? 'DELIVERY_FAILED'
+        : s;
+    }
+
     function isValidOrderTransition(from, to) {
-      return from == to
-        || (from == 'pending' && to in ['confirmed', 'processing', 'cancelled'])
-        || (from == 'confirmed' && to in ['processing', 'cancelled'])
-        || (from == 'processing' && to in ['shipped', 'cancelled'])
-        || (from == 'shipped' && to in ['delivered', 'cancelled']);
+      // OPTIMIZED for the CEL 1000-expression limit: migrateStatus is
+      // called exactly TWICE (not 30×) by comparing concatenated
+      // edge keys against a literal list. The edge list mirrors
+      // CANONICAL_TRANSITIONS in src/lib/orderStateMachine.ts
+      // (plus the two legacy fast paths marked below).
+      return migrateStatus(from) + '->' + migrateStatus(to) in [
+        'ORDER_CREATED->PAYMENT_CONFIRMED',
+        'ORDER_CREATED->CANCELLED',
+        'PAYMENT_CONFIRMED->INVENTORY_RESERVED',
+        'PAYMENT_CONFIRMED->CANCELLED',
+        'INVENTORY_RESERVED->SELLER_NOTIFIED',
+        'INVENTORY_RESERVED->CANCELLED',
+        'SELLER_NOTIFIED->PROCESSING',
+        'SELLER_NOTIFIED->CANCELLED',
+        'PROCESSING->PACKED',
+        'PROCESSING->CANCELLED',
+        'PROCESSING->IN_TRANSIT',           // legacy "shipped" fast path
+        'PACKED->READY_TO_SHIP',
+        'PACKED->CANCELLED',
+        'READY_TO_SHIP->HANDED_OVER',
+        'READY_TO_SHIP->CANCELLED',
+        'HANDED_OVER->IN_TRANSIT',
+        'HANDED_OVER->DELIVERY_FAILED',
+        'IN_TRANSIT->OUT_FOR_DELIVERY',
+        'IN_TRANSIT->DELIVERY_FAILED',
+        'IN_TRANSIT->DELIVERED',            // legacy "delivered" fast path
+        'OUT_FOR_DELIVERY->DELIVERED',
+        'OUT_FOR_DELIVERY->DELIVERY_FAILED',
+        'DELIVERED->RETURN_REQUESTED',
+        'DELIVERY_FAILED->OUT_FOR_DELIVERY',
+        'DELIVERY_FAILED->RETURNED',
+        'DELIVERY_FAILED->REFUND_PENDING',
+        'RETURN_REQUESTED->RETURNED',
+        'RETURN_REQUESTED->DELIVERED',      // return rejected
+        'RETURNED->REFUND_PENDING',
+        'REFUND_PENDING->REFUNDED'
+      ];
     }
 
     function isTerminalStatus(status) {
-      return status == 'delivered' || status == 'cancelled';
+      return migrateStatus(status) in ['DELIVERED', 'CANCELLED', 'REFUNDED'];
     }
 
     function statusNotChanged() {
@@ -117,14 +170,10 @@ service cloud.firestore {
             && isValidOrderTransition(resource.data.status, request.resource.data.status));
     }
 
-    // Seller order transitions include "returned" from "delivered"
+    // Seller order transitions share the canonical machine (the
+    // seller fulfillment lifecycle is a view over the same states).
     function isValidSellerOrderTransition(from, to) {
-      return from == to
-        || (from == 'pending' && to in ['confirmed', 'processing', 'cancelled'])
-        || (from == 'confirmed' && to in ['processing', 'cancelled'])
-        || (from == 'processing' && to in ['shipped', 'cancelled'])
-        || (from == 'shipped' && to in ['delivered', 'cancelled'])
-        || (from == 'delivered' && to in ['returned']);
+      return isValidOrderTransition(from, to);
     }
 
     function validSellerStatusTransition() {
@@ -240,17 +289,27 @@ service cloud.firestore {
       allow delete: if roleIn(['super_admin', 'admin', 'platform_admin', 'content_admin', 'catalog_manager']) ||
         (isApprovedSeller() && resource.data.sellerId == request.auth.uid);
       // qc_manager may ONLY flip the approved flag within its category scope.
+      // (Prompt 03 §2) Inventory counters (stock, availableStock,
+      // reservedStock, soldStock) are SERVER-CONTROLLED: every
+      // reservation/release/sold transition runs inside a Firestore
+      // transaction via the service account. NO client SDK write —
+      // not even super_admin (defense-in-depth against a compromised
+      // admin session corrupting stock).
       allow update: if
-        (roleIn(['super_admin', 'admin', 'platform_admin', 'content_admin', 'catalog_manager'])
+        ((roleIn(['super_admin', 'admin', 'platform_admin', 'content_admin', 'catalog_manager'])
           || (roleIn(['category_manager'])
             && categoryScopeAllows(resource.data.categoryId)))
+          && !request.resource.data.diff(resource.data).affectedKeys()
+               .hasAny(['stock', 'availableStock', 'reservedStock', 'soldStock']))
         || (roleIn(['qc_manager'])
           && categoryScopeAllows(resource.data.categoryId)
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['approved', 'updatedAt']))
         || (isApprovedSeller()
           && resource.data.sellerId == request.auth.uid
           && !request.resource.data.diff(resource.data).affectedKeys()
-               .hasAny(['approved', 'featured', 'rating', 'reviewCount', 'sellerId']));
+               .hasAny(['approved', 'featured', 'rating', 'reviewCount', 'sellerId'])
+          && !request.resource.data.diff(resource.data).affectedKeys()
+               .hasAny(['stock', 'availableStock', 'reservedStock', 'soldStock']));
 
       match /reviews/{rid} {
         // Public can read approved reviews; review author can read their own; admins can read all
@@ -429,13 +488,15 @@ service cloud.firestore {
         allow read: if isSelf(uid) || isAdmin();
         allow create: if false;
         allow update: if
-          // ADMIN PATH: Enterprise RBAC — order-operations roles only
-          // (super_admin, admin, support_admin, order_manager). Admin can only
-          // update operational (non-financial) fields. Financial fields (payment,
-          // total, subtotal, discount, shipping, tax, platformFee,
-          // deliverySnapshot, etc.) are server-controlled and NEVER writable
-          // via client SDK — not even by admins.
-          (roleIn(['super_admin', 'admin', 'support_admin', 'order_manager'])
+          // ADMIN PATH: Enterprise RBAC — order-operations roles only.
+          // (Implementation Prompt 03 §8) support_admin is deliberately
+          // READ-ONLY on orders: it may read tracking and support
+          // information but has NO privileged order mutation.
+          // Financial fields (payment, total, subtotal, discount,
+          // shipping, tax, platformFee, deliverySnapshot, etc.) are
+          // server-controlled and NEVER writable via client SDK —
+          // not even by admins.
+          (roleIn(['super_admin', 'admin', 'order_manager'])
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
               'status', 'tracking', 'courierInfo', 'updatedAt'
             ])
@@ -624,12 +685,12 @@ service cloud.firestore {
         allow read: if isSelf(uid) || isAdmin();
         allow create: if false;
         allow update: if
-          // ADMIN PATH: Enterprise RBAC — order-operations roles only
-          // (super_admin, admin, support_admin, order_manager). Admin can
-          // update operational fields only. Financial settlement fields are
-          // server-controlled and NEVER writable via client SDK — not even
-          // by admins.
-          (roleIn(['super_admin', 'admin', 'support_admin', 'order_manager'])
+          // ADMIN PATH: Enterprise RBAC — order-operations roles only.
+          // (Implementation Prompt 03 §8) support_admin is READ-ONLY:
+          // tracking/support reads only, no privileged mutations.
+          // Financial settlement fields are server-controlled and
+          // NEVER writable via client SDK — not even by admins.
+          (roleIn(['super_admin', 'admin', 'order_manager'])
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
               'status', 'tracking', 'shipping', 'updatedAt'
             ])
@@ -706,6 +767,71 @@ service cloud.firestore {
     match /orderAuditLogs/{auditId} {
       allow read: if isAdmin();
       allow create, update, delete: if false; // Server function only
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // ORDER & LOGISTICS AUTOMATION (Implementation Prompt 03)
+    // ═══════════════════════════════════════════════════════════
+    // All writes go through the service account (server functions).
+    // The client SDK can only READ — scoped to the exact parties
+    // of each record (§8: own-order-only access).
+    // ═══════════════════════════════════════════════════════════
+
+    // Order-role helpers for logistics reads
+    function canReadOrders() {
+      return roleIn(['super_admin', 'admin', 'order_manager', 'support_admin']);
+    }
+
+    // Shipment records (§4) — seller reads own, customer reads own
+    // order's, order-admin roles read all; NO client writes.
+    match /shipments/{shipmentId} {
+      allow read: if canReadOrders()
+        || (isSignedIn() && request.auth.uid == resource.data.sellerId)
+        || (isSignedIn() && request.auth.uid == resource.data.customerId);
+      allow create, update, delete: if false; // Server (logistics provider) only
+    }
+
+    // Tracking events (§6) — internal logistics info is NEVER exposed:
+    // customer sees only customer-visible events of their own shipment,
+    // seller sees customer+seller-visible events of their shipment,
+    // order-admin roles see everything.
+    match /shipments/{shipmentId}/events/{eventId} {
+      allow read: if canReadOrders()
+        || (isSignedIn()
+            && exists(/databases/$(database)/documents/shipments/$(shipmentId))
+            && request.auth.uid == get(/databases/$(database)/documents/shipments/$(shipmentId)).data.customerId
+            && resource.data.visibility == 'customer')
+        || (isSignedIn()
+            && exists(/databases/$(database)/documents/shipments/$(shipmentId))
+            && request.auth.uid == get(/databases/$(database)/documents/shipments/$(shipmentId)).data.sellerId
+            && resource.data.visibility in ['customer', 'seller']);
+      allow create, update, delete: if false; // Server (logistics provider) only
+    }
+
+    // Order events / workflow audit (§7) — order-admin read-only.
+    match /orderEvents/{eventId} {
+      allow read: if canReadOrders();
+      allow create, update, delete: if false; // Workflow processor only
+    }
+
+    // Admin notifications (workflow fan-out) — admin read, no writes.
+    match /adminNotifications/{nid} {
+      allow read: if roleIn(['super_admin', 'admin', 'order_manager', 'support_admin']);
+      allow create, update, delete: if false;
+    }
+
+    // Finance transition ledger (§7 Finance branch) — admin only.
+    match /financeEvents/{fid} {
+      allow read: if roleIn(['super_admin', 'admin', 'order_manager', 'finance_admin']);
+      allow create, update, delete: if false;
+    }
+
+    // Inventory reservations (§2) — admin read-only audit of the
+    // reservation lifecycle; ALL mutations happen in server-side
+    // Firestore transactions.
+    match /inventoryReservations/{resId} {
+      allow read: if roleIn(['super_admin', 'admin', 'order_manager']);
+      allow create, update, delete: if false;
     }
   }
 }

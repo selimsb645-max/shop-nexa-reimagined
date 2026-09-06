@@ -346,12 +346,14 @@ describe("Announcement Authorization — Firestore Rules", () => {
     expect(announcementBlock[0]).toContain("allow read: if true");
   });
 
-  it("only admin can write announcements", () => {
+  it("only master-data roles can write announcements (Enterprise RBAC)", () => {
     const fs = require("fs");
     const rules = fs.readFileSync("firestore.rules", "utf-8");
     const announcementBlock = rules.match(/match \/announcements\/\{id\} \{[\s\S]*?\}/);
     expect(announcementBlock).toBeTruthy();
-    expect(announcementBlock[0]).toContain("allow write: if isAdmin()");
+    // Enterprise RBAC (a110cd8): announcements are master data —
+    // writable by canWriteMasterData() roles, NOT plain isAdmin().
+    expect(announcementBlock[0]).toContain("allow write: if canWriteMasterData()");
   });
 
   // Test #10: Seller cannot manage announcements
