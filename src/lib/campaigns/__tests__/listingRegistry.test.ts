@@ -154,3 +154,34 @@ describe("QC → campaign backbone arrow", () => {
     expect(after.length).toBe(0);
   });
 });
+
+// ═══════════════════════════════════════════════════════════════
+// FIRESTORE RULES — campaignProductCatalog (admin catalog browser)
+// ═══════════════════════════════════════════════════════════════
+describe("campaignProductCatalog — Firestore rules", () => {
+  const fs = require("fs");
+  const rules = fs.readFileSync("firestore.rules", "utf-8");
+  const block = rules.match(/match \/campaignProductCatalog\/\{productId\} \{[\s\S]*?\n    \}/);
+
+  it("has a dedicated match block for the catalog collection", () => {
+    expect(block).toBeTruthy();
+  });
+
+  it("read is manager-gated (isCampaignManager), not public", () => {
+    expect(block[0]).toContain("allow read: if isCampaignManager();");
+    expect(block[0]).not.toContain("allow read: if true");
+  });
+
+  it("ALL client writes are denied — kernel subscriber only", () => {
+    expect(block[0]).toContain("allow write: if false;");
+  });
+
+  it("isCampaignManager covers super/admin/platform/marketing only", () => {
+    const fn = rules.match(/function isCampaignManager\(\)[\s\S]*?\n    \}/);
+    expect(fn).toBeTruthy();
+    expect(fn[0]).toContain("super_admin");
+    expect(fn[0]).toContain("marketing_admin");
+    expect(fn[0]).not.toContain("content_admin");
+    expect(fn[0]).not.toContain("isApprovedSeller");
+  });
+});

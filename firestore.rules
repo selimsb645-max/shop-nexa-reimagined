@@ -999,6 +999,15 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Campaign product catalog (Prompt 06 backbone: PRODUCT→CAMPAIGN).
+    // Written ONLY by the campaign-listing-registry kernel subscriber
+    // (service account) when products pass/fail QC listing. Campaign
+    // managers get read access for the admin panel catalog browser.
+    match /campaignProductCatalog/{productId} {
+      allow read: if isCampaignManager();
+      allow write: if false; // kernel subscriber only
+    }
+
     // Homepage content switch + rollback snapshots (§5, §9) — the
     // campaign engine (service account) is the ONLY writer; customers
     // receive the sanitized view via the server function.
