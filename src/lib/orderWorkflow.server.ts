@@ -52,7 +52,15 @@ export const ORDER_EVENTS_COLLECTION = "orderEvents";
 export const ADMIN_NOTIFICATIONS_COLLECTION = "adminNotifications";
 export const FINANCE_EVENTS_COLLECTION = "financeEvents";
 
-/** Context every handler may need about the order. */
+/**
+ * Context every handler may need about the order.
+ *
+ * `actor` is OPTIONAL and additive (admin fan-out bridge, Sep 2026):
+ * when a transition is initiated by a human (admin console / admin
+ * panel), the audit handler records WHO approved it instead of the
+ * default "system" actor. Omitted everywhere else — checkout and
+ * all existing callers keep their exact previous behavior.
+ */
 export interface OrderEventContext {
   orderId: string;
   customerId: string;
@@ -62,6 +70,7 @@ export interface OrderEventContext {
   total: number;
   currency?: string;
   note?: string;
+  actor?: { uid: string; email?: string | null } | null;
 }
 
 export interface DispatchResult {
@@ -355,17 +364,21 @@ const financeHandler: Handler = async (projectId, event, type) => {
 };
 
 const auditHandler: Handler = async (projectId, event, type) => {
+  // Admin-initiated transitions record the approving human (additive;
+  // every system-initiated event keeps writing actorUid "system").
+  const actor = event.actor ?? null;
   await commitWrites(projectId, [{
     update: {
       name: docPath(projectId, [
         "activityLogs", `act_${event.orderId}_${type.toLowerCase()}`,
       ]),
       fields: toFsFields({
-        actorUid: "system",
-        actorEmail: null,
+        actorUid: actor?.uid ?? "system",
+        actorEmail: actor?.email ?? null,
         action: `order.${type.toLowerCase()}`,
         target: event.orderId,
-        details: `Order ${ORDER_STATUS_LABELS[normalizeOrderStatus(type)]}`,
+        details: `Order ${ORDER_STATUS_LABELS[normalizeOrderStatus(type)]}`
+          + (actor ? ` — by ${actor.email ?? actor.uid} (admin)` : ""),
         createdAt: Date.now(),
       }),
     },
@@ -429,6 +442,7 @@ export async function dispatchOrderEvent(
           total: event.total,
           items: event.items,
           note: event.note ?? null,
+          actor: event.actor ?? null,
         }),
         state: "processing",
         createdAt: now,
@@ -538,6 +552,14 @@ export async function advanceOrderStatus(
         updatedAt: Date.now(),
       }),
     },
+    // CRITICAL FIX (Sep 6, PART 1): without updateMask the Firestore
+    // REST commit REPLACES the entire document — status advancement
+    // would wipe the order's financial fields (items, total, payment,
+    // address, sellerIds). The mask restricts the write to exactly
+    // the three operational fields. Caught by emulator verification.
+    // (updateMask is a sibling of `update` in the Firestore Write
+    // message — NOT inside it.)
+    updateMask: { fieldPaths: ["status", "tracking", "updatedAt"] },
   }]);
 
   return { advanced: true, from: current };
