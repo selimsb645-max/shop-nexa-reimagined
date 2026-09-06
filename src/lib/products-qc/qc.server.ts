@@ -376,11 +376,24 @@ async function writeTransition(
     reviewerUid: opts.reviewerUid ?? review.reviewerUid,
     ...((opts.extra ?? {}) as Partial<QcReview>),
   };
+  // CRITICAL FIX (Sep 6, PART 2): commitWrites sends the REST commit
+  // WITHOUT updateMask — the write REPLACES the whole document. The
+  // review object decoded by readQcReview does not carry the raw
+  // productSnapshot string, so every reviewer transition silently
+  // WIPED the seller's submitted product snapshot (the reviewer's
+  // source of truth for the checklist). Carry it through untouched.
+  const rawDoc = (await batchGetDocs(projectId, [
+    docPath(projectId, [QC_REVIEWS_COLLECTION, review.reviewId]),
+  ])).get(docPath(projectId, [QC_REVIEWS_COLLECTION, review.reviewId]));
+  const rawSnapshot = rawDoc?.exists
+    ? (rawDoc.data as Record<string, unknown>)["productSnapshot"] ?? null
+    : null;
   await commitWrites(projectId, [{
     update: {
       name: docPath(projectId, [QC_REVIEWS_COLLECTION, review.reviewId]),
       fields: toFsFields({
         ...updated,
+        ...(rawSnapshot != null ? { productSnapshot: rawSnapshot } : {}),
         updatedAt: now,
       }),
     },

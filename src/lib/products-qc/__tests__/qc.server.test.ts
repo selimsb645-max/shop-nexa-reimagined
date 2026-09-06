@@ -196,6 +196,26 @@ describe("QC lifecycle", () => {
     expect(read.status).toBe("PENDING_QC");
   });
 
+  it("regression: reviewer transitions never wipe the submitted productSnapshot", async () => {
+    // commitWrites sends REST commits WITHOUT updateMask (full-doc
+    // replace). writeTransition used to drop productSnapshot — the
+    // reviewer's source of truth for the checklist (Sep 6, PART 2 fix).
+    const review = await submitProductForQc("test-project", submitInput());
+    await startQcReview("test-project", review.reviewId, REVIEWER);
+    let res = await fetch(`${BASE}/${QC_REVIEWS_COLLECTION}/${review.reviewId}`);
+    let doc = (await res.json()) as { fields?: Record<string, unknown> };
+    const snap1 = doc.fields?.["productSnapshot"] as Record<string, unknown> | undefined;
+    expect(typeof (snap1 as { stringValue?: string } | undefined)?.stringValue).toBe("string");
+
+    await completeQcReview("test-project", { reviewId: review.reviewId, checklist: fullChecklist(true) }, REVIEWER);
+    await listQcPassedProduct("test-project", review.reviewId, REVIEWER);
+    res = await fetch(`${BASE}/${QC_REVIEWS_COLLECTION}/${review.reviewId}`);
+    doc = (await res.json()) as { fields?: Record<string, unknown> };
+    const snap2 = doc.fields?.["productSnapshot"] as { stringValue?: string } | undefined;
+    expect(typeof snap2?.stringValue).toBe("string");
+    expect(snap2?.stringValue).toBe(snap1?.stringValue);
+  });
+
   it("sellers cannot act from states they don't own (e.g. IN_QC)", async () => {
     const review = await submitProductForQc("test-project", submitInput());
     await startQcReview("test-project", review.reviewId, REVIEWER);
