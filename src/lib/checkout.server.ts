@@ -983,7 +983,18 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
   const workflowCtx = {
     customerId: req.uid,
     sellerIds,
-    items: lines.map((l) => ({ productId: l.productId, quantity: l.quantity })),
+    // Prompt 04: per-line finance context (seller, category, line total,
+    // seller-absorbed shipping) — consumed by the finance handler to post
+    // ledger-first settlements. deliveryLines is index-parallel to lines.
+    items: lines.map((l, i) => ({
+      productId: l.productId,
+      quantity: l.quantity,
+      sellerId: l.sellerId ?? undefined,
+      categoryId: l.categoryId ?? null,
+      subcategoryId: l.subcategoryId ?? null,
+      lineTotalTaka: l.subtotal,
+      shippingTaka: deliveryLines[i]?.sellerAbsorbedCharge ?? 0,
+    })),
     total,
   };
 

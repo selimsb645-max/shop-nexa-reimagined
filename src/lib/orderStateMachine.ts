@@ -308,7 +308,7 @@ export type OrderWorkflowHandler = (typeof ORDER_WORKFLOW_HANDLERS)[number];
 export const EVENT_HANDLER_MAP: Readonly<
   Record<OrderEventType, readonly OrderWorkflowHandler[]>
 > = {
-  ORDER_CREATED:      ["audit"],
+  ORDER_CREATED:      ["finance", "audit"], // Prompt 04: ledger-first settlement creation
   PAYMENT_CONFIRMED:  ["notifyCustomer", "audit"],
   INVENTORY_RESERVED: ["audit"],
   SELLER_NOTIFIED:    ["notifySeller", "notifyAdmin", "audit"],
@@ -323,7 +323,7 @@ export const EVENT_HANDLER_MAP: Readonly<
   RETURN_REQUESTED:   ["notifySeller", "notifyAdmin", "audit"],
   RETURNED:           ["inventory", "finance", "audit"],
   REFUND_PENDING:     ["finance", "notifyCustomer", "audit"],
-  REFUNDED:           ["notifyCustomer", "audit"],
+  REFUNDED:           ["finance", "notifyCustomer", "audit"], // Prompt 04: refund reversal
   DELIVERY_FAILED:    ["shipment", "notifySeller", "notifyAdmin", "audit"],
 };
 

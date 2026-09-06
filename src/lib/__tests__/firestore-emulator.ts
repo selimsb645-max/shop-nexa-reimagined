@@ -32,6 +32,12 @@ interface StoredDoc {
 /** In-memory document store: path → fields */
 const store = new Map<string, StoredDoc>();
 
+// Transaction read-sets: txId → Map<docPath, updateTime-at-read>.
+// At commit time, if any read doc's updateTime changed, the commit is
+// ABORTED — this emulates Firestore's optimistic locking so callers'
+// retry loops behave the same as against production.
+const txReadSets = new Map<string, Map<string, string | null>>();
+
 /** Encode a JS value into Firestore REST API format */
 function encodeValue(v: unknown): Record<string, unknown> {
   if (v === null || v === undefined) return { nullValue: null };
@@ -418,15 +424,27 @@ export function createFirestoreEmulator(port = 8080): Promise<Server> {
           return;
         }
 
+        // ---- beginTransaction (conflict detection via read-set) ----
+        if (url.includes(":beginTransaction") && method === "POST") {
+          const txId = `tx-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
+          txReadSets.set(txId, new Map());
+          res.end(JSON.stringify({ transaction: txId }));
+          return;
+        }
+
         // ---- batchGet ----
         if (url.includes(":batchGet") && method === "POST") {
           const documents = (body.documents as string[]) ?? [];
+          const txId = body.transaction as string | undefined;
           const result: Array<Record<string, unknown>> = [];
           for (const docName of documents) {
             // docName is a full path like projects/{project}/databases/(default)/documents/{path}
             const match = docName.match(/\/databases\/\(default\)\/documents\/(.+)$/);
             const path = match ? match[1] : "";
             const doc = store.get(path);
+            if (txId && txReadSets.has(txId)) {
+              txReadSets.get(txId)!.set(path, doc?.updateTime ?? null);
+            }
             if (doc) {
               result.push({
                 found: {
@@ -447,7 +465,26 @@ export function createFirestoreEmulator(port = 8080): Promise<Server> {
         // ---- commit (batch writes) ----
         if (url.includes(":commit") && method === "POST") {
           const writes = (body.writes as Array<Record<string, unknown>>) ?? [];
+          const commitTxId = body.transaction as string | undefined;
           const now = new Date().toISOString();
+
+          // Optimistic-lock check: any doc read in this transaction that
+          // has since been modified → ABORTED (caller retries).
+          if (commitTxId && txReadSets.has(commitTxId)) {
+            const readSet = txReadSets.get(commitTxId)!;
+            for (const [path, readUpdateTime] of readSet.entries()) {
+              const current = store.get(path)?.updateTime ?? null;
+              if (current !== readUpdateTime) {
+                txReadSets.delete(commitTxId);
+                res.statusCode = 409;
+                res.end(JSON.stringify({
+                  error: { code: 409, message: "ABORTED: transaction conflict, retry" },
+                }));
+                return;
+              }
+            }
+            txReadSets.delete(commitTxId);
+          }
 
           for (const write of writes) {
             if (write.update) {

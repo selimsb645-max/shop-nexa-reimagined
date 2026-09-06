@@ -36,6 +36,17 @@ const RESERVATIONS_COLLECTION = "inventoryReservations";
 export interface ReservationItem {
   productId: string;
   quantity: number;
+  // ── OPTIONAL FINANCE FIELDS (Prompt 04, added additively) ──
+  // Carried on ORDER_CREATED events so the finance handler can build
+  // per-seller settlements without re-reading order documents. Older
+  // callers that omit them are unaffected (all optional).
+  sellerId?: string;
+  categoryId?: string | null;
+  subcategoryId?: string | null;
+  /** Line gross in taka (converted to paisa ONCE server-side). */
+  lineTotalTaka?: number;
+  /** Delivery charge absorbed by the seller for this line (taka). */
+  shippingTaka?: number;
 }
 
 export type ReservationState =

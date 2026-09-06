@@ -180,7 +180,10 @@ describe("§6 tracking event visibility defaults", () => {
   });
 
   it("customer-facing milestones default to customer visibility", () => {
-    for (const t of ["PICKED_UP", "HANDED_OVER", "IN_TRANSIT", "OUT_FOR_DELIVERY", "DELIVERED"]) {
+    const customerMilestones = [
+      "PICKED_UP", "HANDED_OVER", "IN_TRANSIT", "OUT_FOR_DELIVERY", "DELIVERED",
+    ] as const;
+    for (const t of customerMilestones) {
       expect(TRACKING_EVENT_VISIBILITY[t]).toBe("customer");
     }
   });

@@ -833,5 +833,52 @@ service cloud.firestore {
       allow read: if roleIn(['super_admin', 'admin', 'order_manager']);
       allow create, update, delete: if false;
     }
+
+    // ═══ Finance v2 — Prompt 04 (ledger-first) ═══════════════════
+    // ALL finance collections are service-account-only. Client SDKs
+    // can never read or write money data directly (§11): the admin
+    // panel reaches finance exclusively through server functions.
+
+    // Append-only seller ledger — the source of truth for balances.
+    match /sellerLedger/{entryId} {
+      allow read, write: if false;
+    }
+
+    // Seller balance snapshots (derived, protected by tx replay).
+    match /sellerFinance/{sellerId} {
+      allow read, write: if false;
+    }
+
+    // Per-order-per-seller settlement lifecycle docs.
+    match /settlements/{settlementId} {
+      allow read: if roleIn(['super_admin', 'finance_admin', 'admin', 'order_manager']);
+      allow write: if false;
+    }
+
+    // Settlement batches (DRAFT → IN_REVIEW → APPROVED → EXECUTING →
+    // RECONCILED) — finance admin read-only; every mutation (generate,
+    // review, approve, execute, reconcile) happens server-side with
+    // fresh re-auth.
+    match /settlementBatches/{batchId} {
+      allow read: if roleIn(['super_admin', 'finance_admin', 'admin']);
+      allow write: if false;
+    }
+
+    // Payout docs — finance admin read-only audit trail.
+    match /payouts/{payoutId} {
+      allow read: if roleIn(['super_admin', 'finance_admin', 'admin']);
+      allow write: if false;
+    }
+
+    // Finance config (return windows, provider selection) — server-only.
+    match /financeConfig/{docId} {
+      allow read, write: if false;
+    }
+
+    // Failed finance event repair queue — server-only.
+    match /financeRepairQueue/{eventId} {
+      allow read: if roleIn(['super_admin', 'finance_admin']);
+      allow write: if false;
+    }
   }
 }

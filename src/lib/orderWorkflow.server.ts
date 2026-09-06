@@ -26,6 +26,7 @@ import {
   docPath,
   toFsFields,
   type FsWrite,
+  batchGetDocs,
 } from "./firebase-admin.server";
 import {
   convertReservationToSold,
@@ -269,6 +270,72 @@ const financeHandler: Handler = async (projectId, event, type) => {
   const financeRelevant: OrderEventType[] = [
     "DELIVERED", "CANCELLED", "RETURNED", "REFUND_PENDING", "REFUNDED",
   ];
+
+  // ── PROMPT 04 §1: LEDGER-FIRST FINANCE v2 ──────────────────────
+  // Rides on the order events (idempotent, integer paisa). Failures
+  // are recorded in a repair queue — money movements are never
+  // silently lost and never block the order pipeline (§7).
+  if (financeRelevant.includes(type) || type === "ORDER_CREATED") {
+    try {
+      const { readFinanceConfig, createSettlementsForOrder, advanceSettlementsForOrderEvent } =
+        await import("./finance/settlements.server");
+      const { computeOrderFinancials } = await import("./finance/fees.server");
+      const config = await readFinanceConfig(projectId);
+
+      if (type === "ORDER_CREATED") {
+        // Build per-seller lines from the enriched event context.
+        const lines = (event.items ?? []).filter(
+          (i) => i.sellerId != null && i.lineTotalTaka != null,
+        );
+        if (lines.length > 0) {
+          const settingsName = docPath(projectId, ["settings", "site"]);
+          const settingsDocs = await batchGetDocs(projectId, [settingsName]);
+          const siteSettingsData = (settingsDocs.get(settingsName)?.data ??
+            {}) as Record<string, unknown>;
+          const breakdown = await computeOrderFinancials(
+            projectId,
+            siteSettingsData,
+            lines.map((i) => ({
+              sellerId: i.sellerId!,
+              categoryId: i.categoryId ?? null,
+              subcategoryId: i.subcategoryId ?? null,
+              lineTotalTaka: i.lineTotalTaka!,
+              shippingTaka: i.shippingTaka ?? 0,
+            })),
+          );
+          await createSettlementsForOrder(
+            projectId, event.orderId, breakdown.lines, config,
+          );
+        }
+      } else if (
+        type === "DELIVERED" || type === "RETURNED" ||
+        type === "REFUND_PENDING" || type === "REFUNDED" || type === "CANCELLED"
+      ) {
+        await advanceSettlementsForOrderEvent(
+          projectId, event.orderId, type as "DELIVERED", config,
+        );
+      }
+    } catch (err) {
+      // Repairable trail — the finance admin console can re-run this
+      // step idempotently (all writes use deterministic keys).
+      await commitWrites(projectId, [{
+        update: {
+          name: docPath(projectId, [
+            "financeRepairQueue", `rep_${event.orderId}_${type.toLowerCase()}`,
+          ]),
+          fields: toFsFields({
+            orderId: event.orderId,
+            eventType: type,
+            error: err instanceof Error ? err.message : String(err),
+            createdAt: Date.now(),
+            resolvedAt: null,
+          }),
+        },
+      }]).catch(() => {});
+    }
+  }
+
+  // ── LEGACY AUDIT TRAIL (unchanged behavior) ─────────────────────
   if (!financeRelevant.includes(type)) return;
   await commitWrites(projectId, [{
     update: {

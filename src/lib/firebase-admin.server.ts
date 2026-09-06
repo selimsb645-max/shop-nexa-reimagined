@@ -205,6 +205,25 @@ export function fromFsFields(fields: Record<string, FsValue>): Record<string, un
 /* Firestore REST operations                                          */
 /* ------------------------------------------------------------------ */
 
+/**
+ * runQuery endpoint (emulator-aware). Structured queries against any
+ * top-level collection. Server-only.
+ */
+export async function runFirestoreQuery(
+  projectId: string,
+  structuredQuery: Record<string, unknown>,
+): Promise<Array<Record<string, unknown>>> {
+  const token = await getAccessToken();
+  const url = `${baseUrl(projectId).replace(/\/documents$/, "")}/documents:runQuery`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+    body: JSON.stringify({ structuredQuery }),
+  });
+  if (!res.ok) throw new Error(`runQuery failed (${res.status})`);
+  return (await res.json()) as Array<Record<string, unknown>>;
+}
+
 function baseUrl(projectId: string): string {
   const emulatorHost = Deno.env.get("FIRESTORE_EMULATOR_HOST");
   if (emulatorHost) {
