@@ -5,6 +5,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  runTransaction,
   limit as fbLimit,
   orderBy,
   query,
@@ -213,12 +214,27 @@ export async function setProductStock(sellerId: string, id: string, stock: numbe
   const existing = await getSellerProduct(sellerId, id);
   if (!existing) throw new Error("Product not found.");
   const newStock = Math.max(0, Math.floor(stock));
-  await updateDoc(doc(getDb(), PRODUCTS, id), {
-    stock: newStock,
-    updatedAt: serverTimestamp(),
+  const db = getDb();
+  const productRef = doc(db, PRODUCTS, id);
+
+  // Atomic update: read + write inside a transaction so concurrent edits
+  // (dashboard quick-actions, inventory page, order flows) never clobber
+  // each other. Ownership is verified above AND re-checked inside the
+  // transaction; Firestore rules still enforce sellerId == auth.uid.
+  let previousStock: number | null = null;
+  let title = "";
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(productRef);
+    if (!snap.exists()) throw new Error("Product not found.");
+    const data = snap.data() as Product;
+    if (data.sellerId !== sellerId) throw new Error("Permission denied.");
+    previousStock = data.stock;
+    title = data.title;
+    tx.update(productRef, { stock: newStock, updatedAt: serverTimestamp() });
   });
-  // Low stock check — only if stock went down
-  if (newStock < existing.stock) {
-    await notifyLowStock(sellerId, id, existing.title, newStock);
+
+  // Low stock check — only if stock went down (outside the transaction)
+  if (previousStock !== null && newStock < previousStock) {
+    await notifyLowStock(sellerId, id, title, newStock);
   }
 }

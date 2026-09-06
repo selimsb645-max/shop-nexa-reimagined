@@ -1,4 +1,7 @@
 import {
+  reauthenticateWithCredential,
+  EmailAuthProvider,
+  updatePassword as fbUpdatePassword,
   createUserWithEmailAndPassword,
   onAuthStateChanged,
   sendEmailVerification,
@@ -121,4 +124,18 @@ export async function setDisplayName(user: User, displayName: string): Promise<v
 export async function setPhotoURL(user: User, photoURL: string): Promise<void> {
   await fbUpdateProfile(user, { photoURL });
   await updateUserProfile(user.uid, { photoURL });
+}
+
+/**
+ * Change the signed-in user's password. Requires recent-login re-authentication
+ * with the current password; Firebase rejects weak passwords (< 6 chars).
+ */
+export async function changePassword(
+  user: User,
+  currentPassword: string,
+  newPassword: string,
+): Promise<void> {
+  const credential = EmailAuthProvider.credential(user.email ?? "", currentPassword);
+  await reauthenticateWithCredential(user, credential);
+  await fbUpdatePassword(user, newPassword);
 }

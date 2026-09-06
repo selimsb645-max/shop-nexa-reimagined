@@ -12,6 +12,10 @@ import {
   Tag,
   DollarSign,
   MessageSquare,
+  Boxes,
+  Star,
+  User,
+  LifeBuoy,
   TrendingUp,
   Receipt,
   Menu,
@@ -42,25 +46,28 @@ export function SellerShell({ children }: Props) {
 
   const navItems = [
     { to: "/seller", icon: LayoutDashboard, label: "Dashboard", exact: true },
-    { to: "/seller/products", icon: Package, label: "Products" },
     { to: "/seller/orders", icon: ShoppingBag, label: "Orders" },
-    { to: "/seller/messages", icon: MessageSquare, label: "Messages" },
-    { to: "/seller/earnings", icon: DollarSign, label: "Earnings" },
-    { to: "/seller/settlements", icon: Receipt, label: "Settlements" },
-    { to: "/seller/wallet", icon: Wallet, label: "Wallet" },
-    { to: "/seller/coupons", icon: Tag, label: "Coupons" },
+    { to: "/seller/products", icon: Package, label: "Products" },
+    { to: "/seller/inventory", icon: Boxes, label: "Inventory" },
     { to: "/seller/store", icon: Store, label: "Store" },
+    { to: "/seller/earnings", icon: DollarSign, label: "Earnings" },
+    { to: "/seller/wallet", icon: Wallet, label: "Wallet" },
+    { to: "/seller/settlements", icon: Receipt, label: "Settlements" },
+    { to: "/seller/coupons", icon: Tag, label: "Coupons" },
+    { to: "/seller/reviews", icon: Star, label: "Reviews" },
     { to: "/seller/analytics", icon: BarChart3, label: "Analytics" },
     { to: "/seller/insights", icon: TrendingUp, label: "Insights" },
+    { to: "/seller/messages", icon: MessageSquare, label: "Messages" },
     { to: "/seller/notifications", icon: Bell, label: "Notifications" },
+    { to: "/seller/profile", icon: User, label: "Profile" },
     { to: "/seller/settings", icon: Settings, label: "Settings" },
+    { to: "/support", icon: LifeBuoy, label: "Help & Support" },
   ];
 
   const mobileTabs = [
     { to: "/seller", icon: LayoutDashboard, label: "Home", exact: true },
+    { to: "/seller/orders", icon: ShoppingBag, label: "Orders", exact: false },
     { to: "/seller/products", icon: Package, label: "Products" },
-    { to: "/seller/orders", icon: ShoppingBag, label: "Orders" },
-    { to: "/seller/messages", icon: MessageSquare, label: "Messages" },
     { to: "/seller/wallet", icon: Wallet, label: "Wallet" },
   ];
 
@@ -87,7 +94,11 @@ export function SellerShell({ children }: Props) {
               </button>
               <Link to="/" className="flex items-center gap-2">
                 <div className="bg-white rounded-lg px-2 py-1">
-                  <img src="/brand/aventa-shop-logo.png" alt="AVENTA SHOP Seller" className="h-7 w-auto object-contain" />
+                  <img
+                    src="/brand/aventa-shop-logo.png"
+                    alt="AVENTA SHOP Seller"
+                    className="h-7 w-auto object-contain"
+                  />
                 </div>
                 <div className="hidden sm:block leading-tight">
                   <span className="text-sm font-bold text-slate-400">Seller</span>

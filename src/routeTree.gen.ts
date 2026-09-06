@@ -94,12 +94,15 @@ import { Route as AuthenticatedSellerAnalyticsRouteImport } from './routes/_auth
 import { Route as AuthenticatedSellerCouponsRouteImport } from './routes/_authenticated/seller.coupons'
 import { Route as AuthenticatedSellerEarningsRouteImport } from './routes/_authenticated/seller.earnings'
 import { Route as AuthenticatedSellerInsightsRouteImport } from './routes/_authenticated/seller.insights'
+import { Route as AuthenticatedSellerInventoryRouteImport } from './routes/_authenticated/seller.inventory'
 import { Route as AuthenticatedSellerMessagesRouteImport } from './routes/_authenticated/seller.messages'
 import { Route as AuthenticatedSellerNotificationsRouteImport } from './routes/_authenticated/seller.notifications'
 import { Route as AuthenticatedSellerOrdersRouteImport } from './routes/_authenticated/seller.orders'
 import { Route as AuthenticatedSellerProductsRouteImport } from './routes/_authenticated/seller.products'
+import { Route as AuthenticatedSellerProfileRouteImport } from './routes/_authenticated/seller.profile'
 import { Route as AuthenticatedSellerRegisterRouteImport } from './routes/_authenticated/seller.register'
 import { Route as AuthenticatedSellerReturnsRouteImport } from './routes/_authenticated/seller.returns'
+import { Route as AuthenticatedSellerReviewsRouteImport } from './routes/_authenticated/seller.reviews'
 import { Route as AuthenticatedSellerSettingsRouteImport } from './routes/_authenticated/seller.settings'
 import { Route as AuthenticatedSellerSettlementsRouteImport } from './routes/_authenticated/seller.settlements'
 import { Route as AuthenticatedSellerStoreRouteImport } from './routes/_authenticated/seller.store'
@@ -571,6 +574,12 @@ const AuthenticatedSellerInsightsRoute =
     path: '/insights',
     getParentRoute: () => AuthenticatedSellerRoute,
   } as any)
+const AuthenticatedSellerInventoryRoute =
+  AuthenticatedSellerInventoryRouteImport.update({
+    id: '/inventory',
+    path: '/inventory',
+    getParentRoute: () => AuthenticatedSellerRoute,
+  } as any)
 const AuthenticatedSellerMessagesRoute =
   AuthenticatedSellerMessagesRouteImport.update({
     id: '/messages',
@@ -595,6 +604,12 @@ const AuthenticatedSellerProductsRoute =
     path: '/products',
     getParentRoute: () => AuthenticatedSellerRoute,
   } as any)
+const AuthenticatedSellerProfileRoute =
+  AuthenticatedSellerProfileRouteImport.update({
+    id: '/profile',
+    path: '/profile',
+    getParentRoute: () => AuthenticatedSellerRoute,
+  } as any)
 const AuthenticatedSellerRegisterRoute =
   AuthenticatedSellerRegisterRouteImport.update({
     id: '/register',
@@ -605,6 +620,12 @@ const AuthenticatedSellerReturnsRoute =
   AuthenticatedSellerReturnsRouteImport.update({
     id: '/returns',
     path: '/returns',
+    getParentRoute: () => AuthenticatedSellerRoute,
+  } as any)
+const AuthenticatedSellerReviewsRoute =
+  AuthenticatedSellerReviewsRouteImport.update({
+    id: '/reviews',
+    path: '/reviews',
     getParentRoute: () => AuthenticatedSellerRoute,
   } as any)
 const AuthenticatedSellerSettingsRoute =
@@ -763,12 +784,15 @@ export interface FileRoutesByFullPath {
   '/seller/coupons': typeof AuthenticatedSellerCouponsRoute
   '/seller/earnings': typeof AuthenticatedSellerEarningsRoute
   '/seller/insights': typeof AuthenticatedSellerInsightsRoute
+  '/seller/inventory': typeof AuthenticatedSellerInventoryRoute
   '/seller/messages': typeof AuthenticatedSellerMessagesRoute
   '/seller/notifications': typeof AuthenticatedSellerNotificationsRoute
   '/seller/orders': typeof AuthenticatedSellerOrdersRouteWithChildren
   '/seller/products': typeof AuthenticatedSellerProductsRouteWithChildren
+  '/seller/profile': typeof AuthenticatedSellerProfileRoute
   '/seller/register': typeof AuthenticatedSellerRegisterRoute
   '/seller/returns': typeof AuthenticatedSellerReturnsRoute
+  '/seller/reviews': typeof AuthenticatedSellerReviewsRoute
   '/seller/settings': typeof AuthenticatedSellerSettingsRoute
   '/seller/settlements': typeof AuthenticatedSellerSettlementsRoute
   '/seller/store': typeof AuthenticatedSellerStoreRoute
@@ -865,10 +889,13 @@ export interface FileRoutesByTo {
   '/seller/coupons': typeof AuthenticatedSellerCouponsRoute
   '/seller/earnings': typeof AuthenticatedSellerEarningsRoute
   '/seller/insights': typeof AuthenticatedSellerInsightsRoute
+  '/seller/inventory': typeof AuthenticatedSellerInventoryRoute
   '/seller/messages': typeof AuthenticatedSellerMessagesRoute
   '/seller/notifications': typeof AuthenticatedSellerNotificationsRoute
+  '/seller/profile': typeof AuthenticatedSellerProfileRoute
   '/seller/register': typeof AuthenticatedSellerRegisterRoute
   '/seller/returns': typeof AuthenticatedSellerReturnsRoute
+  '/seller/reviews': typeof AuthenticatedSellerReviewsRoute
   '/seller/settings': typeof AuthenticatedSellerSettingsRoute
   '/seller/settlements': typeof AuthenticatedSellerSettlementsRoute
   '/seller/store': typeof AuthenticatedSellerStoreRoute
@@ -969,12 +996,15 @@ export interface FileRoutesById {
   '/_authenticated/seller/coupons': typeof AuthenticatedSellerCouponsRoute
   '/_authenticated/seller/earnings': typeof AuthenticatedSellerEarningsRoute
   '/_authenticated/seller/insights': typeof AuthenticatedSellerInsightsRoute
+  '/_authenticated/seller/inventory': typeof AuthenticatedSellerInventoryRoute
   '/_authenticated/seller/messages': typeof AuthenticatedSellerMessagesRoute
   '/_authenticated/seller/notifications': typeof AuthenticatedSellerNotificationsRoute
   '/_authenticated/seller/orders': typeof AuthenticatedSellerOrdersRouteWithChildren
   '/_authenticated/seller/products': typeof AuthenticatedSellerProductsRouteWithChildren
+  '/_authenticated/seller/profile': typeof AuthenticatedSellerProfileRoute
   '/_authenticated/seller/register': typeof AuthenticatedSellerRegisterRoute
   '/_authenticated/seller/returns': typeof AuthenticatedSellerReturnsRoute
+  '/_authenticated/seller/reviews': typeof AuthenticatedSellerReviewsRoute
   '/_authenticated/seller/settings': typeof AuthenticatedSellerSettingsRoute
   '/_authenticated/seller/settlements': typeof AuthenticatedSellerSettlementsRoute
   '/_authenticated/seller/store': typeof AuthenticatedSellerStoreRoute
@@ -1075,12 +1105,15 @@ export interface FileRouteTypes {
     | '/seller/coupons'
     | '/seller/earnings'
     | '/seller/insights'
+    | '/seller/inventory'
     | '/seller/messages'
     | '/seller/notifications'
     | '/seller/orders'
     | '/seller/products'
+    | '/seller/profile'
     | '/seller/register'
     | '/seller/returns'
+    | '/seller/reviews'
     | '/seller/settings'
     | '/seller/settlements'
     | '/seller/store'
@@ -1177,10 +1210,13 @@ export interface FileRouteTypes {
     | '/seller/coupons'
     | '/seller/earnings'
     | '/seller/insights'
+    | '/seller/inventory'
     | '/seller/messages'
     | '/seller/notifications'
+    | '/seller/profile'
     | '/seller/register'
     | '/seller/returns'
+    | '/seller/reviews'
     | '/seller/settings'
     | '/seller/settlements'
     | '/seller/store'
@@ -1280,12 +1316,15 @@ export interface FileRouteTypes {
     | '/_authenticated/seller/coupons'
     | '/_authenticated/seller/earnings'
     | '/_authenticated/seller/insights'
+    | '/_authenticated/seller/inventory'
     | '/_authenticated/seller/messages'
     | '/_authenticated/seller/notifications'
     | '/_authenticated/seller/orders'
     | '/_authenticated/seller/products'
+    | '/_authenticated/seller/profile'
     | '/_authenticated/seller/register'
     | '/_authenticated/seller/returns'
+    | '/_authenticated/seller/reviews'
     | '/_authenticated/seller/settings'
     | '/_authenticated/seller/settlements'
     | '/_authenticated/seller/store'
@@ -1929,6 +1968,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSellerInsightsRouteImport
       parentRoute: typeof AuthenticatedSellerRoute
     }
+    '/_authenticated/seller/inventory': {
+      id: '/_authenticated/seller/inventory'
+      path: '/inventory'
+      fullPath: '/seller/inventory'
+      preLoaderRoute: typeof AuthenticatedSellerInventoryRouteImport
+      parentRoute: typeof AuthenticatedSellerRoute
+    }
     '/_authenticated/seller/messages': {
       id: '/_authenticated/seller/messages'
       path: '/messages'
@@ -1957,6 +2003,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSellerProductsRouteImport
       parentRoute: typeof AuthenticatedSellerRoute
     }
+    '/_authenticated/seller/profile': {
+      id: '/_authenticated/seller/profile'
+      path: '/profile'
+      fullPath: '/seller/profile'
+      preLoaderRoute: typeof AuthenticatedSellerProfileRouteImport
+      parentRoute: typeof AuthenticatedSellerRoute
+    }
     '/_authenticated/seller/register': {
       id: '/_authenticated/seller/register'
       path: '/register'
@@ -1969,6 +2022,13 @@ declare module '@tanstack/react-router' {
       path: '/returns'
       fullPath: '/seller/returns'
       preLoaderRoute: typeof AuthenticatedSellerReturnsRouteImport
+      parentRoute: typeof AuthenticatedSellerRoute
+    }
+    '/_authenticated/seller/reviews': {
+      id: '/_authenticated/seller/reviews'
+      path: '/reviews'
+      fullPath: '/seller/reviews'
+      preLoaderRoute: typeof AuthenticatedSellerReviewsRouteImport
       parentRoute: typeof AuthenticatedSellerRoute
     }
     '/_authenticated/seller/settings': {
@@ -2190,12 +2250,15 @@ interface AuthenticatedSellerRouteChildren {
   AuthenticatedSellerCouponsRoute: typeof AuthenticatedSellerCouponsRoute
   AuthenticatedSellerEarningsRoute: typeof AuthenticatedSellerEarningsRoute
   AuthenticatedSellerInsightsRoute: typeof AuthenticatedSellerInsightsRoute
+  AuthenticatedSellerInventoryRoute: typeof AuthenticatedSellerInventoryRoute
   AuthenticatedSellerMessagesRoute: typeof AuthenticatedSellerMessagesRoute
   AuthenticatedSellerNotificationsRoute: typeof AuthenticatedSellerNotificationsRoute
   AuthenticatedSellerOrdersRoute: typeof AuthenticatedSellerOrdersRouteWithChildren
   AuthenticatedSellerProductsRoute: typeof AuthenticatedSellerProductsRouteWithChildren
+  AuthenticatedSellerProfileRoute: typeof AuthenticatedSellerProfileRoute
   AuthenticatedSellerRegisterRoute: typeof AuthenticatedSellerRegisterRoute
   AuthenticatedSellerReturnsRoute: typeof AuthenticatedSellerReturnsRoute
+  AuthenticatedSellerReviewsRoute: typeof AuthenticatedSellerReviewsRoute
   AuthenticatedSellerSettingsRoute: typeof AuthenticatedSellerSettingsRoute
   AuthenticatedSellerSettlementsRoute: typeof AuthenticatedSellerSettlementsRoute
   AuthenticatedSellerStoreRoute: typeof AuthenticatedSellerStoreRoute
@@ -2208,13 +2271,16 @@ const AuthenticatedSellerRouteChildren: AuthenticatedSellerRouteChildren = {
   AuthenticatedSellerCouponsRoute: AuthenticatedSellerCouponsRoute,
   AuthenticatedSellerEarningsRoute: AuthenticatedSellerEarningsRoute,
   AuthenticatedSellerInsightsRoute: AuthenticatedSellerInsightsRoute,
+  AuthenticatedSellerInventoryRoute: AuthenticatedSellerInventoryRoute,
   AuthenticatedSellerMessagesRoute: AuthenticatedSellerMessagesRoute,
   AuthenticatedSellerNotificationsRoute: AuthenticatedSellerNotificationsRoute,
   AuthenticatedSellerOrdersRoute: AuthenticatedSellerOrdersRouteWithChildren,
   AuthenticatedSellerProductsRoute:
     AuthenticatedSellerProductsRouteWithChildren,
+  AuthenticatedSellerProfileRoute: AuthenticatedSellerProfileRoute,
   AuthenticatedSellerRegisterRoute: AuthenticatedSellerRegisterRoute,
   AuthenticatedSellerReturnsRoute: AuthenticatedSellerReturnsRoute,
+  AuthenticatedSellerReviewsRoute: AuthenticatedSellerReviewsRoute,
   AuthenticatedSellerSettingsRoute: AuthenticatedSellerSettingsRoute,
   AuthenticatedSellerSettlementsRoute: AuthenticatedSellerSettlementsRoute,
   AuthenticatedSellerStoreRoute: AuthenticatedSellerStoreRoute,
