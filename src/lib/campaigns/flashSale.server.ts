@@ -241,3 +241,44 @@ export async function releaseFlashSaleStock(
   }
   throw new Error("flashsale/conflict: could not release stock after retries");
 }
+
+/* ──────────────────────────────────────────────────────────────── */
+/* Public (storefront) flash-sale view — sanitized (§12)            */
+/* ──────────────────────────────────────────────────────────────── */
+
+export interface PublicFlashSale {
+  campaignId: string;
+  salePriceMinor: number;
+  originalPriceMinor: number;
+  stockRemaining: number;
+  perCustomerLimit: number;
+  endsAt: number;
+}
+
+/**
+ * The storefront's ONLY flash-sale read. Returns a live, in-window
+ * flash sale for the given campaign with just the fields a customer
+ * may see — internal stock bookkeeping, reservations and purchase
+ * counters are stripped. null when: not found, inactive, outside the
+ * sale window, or sold out (sold-out stays null so the UI can drop
+ * the section instead of promising stock that isn't there).
+ */
+export async function getPublicActiveFlashSale(
+  projectId: string,
+  campaignId: string,
+): Promise<PublicFlashSale | null> {
+  const doc = await getFlashSale(projectId, campaignId);
+  if (!doc || !doc.active) return null;
+  const now = Date.now();
+  if (now < doc.startAt || now > doc.endAt) return null;
+  const stockRemaining = doc.stockTotal - doc.stockReserved;
+  if (stockRemaining <= 0) return null;
+  return {
+    campaignId: doc.campaignId,
+    salePriceMinor: doc.salePriceMinor,
+    originalPriceMinor: doc.originalPriceMinor,
+    stockRemaining,
+    perCustomerLimit: doc.perCustomerLimit,
+    endsAt: doc.endAt,
+  };
+}

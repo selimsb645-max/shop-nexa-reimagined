@@ -309,10 +309,23 @@ export async function unlistProduct(
   if (!isValidQcTransition(review.status, "UNLISTED")) {
     throw new Error(`qc/unlist: illegal transition ${review.status} → UNLISTED`);
   }
-  return writeTransition(projectId, review, "UNLISTED", {
+  const updated = await writeTransition(projectId, review, "UNLISTED", {
     actor: { id: `admin:${actor.uid}`, role: actor.adminRole },
     extra: { unlistReason: reason, unlistedAt: Date.now() },
   });
+  await emitDomainEvent(projectId, {
+    source: "product",
+    type: "product.unlisted",
+    key: `${review.productId}_${Date.now()}`,
+    seq: 1,
+    actor: { id: `admin:${actor.uid}`, role: actor.adminRole },
+    payload: {
+      productId: review.productId,
+      sellerUid: review.sellerUid,
+      reason,
+    },
+  });
+  return updated;
 }
 
 // ───────────────────────────────────────────────────────────────

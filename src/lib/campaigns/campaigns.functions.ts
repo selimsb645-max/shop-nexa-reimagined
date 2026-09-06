@@ -39,3 +39,23 @@ export const getPublicCampaignHome = createServerFn({ method: "GET" })
       };
     }
   });
+
+/**
+ * Public flash-sale view for the storefront (Prompt 05 §5 wiring).
+ * Runs off the ACTIVE campaign home; when the homepage has no
+ * campaign or the flash sale is out of window/sold out, returns null
+ * so the storefront can drop the section. Never throws — flash-sale
+ * failures must never break a customer page.
+ */
+export const getPublicCampaignFlashSale = createServerFn({ method: "GET" })
+  .handler(async () => {
+    try {
+      const projectId = getProjectId();
+      const home = await getActiveCampaignHome(projectId);
+      if (!home.campaign || !home.home.flashSaleSection) return null;
+      const { getPublicActiveFlashSale } = await import("./flashSale.server");
+      return await getPublicActiveFlashSale(projectId, home.campaign.campaignId);
+    } catch {
+      return null;
+    }
+  });

@@ -20,6 +20,7 @@ import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { CategoryShowcase, type ShowcaseCategory } from "@/components/home/CategoryShowcase";
+import { CampaignHomeSection } from "@/components/campaigns/CampaignHomeSection";
 
 import { buildMetaTags, getSiteUrl } from "@/lib/seo";
 import { ProductCard } from "@/components/product/ProductCard";
@@ -176,6 +177,10 @@ function HomePage() {
         <section className="mt-3 sm:mt-4">
           <HeroCarousel />
         </section>
+
+        {/* 1a. Live Campaign strip — renders only when a campaign is
+             ACTIVE (server-driven; disappears automatically on end). */}
+        <CampaignHomeSection />
 
         {/* 2. Flash Sale Section */}
         <section className="mt-5 sm:mt-7">

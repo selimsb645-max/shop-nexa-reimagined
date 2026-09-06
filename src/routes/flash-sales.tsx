@@ -23,9 +23,60 @@ import { SiteFooter } from "@/components/layout/SiteFooter";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { ProductCard, ProductCardSkeleton } from "@/components/product/ProductCard";
 import { listProducts } from "@/services/firebase/products";
+import { getPublicCampaignFlashSale } from "@/lib/campaigns/campaigns.functions";
 import { firebaseConfigured } from "@/services/firebase/config";
 import type { Product } from "@/types/commerce";
 import { buildMetaTags, collectionPageJsonLd, breadcrumbJsonLd, jsonLdScript } from "@/lib/seo";
+
+/* ──────────────────────────────────────────────────────────────
+   Campaign Flash Sale bar (Prompt 05 wiring) — additive section.
+   Renders ONLY while the ACTIVE campaign has a live in-window,
+   in-stock flash sale (server-authoritative, sanitized payload).
+  ────────────────────────────────────────────────────────────── */
+function CampaignFlashSaleBar() {
+  const { data: fs } = useQuery({
+    queryKey: ["public-campaign-flash-sale"],
+    queryFn: () => getPublicCampaignFlashSale(),
+    staleTime: 30_000,
+    retry: 1,
+  });
+  if (!fs) return null;
+  const taka = (minor: number) => `৳${(minor / 100).toLocaleString("en-US")}`;
+  const discount = Math.round(((fs.originalPriceMinor - fs.salePriceMinor) / fs.originalPriceMinor) * 100);
+  return (
+    <section className="rounded-2xl border-2 border-red-500 bg-white p-4 sm:p-5 shadow-lg">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-600 shadow-md">
+            <Zap className="h-5 w-5 fill-yellow-300 text-yellow-300" />
+          </span>
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-red-600">
+              Live Campaign Flash Sale
+            </p>
+            <p className="text-lg sm:text-xl font-extrabold text-slate-900">
+              {taka(fs.salePriceMinor)}{" "}
+              <span className="text-sm font-medium text-slate-400 line-through">
+                {taka(fs.originalPriceMinor)}
+              </span>{" "}
+              <span className="ml-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-bold text-red-700">
+                -{discount}% OFF
+              </span>
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+          <span className="rounded-full bg-slate-100 px-3 py-1.5">
+            {fs.stockRemaining} left in stock
+          </span>
+          <span className="rounded-full bg-slate-100 px-3 py-1.5">
+            Max {fs.perCustomerLimit} per customer
+          </span>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 export const Route = createFileRoute("/flash-sales")({
   ssr: true,
@@ -322,6 +373,10 @@ export function FlashSalesPage() {
             </div>
           </div>
         </section>
+
+        {/* Live Campaign Flash Sale — server-driven, auto-hides when
+            the campaign ends or stock runs out. */}
+        <CampaignFlashSaleBar />
 
         {/* Filter and Sort Toolbar */}
         <section className="bg-white rounded-xl p-3 sm:p-4 border border-slate-200/80 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">

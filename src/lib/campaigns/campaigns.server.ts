@@ -672,6 +672,17 @@ export interface PublicCampaignHome {
  * stripped (§12 — internal campaign configuration never exposed).
  */
 export async function getActiveCampaignHome(projectId: string): Promise<PublicCampaignHome> {
+  // Kernel heartbeat (Prompt 06 follow-up): the storefront visit
+  // drains pending domain-event dispatches (bounded, idempotent) and
+  // registers the campaign listing subscriber before doing so.
+  try {
+    const { ensureCampaignListingSubscriber } = await import("./listingRegistry.server");
+    const { processDueDispatches } = await import("../kernel/events");
+    ensureCampaignListingSubscriber();
+    await processDueDispatches(projectId, { limit: 25 });
+  } catch {
+    // The backbone must never take the homepage down.
+  }
   await advanceCampaigns(projectId);
   const home = await readActiveHomeConfig(projectId);
   if (!home.campaignId) {

@@ -289,3 +289,82 @@ export async function processDispatch(projectId: string, dispatchId: string): Pr
   }]);
   return { dispatchId, subscriber: subscriberName, status: "DONE", attempts };
 }
+
+// ───────────────────────────────────────────────────────────────
+// Sweep — process due dispatches (cron / lazy-trigger entrypoint)
+// ───────────────────────────────────────────────────────────────
+
+import { runFirestoreQuery } from "../firebase-admin.server";
+import { fromFsValue, type FsValue } from "../firebase-admin.server";
+
+/**
+ * List PENDING (or DEAD, when `includeDead`) dispatch docs, oldest
+ * first — the work queue for the platform's heartbeat.
+ */
+export async function listDueDispatches(
+  projectId: string,
+  limit = 50,
+  includeDead = false,
+): Promise<Array<{ dispatchId: string; status: string; attempts: number; eventType: string }>> {
+  const statusFilter = includeDead
+    ? undefined
+    : { fieldFilter: { field: { fieldPath: "status" }, op: "EQUAL", value: { stringValue: "PENDING" } } };
+  const rows = await runFirestoreQuery(projectId, {
+    from: [{ collectionId: DOMAIN_DISPATCHES_COLLECTION }],
+    ...(statusFilter ? { where: statusFilter } : {}),
+    orderBy: [{ field: { fieldPath: "createdAt" }, direction: "ASCENDING" }],
+    limit,
+  });
+  return rows
+    .map((row) => {
+      const doc = (row as Record<string, unknown>).document as
+        | { name?: string; fields?: Record<string, FsValue> }
+        | undefined;
+      if (!doc?.name || !doc.fields) return null;
+      const dispatchId = doc.name.split("/").pop() ?? "";
+      const f = doc.fields;
+      return {
+        dispatchId,
+        status: String(fromFsValue(f.status ?? { stringValue: "PENDING" })),
+        attempts: Number(fromFsValue(f.attempts ?? { integerValue: 0 })),
+        eventType: String(fromFsValue(f.eventType ?? { stringValue: "" })),
+      };
+    })
+    .filter((r): r is NonNullable<typeof r> => r !== null);
+}
+
+export interface SweepResult {
+  processed: number;
+  done: number;
+  retried: number;
+  dead: number;
+  errors: string[];
+}
+
+/**
+ * Heartbeat: run every due dispatch. Safe to call from a cron sweep,
+ * from a lazy trigger after any emit, or manually from an admin tool —
+ * DONE dispatches no-op, failures advance attempts, DEAD is skipped
+ * unless `includeDead` (then it gets one final attempt that can only
+ * land DEAD again — never resurrects silently).
+ */
+export async function processDueDispatches(
+  projectId: string,
+  opts: { limit?: number; includeDead?: boolean } = {},
+): Promise<SweepResult> {
+  const limit = opts.limit ?? 50;
+  const due = await listDueDispatches(projectId, limit, opts.includeDead ?? false);
+  const result: SweepResult = { processed: 0, done: 0, retried: 0, dead: 0, errors: [] };
+  for (const d of due) {
+    try {
+      const outcome = await processDispatch(projectId, d.dispatchId);
+      result.processed++;
+      if (outcome.status === "DONE") result.done++;
+      else if (outcome.status === "DEAD") { result.dead++; result.errors.push(`${d.dispatchId}: ${outcome.error ?? "dead"}`); }
+      else { result.retried++; if (outcome.error) result.errors.push(`${d.dispatchId}: ${outcome.error}`); }
+    } catch (err) {
+      result.errors.push(`${d.dispatchId}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+  return result;
+}
