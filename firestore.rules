@@ -1010,5 +1010,37 @@ service cloud.firestore {
         || (request.auth != null && resource.data.customerId == request.auth.uid);
       allow write: if false;
     }
+
+    // ═══ AVENTA CORE kernel — Prompt 06 ═════════════════════════
+    // The typed event bus + cross-domain audit trail are written ONLY
+    // by trusted server code (service account). Clients never write;
+    // reads are admin-gated for operations dashboards.
+
+    match /domainEvents/{eventId} {
+      allow read: if roleIn(['super_admin', 'admin', 'platform_admin']);
+      allow write: if false; // service-account only
+    }
+
+    match /domainDispatches/{dispatchId} {
+      allow read: if roleIn(['super_admin', 'admin', 'platform_admin']);
+      allow write: if false; // service-account only
+    }
+
+    // Append-only platform audit trail (§backbone AUDIT).
+    match /auditTrail/{entryId} {
+      allow read: if roleIn(['super_admin', 'admin', 'platform_admin']);
+      allow create: if false; // service-account only
+      allow update, delete: if false; // append-only, forever
+    }
+
+    // ═══ Product QC — Prompt 06 (PRODUCT layer of the backbone) ══
+    match /qcReviews/{reviewId} {
+      allow read: if roleIn(['super_admin', 'admin', 'platform_admin', 'content_admin', 'support_admin'])
+        || (isApprovedSeller() && resource.data.sellerUid == request.auth.uid);
+      // All writes go through server functions: submit (seller),
+      // start/complete/list/unlist (QC reviewer). The rules layer
+      // below additionally blocks any direct client attempt.
+      allow create, update, delete: if false;
+    }
   }
 }
