@@ -880,5 +880,135 @@ service cloud.firestore {
       allow read: if roleIn(['super_admin', 'finance_admin']);
       allow write: if false;
     }
+
+    // ═══ Campaigns — Prompt 05 helpers ═══════════════════════════
+    // Campaign transition matrix (§2) — mirrors campaignStateMachine.
+    function validCampaignTransition(from, to) {
+      return from == to
+        || (from == 'DRAFT'     && to in ['SUBMITTED', 'REVIEW', 'REJECTED', 'CANCELLED'])
+        || (from == 'SUBMITTED' && to in ['REVIEW', 'REJECTED', 'CANCELLED'])
+        || (from == 'REVIEW'    && to in ['APPROVED', 'REJECTED', 'CANCELLED'])
+        || (from == 'APPROVED'  && to in ['SCHEDULED', 'CANCELLED'])
+        || (from == 'SCHEDULED' && to in ['ACTIVE', 'CANCELLED', 'PAUSED'])
+        || (from == 'ACTIVE'    && to in ['PAUSED', 'ENDED', 'CANCELLED'])
+        || (from == 'PAUSED'    && to in ['ACTIVE', 'ENDED', 'CANCELLED']);
+    }
+
+    // §8: elevated (global/high-value) campaigns may only be APPROVED
+    // by super_admin; §4: the time window is frozen once past REVIEW;
+    // §6: pricing/time fields stay sane integers.
+    function campaignUpdateIsSafe(before, after) {
+      return
+        // elevated approval gate
+        (after.status != 'APPROVED'
+          || !before.elevatedApprovalRequired
+          || roleIn(['super_admin']))
+        // schedule immutability once past APPROVED (§4)
+        && (before.status in ['DRAFT', 'SUBMITTED', 'REVIEW']
+          || (before.startAt == after.startAt && before.endAt == after.endAt))
+        // §6: integer paisa pricing, always
+        && after.discountRules.valueMinor is int
+        && after.startAt is int
+        && after.endAt is int
+        && after.endAt > after.startAt;
+    }
+
+    // ═══ Campaigns — Prompt 05 (dynamic promotion automation) ════
+    // Campaign mutations from the ADMIN PANEL go through the client SDK,
+    // so rules enforce the same state machine + permission gates the
+    // server engine uses. All transitions validate here; elevated
+    // campaigns (global/high-value, §8) require super_admin approval.
+
+    // Campaign manager roles for rule purposes (§8).
+    function isCampaignManager() {
+      return roleIn(['super_admin', 'admin', 'platform_admin', 'marketing_admin']);
+    }
+
+    match /campaigns/{campaignId} {
+      // Sellers may view campaigns open for their submissions (§3);
+      // campaign managers get full read; customers get campaigns only
+      // through the sanitized server function (service account).
+      allow read: if isCampaignManager()
+        || (isApprovedSeller() && resource.data.status in ['SUBMITTED', 'REVIEW', 'APPROVED', 'SCHEDULED', 'ACTIVE']);
+
+      // Create: managers only, always as DRAFT (§1, §2).
+      allow create: if isCampaignManager()
+        && request.resource.data.status == 'DRAFT'
+        && request.resource.data.approvedBy == null;
+
+      // Update: managers only; the transition matrix is enforced HERE.
+      allow update: if isCampaignManager()
+        && validCampaignTransition(resource.data.status, request.resource.data.status)
+        && campaignUpdateIsSafe(resource.data, request.resource.data);
+
+      // Delete: only never-activated drafts (§1 lifecycle hygiene).
+      allow delete: if isCampaignManager()
+        && resource.data.status == 'DRAFT'
+        && resource.data.activatedAt == null;
+
+    }
+
+    // Seller campaign submissions (§3) — sellers submit their own;
+    // only admins move the review state; sellers can never activate.
+    match /campaignSubmissions/{submissionId} {
+      allow read: if roleIn(['super_admin', 'admin', 'platform_admin', 'marketing_admin'])
+        || (isApprovedSeller() && resource.data.sellerUid == request.auth.uid);
+
+      allow create: if isApprovedSeller()
+        && request.resource.data.sellerUid == request.auth.uid
+        && request.resource.data.status == 'PENDING_REVIEW'
+        // submissions only while the campaign accepts them (§3)
+        && get(/databases/$(database)/documents/campaigns/$(request.resource.data.campaignId)).data.status in ['SUBMITTED', 'REVIEW']
+        && request.resource.data.reviewedBy == null;
+
+      // Admin review only: PENDING_REVIEW → APPROVED/REJECTED; items immutable.
+      allow update: if roleIn(['super_admin', 'admin', 'platform_admin', 'marketing_admin'])
+        && resource.data.status == 'PENDING_REVIEW'
+        && request.resource.data.status in ['APPROVED', 'REJECTED']
+        && request.resource.data.items == resource.data.items
+        && request.resource.data.sellerUid == resource.data.sellerUid;
+
+      allow delete: if false;
+    }
+
+    // Campaign audit trail (§11) — append-only.
+    match /campaignEvents/{eventId} {
+      allow read: if roleIn(['super_admin', 'admin', 'platform_admin', 'marketing_admin', 'security_admin']);
+      allow write: if false;
+    }
+
+    // Campaign notification queue (§10) — server-produced records.
+    match /campaignNotifications/{notificationId} {
+      allow read: if roleIn(['super_admin', 'admin', 'platform_admin', 'marketing_admin']);
+      allow write: if false;
+    }
+
+    // Homepage content switch + rollback snapshots (§5, §9) — the
+    // campaign engine (service account) is the ONLY writer; customers
+    // receive the sanitized view via the server function.
+    match /homeConfig/{docId} {
+      allow read, write: if false;
+    }
+
+    // Flash sales (§7) — stock counters are server-only; the race-safe
+    // reservation happens in the flash-sale engine transactions.
+    match /flashSales/{campaignId} {
+      allow read: if isCampaignManager()
+        || (isApprovedSeller() && resource.data.active == true);
+      allow create, update: if isCampaignManager()
+        && request.resource.data.stockTotal is int
+        && request.resource.data.stockTotal >= 0
+        && request.resource.data.salePriceMinor is int
+        && request.resource.data.salePriceMinor > 0
+        && request.resource.data.salePriceMinor < request.resource.data.originalPriceMinor;
+      allow delete: if false;
+    }
+
+    // Flash-sale per-customer purchase counters — server transactions only.
+    match /flashSalePurchases/{purchaseId} {
+      allow read: if roleIn(['super_admin', 'admin', 'platform_admin', 'marketing_admin'])
+        || (request.auth != null && resource.data.customerId == request.auth.uid);
+      allow write: if false;
+    }
   }
 }
