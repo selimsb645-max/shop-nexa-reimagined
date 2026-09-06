@@ -814,6 +814,22 @@ service cloud.firestore {
       allow create, update, delete: if false; // Workflow processor only
     }
 
+    // ────────────────────────────────────────────────────────────
+    // Admin Panel Orders module — collection-group listing.
+    // The admin panel lists real customer orders (users/{uid}/orders)
+    // and seller order mirrors (sellers/{uid}/orders) with a single
+    // collectionGroup("orders") query. READ ONLY for admins here —
+    // every write path stays governed by the specific nested order
+    // rules (status/tracking whitelist + machine-validated
+    // transitions + financial-field locks). No bypass exists: this
+    // rule grants nothing the nested rules did not already grant
+    // per-document to isAdmin().
+    // ────────────────────────────────────────────────────────────
+    match /{path=**}/orders/{orderId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if false; // nested rules govern writes
+    }
+
     // Admin notifications (workflow fan-out) — admin read, no writes.
     match /adminNotifications/{nid} {
       allow read: if roleIn(['super_admin', 'admin', 'order_manager', 'support_admin']);
