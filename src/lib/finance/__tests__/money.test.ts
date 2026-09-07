@@ -7,8 +7,15 @@
 
 import { describe, it, expect } from "vitest";
 import {
-  toMinor, fromMinor, addMoney, subMoney, mulBps, rateToBps,
-  assertMoney, formatMoney, type Money,
+  toMinor,
+  fromMinor,
+  addMoney,
+  subMoney,
+  mulBps,
+  rateToBps,
+  assertMoney,
+  formatMoney,
+  type Money,
 } from "../money";
 
 describe("money: minor-unit representation (§3, §12 amount precision)", () => {

@@ -4,14 +4,26 @@
 
 import { describe, it, expect } from "vitest";
 import {
-  SETTLEMENT_STATES, SETTLEMENT_TRANSITIONS, BATCH_ELIGIBLE_STATE,
-  isValidSettlementTransition, isSettlementState, isTerminalSettlementState,
+  SETTLEMENT_STATES,
+  SETTLEMENT_TRANSITIONS,
+  BATCH_ELIGIBLE_STATE,
+  isValidSettlementTransition,
+  isSettlementState,
+  isTerminalSettlementState,
 } from "../settlementStateMachine";
 import type { SettlementState } from "../settlementStateMachine";
 
 describe("settlement state machine (§4)", () => {
   it("happy path: PENDING → … → PAID is walkable in order", () => {
-    const path: SettlementState[] = ["PENDING", "DELIVERED", "RETURN_WINDOW", "ELIGIBLE", "SETTLEMENT_BATCH", "PROCESSING", "PAID"];
+    const path: SettlementState[] = [
+      "PENDING",
+      "DELIVERED",
+      "RETURN_WINDOW",
+      "ELIGIBLE",
+      "SETTLEMENT_BATCH",
+      "PROCESSING",
+      "PAID",
+    ];
     for (let i = 0; i < path.length - 1; i++) {
       expect(isValidSettlementTransition(path[i], path[i + 1])).toBe(true);
     }

@@ -50,7 +50,10 @@ export const FINANCE_ROLE_PERMISSIONS: Record<string, readonly FinancePermission
 };
 
 /** Server-side permission check. NEVER rely on the client for this. */
-export function hasFinancePermission(adminRole: string | null | undefined, permission: FinancePermission): boolean {
+export function hasFinancePermission(
+  adminRole: string | null | undefined,
+  permission: FinancePermission,
+): boolean {
   if (!adminRole) return false;
   const granted = FINANCE_ROLE_PERMISSIONS[adminRole];
   if (!granted) return false; // deny-by-default
@@ -59,7 +62,10 @@ export function hasFinancePermission(adminRole: string | null | undefined, permi
 
 /** Roles allowed to READ finance documents (mirrored in Firestore rules). */
 export const FINANCE_READ_ROLES: readonly string[] = [
-  "super_admin", "finance_admin", "admin", "order_manager",
+  "super_admin",
+  "finance_admin",
+  "admin",
+  "order_manager",
 ];
 
 /** Can this role perform ANY financial mutation? (Used as a guard rail.) */

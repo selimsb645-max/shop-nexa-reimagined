@@ -13,6 +13,39 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
+// ════════════════════════════════════════════════════════════════════
+// SECURITY AUDIT: shared server-side admin verifier.
+// Mirrors the Firestore rules' roleIn()/isAdmin() semantics EXACTLY:
+// role must be "admin", blocked must NOT be true, and (when given)
+// the adminRole sub-role must be in the allowed list. Uses the
+// emulator-aware batchGetDocs helper — no raw production REST URLs.
+// ════════════════════════════════════════════════════════════════════
+async function verifyAdminAccount(
+  projectId: string,
+  uid: string,
+  allowedRoles: string[] | null,
+): Promise<{ role: string; adminRole: string | null }> {
+  const { batchGetDocs, docPath } = await import("./firebase-admin.server");
+  const name = docPath(projectId, ["users", uid]);
+  const doc = (await batchGetDocs(projectId, [name])).get(name);
+  if (!doc?.exists) {
+    throw new Error("Could not verify admin permissions.");
+  }
+  const data = doc.data as Record<string, unknown>;
+  const role = String(data.role ?? "customer");
+  const adminRole = (data.adminRole as string | null) ?? null;
+  // Same checks the Firestore rules enforce for client access
+  if (role !== "admin" || data.blocked === true) {
+    throw new Error("Authorization failed — caller is not an active admin.");
+  }
+  if (allowedRoles !== null && (adminRole === null || !allowedRoles.includes(adminRole))) {
+    throw new Error(
+      `Authorization failed — your role (${adminRole ?? "none"}) is not permitted for this action.`,
+    );
+  }
+  return { role, adminRole };
+}
+
 // ====================================================================
 // 1. RELEASE SETTLEMENTS (seller triggers lazy release)
 // ====================================================================
@@ -99,22 +132,11 @@ export const processSettlementWithdrawal = createServerFn({ method: "POST" })
 
     const { uid } = await verifyIdToken(data.idToken);
 
-    // Verify caller is admin
-    const token = await getAccessToken();
+    // SECURITY AUDIT: emulator-aware, blocked-aware admin verification.
+    // Only super_admin / finance_admin may move money (unchanged policy).
     const projectId = getProjectId();
-    const userRes = await fetch(
-      `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${encodeURIComponent(uid)}`,
-      { headers: { authorization: `Bearer ${token}` } },
-    );
-    if (!userRes.ok) throw new Error("Could not verify admin permissions.");
-    const userDoc = await userRes.json();
-    const role = userDoc.fields?.role?.stringValue ?? "customer";
-    const adminRole = userDoc.fields?.adminRole?.stringValue ?? null;
-    // SECURITY: sub-role boundaries are enforced server side, not only in the UI.
-    // Only super_admin / finance_admin may move money.
-    if (role !== "admin" || (adminRole !== "super_admin" && adminRole !== "finance_admin")) {
-      throw new Error("Only finance admins can process withdrawals.");
-    }
+    await verifyAdminAccount(projectId, uid, ["super_admin", "finance_admin"]);
+    const token = await getAccessToken();
 
     const result = await processWithdrawal({
       adminUid: uid,
@@ -176,26 +198,13 @@ export const reverseSettlement = createServerFn({ method: "POST" })
 
     const { uid } = await verifyIdToken(data.idToken);
 
-    // Verify caller is admin
-    const token = await getAccessToken();
+    // SECURITY AUDIT: emulator-aware, blocked-aware admin verification.
+    // Step 22 least-privilege policy preserved: only super_admin / admin
+    // may trigger settlement reversal (support_admin, finance_admin,
+    // content_admin are NOT authorized).
     const projectId = getProjectId();
-    const userRes = await fetch(
-      `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${encodeURIComponent(uid)}`,
-      { headers: { authorization: `Bearer ${token}` } },
-    );
-    if (!userRes.ok) throw new Error("Could not verify admin permissions.");
-    const userDoc = await userRes.json();
-    const role = userDoc.fields?.role?.stringValue ?? "customer";
-    const adminRole = userDoc.fields?.adminRole?.stringValue ?? null;
-    if (role !== "admin") throw new Error("Only admins can reverse settlements.");
-    // Step 22: Least-privilege — only super_admin and admin can trigger
-    // settlement reversal (cancellation is a financial operation).
-    // support_admin, finance_admin, content_admin are NOT authorized.
-    if (adminRole !== "super_admin" && adminRole !== "admin") {
-      throw new Error(
-        "You do not have permission to reverse settlements. Only admins and super admins can cancel orders.",
-      );
-    }
+    await verifyAdminAccount(projectId, uid, ["super_admin", "admin"]);
+    const token = await getAccessToken();
 
     return reverseSellerSettlement({
       sellerId: data.sellerId,
@@ -229,20 +238,10 @@ export const markOrderDelivered = createServerFn({ method: "POST" })
     // settlement transitions on another seller's orders (IDOR attack).
     // Admins are allowed to call on behalf of any seller.
     if (uid !== data.sellerId) {
-      // Check if caller is admin
-      const { getAccessToken, getProjectId } = await import("./firebase-admin.server");
-      const token = await getAccessToken();
-      const projectId = getProjectId();
-      const userRes = await fetch(
-        `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${encodeURIComponent(uid)}`,
-        { headers: { authorization: `Bearer ${token}` } },
-      );
-      if (!userRes.ok) throw new Error("Could not verify permissions.");
-      const userDoc = await userRes.json();
-      const role = userDoc.fields?.role?.stringValue ?? "customer";
-      if (role !== "admin") {
-        throw new Error("You can only mark your own orders as delivered.");
-      }
+      // SECURITY AUDIT: admins may act on behalf of any seller, but a
+      // BLOCKED admin must not (mirrors the Firestore rules).
+      const { getProjectId } = await import("./firebase-admin.server");
+      await verifyAdminAccount(getProjectId(), uid, null);
     }
 
     const nowMs = Date.now();
@@ -269,17 +268,9 @@ export const getAdminFinanceOverview = createServerFn({ method: "POST" })
 
     const { uid } = await verifyIdToken(data.idToken);
 
-    // Verify admin
-    const token = await getAccessToken();
+    // SECURITY AUDIT: emulator-aware, blocked-aware admin verification.
     const projectId = getProjectId();
-    const userRes = await fetch(
-      `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${encodeURIComponent(uid)}`,
-      { headers: { authorization: `Bearer ${token}` } },
-    );
-    if (!userRes.ok) throw new Error("Could not verify admin permissions.");
-    const userDoc = await userRes.json();
-    const role = userDoc.fields?.role?.stringValue ?? "customer";
-    if (role !== "admin") throw new Error("Only admins can view finance overview.");
+    await verifyAdminAccount(projectId, uid, null);
 
     return readAdminFinanceOverview();
   });
@@ -324,21 +315,19 @@ const updateCommissionSchema = z.object({
 export const updateSellerCommissionRate = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => updateCommissionSchema.parse(data))
   .handler(async ({ data }) => {
-    const { verifyIdToken, getAccessToken, getProjectId } = await import("./firebase-admin.server");
+    const { verifyIdToken, getProjectId } = await import("./firebase-admin.server");
 
     const { uid } = await verifyIdToken(data.idToken);
 
-    // Verify caller is admin
-    const token = await getAccessToken();
+    // SECURITY AUDIT: commission rates are PLATFORM REVENUE data.
+    // Tightened from any role=='admin' to the existing finance.adjust
+    // permission (super_admin / finance_admin only) — the same gate the
+    // v2 finance engine uses for manual ledger adjustments. Blocked
+    // admins are denied by verifyAdminAccount + requireFinancePermission.
     const projectId = getProjectId();
-    const userRes = await fetch(
-      `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${encodeURIComponent(uid)}`,
-      { headers: { authorization: `Bearer ${token}` } },
-    );
-    if (!userRes.ok) throw new Error("Could not verify admin permissions.");
-    const userDoc = await userRes.json();
-    const role = userDoc.fields?.role?.stringValue ?? "customer";
-    if (role !== "admin") throw new Error("Only admins can update commission rates.");
+    await verifyAdminAccount(projectId, uid, null);
+    const { requireFinancePermission } = await import("./finance/settlementBatch.server");
+    await requireFinancePermission(projectId, uid, "finance.adjust");
 
     const { updateSellerCommissionRate: updateRate } = await import("./admin-commission.server");
 
@@ -359,9 +348,18 @@ const readCommissionSchema = z.object({
 export const getSellerCommissionRate = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => readCommissionSchema.parse(data))
   .handler(async ({ data }) => {
-    const { verifyIdToken } = await import("./firebase-admin.server");
+    const { verifyIdToken, getProjectId } = await import("./firebase-admin.server");
 
     const { uid } = await verifyIdToken(data.idToken);
+
+    // SECURITY AUDIT (IDOR fix): this transport previously had NO
+    // authorization — ANY authenticated caller could read ANY seller's
+    // commission rate. Now: a seller may read only their OWN rate;
+    // active (non-blocked) admins may read any. Everyone else: DENIED.
+    if (uid !== data.sellerId) {
+      const projectId = getProjectId();
+      await verifyAdminAccount(projectId, uid, null);
+    }
 
     const { readSellerCommissionRate: readRate } = await import("./admin-commission.server");
 

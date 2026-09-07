@@ -223,15 +223,25 @@ describe("Cross-Seller Data Isolation — Service Layer", () => {
     expect(code).toMatch(/doc\(getDb\(\),\s*SELLERS,\s*sellerId,\s*ORDERS,\s*orderId\)/);
   });
 
-  it("listSellerWalletTransactions queries sellers/{sellerId}/walletTx", () => {
+  it("wallet service has NO client-side balance computation (v2 only)", () => {
     const code = readService("sellerWallet.ts");
-    expect(code).toContain("WALLET_TX");
-    expect(code).toMatch(/collection\(getDb\(\),\s*SELLERS,\s*sellerId,\s*WALLET_TX\)/);
+    // Legacy float-era functions were removed by the security audit —
+    // any client-computed balance is an architecture regression.
+    expect(code).not.toMatch(/export (async )?function getSellerWalletBalance/);
+    expect(code).not.toMatch(/export (async )?function getSellerTotalEarnings/);
+    expect(code).not.toMatch(/export (async )?function getSellerPendingBalance/);
+    expect(code).not.toMatch(/export (async )?function listSellerWalletTransactions/);
+    expect(code).not.toContain("collection(getDb()");
+    // All reads go through verified server transports
+    expect(code).toContain("getSellerWalletData");
+    expect(code).toContain("getSellerWalletLedgerPage");
+    expect(code).toContain("requestWalletWithdrawal");
   });
 
-  it("getSellerWalletBalance queries sellers/{sellerId}/walletTx", () => {
-    const code = readService("sellerWallet.ts");
-    expect(code).toMatch(/collection\(getDb\(\),\s*SELLERS,\s*sellerId,\s*WALLET_TX\)/);
+  it("legacy client-side withdrawal writer (sellerWithdrawals.ts) is deleted", () => {
+    // The old path wrote withdrawal + walletTx docs via client SDK —
+    // rules deny it, and the code was dead. It must stay gone.
+    expect(fs.existsSync(path.join(SVC_DIR, "sellerWithdrawals.ts"))).toBe(false);
   });
 
   it("listSellerCoupons queries with where('sellerId', '==', sellerId)", () => {
@@ -380,16 +390,19 @@ describe("Server Validation — Financial Functions", () => {
     expect(fnCode).toMatch(/requestSettlementWithdrawal[\s\S]*?verifyIdToken[\s\S]*?uid,/);
   });
 
-  it("processSettlementWithdrawal requires admin role", () => {
-    expect(fnCode).toMatch(/processSettlementWithdrawal[\s\S]*?role !== "admin"/);
+  it("processSettlementWithdrawal requires active admin role (blocked-aware)", () => {
+    // SECURITY AUDIT: hardened from an inline role check to the shared
+    // verifyAdminAccount helper — blocks blocked admins + stale roles,
+    // mirrors the Firestore rules' roleIn() semantics.
+    expect(fnCode).toMatch(/processSettlementWithdrawal[\s\S]*?verifyAdminAccount\(projectId, uid, \["super_admin", "finance_admin"\]\)/);
   });
 
-  it("reverseSettlement requires admin role", () => {
-    expect(fnCode).toMatch(/reverseSettlement[\s\S]*?role !== "admin"/);
+  it("reverseSettlement requires active admin role (blocked-aware)", () => {
+    expect(fnCode).toMatch(/reverseSettlement[\s\S]*?verifyAdminAccount\(projectId, uid, \["super_admin", "admin"\]\)/);
   });
 
-  it("getAdminFinanceOverview requires admin role", () => {
-    expect(fnCode).toMatch(/getAdminFinanceOverview[\s\S]*?role !== "admin"/);
+  it("getAdminFinanceOverview requires active admin role (blocked-aware)", () => {
+    expect(fnCode).toMatch(/getAdminFinanceOverview[\s\S]*?verifyAdminAccount\(projectId, uid, null\)/);
   });
 });
 
@@ -405,12 +418,13 @@ describe("IDOR Protection — markOrderDelivered", () => {
   });
 
   it("markOrderDelivered throws error for non-matching uid (non-admin)", () => {
-    expect(fnCode).toContain("You can only mark your own orders as delivered");
+    expect(fnCode).toContain("uid !== data.sellerId");
   });
 
-  it("markOrderDelivered allows admin override", () => {
-    // Admin check should be present inside the uid !== sellerId branch
-    expect(fnCode).toContain('role !== "admin"');
+  it("markOrderDelivered admin override is blocked-aware (verifyAdminAccount)", () => {
+    // SECURITY AUDIT: the admin-on-behalf path now uses the shared
+    // blocked-aware verifier instead of a raw role fetch.
+    expect(fnCode).toMatch(/if \(uid !== data\.sellerId\) \{[\s\S]*?verifyAdminAccount\(getProjectId\(\), uid, null\)/);
   });
 
   it("markOrderDelivered does NOT blindly trust client-supplied sellerId", () => {

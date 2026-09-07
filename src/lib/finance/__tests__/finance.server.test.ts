@@ -30,19 +30,29 @@ import {
 import { toMinor } from "../money";
 import { computeOrderFinancials } from "../fees.server";
 import {
-  readFinanceConfig, createSettlementsForOrder,
-  advanceSettlementsForOrderEvent, advanceReturnWindowSettlements,
-  querySettlements, SETTLEMENTS_COLLECTION,
+  readFinanceConfig,
+  createSettlementsForOrder,
+  advanceSettlementsForOrderEvent,
+  advanceReturnWindowSettlements,
+  querySettlements,
+  SETTLEMENTS_COLLECTION,
 } from "../settlements.server";
 import {
-  appendLedgerEntry, getSellerBalances, verifyLedgerIntegrity,
+  appendLedgerEntry,
+  getSellerBalances,
+  verifyLedgerIntegrity,
   SELLER_LEDGER_COLLECTION,
 } from "../ledger.server";
 import {
-  generateSettlementBatch, reviewSettlementBatch,
-  approveSettlementBatch, executeSettlementBatch,
-  reconcileSettlementBatch, reversePayout,
-  queryPayouts, requireFinancePermission, requireFreshAuth,
+  generateSettlementBatch,
+  reviewSettlementBatch,
+  approveSettlementBatch,
+  executeSettlementBatch,
+  reconcileSettlementBatch,
+  reversePayout,
+  queryPayouts,
+  requireFinancePermission,
+  requireFreshAuth,
 } from "../settlementBatch.server";
 import { computeFinanceDashboard } from "../reconcile.server";
 
@@ -75,7 +85,13 @@ function fsValue(v: unknown): Record<string, unknown> {
   if (typeof v === "boolean") return { booleanValue: v };
   if (v === null || v === undefined) return { nullValue: null };
   if (typeof v === "object") {
-    return { mapValue: { fields: Object.fromEntries(Object.entries(v as Record<string, unknown>).map(([k, x]) => [k, fsValue(x)])) } };
+    return {
+      mapValue: {
+        fields: Object.fromEntries(
+          Object.entries(v as Record<string, unknown>).map(([k, x]) => [k, fsValue(x)]),
+        ),
+      },
+    };
   }
   return { stringValue: String(v) };
 }
@@ -84,7 +100,9 @@ async function seedDoc(path: string, data: Record<string, unknown>) {
   const res = await fetch(`${BASE}/${path}`, {
     method: "PATCH",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ fields: Object.fromEntries(Object.entries(data).map(([k, v]) => [k, fsValue(v)])) }),
+    body: JSON.stringify({
+      fields: Object.fromEntries(Object.entries(data).map(([k, v]) => [k, fsValue(v)])),
+    }),
   });
   if (!res.ok) throw new Error(`seed ${path} failed: ${res.status}`);
 }
@@ -98,8 +116,18 @@ async function seedSeller(sellerId: string, commissionRate?: number) {
     ...(commissionRate !== undefined ? { commissionRate } : {}),
   });
 }
-async function seedAdmin(uid: string, adminRole: string | null) {
-  await seedDoc(`users/${uid}`, { uid, email: `${uid}@test.local`, adminRole });
+async function seedAdmin(
+  uid: string,
+  adminRole: string | null,
+  opts?: { role?: string; blocked?: boolean },
+) {
+  await seedDoc(`users/${uid}`, {
+    uid,
+    email: `${uid}@test.local`,
+    role: opts?.role ?? "admin",
+    blocked: opts?.blocked ?? false,
+    adminRole,
+  });
 }
 async function seedFinanceConfig(cfg: Record<string, unknown>) {
   await seedDoc("financeConfig/settings", cfg);
@@ -110,13 +138,14 @@ function testToken(uid: string, iat?: number): string {
   return btoa(JSON.stringify({ uid, email: `${uid}@test.local`, ...(iat ? { iat } : {}) }));
 }
 
-
 /** Read all ledger entries for a seller directly from the emulator store. */
 async function readLedgerEntries(sellerId: string) {
   const res = await fetch(`${BASE}/${SELLER_LEDGER_COLLECTION}`);
   const json = (await res.json()) as { documents?: Array<{ fields: Record<string, unknown> }> };
   const { fromFsFields } = await import("../../firebase-admin.server");
-  const all = (json.documents ?? []).map((d) => fromFsFields(d.fields as never) as Record<string, unknown>);
+  const all = (json.documents ?? []).map(
+    (d) => fromFsFields(d.fields as never) as Record<string, unknown>,
+  );
   return all
     .filter((e) => e["sellerId"] === sellerId)
     .map((e) => ({
@@ -195,15 +224,26 @@ describe("finance v2: commission calculation (§2, §12)", () => {
 
   it("category-based commissions resolve per category (audit trail)", async () => {
     await seedSeller(SELLER_A, 0.08);
-    const bd = await computeOrderFinancials("test-project", { commission: { defaultRate: 8, categoryBased: true } }, [
-      { sellerId: SELLER_A, lineTotalTaka: 1000, categoryId: "electronics", subcategoryId: "phones" },
-      { sellerId: SELLER_A, lineTotalTaka: 500, categoryId: "fashion" },
-    ]);
+    const bd = await computeOrderFinancials(
+      "test-project",
+      { commission: { defaultRate: 8, categoryBased: true } },
+      [
+        {
+          sellerId: SELLER_A,
+          lineTotalTaka: 1000,
+          categoryId: "electronics",
+          subcategoryId: "phones",
+        },
+        { sellerId: SELLER_A, lineTotalTaka: 500, categoryId: "fashion" },
+      ],
+    );
     // category rates come from the production resolver: electronics 8%,
     // fashion 12% — assert bps recorded transparently either way
     for (const l of bd.lines) {
       expect(Number.isInteger(l.commission.amountMinor)).toBe(true);
-      expect(l.commission.amountMinor).toBe(Math.trunc((l.gross.amountMinor * l.commissionBps) / 10000));
+      expect(l.commission.amountMinor).toBe(
+        Math.trunc((l.gross.amountMinor * l.commissionBps) / 10000),
+      );
     }
   });
 });
@@ -222,7 +262,6 @@ describe("finance v2: settlement lifecycle + return windows (§4, §5)", () => {
     const res = await createSettlementsForOrder("test-project", orderId, bd.lines, config);
     return { config, bd, res };
   }
-
 
   it("ORDER_CREATED posts settlement + 3 ledger entries (credit, fee, hold)", async () => {
     const { bd } = await createOrder("ord-life-1");
@@ -270,7 +309,11 @@ describe("finance v2: settlement lifecycle + return windows (§4, §5)", () => {
     expect(rows[0].state).toBe("DELIVERED");
 
     // window over → ELIGIBLE + SETTLEMENT_RELEASE moves held → available
-    const r2 = await advanceReturnWindowSettlements("test-project", config, NOW + 3 * 86_400_000 + 1);
+    const r2 = await advanceReturnWindowSettlements(
+      "test-project",
+      config,
+      NOW + 3 * 86_400_000 + 1,
+    );
     expect(r2.eligible).toBe(1);
     rows = await querySettlements("test-project", { orderId: "ord-life-3" });
     expect(rows[0].state).toBe("ELIGIBLE");
@@ -325,9 +368,13 @@ describe("finance v2: settlement lifecycle + return windows (§4, §5)", () => {
 describe("finance v2: ledger engine (§3, §12)", () => {
   it("duplicate idempotency key NEVER double-posts", async () => {
     const input = {
-      sellerId: SELLER_A, type: "ADJUSTMENT" as const,
-      amountMinor: 5000, currency: "BDT" as const,
-      orderId: null, reference: "bonus", createdBy: "admin",
+      sellerId: SELLER_A,
+      type: "ADJUSTMENT" as const,
+      amountMinor: 5000,
+      currency: "BDT" as const,
+      orderId: null,
+      reference: "bonus",
+      createdBy: "admin",
       idempotencyKey: "adj_test_1",
     };
     await appendLedgerEntry("test-project", input);
@@ -341,9 +388,36 @@ describe("finance v2: ledger engine (§3, §12)", () => {
 
   it("concurrent appends both land with a consistent chain", async () => {
     await Promise.all([
-      appendLedgerEntry("test-project", { sellerId: SELLER_A, type: "ADJUSTMENT", amountMinor: 1000, currency: "BDT", orderId: null, reference: "c1", createdBy: "t", idempotencyKey: "conc_1" }),
-      appendLedgerEntry("test-project", { sellerId: SELLER_A, type: "ADJUSTMENT", amountMinor: 2000, currency: "BDT", orderId: null, reference: "c2", createdBy: "t", idempotencyKey: "conc_2" }),
-      appendLedgerEntry("test-project", { sellerId: SELLER_A, type: "ADJUSTMENT", amountMinor: 3000, currency: "BDT", orderId: null, reference: "c3", createdBy: "t", idempotencyKey: "conc_3" }),
+      appendLedgerEntry("test-project", {
+        sellerId: SELLER_A,
+        type: "ADJUSTMENT",
+        amountMinor: 1000,
+        currency: "BDT",
+        orderId: null,
+        reference: "c1",
+        createdBy: "t",
+        idempotencyKey: "conc_1",
+      }),
+      appendLedgerEntry("test-project", {
+        sellerId: SELLER_A,
+        type: "ADJUSTMENT",
+        amountMinor: 2000,
+        currency: "BDT",
+        orderId: null,
+        reference: "c2",
+        createdBy: "t",
+        idempotencyKey: "conc_2",
+      }),
+      appendLedgerEntry("test-project", {
+        sellerId: SELLER_A,
+        type: "ADJUSTMENT",
+        amountMinor: 3000,
+        currency: "BDT",
+        orderId: null,
+        reference: "c3",
+        createdBy: "t",
+        idempotencyKey: "conc_3",
+      }),
     ]);
     const balances = await getSellerBalances("test-project", SELLER_A);
     expect(balances.availableMinor).toBe(6000);
@@ -356,11 +430,33 @@ describe("finance v2: ledger engine (§3, §12)", () => {
   });
 
   it("chain break + stored-balance tampering are DETECTED (reconciliation)", async () => {
-    await appendLedgerEntry("test-project", { sellerId: SELLER_A, type: "ADJUSTMENT", amountMinor: 1000, currency: "BDT", orderId: null, reference: "r1", createdBy: "t", idempotencyKey: "tamper_1" });
-    await appendLedgerEntry("test-project", { sellerId: SELLER_A, type: "ADJUSTMENT", amountMinor: 2000, currency: "BDT", orderId: null, reference: "r2", createdBy: "t", idempotencyKey: "tamper_2" });
+    await appendLedgerEntry("test-project", {
+      sellerId: SELLER_A,
+      type: "ADJUSTMENT",
+      amountMinor: 1000,
+      currency: "BDT",
+      orderId: null,
+      reference: "r1",
+      createdBy: "t",
+      idempotencyKey: "tamper_1",
+    });
+    await appendLedgerEntry("test-project", {
+      sellerId: SELLER_A,
+      type: "ADJUSTMENT",
+      amountMinor: 2000,
+      currency: "BDT",
+      orderId: null,
+      reference: "r2",
+      createdBy: "t",
+      idempotencyKey: "tamper_2",
+    });
 
     // Tamper with the stored balance snapshot directly (as a rogue write would)
-    await seedDoc("sellerFinance/" + SELLER_A, { availableMinor: 999, heldMinor: 0, paidOutMinor: 0 });
+    await seedDoc("sellerFinance/" + SELLER_A, {
+      availableMinor: 999,
+      heldMinor: 0,
+      paidOutMinor: 0,
+    });
     const balances = await getSellerBalances("test-project", SELLER_A);
     expect(balances.availableMinor).toBe(999); // stored is tampered…
     const entries = await readLedgerEntries(SELLER_A);
@@ -378,7 +474,12 @@ describe("finance v2: batch → payout flow (§6, §7, §8)", () => {
   const REVIEWER = "reviewer";
   const NOW_IAT = Math.floor(Date.now() / 1000);
 
-  async function seedEligible(orderId: string, sellerId: string, taka: number, catId = "electronics") {
+  async function seedEligible(
+    orderId: string,
+    sellerId: string,
+    taka: number,
+    catId = "electronics",
+  ) {
     await seedFinanceConfig({ payoutProvider: "MOCK", mockPayoutEnabled: true });
     await seedSeller(sellerId, 0.08);
     const config = await readFinanceConfig("test-project");
@@ -416,21 +517,43 @@ describe("finance v2: batch → payout flow (§6, §7, §8)", () => {
 
     // STALE token must be refused — money moves need fresh re-auth
     await expect(
-      approveSettlementBatch("test-project", testToken(FINANCE_ADMIN, NOW_IAT - 3600), batch.batchId),
+      approveSettlementBatch(
+        "test-project",
+        testToken(FINANCE_ADMIN, NOW_IAT - 3600),
+        batch.batchId,
+      ),
     ).rejects.toThrow(/re-authentication/i);
 
-    const approved = await approveSettlementBatch("test-project", testToken(FINANCE_ADMIN, NOW_IAT), batch.batchId);
+    const approved = await approveSettlementBatch(
+      "test-project",
+      testToken(FINANCE_ADMIN, NOW_IAT),
+      batch.batchId,
+    );
     expect(approved.state).toBe("APPROVED");
     // approve replay is idempotent
-    const approved2 = await approveSettlementBatch("test-project", testToken(FINANCE_ADMIN, NOW_IAT), batch.batchId);
+    const approved2 = await approveSettlementBatch(
+      "test-project",
+      testToken(FINANCE_ADMIN, NOW_IAT),
+      batch.batchId,
+    );
     expect(approved2.state).toBe("APPROVED");
 
     // execute with a STALE token also refused
     await expect(
-      executeSettlementBatch("test-project", testToken(FINANCE_ADMIN, NOW_IAT - 3600), batch.batchId, { productionMode: false }),
+      executeSettlementBatch(
+        "test-project",
+        testToken(FINANCE_ADMIN, NOW_IAT - 3600),
+        batch.batchId,
+        { productionMode: false },
+      ),
     ).rejects.toThrow(/re-authentication/i);
 
-    const exec = await executeSettlementBatch("test-project", testToken(FINANCE_ADMIN, NOW_IAT), batch.batchId, { productionMode: false });
+    const exec = await executeSettlementBatch(
+      "test-project",
+      testToken(FINANCE_ADMIN, NOW_IAT),
+      batch.batchId,
+      { productionMode: false },
+    );
     expect(exec.payouts.length).toBe(1);
     expect(exec.failed).toBe(0);
     expect(exec.payouts[0].status).toBe("SUBMITTED");
@@ -455,8 +578,18 @@ describe("finance v2: batch → payout flow (§6, §7, §8)", () => {
     await reviewSettlementBatch("test-project", REVIEWER, batch.batchId, "ok");
     await approveSettlementBatch("test-project", testToken(FINANCE_ADMIN, NOW_IAT), batch.batchId);
 
-    const e1 = await executeSettlementBatch("test-project", testToken(FINANCE_ADMIN, NOW_IAT), batch.batchId, { productionMode: false });
-    const e2 = await executeSettlementBatch("test-project", testToken(FINANCE_ADMIN, NOW_IAT), batch.batchId, { productionMode: false });
+    const e1 = await executeSettlementBatch(
+      "test-project",
+      testToken(FINANCE_ADMIN, NOW_IAT),
+      batch.batchId,
+      { productionMode: false },
+    );
+    const e2 = await executeSettlementBatch(
+      "test-project",
+      testToken(FINANCE_ADMIN, NOW_IAT),
+      batch.batchId,
+      { productionMode: false },
+    );
 
     expect(e2.payouts[0].payoutId).toBe(e1.payouts[0].payoutId); // same payout returned
     const all = await queryPayouts("test-project", { batchId: batch.batchId });
@@ -476,7 +609,12 @@ describe("finance v2: batch → payout flow (§6, §7, §8)", () => {
     const batch = await generateSettlementBatch("test-project", FINANCE_ADMIN);
     await reviewSettlementBatch("test-project", REVIEWER, batch.batchId, "ok");
     await approveSettlementBatch("test-project", testToken(FINANCE_ADMIN, NOW_IAT), batch.batchId);
-    const exec = await executeSettlementBatch("test-project", testToken(FINANCE_ADMIN, NOW_IAT), batch.batchId, { productionMode: false });
+    const exec = await executeSettlementBatch(
+      "test-project",
+      testToken(FINANCE_ADMIN, NOW_IAT),
+      batch.batchId,
+      { productionMode: false },
+    );
 
     expect(exec.failed).toBe(1);
     expect(exec.payouts[0].status).toBe("FAILED");
@@ -495,20 +633,35 @@ describe("finance v2: batch → payout flow (§6, §7, §8)", () => {
     const batch = await generateSettlementBatch("test-project", FINANCE_ADMIN);
     await reviewSettlementBatch("test-project", REVIEWER, batch.batchId, "ok");
     await approveSettlementBatch("test-project", testToken(FINANCE_ADMIN, NOW_IAT), batch.batchId);
-    const exec = await executeSettlementBatch("test-project", testToken(FINANCE_ADMIN, NOW_IAT), batch.batchId, { productionMode: false });
+    const exec = await executeSettlementBatch(
+      "test-project",
+      testToken(FINANCE_ADMIN, NOW_IAT),
+      batch.batchId,
+      { productionMode: false },
+    );
     const payoutId = exec.payouts[0].payoutId;
 
     let balances = await getSellerBalances("test-project", SELLER_A);
     const netBefore = balances.paidOutMinor;
     expect(netBefore).toBeGreaterThan(0);
 
-    const p1 = await reversePayout("test-project", testToken(FINANCE_ADMIN, NOW_IAT), payoutId, "bank rejected");
+    const p1 = await reversePayout(
+      "test-project",
+      testToken(FINANCE_ADMIN, NOW_IAT),
+      payoutId,
+      "bank rejected",
+    );
     expect(p1.status).toBe("REVERSED");
     balances = await getSellerBalances("test-project", SELLER_A);
-    expect(balances.paidOutMinor).toBe(0);          // payout reversed out
+    expect(balances.paidOutMinor).toBe(0); // payout reversed out
     expect(balances.availableMinor).toBe(netBefore); // money back to seller
 
-    const p2 = await reversePayout("test-project", testToken(FINANCE_ADMIN, NOW_IAT), payoutId, "replay");
+    const p2 = await reversePayout(
+      "test-project",
+      testToken(FINANCE_ADMIN, NOW_IAT),
+      payoutId,
+      "replay",
+    );
     expect(p2.status).toBe("REVERSED"); // idempotent
     balances = await getSellerBalances("test-project", SELLER_A);
     expect(balances.availableMinor).toBe(netBefore); // NOT credited twice
@@ -518,22 +671,40 @@ describe("finance v2: batch → payout flow (§6, §7, §8)", () => {
     await seedEligible("ord-auth-1", SELLER_A, 90);
 
     // support_admin: denied everything (not even generate)
-    await expect(generateSettlementBatch("test-project", "support")).rejects.toThrow(/finance\/permission/i);
+    await expect(generateSettlementBatch("test-project", "support")).rejects.toThrow(
+      /finance\/permission/i,
+    );
     // content_admin: denied
-    await expect(generateSettlementBatch("test-project", "content")).rejects.toThrow(/finance\/permission/i);
+    await expect(generateSettlementBatch("test-project", "content")).rejects.toThrow(
+      /finance\/permission/i,
+    );
     // order_manager: read-only — denied generate/review/reconcile
-    await expect(generateSettlementBatch("test-project", "ordermgr")).rejects.toThrow(/finance\/permission/i);
+    await expect(generateSettlementBatch("test-project", "ordermgr")).rejects.toThrow(
+      /finance\/permission/i,
+    );
     // no role at all: denied
-    await expect(generateSettlementBatch("test-project", "plainuser")).rejects.toThrow(/finance\/permission/i);
+    await expect(generateSettlementBatch("test-project", "plainuser")).rejects.toThrow(
+      /finance\/permission/i,
+    );
 
     // Direct permission probes (unauthorized ADJUSTMENT / PAYOUT / REFUND)
-    await expect(requireFinancePermission("test-project", "ordermgr", "finance.adjust")).rejects.toThrow();
-    await expect(requireFinancePermission("test-project", "support", "finance.payout")).rejects.toThrow();
-    await expect(requireFinancePermission("test-project", "content", "finance.refund")).rejects.toThrow();
-    await expect(requireFinancePermission("test-project", "plainuser", "finance.read")).rejects.toThrow();
+    await expect(
+      requireFinancePermission("test-project", "ordermgr", "finance.adjust"),
+    ).rejects.toThrow();
+    await expect(
+      requireFinancePermission("test-project", "support", "finance.payout"),
+    ).rejects.toThrow();
+    await expect(
+      requireFinancePermission("test-project", "content", "finance.refund"),
+    ).rejects.toThrow();
+    await expect(
+      requireFinancePermission("test-project", "plainuser", "finance.read"),
+    ).rejects.toThrow();
 
     // finance_admin CAN
-    await expect(requireFinancePermission("test-project", FINANCE_ADMIN, "finance.settlement")).resolves.toBeUndefined();
+    await expect(
+      requireFinancePermission("test-project", FINANCE_ADMIN, "finance.settlement"),
+    ).resolves.toBeUndefined();
   });
 
   it("batch generation is idempotent by caller key", async () => {

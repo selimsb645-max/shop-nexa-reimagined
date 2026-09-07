@@ -11,7 +11,12 @@
  *  - everything else submits successfully with a stable providerRef.
  */
 
-import type { PayoutProvider, PayoutRequest, PayoutExecutionResult, PayoutPollResult } from "./types";
+import type {
+  PayoutProvider,
+  PayoutRequest,
+  PayoutExecutionResult,
+  PayoutPollResult,
+} from "./types";
 
 export const MOCK_PAYOUT_PROVIDER: PayoutProvider = {
   id: "MOCK",

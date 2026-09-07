@@ -24,7 +24,13 @@ import {
   closeFirestoreEmulator,
 } from "../../__tests__/firestore-emulator";
 
-import { appendLedgerEntry, getSellerBalances, verifyLedgerIntegrity, SELLER_LEDGER_COLLECTION, SELLER_FINANCE_COLLECTION } from "../ledger.server";
+import {
+  appendLedgerEntry,
+  getSellerBalances,
+  verifyLedgerIntegrity,
+  SELLER_LEDGER_COLLECTION,
+  SELLER_FINANCE_COLLECTION,
+} from "../ledger.server";
 import {
   getSellerWallet,
   requestWalletWithdrawal,
@@ -69,7 +75,13 @@ function fsValue(v: unknown): Record<string, unknown> {
   if (typeof v === "boolean") return { booleanValue: v };
   if (v === null || v === undefined) return { nullValue: null };
   if (typeof v === "object") {
-    return { mapValue: { fields: Object.fromEntries(Object.entries(v as Record<string, unknown>).map(([k, x]) => [k, fsValue(x)])) } };
+    return {
+      mapValue: {
+        fields: Object.fromEntries(
+          Object.entries(v as Record<string, unknown>).map(([k, x]) => [k, fsValue(x)]),
+        ),
+      },
+    };
   }
   return { stringValue: String(v) };
 }
@@ -78,21 +90,43 @@ async function seedDoc(path: string, data: Record<string, unknown>) {
   const res = await fetch(`${BASE}/${path}`, {
     method: "PATCH",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ fields: Object.fromEntries(Object.entries(data).map(([k, v]) => [k, fsValue(v)])) }),
+    body: JSON.stringify({
+      fields: Object.fromEntries(Object.entries(data).map(([k, v]) => [k, fsValue(v)])),
+    }),
   });
   if (!res.ok) throw new Error(`seed ${path} failed: ${res.status}`);
 }
 
 async function seedSeller(sellerId: string) {
-  await seedDoc(`sellers/${sellerId}`, { uid: sellerId, shopName: `Shop ${sellerId}`, status: "approved" });
+  await seedDoc(`sellers/${sellerId}`, {
+    uid: sellerId,
+    shopName: `Shop ${sellerId}`,
+    status: "approved",
+  });
 }
-async function seedAdmin(uid: string, adminRole: string | null) {
-  await seedDoc(`users/${uid}`, { uid, email: `${uid}@test.local`, adminRole });
+async function seedAdmin(
+  uid: string,
+  adminRole: string | null,
+  opts?: { role?: string; blocked?: boolean },
+) {
+  await seedDoc(`users/${uid}`, {
+    uid,
+    email: `${uid}@test.local`,
+    role: opts?.role ?? "admin",
+    blocked: opts?.blocked ?? false,
+    adminRole,
+  });
 }
 
 /** Test (emulator-mode) ID token: base64 JSON, per firebase-admin.server. */
 function testToken(uid: string, iatSeconds?: number): string {
-  return btoa(JSON.stringify({ uid, email: `${uid}@test.local`, iat: iatSeconds ?? Math.floor(Date.now() / 1000) }));
+  return btoa(
+    JSON.stringify({
+      uid,
+      email: `${uid}@test.local`,
+      iat: iatSeconds ?? Math.floor(Date.now() / 1000),
+    }),
+  );
 }
 
 const SELLER = "seller_wallet_a";
@@ -194,10 +228,22 @@ describe("wallet: ledger entries", () => {
 
   it("rejects unsafe/zero amounts", async () => {
     await expect(
-      append({ sellerId: SELLER, type: "ORDER_CREDIT", amountMinor: 0, currency: "BDT", createdBy: "system" }),
-        ).rejects.toThrow(/zero-amount|unsafe amountMinor/);
+      append({
+        sellerId: SELLER,
+        type: "ORDER_CREDIT",
+        amountMinor: 0,
+        currency: "BDT",
+        createdBy: "system",
+      }),
+    ).rejects.toThrow(/zero-amount|unsafe amountMinor/);
     await expect(
-      append({ sellerId: SELLER, type: "ORDER_CREDIT", amountMinor: 1.5, currency: "BDT", createdBy: "system" }),
+      append({
+        sellerId: SELLER,
+        type: "ORDER_CREDIT",
+        amountMinor: 1.5,
+        currency: "BDT",
+        createdBy: "system",
+      }),
     ).rejects.toThrow(/unsafe amountMinor/);
   });
 
@@ -244,8 +290,22 @@ describe("wallet: concurrency protection", () => {
     await credit(SELLER, 100000, "order_1"); // ৳1000
 
     const results = await Promise.allSettled([
-      append({ sellerId: SELLER, type: "SETTLEMENT_HOLD", amountMinor: 70000, currency: "BDT", createdBy: "system", idempotencyKey: "hold_a" }),
-      append({ sellerId: SELLER, type: "SETTLEMENT_HOLD", amountMinor: 70000, currency: "BDT", createdBy: "system", idempotencyKey: "hold_b" }),
+      append({
+        sellerId: SELLER,
+        type: "SETTLEMENT_HOLD",
+        amountMinor: 70000,
+        currency: "BDT",
+        createdBy: "system",
+        idempotencyKey: "hold_a",
+      }),
+      append({
+        sellerId: SELLER,
+        type: "SETTLEMENT_HOLD",
+        amountMinor: 70000,
+        currency: "BDT",
+        createdBy: "system",
+        idempotencyKey: "hold_b",
+      }),
     ]);
 
     const ok = results.filter((r) => r.status === "fulfilled");
@@ -259,7 +319,8 @@ describe("wallet: concurrency protection", () => {
     expect(wallet.availableMinor).toBeGreaterThanOrEqual(0);
 
     const integrity = await verifyLedgerIntegrity(
-      "test-project", SELLER,
+      "test-project",
+      SELLER,
       await querySellerLedger("test-project", SELLER),
     );
     expect(integrity.ok).toBe(true);
@@ -325,16 +386,32 @@ describe("wallet: withdrawal lifecycle", () => {
 
   it("rejects invalid amounts, methods and destinations", async () => {
     await expect(
-      requestWalletWithdrawal("test-project", SELLER, { amountTaka: 5, method: "bkash", destination: "01712345678" }),
+      requestWalletWithdrawal("test-project", SELLER, {
+        amountTaka: 5,
+        method: "bkash",
+        destination: "01712345678",
+      }),
     ).rejects.toThrow(/minimum withdrawal/i);
     await expect(
-      requestWalletWithdrawal("test-project", SELLER, { amountTaka: -50, method: "bkash", destination: "01712345678" }),
+      requestWalletWithdrawal("test-project", SELLER, {
+        amountTaka: -50,
+        method: "bkash",
+        destination: "01712345678",
+      }),
     ).rejects.toThrow();
     await expect(
-      requestWalletWithdrawal("test-project", SELLER, { amountTaka: 50, method: "crypto" as never, destination: "01712345678" }),
+      requestWalletWithdrawal("test-project", SELLER, {
+        amountTaka: 50,
+        method: "crypto" as never,
+        destination: "01712345678",
+      }),
     ).rejects.toThrow(/unsupported withdrawal method/);
     await expect(
-      requestWalletWithdrawal("test-project", SELLER, { amountTaka: 50, method: "bkash", destination: "12" }),
+      requestWalletWithdrawal("test-project", SELLER, {
+        amountTaka: 50,
+        method: "bkash",
+        destination: "12",
+      }),
     ).rejects.toThrow(/valid payout destination/);
   });
 
@@ -369,7 +446,8 @@ describe("wallet: withdrawal lifecycle", () => {
     ).rejects.toThrow(/already COMPLETED/);
 
     const integrity = await verifyLedgerIntegrity(
-      "test-project", SELLER,
+      "test-project",
+      SELLER,
       await querySellerLedger("test-project", SELLER),
     );
     expect(integrity.ok).toBe(true);
@@ -402,20 +480,28 @@ describe("wallet: withdrawal lifecycle", () => {
       destination: "01712345678",
     });
     await expect(
-      processWalletWithdrawal("test-project", { uid: SUPPORT, email: "s@test.local" }, {
-        sellerId: SELLER,
-        withdrawalId: res.withdrawalId,
-        action: "approve",
-      }),
+      processWalletWithdrawal(
+        "test-project",
+        { uid: SUPPORT, email: "s@test.local" },
+        {
+          sellerId: SELLER,
+          withdrawalId: res.withdrawalId,
+          action: "approve",
+        },
+      ),
     ).rejects.toThrow(/lacks finance.payout/);
     // even plain admin (finance.read only) cannot move money
     await seedAdmin("admin_plain", "admin");
     await expect(
-      processWalletWithdrawal("test-project", { uid: "admin_plain", email: "a@test.local" }, {
-        sellerId: SELLER,
-        withdrawalId: res.withdrawalId,
-        action: "approve",
-      }),
+      processWalletWithdrawal(
+        "test-project",
+        { uid: "admin_plain", email: "a@test.local" },
+        {
+          sellerId: SELLER,
+          withdrawalId: res.withdrawalId,
+          action: "approve",
+        },
+      ),
     ).rejects.toThrow(/lacks finance.payout/);
   });
 });
@@ -437,7 +523,11 @@ describe("wallet: status lifecycle", () => {
       reason: "Chargeback investigation case #8842",
     });
     await expect(
-      requestWalletWithdrawal("test-project", SELLER, { amountTaka: 100, method: "bkash", destination: "01712345678" }),
+      requestWalletWithdrawal("test-project", SELLER, {
+        amountTaka: 100,
+        method: "bkash",
+        destination: "01712345678",
+      }),
     ).rejects.toThrow(/blocked/);
 
     // Order flow still posts (ledger must stay consistent with orders)
@@ -454,19 +544,43 @@ describe("wallet: status lifecycle", () => {
   });
 
   it("reactivation restores withdrawals", async () => {
-    await setWalletStatus("test-project", ADMIN_ACTOR, { sellerId: SELLER, status: "SUSPENDED", reason: "Temporary risk review pending" });
-    await setWalletStatus("test-project", ADMIN_ACTOR, { sellerId: SELLER, status: "ACTIVE", reason: "Risk review complete — cleared" });
-    const res = await requestWalletWithdrawal("test-project", SELLER, { amountTaka: 100, method: "bkash", destination: "01712345678" });
+    await setWalletStatus("test-project", ADMIN_ACTOR, {
+      sellerId: SELLER,
+      status: "SUSPENDED",
+      reason: "Temporary risk review pending",
+    });
+    await setWalletStatus("test-project", ADMIN_ACTOR, {
+      sellerId: SELLER,
+      status: "ACTIVE",
+      reason: "Risk review complete — cleared",
+    });
+    const res = await requestWalletWithdrawal("test-project", SELLER, {
+      amountTaka: 100,
+      method: "bkash",
+      destination: "01712345678",
+    });
     expect(res.amountMinor).toBe(10000);
   });
 
   it("CLOSED is terminal and blocks debits", async () => {
-    await setWalletStatus("test-project", ADMIN_ACTOR, { sellerId: SELLER, status: "CLOSED", reason: "Seller account terminated for policy violations" });
+    await setWalletStatus("test-project", ADMIN_ACTOR, {
+      sellerId: SELLER,
+      status: "CLOSED",
+      reason: "Seller account terminated for policy violations",
+    });
     await expect(
-      setWalletStatus("test-project", ADMIN_ACTOR, { sellerId: SELLER, status: "ACTIVE", reason: "Attempting to reopen a closed wallet" }),
+      setWalletStatus("test-project", ADMIN_ACTOR, {
+        sellerId: SELLER,
+        status: "ACTIVE",
+        reason: "Attempting to reopen a closed wallet",
+      }),
     ).rejects.toThrow(/INVALID_STATE_TRANSITION/);
     await expect(
-      requestWalletWithdrawal("test-project", SELLER, { amountTaka: 100, method: "bkash", destination: "01712345678" }),
+      requestWalletWithdrawal("test-project", SELLER, {
+        amountTaka: 100,
+        method: "bkash",
+        destination: "01712345678",
+      }),
     ).rejects.toThrow(/closed/);
     // Financial history is preserved — never deleted
     const wallet = await getSellerWallet("test-project", SELLER);
@@ -475,10 +589,18 @@ describe("wallet: status lifecycle", () => {
 
   it("requires a meaningful reason and finance.adjust permission", async () => {
     await expect(
-      setWalletStatus("test-project", ADMIN_ACTOR, { sellerId: SELLER, status: "SUSPENDED", reason: "short" }),
+      setWalletStatus("test-project", ADMIN_ACTOR, {
+        sellerId: SELLER,
+        status: "SUSPENDED",
+        reason: "short",
+      }),
     ).rejects.toThrow(/reason/);
     await expect(
-      setWalletStatus("test-project", { uid: SUPPORT, email: "s@test.local" }, { sellerId: SELLER, status: "SUSPENDED", reason: "Support cannot touch finance" }),
+      setWalletStatus(
+        "test-project",
+        { uid: SUPPORT, email: "s@test.local" },
+        { sellerId: SELLER, status: "SUSPENDED", reason: "Support cannot touch finance" },
+      ),
     ).rejects.toThrow(/lacks finance.adjust/);
   });
 });
@@ -506,26 +628,43 @@ describe("wallet: manual adjustments", () => {
 
     // audit log row exists
     const logsRes = await fetch(`${BASE}/activityLogs`);
-    const logs = (await logsRes.json()) as { documents?: Array<{ fields: Record<string, Record<string, unknown>> }> };
-    const actions = (logs.documents ?? []).map((d) => (d.fields["action"] as { stringValue?: string })?.stringValue);
+    const logs = (await logsRes.json()) as {
+      documents?: Array<{ fields: Record<string, Record<string, unknown>> }>;
+    };
+    const actions = (logs.documents ?? []).map(
+      (d) => (d.fields["action"] as { stringValue?: string })?.stringValue,
+    );
     expect(actions).toContain("MANUAL_CREDIT");
   });
 
   it("rejects debit over balance, short reasons, and unauthorized roles", async () => {
     await expect(
       postManualAdjustment("test-project", ADMIN_ACTOR, {
-        sellerId: SELLER, amountTaka: 500, direction: "DEBIT", reason: "Debit exceeding the seller balance on purpose",
+        sellerId: SELLER,
+        amountTaka: 500,
+        direction: "DEBIT",
+        reason: "Debit exceeding the seller balance on purpose",
       }),
     ).rejects.toThrow(/invariant violated/);
     await expect(
       postManualAdjustment("test-project", ADMIN_ACTOR, {
-        sellerId: SELLER, amountTaka: 100, direction: "CREDIT", reason: "too short",
+        sellerId: SELLER,
+        amountTaka: 100,
+        direction: "CREDIT",
+        reason: "too short",
       }),
     ).rejects.toThrow(/reason/);
     await expect(
-      postManualAdjustment("test-project", { uid: SELLER, email: null }, {
-        sellerId: SELLER, amountTaka: 100, direction: "CREDIT", reason: "Seller trying to credit itself",
-      }),
+      postManualAdjustment(
+        "test-project",
+        { uid: SELLER, email: null },
+        {
+          sellerId: SELLER,
+          amountTaka: 100,
+          direction: "CREDIT",
+          reason: "Seller trying to credit itself",
+        },
+      ),
     ).rejects.toThrow(/lacks finance.adjust/);
   });
 });
@@ -550,12 +689,20 @@ describe("wallet: admin views & permissions", () => {
   });
 
   it("denies wallet listing to roles without finance.read", async () => {
-    await expect(listAdminWallets("test-project", SUPPORT, {})).rejects.toThrow(/lacks finance.read/);
-    await expect(listAdminWallets("test-project", SELLER, {})).rejects.toThrow(/lacks finance.read/);
+    await expect(listAdminWallets("test-project", SUPPORT, {})).rejects.toThrow(
+      /lacks finance.read/,
+    );
+    await expect(listAdminWallets("test-project", SELLER, {})).rejects.toThrow(
+      /lacks finance.read/,
+    );
   });
 
   it("wallet detail includes ledger + withdrawals", async () => {
-    const res = await requestWalletWithdrawal("test-project", SELLER, { amountTaka: 100, method: "bkash", destination: "01712345678" });
+    const res = await requestWalletWithdrawal("test-project", SELLER, {
+      amountTaka: 100,
+      method: "bkash",
+      destination: "01712345678",
+    });
     const detail = await getAdminWalletDetail("test-project", ADMIN, SELLER, {});
     expect(detail.wallet.availableMinor).toBe(20000);
     expect(detail.ledger.entries.length).toBeGreaterThan(0);
@@ -564,14 +711,20 @@ describe("wallet: admin views & permissions", () => {
 
   it("requireFreshAuth rejects stale tokens for money-moving transports", async () => {
     const staleIat = Math.floor(Date.now() / 1000) - 600; // 10 min old
-    await expect(requireFreshAuth(testToken(ADMIN, staleIat))).rejects.toThrow(/re-authentication required/i);
+    await expect(requireFreshAuth(testToken(ADMIN, staleIat))).rejects.toThrow(
+      /re-authentication required/i,
+    );
     await expect(requireFreshAuth(testToken(ADMIN))).resolves.toBe(ADMIN);
   });
 
   it("super_admin retains full finance authority", async () => {
     await seedAdmin("root_admin", "super_admin");
-    await expect(requireFinancePermission("test-project", "root_admin", "finance.adjust")).resolves.toBeUndefined();
-    await expect(requireFinancePermission("test-project", "root_admin", "finance.payout")).resolves.toBeUndefined();
+    await expect(
+      requireFinancePermission("test-project", "root_admin", "finance.adjust"),
+    ).resolves.toBeUndefined();
+    await expect(
+      requireFinancePermission("test-project", "root_admin", "finance.payout"),
+    ).resolves.toBeUndefined();
   });
 });
 
@@ -586,10 +739,33 @@ describe("wallet: reconciliation", () => {
 
   it("ledger replay === wallet balances after mixed credits and debits", async () => {
     await credit(SELLER, 100000, "order_1");
-    await append({ sellerId: SELLER, type: "COMMISSION_DEBIT", amountMinor: 8000, currency: "BDT", createdBy: "system", idempotencyKey: "order_1_comm" });
-    await append({ sellerId: SELLER, type: "SHIPPING_DEBIT", amountMinor: 2000, currency: "BDT", createdBy: "system", idempotencyKey: "order_1_ship" });
-    const wd = await requestWalletWithdrawal("test-project", SELLER, { amountTaka: 500, method: "bkash", destination: "01712345678" });
-    await processWalletWithdrawal("test-project", ADMIN_ACTOR, { sellerId: SELLER, withdrawalId: wd.withdrawalId, action: "reject", note: "Test rejection for reconciliation flow" });
+    await append({
+      sellerId: SELLER,
+      type: "COMMISSION_DEBIT",
+      amountMinor: 8000,
+      currency: "BDT",
+      createdBy: "system",
+      idempotencyKey: "order_1_comm",
+    });
+    await append({
+      sellerId: SELLER,
+      type: "SHIPPING_DEBIT",
+      amountMinor: 2000,
+      currency: "BDT",
+      createdBy: "system",
+      idempotencyKey: "order_1_ship",
+    });
+    const wd = await requestWalletWithdrawal("test-project", SELLER, {
+      amountTaka: 500,
+      method: "bkash",
+      destination: "01712345678",
+    });
+    await processWalletWithdrawal("test-project", ADMIN_ACTOR, {
+      sellerId: SELLER,
+      withdrawalId: wd.withdrawalId,
+      action: "reject",
+      note: "Test rejection for reconciliation flow",
+    });
 
     const report = await runWalletReconciliation("test-project", ADMIN);
     expect(report.mismatches).toHaveLength(0);
@@ -631,10 +807,30 @@ describe("wallet: legacy walletTx migration", () => {
   });
 
   it("migrates legacy float entries to integer paisa, idempotently", async () => {
-    await seedDoc(`sellers/${SELLER}/walletTx/leg_1`, { type: "earning", amount: 100.5, status: "completed", createdAt: 1757000000000 });
-    await seedDoc(`sellers/${SELLER}/walletTx/leg_2`, { type: "withdrawal", amount: -30, status: "completed", createdAt: 1757000001000 });
-    await seedDoc(`sellers/${SELLER}/walletTx/leg_3`, { type: "withdrawal", amount: -20, status: "pending", createdAt: 1757000002000 });
-    await seedDoc(`sellers/${SELLER}/walletTx/leg_4`, { type: "bonus", amount: 10.25, status: "completed", createdAt: 1757000003000 });
+    await seedDoc(`sellers/${SELLER}/walletTx/leg_1`, {
+      type: "earning",
+      amount: 100.5,
+      status: "completed",
+      createdAt: 1757000000000,
+    });
+    await seedDoc(`sellers/${SELLER}/walletTx/leg_2`, {
+      type: "withdrawal",
+      amount: -30,
+      status: "completed",
+      createdAt: 1757000001000,
+    });
+    await seedDoc(`sellers/${SELLER}/walletTx/leg_3`, {
+      type: "withdrawal",
+      amount: -20,
+      status: "pending",
+      createdAt: 1757000002000,
+    });
+    await seedDoc(`sellers/${SELLER}/walletTx/leg_4`, {
+      type: "bonus",
+      amount: 10.25,
+      status: "completed",
+      createdAt: 1757000003000,
+    });
 
     const out = await migrateLegacyWalletTx("test-project", ADMIN, SELLER);
     expect(out.migrated).toBe(3);
@@ -653,13 +849,16 @@ describe("wallet: legacy walletTx migration", () => {
     expect(wallet2.transactionCount).toBe(3);
 
     const integrity = await verifyLedgerIntegrity(
-      "test-project", SELLER,
+      "test-project",
+      SELLER,
       await querySellerLedger("test-project", SELLER),
     );
     expect(integrity.ok).toBe(true);
   });
 
   it("refuses migration without finance.adjust", async () => {
-    await expect(migrateLegacyWalletTx("test-project", SUPPORT, SELLER)).rejects.toThrow(/lacks finance.adjust/);
+    await expect(migrateLegacyWalletTx("test-project", SUPPORT, SELLER)).rejects.toThrow(
+      /lacks finance.adjust/,
+    );
   });
 });

@@ -21,7 +21,10 @@
  */
 
 import { docPath, batchGetDocs } from "../firebase-admin.server";
-import { resolveCategoryCommissions, resolveProductCommissionRate } from "../category-commission.server";
+import {
+  resolveCategoryCommissions,
+  resolveProductCommissionRate,
+} from "../category-commission.server";
 import { toMinor, mulBps, rateToBps, type Money } from "./money";
 
 export interface OrderLineFinancialInput {
@@ -81,7 +84,10 @@ export async function computeOrderFinancials(
 
   const sellerIds = [...new Set(lines.map((l) => l.sellerId))];
   const sellerDocs = sellerIds.length
-    ? await batchGetDocs(projectId, sellerIds.map((sid) => docPath(projectId, ["sellers", sid])))
+    ? await batchGetDocs(
+        projectId,
+        sellerIds.map((sid) => docPath(projectId, ["sellers", sid])),
+      )
     : new Map();
 
   const sellerBps = new Map<string, number>();
@@ -101,24 +107,36 @@ export async function computeOrderFinancials(
   const subPairs = lines
     .filter((l) => l.categoryId && l.subcategoryId)
     .map((l) => ({ categoryId: l.categoryId!, subcategoryId: l.subcategoryId! }));
-  const commissionCache = categoryBased && categoryIds.length
-    ? await resolveCategoryCommissions(categoryIds, subPairs)
-    : new Map();
+  const commissionCache =
+    categoryBased && categoryIds.length
+      ? await resolveCategoryCommissions(categoryIds, subPairs)
+      : new Map();
 
   const out: OrderLineFinancial[] = [];
-  let grossMinor = 0, commissionMinor = 0, shippingMinor = 0, netMinor = 0;
+  let grossMinor = 0,
+    commissionMinor = 0,
+    shippingMinor = 0,
+    netMinor = 0;
 
   // ── GROUP PER SELLER FIRST (§2): one seller → one settlement row.
   // Multiple lines of the same seller are aggregated BEFORE any money
   // math so commission applies to the seller's order subtotal exactly
   // once (same result as per-line bps since the rate is per-seller).
-  const grouped = new Map<string, {
-    grossTaka: number; shippingTaka: number;
-    categoryId: string | null; subcategoryId: string | null;
-  }>();
+  const grouped = new Map<
+    string,
+    {
+      grossTaka: number;
+      shippingTaka: number;
+      categoryId: string | null;
+      subcategoryId: string | null;
+    }
+  >();
   for (const l of lines) {
     const g = grouped.get(l.sellerId) ?? {
-      grossTaka: 0, shippingTaka: 0, categoryId: null, subcategoryId: null,
+      grossTaka: 0,
+      shippingTaka: 0,
+      categoryId: null,
+      subcategoryId: null,
     };
     g.grossTaka += l.lineTotalTaka;
     g.shippingTaka += l.shippingTaka ?? 0;
@@ -142,11 +160,15 @@ export async function computeOrderFinancials(
     let commissionBps = sellerBps.get(l.sellerId) ?? globalDefaultBps;
     if (categoryBased && l.categoryId) {
       const rate = resolveProductCommissionRate(
-        l.categoryId, l.subcategoryId, commissionCache,
+        l.categoryId,
+        l.subcategoryId,
+        commissionCache,
         sellerBps.get(l.sellerId) ?? globalDefaultRate,
         globalDefaultRate,
       );
-      commissionBps = rateToBps(Math.min(Math.max(Number.isFinite(rate) ? rate : globalDefaultRate, 0), 1));
+      commissionBps = rateToBps(
+        Math.min(Math.max(Number.isFinite(rate) ? rate : globalDefaultRate, 0), 1),
+      );
     }
 
     const commissionAmt = mulBps(gross.amountMinor, commissionBps);
@@ -171,7 +193,8 @@ export async function computeOrderFinancials(
     currency: "BDT",
     lines: out,
     totals: {
-      grossMinor, commissionMinor,
+      grossMinor,
+      commissionMinor,
       shippingFeeMinor: shippingMinor,
       sellerNetMinor: netMinor,
     },

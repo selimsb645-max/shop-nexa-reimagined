@@ -35,14 +35,26 @@ import {
   type FsWrite,
 } from "../firebase-admin.server";
 import { appendLedgerEntry } from "./ledger.server";
-import { transitionSettlement, querySettlements, readFinanceConfig, type FinanceConfig } from "./settlements.server";
+import {
+  transitionSettlement,
+  querySettlements,
+  readFinanceConfig,
+  type FinanceConfig,
+} from "./settlements.server";
 import { resolvePayoutProvider } from "./payoutProviders/registry";
 import { hasFinancePermission, type FinancePermission } from "./permissions";
 
 export const SETTLEMENT_BATCHES_COLLECTION = "settlementBatches";
 export const PAYOUTS_COLLECTION = "payouts";
 
-export const BATCH_STATES = ["DRAFT", "IN_REVIEW", "APPROVED", "EXECUTING", "RECONCILED", "FAILED"] as const;
+export const BATCH_STATES = [
+  "DRAFT",
+  "IN_REVIEW",
+  "APPROVED",
+  "EXECUTING",
+  "RECONCILED",
+  "FAILED",
+] as const;
 export type BatchState = (typeof BATCH_STATES)[number];
 
 const BATCH_TRANSITIONS: Record<BatchState, readonly BatchState[]> = {
@@ -147,6 +159,12 @@ async function getAdminRole(projectId: string, uid: string): Promise<string | nu
   if (!doc?.exists) return null;
   // FetchedDoc.data is ALREADY decoded by batchGetDocs.
   const data = doc.data as Record<string, unknown>;
+  // SECURITY AUDIT: mirror the Firestore rules' roleIn() semantics —
+  // a stale/leaked adminRole on a NON-admin user, or a BLOCKED admin,
+  // must carry ZERO finance authority server-side. The rules already
+  // enforce this for client SDK reads; this closes the same gap for
+  // Admin SDK (rules-bypassing) server functions.
+  if (String(data.role ?? "") !== "admin" || data.blocked === true) return null;
   return (data.adminRole as string) ?? null;
 }
 
@@ -187,12 +205,14 @@ async function writeBatchState(
     throw new Error(`finance/batch: invalid transition ${batch.state} → ${to} (${batch.batchId})`);
   }
   const now = Date.now();
-  await commitWrites(projectId, [{
-    update: {
-      name: docPath(projectId, [SETTLEMENT_BATCHES_COLLECTION, batch.batchId]),
-      fields: toFsFields({ ...batch, ...extra, state: to, updatedAt: now }),
+  await commitWrites(projectId, [
+    {
+      update: {
+        name: docPath(projectId, [SETTLEMENT_BATCHES_COLLECTION, batch.batchId]),
+        fields: toFsFields({ ...batch, ...extra, state: to, updatedAt: now }),
+      },
     },
-  }]);
+  ]);
 }
 
 /**
@@ -225,7 +245,8 @@ export async function generateSettlementBatch(
     list.push(s);
     perSeller.set(s.sellerId, list);
   }
-  let totalGross = 0, totalNet = 0;
+  let totalGross = 0,
+    totalNet = 0;
   const writes: FsWrite[] = [];
   for (const s of eligible) {
     totalGross += Number(s.grossMinor ?? 0);
@@ -238,15 +259,24 @@ export async function generateSettlementBatch(
     });
   }
   const batch: BatchDoc = {
-    batchId, state: "DRAFT", currency: "BDT",
+    batchId,
+    state: "DRAFT",
+    currency: "BDT",
     settlementCount: eligible.length,
     sellerCount: perSeller.size,
     totalGrossMinor: totalGross,
     totalNetMinor: totalNet,
     generatedBy: actorUid,
-    reviewedBy: null, reviewNote: null, approvedBy: null, executedBy: null, reconciledBy: null,
-    payoutCount: 0, failedPayoutCount: 0, mismatchReport: null,
-    createdAt: now, updatedAt: now,
+    reviewedBy: null,
+    reviewNote: null,
+    approvedBy: null,
+    executedBy: null,
+    reconciledBy: null,
+    payoutCount: 0,
+    failedPayoutCount: 0,
+    mismatchReport: null,
+    createdAt: now,
+    updatedAt: now,
     ...(idempotencyKey ? { idempotencyKey } : {}),
   } as BatchDoc;
   writes.push({
@@ -323,7 +353,9 @@ export async function executeSettlementBatch(
 
   const config = await readFinanceConfig(projectId);
   const provider = resolvePayoutProvider(
-    config.payoutProvider, options.productionMode, config.mockPayoutEnabled,
+    config.payoutProvider,
+    options.productionMode,
+    config.mockPayoutEnabled,
   );
 
   if (batch.state === "APPROVED") {
@@ -356,29 +388,44 @@ export async function executeSettlementBatch(
     }
 
     const result = await provider.executePayout({
-      payoutId, batchId, sellerId, amountMinor, currency: "BDT", payoutReference,
+      payoutId,
+      batchId,
+      sellerId,
+      amountMinor,
+      currency: "BDT",
+      payoutReference,
     });
     const status: PayoutDoc["status"] = result.status === "SUBMITTED" ? "SUBMITTED" : "FAILED";
     const payout: PayoutDoc = {
-      payoutId, batchId, sellerId,
+      payoutId,
+      batchId,
+      sellerId,
       settlementIds: list.map((s) => s.settlementId),
-      currency: "BDT", amountMinor,
-      status, payoutReference,
-      providerRef: result.providerRef, providerId: provider.id,
-      idempotencyKey: payoutReference, createdBy: uid,
+      currency: "BDT",
+      amountMinor,
+      status,
+      payoutReference,
+      providerRef: result.providerRef,
+      providerId: provider.id,
+      idempotencyKey: payoutReference,
+      createdBy: uid,
       failureDetail: status === "FAILED" ? result.detail : null,
-      createdAt: now, updatedAt: now,
+      createdAt: now,
+      updatedAt: now,
     };
-    await commitWrites(projectId, [{
-      update: { name: payoutName, fields: toFsFields({ ...payout }) },
-    }]);
+    await commitWrites(projectId, [
+      {
+        update: { name: payoutName, fields: toFsFields({ ...payout }) },
+      },
+    ]);
     payouts.push(payout);
 
     if (status === "FAILED") {
       failed++;
       for (const s of list) {
         await transitionSettlement(projectId, s.settlementId, "FAILED", {
-          holdReason: `payout failed: ${result.detail}`, updatedAt: now,
+          holdReason: `payout failed: ${result.detail}`,
+          updatedAt: now,
         } as never).catch(() => {});
       }
       continue;
@@ -387,30 +434,47 @@ export async function executeSettlementBatch(
     // ── LEDGER (§1): PAYOUT debits the seller's available balance —
     // released earlier by SETTLEMENT_RELEASE, so funds are real.
     await appendLedgerEntry(projectId, {
-      sellerId, type: "PAYOUT", amountMinor, currency: "BDT",
-      orderId: null, reference: payoutReference, createdBy: uid,
+      sellerId,
+      type: "PAYOUT",
+      amountMinor,
+      currency: "BDT",
+      orderId: null,
+      reference: payoutReference,
+      createdBy: uid,
       idempotencyKey: `pay_${payoutReference}`,
     });
     for (const s of list) {
       await transitionSettlement(projectId, s.settlementId, "PROCESSING", {
-        payoutId, updatedAt: now,
+        payoutId,
+        updatedAt: now,
       } as never).catch(() => {});
       await transitionSettlement(projectId, s.settlementId, "PAID", {
-        payoutId, updatedAt: now,
+        payoutId,
+        updatedAt: now,
       } as never).catch(() => {});
     }
   }
 
-  await commitWrites(projectId, [{
-    update: {
-      name: docPath(projectId, [SETTLEMENT_BATCHES_COLLECTION, batchId]),
-      fields: toFsFields({
-        ...batch, state: "EXECUTING", executedBy: uid,
-        payoutCount: payouts.length, failedPayoutCount: failed, updatedAt: now,
-      }),
+  await commitWrites(projectId, [
+    {
+      update: {
+        name: docPath(projectId, [SETTLEMENT_BATCHES_COLLECTION, batchId]),
+        fields: toFsFields({
+          ...batch,
+          state: "EXECUTING",
+          executedBy: uid,
+          payoutCount: payouts.length,
+          failedPayoutCount: failed,
+          updatedAt: now,
+        }),
+      },
     },
-  }]);
-  return { batch: { ...batch, executedBy: uid, payoutCount: payouts.length, failedPayoutCount: failed }, payouts, failed };
+  ]);
+  return {
+    batch: { ...batch, executedBy: uid, payoutCount: payouts.length, failedPayoutCount: failed },
+    payouts,
+    failed,
+  };
 }
 
 /**
@@ -441,7 +505,8 @@ export async function reconcileSettlementBatch(
   const ledgerNames = payouts.map((p) =>
     docPath(projectId, ["sellerLedger", `led_${p.sellerId}_pay_${p.payoutReference}`]),
   );
-  const ledgerDocs = ledgerNames.length > 0 ? await batchGetDocs(projectId, ledgerNames) : new Map();
+  const ledgerDocs =
+    ledgerNames.length > 0 ? await batchGetDocs(projectId, ledgerNames) : new Map();
   let ledgerTotal = 0;
   payouts.forEach((p, i) => {
     const entry = ledgerDocs.get(ledgerNames[i]);
@@ -451,7 +516,9 @@ export async function reconcileSettlementBatch(
     }
     const amountMinor = Number((entry.data as Record<string, unknown>)["amountMinor"] ?? 0);
     if (amountMinor !== p.amountMinor) {
-      mismatches.push(`payout ${p.payoutId}: doc amount ${p.amountMinor} != ledger amount ${amountMinor}`);
+      mismatches.push(
+        `payout ${p.payoutId}: doc amount ${p.amountMinor} != ledger amount ${amountMinor}`,
+      );
     }
     ledgerTotal += amountMinor;
   });
@@ -466,22 +533,26 @@ export async function reconcileSettlementBatch(
   }
   const notPaid = settlements.filter((s) => s.state !== "PAID" && s.state !== "FAILED");
   if (notPaid.length > 0) {
-    mismatches.push(`${notPaid.length} settlements not PAID/FAILED: ${notPaid.map((s) => `${s.settlementId}(${s.state})`).join(", ")}`);
+    mismatches.push(
+      `${notPaid.length} settlements not PAID/FAILED: ${notPaid.map((s) => `${s.settlementId}(${s.state})`).join(", ")}`,
+    );
   }
 
   const reconciled = mismatches.length === 0;
-  await commitWrites(projectId, [{
-    update: {
-      name: docPath(projectId, [SETTLEMENT_BATCHES_COLLECTION, batchId]),
-      fields: toFsFields({
-        ...batch,
-        state: reconciled ? "RECONCILED" : batch.state,
-        reconciledBy: reconciled ? actorUid : batch.reconciledBy,
-        mismatchReport: reconciled ? null : mismatches,
-        updatedAt: Date.now(),
-      }),
+  await commitWrites(projectId, [
+    {
+      update: {
+        name: docPath(projectId, [SETTLEMENT_BATCHES_COLLECTION, batchId]),
+        fields: toFsFields({
+          ...batch,
+          state: reconciled ? "RECONCILED" : batch.state,
+          reconciledBy: reconciled ? actorUid : batch.reconciledBy,
+          mismatchReport: reconciled ? null : mismatches,
+          updatedAt: Date.now(),
+        }),
+      },
     },
-  }]);
+  ]);
   return { batch: { ...batch }, reconciled, mismatches };
 }
 
@@ -494,8 +565,14 @@ export async function queryBatches(
   q: { state?: BatchState; idempotencyKey?: string; limit?: number },
 ): Promise<BatchDoc[]> {
   const where: unknown[] = [];
-  if (q.state) where.push({ field: { fieldPath: "state" }, op: "EQUAL", value: { stringValue: q.state } });
-  if (q.idempotencyKey) where.push({ field: { fieldPath: "idempotencyKey" }, op: "EQUAL", value: { stringValue: q.idempotencyKey } });
+  if (q.state)
+    where.push({ field: { fieldPath: "state" }, op: "EQUAL", value: { stringValue: q.state } });
+  if (q.idempotencyKey)
+    where.push({
+      field: { fieldPath: "idempotencyKey" },
+      op: "EQUAL",
+      value: { stringValue: q.idempotencyKey },
+    });
   const structuredQuery: Record<string, unknown> = {
     from: [{ collectionId: SETTLEMENT_BATCHES_COLLECTION }],
     limit: q.limit ?? 100,
@@ -510,7 +587,9 @@ export async function queryBatches(
   const json = (await runFirestoreQuery(projectId, body.structuredQuery)) as Array<{
     document?: { fields: Record<string, unknown> };
   }>;
-  return json.filter((r) => r.document).map((r) => fromFsFields(r.document!.fields as never) as unknown as BatchDoc);
+  return json
+    .filter((r) => r.document)
+    .map((r) => fromFsFields(r.document!.fields as never) as unknown as BatchDoc);
 }
 
 export async function queryPayouts(
@@ -518,9 +597,16 @@ export async function queryPayouts(
   q: { batchId?: string; sellerId?: string; status?: PayoutDoc["status"]; limit?: number },
 ): Promise<PayoutDoc[]> {
   const where: unknown[] = [];
-  if (q.batchId) where.push({ field: { fieldPath: "batchId" }, op: "EQUAL", value: { stringValue: q.batchId } });
-  if (q.sellerId) where.push({ field: { fieldPath: "sellerId" }, op: "EQUAL", value: { stringValue: q.sellerId } });
-  if (q.status) where.push({ field: { fieldPath: "status" }, op: "EQUAL", value: { stringValue: q.status } });
+  if (q.batchId)
+    where.push({ field: { fieldPath: "batchId" }, op: "EQUAL", value: { stringValue: q.batchId } });
+  if (q.sellerId)
+    where.push({
+      field: { fieldPath: "sellerId" },
+      op: "EQUAL",
+      value: { stringValue: q.sellerId },
+    });
+  if (q.status)
+    where.push({ field: { fieldPath: "status" }, op: "EQUAL", value: { stringValue: q.status } });
   const structuredQuery: Record<string, unknown> = {
     from: [{ collectionId: PAYOUTS_COLLECTION }],
     limit: q.limit ?? 100,
@@ -535,7 +621,9 @@ export async function queryPayouts(
   const json = (await runFirestoreQuery(projectId, body.structuredQuery)) as Array<{
     document?: { fields: Record<string, unknown> };
   }>;
-  return json.filter((r) => r.document).map((r) => fromFsFields(r.document!.fields as never) as unknown as PayoutDoc);
+  return json
+    .filter((r) => r.document)
+    .map((r) => fromFsFields(r.document!.fields as never) as unknown as PayoutDoc);
 }
 
 /**
@@ -560,13 +648,22 @@ export async function reversePayout(
   if (payout.status === "REVERSED") return payout; // idempotent
 
   await appendLedgerEntry(projectId, {
-    sellerId: payout.sellerId, type: "PAYOUT_REVERSAL",
-    amountMinor: payout.amountMinor, currency: "BDT",
-    orderId: null, reference: payout.payoutReference, createdBy: uid,
+    sellerId: payout.sellerId,
+    type: "PAYOUT_REVERSAL",
+    amountMinor: payout.amountMinor,
+    currency: "BDT",
+    orderId: null,
+    reference: payout.payoutReference,
+    createdBy: uid,
     idempotencyKey: `prev_${payout.payoutReference}`,
   });
   const now = Date.now();
-  const reversed: PayoutDoc = { ...payout, status: "REVERSED", failureDetail: reason, updatedAt: now };
+  const reversed: PayoutDoc = {
+    ...payout,
+    status: "REVERSED",
+    failureDetail: reason,
+    updatedAt: now,
+  };
   await commitWrites(projectId, [{ update: { name, fields: toFsFields({ ...reversed }) } }]);
   return reversed;
 }

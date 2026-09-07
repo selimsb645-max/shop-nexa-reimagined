@@ -48,8 +48,8 @@ export function toMinor(taka: number, currency: Currency = "BDT"): Money {
   } else {
     const neg = taka < 0;
     const [intPart = "0", fracPart = ""] = str.split(".");
-    const frac2 = (fracPart + "00").slice(0, 2);       // first two decimals
-    const remainder = fracPart.slice(2);                 // everything beyond
+    const frac2 = (fracPart + "00").slice(0, 2); // first two decimals
+    const remainder = fracPart.slice(2); // everything beyond
     let minor = Number(intPart) * 100 + Number(frac2 || "0");
     // Half-up on the remaining digits: any remainder ≥ 5… rounds up.
     if (remainder.length > 0 && Number(remainder[0]) >= 5) minor += 1;
@@ -67,13 +67,15 @@ export function fromMinor(m: Money): number {
 }
 
 export function addMoney(a: Money, b: Money): Money {
-  assertMoney(a); assertMoney(b);
+  assertMoney(a);
+  assertMoney(b);
   if (a.currency !== b.currency) throw new Error("finance/money: currency mismatch");
   return { currency: a.currency, amountMinor: a.amountMinor + b.amountMinor };
 }
 
 export function subMoney(a: Money, b: Money): Money {
-  assertMoney(a); assertMoney(b);
+  assertMoney(a);
+  assertMoney(b);
   if (a.currency !== b.currency) throw new Error("finance/money: currency mismatch");
   return { currency: a.currency, amountMinor: a.amountMinor - b.amountMinor };
 }

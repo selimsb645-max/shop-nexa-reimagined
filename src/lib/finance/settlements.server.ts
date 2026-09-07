@@ -22,7 +22,15 @@
  *   data, so future policies need zero code changes.
  */
 
-import { docPath, batchGetDocs, commitWrites, runFirestoreQuery, toFsFields, fromFsFields, type FsWrite } from "../firebase-admin.server";
+import {
+  docPath,
+  batchGetDocs,
+  commitWrites,
+  runFirestoreQuery,
+  toFsFields,
+  fromFsFields,
+  type FsWrite,
+} from "../firebase-admin.server";
 // (getAccessToken intentionally NOT imported — queries go through the
 // emulator-aware runFirestoreQuery helper.)
 import { SETTLEMENT_HOLD_DAYS } from "../../types/settlement";
@@ -65,8 +73,11 @@ export async function readFinanceConfig(projectId: string): Promise<FinanceConfi
   const raw = doc.data as Partial<FinanceConfig>;
   return {
     currency: "BDT",
-    defaultReturnWindowDays: Number(raw.defaultReturnWindowDays ?? DEFAULT_CONFIG.defaultReturnWindowDays),
-    categoryReturnWindowOverrides: (raw.categoryReturnWindowOverrides as FinanceConfig["categoryReturnWindowOverrides"]) ?? {},
+    defaultReturnWindowDays: Number(
+      raw.defaultReturnWindowDays ?? DEFAULT_CONFIG.defaultReturnWindowDays,
+    ),
+    categoryReturnWindowOverrides:
+      (raw.categoryReturnWindowOverrides as FinanceConfig["categoryReturnWindowOverrides"]) ?? {},
     payoutProvider: String(raw.payoutProvider ?? DEFAULT_CONFIG.payoutProvider),
     mockPayoutEnabled: Boolean(raw.mockPayoutEnabled),
   };
@@ -111,16 +122,20 @@ export async function createSettlementsForOrder(
   createdAt = Date.now(),
 ): Promise<{ created: number; skipped: number }> {
   if (lines.length === 0) return { created: 0, skipped: 0 };
-  const names = lines.map(
-    (l) => docPath(projectId, [SETTLEMENTS_COLLECTION, settlementDocId(orderId, l.sellerId)]),
+  const names = lines.map((l) =>
+    docPath(projectId, [SETTLEMENTS_COLLECTION, settlementDocId(orderId, l.sellerId)]),
   );
   const existing = await batchGetDocs(projectId, names);
 
-  let created = 0, skipped = 0;
+  let created = 0,
+    skipped = 0;
   const writes: FsWrite[] = [];
   for (const l of lines) {
     const name = docPath(projectId, [SETTLEMENTS_COLLECTION, settlementDocId(orderId, l.sellerId)]);
-    if (existing.get(name)?.exists) { skipped++; continue; }
+    if (existing.get(name)?.exists) {
+      skipped++;
+      continue;
+    }
 
     writes.push({
       update: {
@@ -157,30 +172,46 @@ export async function createSettlementsForOrder(
     const name = docPath(projectId, [SETTLEMENTS_COLLECTION, settlementDocId(orderId, l.sellerId)]);
     if (existing.get(name)?.exists) continue;
     await appendLedgerEntry(projectId, {
-      sellerId: l.sellerId, type: "ORDER_CREDIT",
-      amountMinor: l.gross.amountMinor, currency: "BDT",
-      orderId, reference: null, createdBy: "system",
+      sellerId: l.sellerId,
+      type: "ORDER_CREDIT",
+      amountMinor: l.gross.amountMinor,
+      currency: "BDT",
+      orderId,
+      reference: null,
+      createdBy: "system",
       idempotencyKey: `oc_${orderId}`,
     });
     await appendLedgerEntry(projectId, {
-      sellerId: l.sellerId, type: "COMMISSION_DEBIT",
-      amountMinor: l.commission.amountMinor, currency: "BDT",
-      orderId, reference: null, createdBy: "system",
+      sellerId: l.sellerId,
+      type: "COMMISSION_DEBIT",
+      amountMinor: l.commission.amountMinor,
+      currency: "BDT",
+      orderId,
+      reference: null,
+      createdBy: "system",
       idempotencyKey: `cd_${orderId}`,
     });
     if (l.shippingFee.amountMinor > 0) {
       await appendLedgerEntry(projectId, {
-        sellerId: l.sellerId, type: "SHIPPING_DEBIT",
-        amountMinor: l.shippingFee.amountMinor, currency: "BDT",
-        orderId, reference: null, createdBy: "system",
+        sellerId: l.sellerId,
+        type: "SHIPPING_DEBIT",
+        amountMinor: l.shippingFee.amountMinor,
+        currency: "BDT",
+        orderId,
+        reference: null,
+        createdBy: "system",
         idempotencyKey: `sd_${orderId}`,
       });
     }
     // Net earnings held until the return window clears.
     await appendLedgerEntry(projectId, {
-      sellerId: l.sellerId, type: "SETTLEMENT_HOLD",
-      amountMinor: l.sellerNet.amountMinor, currency: "BDT",
-      orderId, reference: settlementDocId(orderId, l.sellerId), createdBy: "system",
+      sellerId: l.sellerId,
+      type: "SETTLEMENT_HOLD",
+      amountMinor: l.sellerNet.amountMinor,
+      currency: "BDT",
+      orderId,
+      reference: settlementDocId(orderId, l.sellerId),
+      createdBy: "system",
       idempotencyKey: `sh_${orderId}`,
     });
     created++;
@@ -188,7 +219,10 @@ export async function createSettlementsForOrder(
   return { created, skipped };
 }
 
-async function readSettlement(projectId: string, settlementId: string): Promise<SettlementDoc | null> {
+async function readSettlement(
+  projectId: string,
+  settlementId: string,
+): Promise<SettlementDoc | null> {
   const name = docPath(projectId, [SETTLEMENTS_COLLECTION, settlementId]);
   const docs = await batchGetDocs(projectId, [name]);
   const doc = docs.get(name);
@@ -211,7 +245,8 @@ export async function advanceSettlementsForOrderEvent(
   // Find this order's settlements by deterministic ids is not possible
   // without the seller list — query by orderId instead.
   const rows = await querySettlements(projectId, { orderId, limit: 50 });
-  let updated = 0, held = 0;
+  let updated = 0,
+    held = 0;
   for (const s of rows) {
     // `now` is injectable for deterministic tests (default: wall clock).
     if (eventType === "DELIVERED") {
@@ -219,14 +254,18 @@ export async function advanceSettlementsForOrderEvent(
       const days = resolveReturnWindowDays(config, s.categoryId);
       const endsAt = now + days * 86_400_000;
       await transitionSettlement(projectId, s.settlementId, "DELIVERED", {
-        deliveredAt: now, returnWindowDays: days, returnWindowEndsAt: endsAt, updatedAt: now,
+        deliveredAt: now,
+        returnWindowDays: days,
+        returnWindowEndsAt: endsAt,
+        updatedAt: now,
       });
       updated++;
     } else if (eventType === "REFUND_PENDING") {
       // Refund REQUESTED but not completed: flag for finance, no debit.
       if (["PENDING", "DELIVERED", "RETURN_WINDOW", "ELIGIBLE"].includes(s.state)) {
         await transitionSettlement(projectId, s.settlementId, "REFUND_PENDING", {
-          updatedAt: now, holdReason: "refund requested",
+          updatedAt: now,
+          holdReason: "refund requested",
         });
         updated++;
       }
@@ -234,51 +273,96 @@ export async function advanceSettlementsForOrderEvent(
       // Refund path: release the held net back, then debit it, and
       // mark REVERSED. Entries are new transactions (ledger is
       // append-only — corrections are never edits, §10).
-      if (["PENDING", "DELIVERED", "RETURN_WINDOW", "REFUND_PENDING", "ELIGIBLE"].includes(s.state)) {
+      if (
+        ["PENDING", "DELIVERED", "RETURN_WINDOW", "REFUND_PENDING", "ELIGIBLE"].includes(s.state)
+      ) {
         // Release the held net FIRST if the hold still exists (it was
         // already released for ELIGIBLE settlements) — then debit the
         // refund so the net effect is exactly zero for the seller.
-        const holdStillActive = ["PENDING", "DELIVERED", "RETURN_WINDOW", "REFUND_PENDING"].includes(s.state);
+        const holdStillActive = [
+          "PENDING",
+          "DELIVERED",
+          "RETURN_WINDOW",
+          "REFUND_PENDING",
+        ].includes(s.state);
         if (holdStillActive) {
           await appendLedgerEntry(projectId, {
-            sellerId: s.sellerId, type: "SETTLEMENT_RELEASE",
-            amountMinor: s.netMinor, currency: "BDT",
-            orderId, reference: s.settlementId, createdBy: "system",
+            sellerId: s.sellerId,
+            type: "SETTLEMENT_RELEASE",
+            amountMinor: s.netMinor,
+            currency: "BDT",
+            orderId,
+            reference: s.settlementId,
+            createdBy: "system",
             idempotencyKey: `sr_refund_${orderId}`,
           });
         }
         await appendLedgerEntry(projectId, {
-          sellerId: s.sellerId, type: "REFUND_DEBIT",
-          amountMinor: s.netMinor, currency: "BDT",
-          orderId, reference: s.settlementId, createdBy: "system",
+          sellerId: s.sellerId,
+          type: "REFUND_DEBIT",
+          amountMinor: s.netMinor,
+          currency: "BDT",
+          orderId,
+          reference: s.settlementId,
+          createdBy: "system",
           idempotencyKey: `rd_${orderId}`,
         });
-        await transitionSettlement(projectId, s.settlementId, "REVERSED", { updatedAt: now, holdReason: `order ${eventType.toLowerCase()}` });
+        await transitionSettlement(projectId, s.settlementId, "REVERSED", {
+          updatedAt: now,
+          holdReason: `order ${eventType.toLowerCase()}`,
+        });
         updated++;
       }
     } else if (eventType === "CANCELLED") {
-      if (s.state === "REVERSED") { continue; }
-      if (s.state === "PENDING" || s.state === "DELIVERED" || s.state === "RETURN_WINDOW" || s.state === "ELIGIBLE") {
+      if (s.state === "REVERSED") {
+        continue;
+      }
+      if (
+        s.state === "PENDING" ||
+        s.state === "DELIVERED" ||
+        s.state === "RETURN_WINDOW" ||
+        s.state === "ELIGIBLE"
+      ) {
         // Order cancelled before payout: un-hold, then debit the net
         // (the sale never happened).
         await appendLedgerEntry(projectId, {
-          sellerId: s.sellerId, type: "SETTLEMENT_RELEASE",
-          amountMinor: s.netMinor, currency: "BDT",
-          orderId, reference: s.settlementId, createdBy: "system",
+          sellerId: s.sellerId,
+          type: "SETTLEMENT_RELEASE",
+          amountMinor: s.netMinor,
+          currency: "BDT",
+          orderId,
+          reference: s.settlementId,
+          createdBy: "system",
           idempotencyKey: `sr_cancel_${orderId}`,
         });
         await appendLedgerEntry(projectId, {
-          sellerId: s.sellerId, type: "REFUND_DEBIT",
-          amountMinor: s.netMinor, currency: "BDT",
-          orderId, reference: s.settlementId, createdBy: "system",
+          sellerId: s.sellerId,
+          type: "REFUND_DEBIT",
+          amountMinor: s.netMinor,
+          currency: "BDT",
+          orderId,
+          reference: s.settlementId,
+          createdBy: "system",
           idempotencyKey: `rd_cancel_${orderId}`,
         });
-        await transitionSettlement(projectId, s.settlementId, "REVERSED", { updatedAt: now, holdReason: "order cancelled" });
+        await transitionSettlement(projectId, s.settlementId, "REVERSED", {
+          updatedAt: now,
+          holdReason: "order cancelled",
+        });
         updated++;
-      } else if (s.state === "SETTLEMENT_BATCH" || s.state === "PROCESSING" || s.state === "ON_HOLD" || s.state === "DISPUTED" || s.state === "REFUND_PENDING") {
+      } else if (
+        s.state === "SETTLEMENT_BATCH" ||
+        s.state === "PROCESSING" ||
+        s.state === "ON_HOLD" ||
+        s.state === "DISPUTED" ||
+        s.state === "REFUND_PENDING"
+      ) {
         // In (or held out of) the batch pipeline — flag for finance review
         // instead of silently reversing mid-payout.
-        await transitionSettlement(projectId, s.settlementId, "ON_HOLD", { updatedAt: now, holdReason: "order cancelled — finance review required" });
+        await transitionSettlement(projectId, s.settlementId, "ON_HOLD", {
+          updatedAt: now,
+          holdReason: "order cancelled — finance review required",
+        });
         held++;
       }
     }
@@ -304,7 +388,8 @@ export async function advanceReturnWindowSettlements(
   now = Date.now(),
 ): Promise<{ eligible: number; released: number }> {
   const rows = await querySettlements(projectId, { state: "DELIVERED", limit: 500 });
-  let eligible = 0, released = 0;
+  let eligible = 0,
+    released = 0;
   for (const s of rows) {
     const endsAt = Number(s.returnWindowEndsAt ?? 0);
     if (endsAt > now) continue;
@@ -312,13 +397,18 @@ export async function advanceReturnWindowSettlements(
     await transitionSettlement(projectId, s.settlementId, "RETURN_WINDOW", { updatedAt: now });
     if (!isValidSettlementTransition("RETURN_WINDOW", "ELIGIBLE")) continue;
     await appendLedgerEntry(projectId, {
-      sellerId: s.sellerId, type: "SETTLEMENT_RELEASE",
-      amountMinor: s.netMinor, currency: "BDT",
-      orderId: s.orderId, reference: s.settlementId, createdBy: "system",
+      sellerId: s.sellerId,
+      type: "SETTLEMENT_RELEASE",
+      amountMinor: s.netMinor,
+      currency: "BDT",
+      orderId: s.orderId,
+      reference: s.settlementId,
+      createdBy: "system",
       idempotencyKey: `sr_${s.orderId}`,
     });
     await transitionSettlement(projectId, s.settlementId, "ELIGIBLE", { updatedAt: now });
-    eligible++; released++;
+    eligible++;
+    released++;
   }
   return { eligible, released };
 }
@@ -333,25 +423,51 @@ export async function transitionSettlement(
   const current = await readSettlement(projectId, settlementId);
   if (!current) throw new Error(`finance/settlement: ${settlementId} not found`);
   if (!isValidSettlementTransition(current.state, to)) {
-    throw new Error(`finance/settlement: invalid transition ${current.state} → ${to} (${settlementId})`);
+    throw new Error(
+      `finance/settlement: invalid transition ${current.state} → ${to} (${settlementId})`,
+    );
   }
-  await commitWrites(projectId, [{
-    update: {
-      name: docPath(projectId, [SETTLEMENTS_COLLECTION, settlementId]),
-      fields: toFsFields({ ...current, ...extra, state: to, updatedAt: extra.updatedAt ?? current.updatedAt }),
+  await commitWrites(projectId, [
+    {
+      update: {
+        name: docPath(projectId, [SETTLEMENTS_COLLECTION, settlementId]),
+        fields: toFsFields({
+          ...current,
+          ...extra,
+          state: to,
+          updatedAt: extra.updatedAt ?? current.updatedAt,
+        }),
+      },
     },
-  }]);
+  ]);
 }
 
-export type SettlementQuery = { state?: SettlementState; orderId?: string; sellerId?: string; batchId?: string; limit?: number };
+export type SettlementQuery = {
+  state?: SettlementState;
+  orderId?: string;
+  sellerId?: string;
+  batchId?: string;
+  limit?: number;
+};
 
 /** Query settlements (top-level collection) via runQuery. */
-export async function querySettlements(projectId: string, q: SettlementQuery): Promise<SettlementDoc[]> {
+export async function querySettlements(
+  projectId: string,
+  q: SettlementQuery,
+): Promise<SettlementDoc[]> {
   const where: unknown[] = [];
-  if (q.state) where.push({ field: { fieldPath: "state" }, op: "EQUAL", value: { stringValue: q.state } });
-  if (q.orderId) where.push({ field: { fieldPath: "orderId" }, op: "EQUAL", value: { stringValue: q.orderId } });
-  if (q.sellerId) where.push({ field: { fieldPath: "sellerId" }, op: "EQUAL", value: { stringValue: q.sellerId } });
-  if (q.batchId) where.push({ field: { fieldPath: "batchId" }, op: "EQUAL", value: { stringValue: q.batchId } });
+  if (q.state)
+    where.push({ field: { fieldPath: "state" }, op: "EQUAL", value: { stringValue: q.state } });
+  if (q.orderId)
+    where.push({ field: { fieldPath: "orderId" }, op: "EQUAL", value: { stringValue: q.orderId } });
+  if (q.sellerId)
+    where.push({
+      field: { fieldPath: "sellerId" },
+      op: "EQUAL",
+      value: { stringValue: q.sellerId },
+    });
+  if (q.batchId)
+    where.push({ field: { fieldPath: "batchId" }, op: "EQUAL", value: { stringValue: q.batchId } });
   const structuredQuery: Record<string, unknown> = {
     from: [{ collectionId: SETTLEMENTS_COLLECTION }],
     limit: q.limit ?? 100,

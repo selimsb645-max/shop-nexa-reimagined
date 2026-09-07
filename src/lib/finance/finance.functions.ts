@@ -21,8 +21,15 @@ import { getProjectId } from "../firebase-admin.server";
 // ────────────────────────────────────────────────────────────────────
 
 const ledgerTypeSchema = z.enum([
-  "ORDER_CREDIT", "COMMISSION_DEBIT", "SHIPPING_DEBIT", "REFUND_DEBIT", "ADJUSTMENT",
-  "SETTLEMENT_HOLD", "SETTLEMENT_RELEASE", "PAYOUT", "PAYOUT_REVERSAL",
+  "ORDER_CREDIT",
+  "COMMISSION_DEBIT",
+  "SHIPPING_DEBIT",
+  "REFUND_DEBIT",
+  "ADJUSTMENT",
+  "SETTLEMENT_HOLD",
+  "SETTLEMENT_RELEASE",
+  "PAYOUT",
+  "PAYOUT_REVERSAL",
 ]);
 
 // ────────────────────────────────────────────────────────────────────
@@ -40,7 +47,8 @@ export const getSellerWalletData = createServerFn({ method: "POST" })
     const { verifySellerToken } = await import("./walletAuth.server");
     const { uid } = await verifySellerToken(data.idToken);
     const projectId = getProjectId();
-    const { getSellerWallet, queryWalletLedgerPage, listSellerWithdrawals } = await import("./wallet.server");
+    const { getSellerWallet, queryWalletLedgerPage, listSellerWithdrawals } =
+      await import("./wallet.server");
     const [wallet, ledger, withdrawals] = await Promise.all([
       getSellerWallet(projectId, uid),
       queryWalletLedgerPage(projectId, uid, { type: data.type ?? null, limit: 25 }),
@@ -171,13 +179,17 @@ export const postWalletAdjustment = createServerFn({ method: "POST" })
     const { verifyIdToken } = await import("../firebase-admin.server");
     const { email } = await verifyIdToken(data.idToken);
     const { postManualAdjustment } = await import("./wallet.server");
-    return postManualAdjustment(projectId, { uid, email }, {
-      sellerId: data.sellerId,
-      amountTaka: data.amountTaka,
-      direction: data.direction,
-      reason: data.reason,
-      reference: data.reference,
-    });
+    return postManualAdjustment(
+      projectId,
+      { uid, email },
+      {
+        sellerId: data.sellerId,
+        amountTaka: data.amountTaka,
+        direction: data.direction,
+        reason: data.reason,
+        reference: data.reference,
+      },
+    );
   });
 
 // ────────────────────────────────────────────────────────────────────
@@ -201,11 +213,15 @@ export const setWalletStatus = createServerFn({ method: "POST" })
     const { verifyIdToken } = await import("../firebase-admin.server");
     const { email } = await verifyIdToken(data.idToken);
     const { setWalletStatus: setStatus } = await import("./wallet.server");
-    return setStatus(projectId, { uid, email }, {
-      sellerId: data.sellerId,
-      status: data.status,
-      reason: data.reason,
-    });
+    return setStatus(
+      projectId,
+      { uid, email },
+      {
+        sellerId: data.sellerId,
+        status: data.status,
+        reason: data.reason,
+      },
+    );
   });
 
 // ────────────────────────────────────────────────────────────────────
@@ -235,12 +251,16 @@ export const processWalletWithdrawal = createServerFn({ method: "POST" })
     const { verifyIdToken } = await import("../firebase-admin.server");
     const { email } = await verifyIdToken(data.idToken);
     const { processWalletWithdrawal: process } = await import("./wallet.server");
-    return process(projectId, { uid, email }, {
-      sellerId: data.sellerId,
-      withdrawalId: data.withdrawalId,
-      action: data.action,
-      note: data.note,
-    });
+    return process(
+      projectId,
+      { uid, email },
+      {
+        sellerId: data.sellerId,
+        withdrawalId: data.withdrawalId,
+        action: data.action,
+        note: data.note,
+      },
+    );
   });
 
 // ────────────────────────────────────────────────────────────────────

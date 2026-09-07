@@ -9,22 +9,38 @@
  * All integer paisa. Server-only (service account).
  */
 
+import { docPath, batchGetDocs, runFirestoreQuery, fromFsFields } from "../firebase-admin.server";
 import {
-  docPath,
-  batchGetDocs,
-  runFirestoreQuery,
-  fromFsFields,
-} from "../firebase-admin.server";
-import { verifyLedgerIntegrity, SELLER_LEDGER_COLLECTION, SELLER_FINANCE_COLLECTION, type LedgerEntry, type LedgerEntryType } from "./ledger.server";
+  verifyLedgerIntegrity,
+  SELLER_LEDGER_COLLECTION,
+  SELLER_FINANCE_COLLECTION,
+  type LedgerEntry,
+  type LedgerEntryType,
+} from "./ledger.server";
 import { querySettlements, SETTLEMENTS_COLLECTION } from "./settlements.server";
-import { queryBatches, queryPayouts, SETTLEMENT_BATCHES_COLLECTION, PAYOUTS_COLLECTION, type PayoutDoc, type BatchState } from "./settlementBatch.server";
+import {
+  queryBatches,
+  queryPayouts,
+  SETTLEMENT_BATCHES_COLLECTION,
+  PAYOUTS_COLLECTION,
+  type PayoutDoc,
+  type BatchState,
+} from "./settlementBatch.server";
 
 /** Query all ledger entries for a seller (chronological). */
-export async function querySellerLedger(projectId: string, sellerId: string, limit = 1000): Promise<LedgerEntry[]> {
+export async function querySellerLedger(
+  projectId: string,
+  sellerId: string,
+  limit = 1000,
+): Promise<LedgerEntry[]> {
   const json = (await runFirestoreQuery(projectId, {
     from: [{ collectionId: SELLER_LEDGER_COLLECTION }],
     where: {
-      fieldFilter: { field: { fieldPath: "sellerId" }, op: "EQUAL", value: { stringValue: sellerId } },
+      fieldFilter: {
+        field: { fieldPath: "sellerId" },
+        op: "EQUAL",
+        value: { stringValue: sellerId },
+      },
     },
     limit,
   })) as Array<{ document?: { fields: Record<string, unknown> } }>;
@@ -40,14 +56,20 @@ export interface FinanceDashboard {
   payoutTotals: Record<string, { count: number; amountMinor: number }>;
   batchTotals: Record<string, { count: number; netMinor: number }>;
   failedPayouts: PayoutDoc[];
-  refundTotalMinor: number;      // sum of REFUND_DEBIT ledger entries
+  refundTotalMinor: number; // sum of REFUND_DEBIT ledger entries
   adjustmentTotalMinor: number; // sum of signed ADJUSTMENT ledger entries
-  heldTotalMinor: number;       // sum of settlement nets still in held states
+  heldTotalMinor: number; // sum of settlement nets still in held states
   mismatches: string[];
   sellersChecked: number;
 }
 
-const HELD_SETTLEMENT_STATES = ["PENDING", "DELIVERED", "RETURN_WINDOW", "SETTLEMENT_BATCH", "PROCESSING"];
+const HELD_SETTLEMENT_STATES = [
+  "PENDING",
+  "DELIVERED",
+  "RETURN_WINDOW",
+  "SETTLEMENT_BATCH",
+  "PROCESSING",
+];
 
 /**
  * Build the finance dashboard + mismatch report (§9). Callers pass the
@@ -87,7 +109,8 @@ export async function computeFinanceDashboard(
 
   const failedPayouts = payouts.filter((p) => p.status === "FAILED");
   const heldTotalMinor = HELD_SETTLEMENT_STATES.reduce(
-    (sum, st) => sum + (settlementTotals[st]?.netMinor ?? 0), 0,
+    (sum, st) => sum + (settlementTotals[st]?.netMinor ?? 0),
+    0,
   );
 
   // ── LEDGER INTEGRITY per seller + refund/adjustment totals ──────

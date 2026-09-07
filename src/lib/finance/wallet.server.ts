@@ -44,10 +44,7 @@ import {
   type WalletStatus,
 } from "./ledger.server";
 import { toMinor, type Currency } from "./money";
-import {
-  requireFinancePermission,
-  requireFreshAuth,
-} from "./settlementBatch.server";
+import { requireFinancePermission, requireFreshAuth } from "./settlementBatch.server";
 import { querySellerLedger, computeFinanceDashboard } from "./reconcile.server";
 import { verifyLedgerIntegrity } from "./ledger.server";
 
@@ -61,7 +58,11 @@ export const WITHDRAWAL_METHODS: readonly WithdrawalMethod[] = ["bank", "bkash",
 
 /** Withdrawal lifecycle (spec §15). */
 export const WITHDRAWAL_STATUSES = [
-  "REQUESTED", "PROCESSING", "COMPLETED", "REJECTED", "FAILED",
+  "REQUESTED",
+  "PROCESSING",
+  "COMPLETED",
+  "REJECTED",
+  "FAILED",
 ] as const;
 export type WithdrawalStatus = (typeof WITHDRAWAL_STATUSES)[number];
 
@@ -141,7 +142,11 @@ export async function queryWalletLedgerPage(
   const limit = Math.min(Math.max(opts.limit ?? 25, 1), 100);
   const where: Record<string, unknown>[] = [
     {
-      fieldFilter: { field: { fieldPath: "sellerId" }, op: "EQUAL", value: { stringValue: sellerId } },
+      fieldFilter: {
+        field: { fieldPath: "sellerId" },
+        op: "EQUAL",
+        value: { stringValue: sellerId },
+      },
     },
   ];
   if (opts.type) {
@@ -151,7 +156,11 @@ export async function queryWalletLedgerPage(
   }
   if (opts.before != null) {
     where.push({
-      fieldFilter: { field: { fieldPath: "seq" }, op: "LESS_THAN", value: { integerValue: String(opts.before) } },
+      fieldFilter: {
+        field: { fieldPath: "seq" },
+        op: "LESS_THAN",
+        value: { integerValue: String(opts.before) },
+      },
     });
   }
   const json = (await runFirestoreQuery(projectId, {
@@ -165,7 +174,9 @@ export async function queryWalletLedgerPage(
   const hasMore = rows.length > limit;
   const entries = rows
     .slice(0, limit)
-    .map((r) => decodeLedgerEntry(fromFsFields(r.document!.fields as never) as Record<string, unknown>));
+    .map((r) =>
+      decodeLedgerEntry(fromFsFields(r.document!.fields as never) as Record<string, unknown>),
+    );
   return {
     entries,
     nextBefore: entries.length > 0 ? entries[entries.length - 1].seq : null,
@@ -183,8 +194,8 @@ function decodeLedgerEntry(fields: Record<string, unknown>): LedgerEntry {
     type: String(f["type"]) as LedgerEntryType,
     amountMinor: Number(f["amountMinor"] ?? 0),
     currency: "BDT",
-    orderId: (g("orderId") as string | null),
-    reference: (g("reference") as string | null),
+    orderId: g("orderId") as string | null,
+    reference: g("reference") as string | null,
     direction: (g("direction") as "CREDIT" | "DEBIT" | null) ?? "DEBIT",
     status: "COMPLETED",
     createdBy: String(f["createdBy"] ?? "system"),
@@ -354,8 +365,17 @@ export interface WithdrawalDoc {
   reviewNote: string | null;
 }
 
-async function readWithdrawalDoc(projectId: string, sellerId: string, withdrawalId: string): Promise<WithdrawalDoc> {
-  const name = docPath(projectId, [SELLERS_COLLECTION, sellerId, WITHDRAWALS_COLLECTION, withdrawalId]);
+async function readWithdrawalDoc(
+  projectId: string,
+  sellerId: string,
+  withdrawalId: string,
+): Promise<WithdrawalDoc> {
+  const name = docPath(projectId, [
+    SELLERS_COLLECTION,
+    sellerId,
+    WITHDRAWALS_COLLECTION,
+    withdrawalId,
+  ]);
   const docs = await batchGetDocs(projectId, [name]);
   const doc = docs.get(name);
   if (!doc?.exists) throw new Error("wallet/withdraw: withdrawal request not found.");
@@ -445,7 +465,12 @@ export async function processWalletWithdrawal(
   const writes: FsWrite[] = [
     {
       update: {
-        name: docPath(projectId, [SELLERS_COLLECTION, input.sellerId, WITHDRAWALS_COLLECTION, input.withdrawalId]),
+        name: docPath(projectId, [
+          SELLERS_COLLECTION,
+          input.sellerId,
+          WITHDRAWALS_COLLECTION,
+          input.withdrawalId,
+        ]),
         fields: toFsFields({
           status: finalStatus,
           processedAt: now,
@@ -457,7 +482,12 @@ export async function processWalletWithdrawal(
     },
     {
       update: {
-        name: docPath(projectId, [SELLERS_COLLECTION, input.sellerId, SELLER_NOTIFICATIONS_COLLECTION, newDocId()]),
+        name: docPath(projectId, [
+          SELLERS_COLLECTION,
+          input.sellerId,
+          SELLER_NOTIFICATIONS_COLLECTION,
+          newDocId(),
+        ]),
         fields: toFsFields({
           type: "withdrawal",
           title: finalStatus === "COMPLETED" ? "Withdrawal processed" : "Withdrawal rejected",
@@ -502,25 +532,29 @@ export async function listSellerWithdrawals(
   if (!listRes.ok) {
     throw new Error("wallet/withdrawals: could not read the withdrawal list.");
   }
-  const json = ((await listRes.json()) as { documents?: Array<{ name?: string; fields: Record<string, unknown> }> }).documents ?? [];
-  return json
-    .map((r) => {
-      const d = fromFsFields(r.fields as never) as Record<string, unknown>;
-      return {
-        withdrawalId: String(d["withdrawalId"] ?? ""),
-        sellerId,
-        amountMinor: Number(d["amountMinor"] ?? 0),
-        currency: String(d["currency"] ?? "BDT"),
-        status: String(d["status"] ?? "REQUESTED") as WithdrawalStatus,
-        method: String(d["method"] ?? "bank"),
-        destination: (d["destination"] as string | null) ?? null,
-        note: (d["note"] as string | null) ?? null,
-        requestedAt: Number(d["requestedAt"] ?? 0),
-        processedAt: d["processedAt"] != null ? Number(d["processedAt"]) : null,
-        processedBy: (d["processedBy"] as string | null) ?? null,
-        reviewNote: (d["reviewNote"] as string | null) ?? null,
-      };
-    });
+  const json =
+    (
+      (await listRes.json()) as {
+        documents?: Array<{ name?: string; fields: Record<string, unknown> }>;
+      }
+    ).documents ?? [];
+  return json.map((r) => {
+    const d = fromFsFields(r.fields as never) as Record<string, unknown>;
+    return {
+      withdrawalId: String(d["withdrawalId"] ?? ""),
+      sellerId,
+      amountMinor: Number(d["amountMinor"] ?? 0),
+      currency: String(d["currency"] ?? "BDT"),
+      status: String(d["status"] ?? "REQUESTED") as WithdrawalStatus,
+      method: String(d["method"] ?? "bank"),
+      destination: (d["destination"] as string | null) ?? null,
+      note: (d["note"] as string | null) ?? null,
+      requestedAt: Number(d["requestedAt"] ?? 0),
+      processedAt: d["processedAt"] != null ? Number(d["processedAt"]) : null,
+      processedBy: (d["processedBy"] as string | null) ?? null,
+      reviewNote: (d["reviewNote"] as string | null) ?? null,
+    };
+  });
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -535,7 +569,13 @@ export interface AdjustmentResult {
 export async function postManualAdjustment(
   projectId: string,
   admin: { uid: string; email: string | null },
-  input: { sellerId: string; amountTaka: number; direction: "CREDIT" | "DEBIT"; reason: string; reference?: string },
+  input: {
+    sellerId: string;
+    amountTaka: number;
+    direction: "CREDIT" | "DEBIT";
+    reason: string;
+    reference?: string;
+  },
 ): Promise<AdjustmentResult> {
   await requireFinancePermission(projectId, admin.uid, "finance.adjust");
   const reason = input.reason.trim();
@@ -579,7 +619,12 @@ export async function postManualAdjustment(
     }),
     {
       update: {
-        name: docPath(projectId, [SELLERS_COLLECTION, input.sellerId, SELLER_NOTIFICATIONS_COLLECTION, newDocId()]),
+        name: docPath(projectId, [
+          SELLERS_COLLECTION,
+          input.sellerId,
+          SELLER_NOTIFICATIONS_COLLECTION,
+          newDocId(),
+        ]),
         fields: toFsFields({
           type: "wallet",
           title: input.direction === "CREDIT" ? "Wallet credited" : "Wallet adjusted",
@@ -631,7 +676,7 @@ export async function setWalletStatus(
   if (!allowed.includes(to)) {
     throw new Error(
       `wallet/status: INVALID_STATE_TRANSITION ${wallet.status} → ${to}` +
-      (wallet.status === "CLOSED" ? " (closed wallets are terminal)." : "."),
+        (wallet.status === "CLOSED" ? " (closed wallets are terminal)." : "."),
     );
   }
   const now = Date.now();
@@ -685,13 +730,19 @@ export async function listAdminWallets(
   const where: Record<string, unknown>[] = [];
   if (opts.status) {
     where.push({
-      fieldFilter: { field: { fieldPath: "status" }, op: "EQUAL", value: { stringValue: opts.status } },
+      fieldFilter: {
+        field: { fieldPath: "status" },
+        op: "EQUAL",
+        value: { stringValue: opts.status },
+      },
     });
   }
   const json = (await runFirestoreQuery(projectId, {
     from: [{ collectionId: SELLER_FINANCE_COLLECTION }],
     ...(where.length > 0
-      ? { where: where.length === 1 ? where[0] : { compositeFilter: { op: "AND", filters: where } } }
+      ? {
+          where: where.length === 1 ? where[0] : { compositeFilter: { op: "AND", filters: where } },
+        }
       : {}),
     limit,
   })) as Array<{ document?: { name?: string; fields: Record<string, unknown> } }>;
@@ -731,7 +782,11 @@ export async function listAdminWallets(
       },
     };
     const q = (opts.search ?? "").trim().toLowerCase();
-    if (q && !(row.shopName ?? "").toLowerCase().includes(q) && !row.sellerId.toLowerCase().includes(q)) {
+    if (
+      q &&
+      !(row.shopName ?? "").toLowerCase().includes(q) &&
+      !row.sellerId.toLowerCase().includes(q)
+    ) {
       continue;
     }
     out.push(row);
@@ -756,7 +811,10 @@ export async function getAdminWalletDetail(
   await requireFinancePermission(projectId, adminUid, "finance.read");
   const [wallet, ledger, withdrawals, sellerDocs] = await Promise.all([
     getSellerWallet(projectId, sellerId),
-    queryWalletLedgerPage(projectId, sellerId, { type: opts.type ?? null, before: opts.before ?? null }),
+    queryWalletLedgerPage(projectId, sellerId, {
+      type: opts.type ?? null,
+      before: opts.before ?? null,
+    }),
     listSellerWithdrawals(projectId, sellerId, 25),
     batchGetDocs(projectId, [docPath(projectId, [SELLERS_COLLECTION, sellerId])]),
   ]);
@@ -814,7 +872,10 @@ export async function runWalletReconciliation(
 // LEGACY MIGRATION (spec §38 — never overwrite, deterministic ids)
 // ────────────────────────────────────────────────────────────────────
 
-interface StoredDocRaw { name?: string; fields: Record<string, unknown> }
+interface StoredDocRaw {
+  name?: string;
+  fields: Record<string, unknown>;
+}
 
 /** Firestore REST base (emulator-aware) for direct document reads. */
 function firestoreBaseUrl(projectId: string): string {
@@ -860,7 +921,10 @@ export async function migrateLegacyWalletTx(
     .map((r) => {
       const d = fromFsFields(r.fields as never) as Record<string, unknown>;
       return {
-        docId: String(r.name ?? "").split("/").pop() ?? newDocId(),
+        docId:
+          String(r.name ?? "")
+            .split("/")
+            .pop() ?? newDocId(),
         type: String(d["type"] ?? "earning"),
         amount: Number(d["amount"] ?? 0),
         status: String(d["status"] ?? "completed"),
@@ -880,10 +944,13 @@ export async function migrateLegacyWalletTx(
     // only at this read boundary per money.ts rules).
     const amountMinor = toMinor(Math.abs(row.amount)).amountMinor * (row.amount < 0 ? -1 : 1);
     const type: LedgerEntryType =
-      row.type === "withdrawal" ? "PAYOUT"
-      : row.type === "refund" ? "REFUND_DEBIT"
-      : row.type === "adjustment" || row.type === "bonus" || row.type === "topup" ? "ADJUSTMENT"
-      : "ORDER_CREDIT";
+      row.type === "withdrawal"
+        ? "PAYOUT"
+        : row.type === "refund"
+          ? "REFUND_DEBIT"
+          : row.type === "adjustment" || row.type === "bonus" || row.type === "topup"
+            ? "ADJUSTMENT"
+            : "ORDER_CREDIT";
     // Deterministic migration ids — skip docs already migrated (the
     // append itself is also idempotent; this keeps the counter honest).
     const existingEntry = docPath(projectId, [

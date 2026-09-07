@@ -321,6 +321,9 @@ describe("firestore.rules — flashSales security audit", () => {
     expect(block).toBeTruthy();
   });
 
+  // Fail fast outside `it` so TS narrows `block` for the assertions below.
+  if (!block) throw new Error("flashSales rules block not found — aborting audit");
+
   it("reads stay manager-gated / seller-gated (no public read)", () => {
     expect(block).toContain("allow read: if isCampaignManager()");
     expect(block).toContain("isApprovedSeller()");

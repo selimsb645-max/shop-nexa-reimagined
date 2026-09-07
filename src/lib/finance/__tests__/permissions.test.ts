@@ -7,14 +7,24 @@
 
 import { describe, it, expect } from "vitest";
 import {
-  FINANCE_PERMISSIONS, FINANCE_READ_ROLES,
-  hasFinancePermission, canMutateFinance,
+  FINANCE_PERMISSIONS,
+  FINANCE_READ_ROLES,
+  hasFinancePermission,
+  canMutateFinance,
 } from "../permissions";
 
 describe("finance permissions (§11, §12 unauthorized access)", () => {
   it("super_admin and finance_admin hold ALL finance permissions", () => {
     for (const role of ["super_admin", "finance_admin"] as const) {
-      for (const perm of FINANCE_PERMISSIONS as readonly ("finance.read" | "finance.review" | "finance.adjust" | "finance.settlement" | "finance.payout" | "finance.refund" | "finance.reconcile")[]) {
+      for (const perm of FINANCE_PERMISSIONS as readonly (
+        | "finance.read"
+        | "finance.review"
+        | "finance.adjust"
+        | "finance.settlement"
+        | "finance.payout"
+        | "finance.refund"
+        | "finance.reconcile"
+      )[]) {
         expect(hasFinancePermission(role, perm)).toBe(true);
       }
       expect(canMutateFinance(role)).toBe(true);
@@ -24,7 +34,14 @@ describe("finance permissions (§11, §12 unauthorized access)", () => {
   it("admin and order_manager are finance READ-ONLY", () => {
     expect(hasFinancePermission("admin", "finance.read")).toBe(true);
     expect(hasFinancePermission("order_manager", "finance.read")).toBe(true);
-    for (const perm of ["finance.review", "finance.adjust", "finance.settlement", "finance.payout", "finance.refund", "finance.reconcile"] as const) {
+    for (const perm of [
+      "finance.review",
+      "finance.adjust",
+      "finance.settlement",
+      "finance.payout",
+      "finance.refund",
+      "finance.reconcile",
+    ] as const) {
       expect(hasFinancePermission("admin", perm)).toBe(false);
       expect(hasFinancePermission("order_manager", perm)).toBe(false);
     }
@@ -42,7 +59,15 @@ describe("finance permissions (§11, §12 unauthorized access)", () => {
   });
 
   it("catalog, QC, marketing and every other role are deny-by-default", () => {
-    for (const role of ["catalog_manager", "category_manager", "qc_manager", "marketing_admin", "seller", "customer", ""])
+    for (const role of [
+      "catalog_manager",
+      "category_manager",
+      "qc_manager",
+      "marketing_admin",
+      "seller",
+      "customer",
+      "",
+    ])
       for (const perm of FINANCE_PERMISSIONS) {
         expect(hasFinancePermission(role, perm)).toBe(false);
       }

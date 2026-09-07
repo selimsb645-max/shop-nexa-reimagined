@@ -84,7 +84,9 @@ export interface LedgerEntryInput {
   extraWrites?: FsWrite[];
 }
 
-export interface LedgerEntry extends Required<Omit<LedgerEntryInput, "orderId" | "reference" | "idempotencyKey" | "extraWrites">> {
+export interface LedgerEntry extends Required<
+  Omit<LedgerEntryInput, "orderId" | "reference" | "idempotencyKey" | "extraWrites">
+> {
   /** Monotonic per-seller sequence — the authoritative replay order
    *  (createdAt ties at ms resolution are otherwise ambiguous). */
   seq: number;
@@ -209,8 +211,9 @@ export async function appendLedgerEntry(
           orderId: (data["orderId"] as string) ?? null,
           reference: (data["reference"] as string) ?? null,
           createdBy: data["createdBy"] as string,
-          direction: (data["direction"] as "CREDIT" | "DEBIT" | undefined)
-            ?? entryDirection(data["type"] as LedgerEntryType, Number(data["amountMinor"])),
+          direction:
+            (data["direction"] as "CREDIT" | "DEBIT" | undefined) ??
+            entryDirection(data["type"] as LedgerEntryType, Number(data["amountMinor"])),
           status: "COMPLETED",
           balanceBefore: Number(data["balanceBefore"]),
           balanceAfter: Number(data["balanceAfter"]),
@@ -232,7 +235,7 @@ export async function appendLedgerEntry(
         await rollbackTransaction(projectId, tx);
         throw new Error(
           `finance/wallet: wallet is ${walletStatus} — withdrawal operations are blocked ` +
-          `(${input.type} on seller ${input.sellerId})`,
+            `(${input.type} on seller ${input.sellerId})`,
         );
       }
       if (input.type === "ADJUSTMENT" && input.amountMinor < 0 && walletStatus === "CLOSED") {
@@ -244,21 +247,32 @@ export async function appendLedgerEntry(
       const amt = input.amountMinor;
       switch (input.type) {
         case "ORDER_CREDIT":
-          balances.availableMinor += amt; break;
+          balances.availableMinor += amt;
+          break;
         case "COMMISSION_DEBIT":
         case "SHIPPING_DEBIT":
         case "REFUND_DEBIT":
-          balances.availableMinor -= amt; break;
+          balances.availableMinor -= amt;
+          break;
         case "SETTLEMENT_HOLD":
-          balances.availableMinor -= amt; balances.heldMinor += amt; break;
+          balances.availableMinor -= amt;
+          balances.heldMinor += amt;
+          break;
         case "SETTLEMENT_RELEASE":
-          balances.availableMinor += amt; balances.heldMinor -= amt; break;
+          balances.availableMinor += amt;
+          balances.heldMinor -= amt;
+          break;
         case "PAYOUT":
-          balances.availableMinor -= amt; balances.paidOutMinor += amt; break;
+          balances.availableMinor -= amt;
+          balances.paidOutMinor += amt;
+          break;
         case "PAYOUT_REVERSAL":
-          balances.availableMinor += amt; balances.paidOutMinor -= amt; break;
+          balances.availableMinor += amt;
+          balances.paidOutMinor -= amt;
+          break;
         case "ADJUSTMENT":
-          balances.availableMinor += amt; break; // signed amount
+          balances.availableMinor += amt;
+          break; // signed amount
         default:
           throw new Error(`finance/ledger: unknown entry type ${input.type}`);
       }
@@ -399,15 +413,25 @@ export async function verifyLedgerIntegrity(
         break;
       case "COMMISSION_DEBIT":
       case "SHIPPING_DEBIT":
-      case "REFUND_DEBIT": replayed.availableMinor -= e.amountMinor; break;
+      case "REFUND_DEBIT":
+        replayed.availableMinor -= e.amountMinor;
+        break;
       case "SETTLEMENT_HOLD":
-        replayed.availableMinor -= e.amountMinor; replayed.heldMinor += e.amountMinor; break;
+        replayed.availableMinor -= e.amountMinor;
+        replayed.heldMinor += e.amountMinor;
+        break;
       case "SETTLEMENT_RELEASE":
-        replayed.availableMinor += e.amountMinor; replayed.heldMinor -= e.amountMinor; break;
+        replayed.availableMinor += e.amountMinor;
+        replayed.heldMinor -= e.amountMinor;
+        break;
       case "PAYOUT":
-        replayed.availableMinor -= e.amountMinor; replayed.paidOutMinor += e.amountMinor; break;
+        replayed.availableMinor -= e.amountMinor;
+        replayed.paidOutMinor += e.amountMinor;
+        break;
       case "PAYOUT_REVERSAL":
-        replayed.availableMinor += e.amountMinor; replayed.paidOutMinor -= e.amountMinor; break;
+        replayed.availableMinor += e.amountMinor;
+        replayed.paidOutMinor -= e.amountMinor;
+        break;
       case "ADJUSTMENT":
         replayed.availableMinor += e.amountMinor;
         if (e.amountMinor > 0) replayed.totalEarnedMinor += e.amountMinor;
@@ -419,16 +443,22 @@ export async function verifyLedgerIntegrity(
   }
   const stored = await getSellerBalances(projectId, sellerId);
   if (stored.availableMinor !== replayed.availableMinor) {
-    mismatches.push(`available mismatch: stored=${stored.availableMinor} replayed=${replayed.availableMinor}`);
+    mismatches.push(
+      `available mismatch: stored=${stored.availableMinor} replayed=${replayed.availableMinor}`,
+    );
   }
   if (stored.heldMinor !== replayed.heldMinor) {
     mismatches.push(`held mismatch: stored=${stored.heldMinor} replayed=${replayed.heldMinor}`);
   }
   if (stored.paidOutMinor !== replayed.paidOutMinor) {
-    mismatches.push(`paidOut mismatch: stored=${stored.paidOutMinor} replayed=${replayed.paidOutMinor}`);
+    mismatches.push(
+      `paidOut mismatch: stored=${stored.paidOutMinor} replayed=${replayed.paidOutMinor}`,
+    );
   }
-  if ((stored as Balances & { totalEarnedMinor?: number }).totalEarnedMinor !== undefined
-    && (stored as Balances & { totalEarnedMinor?: number }).totalEarnedMinor !== expectedEarned) {
+  if (
+    (stored as Balances & { totalEarnedMinor?: number }).totalEarnedMinor !== undefined &&
+    (stored as Balances & { totalEarnedMinor?: number }).totalEarnedMinor !== expectedEarned
+  ) {
     mismatches.push(
       `totalEarned mismatch: stored=${(stored as Balances & { totalEarnedMinor?: number }).totalEarnedMinor} replayed=${expectedEarned}`,
     );
