@@ -8,7 +8,6 @@ import {
   type Auth,
 } from "firebase/auth";
 import { connectFirestoreEmulator, getFirestore, type Firestore } from "firebase/firestore";
-import { getStorage, type FirebaseStorage } from "firebase/storage";
 
 /**
  * Firebase web config — these are PUBLIC values (safe to ship in client code).
@@ -19,7 +18,6 @@ const firebaseConfig = {
   apiKey: "AIzaSyCjPujDgUn2c1aLKWLMXTsV3rNM3Q2J1wQ",
   authDomain: "studio-6202246915-3b319.firebaseapp.com",
   projectId: "studio-6202246915-3b319",
-  storageBucket: "studio-6202246915-3b319.firebasestorage.app",
   messagingSenderId: "763885455427",
   appId: "1:763885455427:web:3bf184751c119a1760ecf6",
 };
@@ -31,7 +29,6 @@ export const firebaseConfigured = Boolean(
 let app: FirebaseApp | null = null;
 let authInstance: Auth | null = null;
 let dbInstance: Firestore | null = null;
-let storageInstance: FirebaseStorage | null = null;
 
 export function getApp(): FirebaseApp {
   if (!firebaseConfigured) {
@@ -72,11 +69,6 @@ export function getDb(): Firestore {
     }
   }
   return dbInstance;
-}
-
-export function getStorageBucket(): FirebaseStorage {
-  if (!storageInstance) storageInstance = getStorage(getApp());
-  return storageInstance;
 }
 
 export const googleProvider = new GoogleAuthProvider();

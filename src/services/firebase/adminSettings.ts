@@ -11,8 +11,8 @@ import {
   setDoc,
   updateDoc,
 } from "firebase/firestore";
-import { getDb, getStorageBucket } from "./config";
-import { getDownloadURL, ref as sref, uploadBytes } from "firebase/storage";
+import { getDb } from "./config";
+import { uploadToCloudinary } from "@/services/cloudinary";
 import type { Banner, SiteSettings } from "@/types/admin";
 
 const SETTINGS_COL = "settings";
@@ -85,8 +85,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   },
   homepage: {
     heroHeadline: "Shop Smarter. Live Better.",
-    heroSubheadline:
-      "Everything you need in one place. Top quality products at unbeatable prices.",
+    heroSubheadline: "Everything you need in one place. Top quality products at unbeatable prices.",
     heroCtaLabel: "Shop Now",
     heroCtaLink: "/shop",
     featuredCategorySlugs: [],
@@ -114,10 +113,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
  * Reads a single setting value by dot-path (e.g. "inventory.alertThreshold").
  * Returns the fallback if settings or the path don't exist.
  */
-export async function getSiteSetting<T>(
-  path: string,
-  fallback: T,
-): Promise<T> {
+export async function getSiteSetting<T>(path: string, fallback: T): Promise<T> {
   try {
     const settings = await getSiteSettings();
     const parts = path.split(".");
@@ -153,8 +149,7 @@ function mapBanner(id: string, d: Record<string, unknown>): Banner {
     position: (d.position as Banner["position"]) ?? "hero",
     active: Boolean(d.active),
     order: Number(d.order ?? 0),
-    createdAt:
-      typeof created === "number" ? created : created?.toMillis?.() ?? Date.now(),
+    createdAt: typeof created === "number" ? created : (created?.toMillis?.() ?? Date.now()),
     updatedAt: typeof d.updatedAt === "number" ? d.updatedAt : Date.now(),
   };
 }
@@ -192,12 +187,13 @@ export async function deleteBanner(id: string): Promise<void> {
   await deleteDoc(doc(getDb(), BANNERS, id));
 }
 
+/**
+ * Upload a banner image to Cloudinary (shop-nexa/banners folder).
+ * Banner METADATA writes (create/update/delete of banner docs) stay
+ * admin-gated by the Firestore `banners` rules (canWriteMasterData);
+ * this function only returns the CDN URL that the admin form persists.
+ */
 export async function uploadBannerImage(file: File): Promise<string> {
-  if (!file.type.startsWith("image/")) throw new Error("Please choose an image file.");
-  if (file.size > 8 * 1024 * 1024) throw new Error("Image must be smaller than 8MB.");
-  const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-  const path = `banners/${crypto.randomUUID()}.${ext}`;
-  const objectRef = sref(getStorageBucket(), path);
-  await uploadBytes(objectRef, file, { contentType: file.type });
-  return await getDownloadURL(objectRef);
+  const result = await uploadToCloudinary(file, "banners", ["banner"]);
+  return result.url;
 }

@@ -10,6 +10,17 @@ Dhaka — the full hardened ruleset (money collections deny-all, legacy
 **LIVE in production**. Rules compiled with only unused-function warnings
 and released cleanly.
 
+**Firebase Cloud Storage production dependency: NONE** (19:30 Dhaka).
+The last active Storage path (admin banner images) was migrated to the
+existing Cloudinary service; the dead `deleteStorageObject` Firebase
+branch, all `firebase/storage` SDK imports, the `getStorageBucket` init,
+the `storageBucket` config field, the `firebase.json` storage target and
+the `storage.rules` file were removed, locked by static tests. **Storage
+rules deployment: NOT REQUIRED.** If historical Firestore rows still hold
+Firebase Storage image URLs, those files keep serving under whatever rules
+are already live in production (code never touches them); display code
+already returns non-Cloudinary URLs as-is.
+
 Important nuance: a Firestore *rules* deploy does **not** require billing
 (it works on the free Spark plan too). So this success proves the earlier
 deploy blocker no longer reproduces for this operation, but it does **not**
@@ -71,17 +82,13 @@ Operations that do NOT require billing (free on Spark):
 
 ### Blocked or limited WITHOUT billing ❌
 
-1. **Cloud Storage — REFINED Sep 7 (storage-vs-Cloudinary audit):**
-   product images, avatars, and shop logos all upload to CLOUDINARY
-   (unsigned preset, no billing dependency on Firebase). The ONLY active
-   Firebase Storage path is `uploadBannerImage` (admin banner images,
-   `admin.banners.tsx`). So Storage is a *partial* dependency: banner
-   upload fails without a working bucket; migrating banners to the
-   existing Cloudinary service (~1 function + 1 route call) would remove
-   the Firebase Storage dependency entirely (legacy `deleteStorageObject`
-   Firebase-path support is dead code — zero callers). If historic
-   Firestore rows still hold Firebase Storage image URLs, those images
-   also depend on the bucket remaining readable.
+1. **Cloud Storage — REMOVED Sep 7 (banner migration + cleanup):**
+   ALL image uploads (product images, avatars, shop logos, and — as of
+   the migration — admin banner images) go to CLOUDINARY via the existing
+   unsigned-preset service. There is no active Firebase Storage path left
+   in the codebase: dead code removed, SDK imports removed, init removed,
+   storage rules/file removed from deploy config. Legacy image URLs in
+   historic data (if any) are untouched and keep serving.
 2. **Firestore at scale** — past 50K reads/20K writes per day the default
    DB stops serving (Spark) or starts billing (Blaze). A multi-vendor
    marketplace will need Blaze eventually.
@@ -93,14 +100,36 @@ Operations that do NOT require billing (free on Spark):
 
 ## Bottom line
 
-AVENTA's architecture was deliberately built so that the only hard
-production dependency on Firebase billing is **Cloud Storage (images)**
-and, at scale, **Firestore quotas**. Auth, rules, indexes, push, hosting,
-and all server logic run without a billing requirement.
+AVENTA's production architecture now maps cleanly:
+
+- **Cloudinary** — all image storage (products, avatars, logos, banners);
+  unsigned-preset caveats below.
+- **Vercel** — application + server runtime (customer storefront, seller
+  portal, admin panel, all TanStack Start server functions).
+- **Firebase** — Auth + Firestore + FCM only (+ free rules/index deploys).
+- **Firestore free quota** (Spark: 50K reads / 20K writes / 20K deletes
+  per day, 1 GiB) — a scale limitation to monitor, not an immediate
+  billing blocker; Blaze is required only once real traffic crosses it.
+
+The only Firebase billing dependencies that remain are Firestore quotas
+at marketplace scale (and any future billable feature like phone auth).
+Auth, rules, indexes, FCM, hosting, and all server logic run without a
+billing requirement.
 
 The Sep 7 rules deploy succeeded, so the gate sequence
-(`docs/finance-v2-canonical-rail.md`) has completed step 1. Still pending:
-storage rules deploy (`firebase deploy --only storage` — needs the bucket
-and therefore confirms whether billable ops work now), Firestore indexes
-deploy (free), and the production app deploys before the reconciliation /
-migration reports can run.
+(`docs/finance-v2-canonical-rail.md`) has completed step 1. Storage rules
+deploy is no longer required (see above). Still pending: Firestore
+indexes deploy (free), and the production app deploys before the
+reconciliation / migration reports can run.
+
+### Cloudinary caveats (non-blocking, documented)
+
+- Unsigned upload preset (`aventa_products`): anyone who knows the cloud
+  name can upload into `shop-nexa/*` folders — quota-pollution risk only;
+  Firestore rules prevent attaching assets to other sellers' products or
+  other users' profiles. A signed-upload server bridge would close this.
+- No server-side Cloudinary deletion path exists — replaced banner/product
+  images accumulate as unused assets; cleanup must happen in the
+  Cloudinary console (or a future admin-API integration).
+- No webhook / moderation integration; preset restrictions (format/size
+  caps) are configured in the Cloudinary console, not in this repo.

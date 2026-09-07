@@ -24,9 +24,7 @@ let cloudinaryInstance: Cloudinary | null = null;
 
 function getCloudinary(): Cloudinary {
   if (!CLOUD_NAME) {
-    throw new Error(
-      "VITE_CLOUDINARY_CLOUD_NAME is not set. Add it to your .env file.",
-    );
+    throw new Error("VITE_CLOUDINARY_CLOUD_NAME is not set. Add it to your .env file.");
   }
   if (!cloudinaryInstance) {
     cloudinaryInstance = new Cloudinary({ cloud: { cloudName: CLOUD_NAME } });
@@ -50,10 +48,8 @@ export interface CloudinaryUploadResult {
 }
 
 function validateImage(file: File, maxMb = 8): void {
-  if (!file.type.startsWith("image/"))
-    throw new Error("Please choose an image file.");
-  if (file.size > maxMb * 1024 * 1024)
-    throw new Error(`Image must be smaller than ${maxMb}MB.`);
+  if (!file.type.startsWith("image/")) throw new Error("Please choose an image file.");
+  if (file.size > maxMb * 1024 * 1024) throw new Error(`Image must be smaller than ${maxMb}MB.`);
 }
 
 /**
@@ -81,13 +77,10 @@ export async function uploadToCloudinary(
     formData.append("tags", tags.join(","));
   }
 
-  const response = await fetch(
-    `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
-    {
-      method: "POST",
-      body: formData,
-    },
-  );
+  const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+    method: "POST",
+    body: formData,
+  });
 
   if (!response.ok) {
     const errorBody = await response.text();
@@ -113,10 +106,7 @@ export async function uploadToCloudinary(
  * Applies auto format (WebP/AVIF), auto quality, and optional resizing.
  * Non-Cloudinary URLs are returned as-is (graceful fallback).
  */
-export function getOptimizedImageUrl(
-  source: string,
-  width?: number,
-): string {
+export function getOptimizedImageUrl(source: string, width?: number): string {
   // Already transformed Cloudinary URL — return as-is
   if (source.includes("/image/upload/f_") || source.includes("/image/upload/q_")) {
     return source;
@@ -157,9 +147,7 @@ export function getResponsiveSrcSet(
   source: string,
   widths: number[] = [200, 400, 600, 800, 1200],
 ): string {
-  return widths
-    .map((w) => `${getOptimizedImageUrl(source, w)} ${w}w`)
-    .join(", ");
+  return widths.map((w) => `${getOptimizedImageUrl(source, w)} ${w}w`).join(", ");
 }
 
 // ─── Utility ────────────────────────────────────────────────────
