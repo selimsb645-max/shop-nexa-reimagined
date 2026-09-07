@@ -1023,16 +1023,18 @@ service cloud.firestore {
 
     // Flash sales (§7) — stock counters are server-only; the race-safe
     // reservation happens in the flash-sale engine transactions.
+    // ALL mutations (create/update/reschedule/enable/disable) go through
+    // the role-verified scheduling core (backend engine + admin panel
+    // bridge, service account) — that is the ONLY path where Option-A
+    // conflict prevention, stock guards, price safety and FLASH_SALE_*
+    // audit happen. No client of any role may write directly; the old
+    // campaign-manager client-write path was a bypass around all of it.
+    // Reads: campaign managers (full) and approved sellers (active sales
+    // affecting their products).
     match /flashSales/{campaignId} {
       allow read: if isCampaignManager()
         || (isApprovedSeller() && resource.data.active == true);
-      allow create, update: if isCampaignManager()
-        && request.resource.data.stockTotal is int
-        && request.resource.data.stockTotal >= 0
-        && request.resource.data.salePriceMinor is int
-        && request.resource.data.salePriceMinor > 0
-        && request.resource.data.salePriceMinor < request.resource.data.originalPriceMinor;
-      allow delete: if false;
+      allow write: if false; // service-account only
     }
 
     // Flash-sale per-customer purchase counters — server transactions only.

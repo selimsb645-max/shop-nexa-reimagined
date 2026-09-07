@@ -298,3 +298,41 @@ describe("admin listing — derived status view", () => {
     expect(byId.get("c_active")?.stockRemaining).toBe(10);
   });
 });
+
+// ───────────────────────────────────────────────────────────────
+// Security rules audit — flashSales must be server-write-only.
+// Same regex-audit discipline as listingRegistry/qc-security-audit:
+// the scheduling core (backend engine + panel bridge) is the ONLY
+// writer; a client write path of ANY role would bypass Option-A
+// conflict prevention, stock guards, price safety and audit.
+// ───────────────────────────────────────────────────────────────
+describe("firestore.rules — flashSales security audit", () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const fs = require("fs") as typeof import("fs");
+  const rules = fs.readFileSync("firestore.rules", "utf-8");
+  const block = rules.match(/match \/flashSales\/\{campaignId\} \{[\s\S]*?\n {4}\}/);
+
+  it("has a dedicated match block for the flashSales collection", () => {
+    expect(block).toBeTruthy();
+  });
+
+  it("reads stay manager-gated / seller-gated (no public read)", () => {
+    expect(block[0]).toContain("allow read: if isCampaignManager()");
+    expect(block[0]).toContain("isApprovedSeller()");
+    expect(block[0]).not.toContain("allow read: if true");
+    expect(block[0]).not.toContain("allow read: if request.auth != null");
+  });
+
+  it("ALL client writes are denied — scheduling core only (no campaign-manager client path)", () => {
+    expect(block[0]).toContain("allow write: if false;");
+    // The old Prompt-05 client-write path must not come back:
+    expect(block[0]).not.toContain("allow create, update: if isCampaignManager()");
+    expect(block[0]).not.toMatch(/allow (create|update|delete): if (?!false)/);
+  });
+
+  it("per-customer purchase counters stay server-transaction-only", () => {
+    const counters = rules.match(/match \/flashSalePurchases\/\{purchaseId\} \{[\s\S]*?\n {4}\}/);
+    expect(counters).toBeTruthy();
+    expect(counters[0]).toContain("allow write: if false;");
+  });
+});
