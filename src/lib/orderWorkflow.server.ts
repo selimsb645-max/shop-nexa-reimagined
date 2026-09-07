@@ -67,6 +67,12 @@ export interface OrderEventContext {
   sellerIds: string[];
   /** Product lines for inventory reservation (productId → qty). */
   items: ReservationItem[];
+  /**
+   * Flash-sale claims reserved at checkout (reserve→order). Released
+   * by the flash-sale handler on CANCELLED / DELIVERY_FAILED.
+   * Absent on every order without a flash-sale line.
+   */
+  flashSaleClaims?: Array<{ campaignId: string; productId: string; quantity: number }>;
   total: number;
   currency?: string;
   note?: string;
@@ -115,6 +121,23 @@ const inventoryHandler: Handler = async (projectId, event, type) => {
     return;
   }
   // No inventory action for this event type — no-op success.
+};
+
+/**
+ * Reserve→order flash-sale compensation: when an order dies after
+ * checkout (cancelled by the customer, admin, or a failed delivery),
+ * the flash-sale stock pool and the per-customer purchase counter
+ * must give the units back. DELIVERED keeps the reservation — the
+ * purchase counter was already written at checkout reserve time.
+ */
+const flashSaleHandler: Handler = async (projectId, event, type) => {
+  if (type !== "CANCELLED" && type !== "DELIVERY_FAILED") return;
+  const claims = event.flashSaleClaims ?? [];
+  if (claims.length === 0) return;
+  const { releaseFlashSaleStock } = await import("./campaigns/flashSale.server");
+  await Promise.all(
+    claims.map((c) => releaseFlashSaleStock(projectId, c.campaignId, event.customerId, c.quantity)),
+  );
 };
 
 const notifySellerHandler: Handler = async (projectId, event, type) => {
@@ -387,6 +410,7 @@ const auditHandler: Handler = async (projectId, event, type) => {
 
 const HANDLERS: Record<OrderWorkflowHandler, Handler> = {
   inventory: inventoryHandler,
+  flashSale: flashSaleHandler,
   notifySeller: notifySellerHandler,
   notifyAdmin: notifyAdminHandler,
   notifyCustomer: notifyCustomerHandler,

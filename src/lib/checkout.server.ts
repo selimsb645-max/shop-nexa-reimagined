@@ -40,6 +40,12 @@ import { deactivateExpiredCoupons } from "./coupon-expiry.functions";
 import { checkLowStockAndNotify } from "./stock-alert.server";
 import { reserveInventoryForOrder } from "./inventory.server";
 import {
+  getActiveFlashSaleForProduct,
+  releaseFlashSaleStock,
+  reserveFlashSaleStock,
+  type FlashSaleDoc,
+} from "./campaigns/flashSale.server";
+import {
   advanceOrderStatus,
   dispatchOrderEvent,
 } from "./orderWorkflow.server";
@@ -307,6 +313,8 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
     updateTime: string | null;
     categoryId: string | null;
     subcategoryId: string | null;
+    /** Set when an active flash sale repriced this line (reserve→order). */
+    flashSale: { campaignId: string; salePriceMinor: number; originalPriceMinor: number } | null;
   }
 
   const lines: Line[] = [];
@@ -346,7 +354,49 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
       updateTime: doc.updateTime,
       categoryId: (d["categoryId"] as string | null) ?? null,
       subcategoryId: (d["subcategoryId"] as string | null) ?? null,
+      flashSale: null,
     });
+  }
+
+  // ── FLASH SALE PRICING (reserve→order integration) ─────────────
+  // An active, in-window flash sale bound to a cart product applies
+  // its price to that line automatically — the server decides, the
+  // client never sends flash-sale state. Only a strictly-lower sale
+  // price is applied (guards against stale/invalid sale docs), and
+  // only sales with remaining stock. Claims are reserved atomically
+  // right before the order write (see below) and released by the
+  // order workflow on CANCELLED / DELIVERY_FAILED.
+  const flashByProduct = new Map<string, FlashSaleDoc>();
+  await Promise.all(
+    productIds.map(async (id) => {
+      const sale = await getActiveFlashSaleForProduct(projectId, id, nowMs);
+      if (sale) flashByProduct.set(id, sale);
+    }),
+  );
+  const flashSaleClaims: Array<{ campaignId: string; productId: string; quantity: number }> = [];
+  for (const l of lines) {
+    const sale = flashByProduct.get(l.productId);
+    if (!sale) continue;
+    const salePriceTaka = sale.salePriceMinor / 100; // paisa → taka (exact 2dp)
+    if (!(salePriceTaka > 0) || !(salePriceTaka < l.price)) continue; // must be a real discount
+    l.price = round2(salePriceTaka);
+    l.subtotal = round2(l.price * l.quantity);
+    l.flashSale = {
+      campaignId: sale.campaignId,
+      salePriceMinor: sale.salePriceMinor,
+      originalPriceMinor: sale.originalPriceMinor,
+    };
+  }
+  for (const l of lines) {
+    if (!l.flashSale) continue;
+    const existing = flashSaleClaims.find((c) => c.campaignId === l.flashSale!.campaignId);
+    if (existing) existing.quantity += l.quantity;
+    else
+      flashSaleClaims.push({
+        campaignId: l.flashSale.campaignId,
+        productId: l.productId,
+        quantity: l.quantity,
+      });
   }
 
   const subtotal = round2(lines.reduce((s, l) => s + l.subtotal, 0));
@@ -943,6 +993,44 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
     // never double-notify a seller).
   }
 
+  // ── FLASH SALE RESERVATION (reserve→order) ─────────────────────
+  // Atomic per-customer-limit + stock reservation BEFORE the order
+  // write: a SOLD_OUT / CUSTOMER_LIMIT rejection fails the checkout
+  // cleanly with nothing written. Sibling claims already reserved in
+  // this request are compensated. After the order exists, releases
+  // run through the order workflow (CANCELLED / DELIVERY_FAILED).
+  if (flashSaleClaims.length > 0) {
+    const reserved: typeof flashSaleClaims = [];
+    try {
+      for (const claim of flashSaleClaims) {
+        const r = await reserveFlashSaleStock(projectId, {
+          campaignId: claim.campaignId,
+          customerId: req.uid,
+          quantity: claim.quantity,
+          now: nowMs,
+        });
+        if (!r.ok) {
+          throw new Error(
+            r.code === "SOLD_OUT"
+              ? "This flash sale just sold out — the offer is no longer available."
+              : r.code === "CUSTOMER_LIMIT"
+                ? "You have reached the purchase limit for this flash sale."
+                : "This flash sale offer is no longer active.",
+          );
+        }
+        reserved.push(claim);
+      }
+    } catch (err) {
+      // Compensate sibling claims reserved earlier in this request.
+      await Promise.all(
+        reserved.map((c) =>
+          releaseFlashSaleStock(projectId, c.campaignId, req.uid, c.quantity).catch(() => {}),
+        ),
+      );
+      throw err;
+    }
+  }
+
   void nowIso;
   await commitWrites(projectId, writes);
 
@@ -995,6 +1083,9 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
       lineTotalTaka: l.subtotal,
       shippingTaka: deliveryLines[i]?.sellerAbsorbedCharge ?? 0,
     })),
+    // Reserve→order: released by the flash-sale workflow handler on
+    // CANCELLED / DELIVERY_FAILED (per-customer counter included).
+    flashSaleClaims: flashSaleClaims.length > 0 ? flashSaleClaims : undefined,
     total,
   };
 

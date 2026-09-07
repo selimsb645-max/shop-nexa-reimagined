@@ -21,6 +21,7 @@ import {
   batchGetDocsWithTx,
   commitWithTx,
   rollbackTransaction,
+  runFirestoreQuery,
 } from "../firebase-admin.server";
 import { validateCampaignPricing, type DiscountRules } from "./pricing";
 
@@ -31,6 +32,11 @@ const MAX_ATTEMPTS = 5;
 
 export interface FlashSaleDoc {
   campaignId: string;
+  /**
+   * The product this flash sale sells (reserve→order integration).
+   * null on legacy docs — such sales never match at checkout.
+   */
+  productId: string | null;
   startAt: number;
   endAt: number;
   stockTotal: number;
@@ -43,6 +49,8 @@ export interface FlashSaleDoc {
 
 export interface CreateFlashSaleInput {
   campaignId: string;
+  /** Required for checkout integration — a sale must sell a product. */
+  productId?: string | null;
   startAt: number;
   endAt: number;
   stockLimit: number;
@@ -56,8 +64,17 @@ export async function createFlashSale(
   input: CreateFlashSaleInput,
 ): Promise<FlashSaleDoc> {
   if (input.stockLimit < 1) throw new Error("flashsale/validation: stockLimit must be >= 1");
-  if (input.perCustomerLimit < 1) throw new Error("flashsale/validation: perCustomerLimit must be >= 1");
-  if (input.endAt <= input.startAt) throw new Error("flashsale/validation: endAt must be after startAt");
+  if (input.perCustomerLimit < 1)
+    throw new Error("flashsale/validation: perCustomerLimit must be >= 1");
+  if (input.endAt <= input.startAt)
+    throw new Error("flashsale/validation: endAt must be after startAt");
+  // Reserve→order integration: a sale bound to no product can never
+  // be applied at checkout — reject empty strings, keep null (legacy).
+  if (input.productId !== undefined && input.productId !== null) {
+    if (typeof input.productId !== "string" || !input.productId.trim()) {
+      throw new Error("flashsale/validation: productId must be a non-empty string");
+    }
+  }
   // Price safety (§6): sale price must be a valid discount of the original.
   const { result } = validateCampaignPricing(
     input.originalPriceMinor,
@@ -68,6 +85,7 @@ export async function createFlashSale(
 
   const doc: FlashSaleDoc = {
     campaignId: input.campaignId,
+    productId: input.productId?.trim() ?? null,
     startAt: input.startAt,
     endAt: input.endAt,
     stockTotal: input.stockLimit,
@@ -88,13 +106,16 @@ export async function createFlashSale(
   return doc;
 }
 
-export async function getFlashSale(projectId: string, campaignId: string): Promise<FlashSaleDoc | null> {
+export async function getFlashSale(
+  projectId: string,
+  campaignId: string,
+): Promise<FlashSaleDoc | null> {
   const docs = await batchGetDocs(projectId, [
     docPath(projectId, [FLASH_SALES_COLLECTION, campaignId]),
   ]);
   const d = docs.get(docPath(projectId, [FLASH_SALES_COLLECTION, campaignId]));
   if (!d?.exists) return null;
-  return (d.data as Record<string, unknown>) as unknown as FlashSaleDoc;
+  return d.data as Record<string, unknown> as unknown as FlashSaleDoc;
 }
 
 export type ReserveResult =
@@ -214,7 +235,9 @@ export async function releaseFlashSaleStock(
       return;
     }
     const sale = saleDoc.data as Record<string, unknown> as unknown as FlashSaleDoc;
-    const purchased = Number((purchaseDoc.data as Record<string, unknown> as Record<string, unknown>)["qty"]);
+    const purchased = Number(
+      (purchaseDoc.data as Record<string, unknown> as Record<string, unknown>)["qty"],
+    );
     const writes = [
       {
         update: {
@@ -248,6 +271,7 @@ export async function releaseFlashSaleStock(
 
 export interface PublicFlashSale {
   campaignId: string;
+  productId: string | null;
   salePriceMinor: number;
   originalPriceMinor: number;
   stockRemaining: number;
@@ -275,10 +299,72 @@ export async function getPublicActiveFlashSale(
   if (stockRemaining <= 0) return null;
   return {
     campaignId: doc.campaignId,
+    productId: doc.productId,
     salePriceMinor: doc.salePriceMinor,
     originalPriceMinor: doc.originalPriceMinor,
     stockRemaining,
     perCustomerLimit: doc.perCustomerLimit,
     endsAt: doc.endAt,
   };
+}
+
+/* ──────────────────────────────────────────────────────────────── */
+/* Reserve→order integration (Prompt 05 follow-up)                 */
+/* ──────────────────────────────────────────────────────────────── */
+
+/**
+ * The CHECKOUT-side flash-sale lookup: the active, in-window flash
+ * sale for a given product (there is at most one meaningful match —
+ * if several are active we serve the one ending soonest so stock
+ * drains deterministically). Server-only; internal bookkeeping
+ * fields stay inside the server boundary.
+ *
+ * Returns null when: no sale bound to the product, none active,
+ * none in-window, or all sold out. Checkout treats null as "normal
+ * pricing applies".
+ */
+export async function getActiveFlashSaleForProduct(
+  projectId: string,
+  productId: string,
+  now?: number,
+): Promise<FlashSaleDoc | null> {
+  const t = now ?? Date.now();
+  const rows = await runFirestoreQuery(projectId, {
+    from: [{ collectionId: FLASH_SALES_COLLECTION }],
+    where: {
+      compositeFilter: {
+        op: "AND",
+        filters: [
+          {
+            fieldFilter: {
+              field: { fieldPath: "productId" },
+              op: "EQUAL",
+              value: { stringValue: productId },
+            },
+          },
+          {
+            fieldFilter: {
+              field: { fieldPath: "active" },
+              op: "EQUAL",
+              value: { booleanValue: true },
+            },
+          },
+        ],
+      },
+    },
+    limit: 10,
+  });
+  let best: FlashSaleDoc | null = null;
+  for (const row of rows) {
+    const doc = (row as { document?: { name?: string; fields?: Record<string, unknown> } })
+      .document;
+    if (!doc?.fields) continue;
+    const sale = fromFsFields(
+      doc.fields as Parameters<typeof fromFsFields>[0],
+    ) as unknown as FlashSaleDoc;
+    if (!sale.active || t < sale.startAt || t >= sale.endAt) continue;
+    if (sale.stockTotal - sale.stockReserved <= 0) continue;
+    if (!best || sale.endAt < best.endAt) best = sale;
+  }
+  return best;
 }

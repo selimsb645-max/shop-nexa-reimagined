@@ -295,6 +295,7 @@ export const ORDER_EVENT_TYPES: readonly OrderEventType[] = [
 /** Workflow handler ids (§7 fan-out). */
 export const ORDER_WORKFLOW_HANDLERS = [
   "inventory",
+  "flashSale",
   "notifySeller",
   "notifyAdmin",
   "notifyCustomer",
@@ -319,12 +320,12 @@ export const EVENT_HANDLER_MAP: Readonly<
   IN_TRANSIT:         ["shipment", "notifyCustomer", "audit"],
   OUT_FOR_DELIVERY:   ["shipment", "notifyCustomer", "audit"],
   DELIVERED:          ["shipment", "inventory", "finance", "notifyCustomer", "audit"],
-  CANCELLED:          ["inventory", "finance", "notifySeller", "notifyCustomer", "audit"],
+  CANCELLED:          ["inventory", "flashSale", "finance", "notifySeller", "notifyCustomer", "audit"],
   RETURN_REQUESTED:   ["notifySeller", "notifyAdmin", "audit"],
   RETURNED:           ["inventory", "finance", "audit"],
   REFUND_PENDING:     ["finance", "notifyCustomer", "audit"],
   REFUNDED:           ["finance", "notifyCustomer", "audit"], // Prompt 04: refund reversal
-  DELIVERY_FAILED:    ["shipment", "notifySeller", "notifyAdmin", "audit"],
+  DELIVERY_FAILED:    ["shipment", "inventory", "flashSale", "notifySeller", "notifyAdmin", "audit"],
 };
 
 // ═══════════════════════════════════════════════════════════════
