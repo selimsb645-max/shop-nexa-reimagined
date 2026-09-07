@@ -1,49 +1,46 @@
 /**
- * AVENTA SHOP — Seller Wallet
+ * AVENTA SHOP — Seller Wallet (v2, server-authoritative)
  *
  * Route: /seller/wallet
- * Reuses existing infrastructure:
- * - getSellerWalletBalance, getSellerTotalEarnings, getSellerPendingBalance
- * - listSellerWalletTransactions (from sellerWallet service)
- * - requestSellerWithdrawal + triggerSettlementRelease (from sellerSettlements)
- * - SellerGate for auth + seller authorization
  *
- * Security: All balance data comes from Firestore (RLS-protected).
- * Withdrawals go through server-verified settlement functions.
+ * Every number on this page comes from the finance engine through
+ * verified server functions:
+ *  - balances from `sellerFinance/{uid}` (maintained ONLY inside
+ *    atomic ledger transactions — never client-computed)
+ *  - history from the append-only `sellerLedger` collection
+ *  - withdrawal requests reserve funds via SETTLEMENT_HOLD entries
+ *
+ * Legacy float-era walletTx reads are no longer used here.
  */
 
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { SellerGate } from "@/components/seller/SellerGate";
 import {
-  getSellerWalletBalance,
-  getSellerTotalEarnings,
-  getSellerPendingBalance,
-  listSellerWalletTransactions,
+  fetchWalletV2,
+  fetchWalletV2LedgerPage,
+  requestWalletWithdrawalV2,
+  type WalletV2Entry,
+  type WalletV2Overview,
 } from "@/services/firebase/sellerWallet";
-import {
-  requestSellerWithdrawal,
-  triggerSettlementRelease,
-} from "@/services/firebase/sellerSettlements";
 import { formatPrice, formatDateTime } from "@/utils/format";
 import { toast } from "sonner";
-import type { SellerWalletTx, SellerWalletTxType } from "@/types/seller";
 import type { SellerProfile } from "@/types/seller";
 import {
   Wallet,
   Clock,
   ArrowDownToLine,
-  ArrowUpFromLine,
-  History,
   Loader,
   Banknote,
   Smartphone,
   Landmark,
-  CheckCircle2,
-  XCircle,
   Plus,
   Minus,
+  ShieldAlert,
+  CheckCircle2,
+  XCircle,
+  History,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/seller/wallet")({
@@ -52,30 +49,34 @@ export const Route = createFileRoute("/_authenticated/seller/wallet")({
   head: () => ({ meta: [{ title: "Wallet — AVENTA SHOP Seller" }] }),
 });
 
-const TX_TYPE_CONFIG: Record<
-  SellerWalletTxType,
-  { label: string; icon: typeof Plus; color: string; bgColor: string }
-> = {
-  earning: { label: "Earning", icon: Plus, color: "#059669", bgColor: "#ecfdf5" },
-  withdrawal: { label: "Withdrawal", icon: Minus, color: "#6366f1", bgColor: "#eef2ff" },
-  adjustment: { label: "Adjustment", icon: Banknote, color: "#d97706", bgColor: "#fffbeb" },
-  refund: { label: "Refund", icon: ArrowUpFromLine, color: "#dc2626", bgColor: "#fef2f2" },
-  bonus: { label: "Bonus", icon: Plus, color: "#f57224", bgColor: "#fff7ed" },
+/** Ledger entry presentation — CREDIT/DEBIT never inferred from labels. */
+const LEDGER_TYPE_CONFIG: Record<string, { label: string }> = {
+  ORDER_CREDIT: { label: "Sale Earning" },
+  COMMISSION_DEBIT: { label: "Marketplace Fee" },
+  SHIPPING_DEBIT: { label: "Shipping Fee" },
+  REFUND_DEBIT: { label: "Refund" },
+  ADJUSTMENT: { label: "Adjustment" },
+  SETTLEMENT_HOLD: { label: "Funds on Hold" },
+  SETTLEMENT_RELEASE: { label: "Funds Released" },
+  PAYOUT: { label: "Withdrawal Paid" },
+  PAYOUT_REVERSAL: { label: "Payout Reversal" },
 };
 
-const TX_STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: string }> = {
-  completed: { label: "Completed", color: "#059669", bgColor: "#ecfdf5" },
-  pending: { label: "Pending", color: "#d97706", bgColor: "#fffbeb" },
-  failed: { label: "Failed", color: "#dc2626", bgColor: "#fef2f2" },
-};
+function entryLabel(e: WalletV2Entry): string {
+  if (e.type === "ADJUSTMENT") {
+    return e.direction === "CREDIT" ? "Bonus / Compensation" : "Adjustment";
+  }
+  return LEDGER_TYPE_CONFIG[e.type]?.label ?? e.type;
+}
 
 function WalletPage({ profile }: { profile: SellerProfile }) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [balance, setBalance] = useState(0);
-  const [totalEarnings, setTotalEarnings] = useState(0);
-  const [pendingBalance, setPendingBalance] = useState(0);
-  const [transactions, setTransactions] = useState<SellerWalletTx[]>([]);
+  const [data, setData] = useState<WalletV2Overview | null>(null);
+  const [entries, setEntries] = useState<WalletV2Entry[]>([]);
+  const [cursor, setCursor] = useState<number | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [withdrawMethod, setWithdrawMethod] = useState<"bank" | "bkash" | "nagad" | "rocket">(
@@ -83,41 +84,51 @@ function WalletPage({ profile }: { profile: SellerProfile }) {
   );
   const [submitting, setSubmitting] = useState(false);
 
-  async function loadData() {
+  const loadData = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     try {
       const idToken = await user.getIdToken();
-      await triggerSettlementRelease(idToken);
-      const [bal, earn, pend, txs] = await Promise.all([
-        getSellerWalletBalance(profile.uid),
-        getSellerTotalEarnings(profile.uid),
-        getSellerPendingBalance(profile.uid),
-        listSellerWalletTransactions(profile.uid, { max: 100 }),
-      ]);
-      setBalance(bal);
-      setTotalEarnings(earn);
-      setPendingBalance(pend);
-      setTransactions(txs);
+      const overview = await fetchWalletV2(idToken);
+      setData(overview);
+      setEntries(overview.ledger.entries);
+      setCursor(overview.ledger.nextBefore);
+      setHasMore(overview.ledger.hasMore);
     } catch (err) {
-      toast.error("Could not load wallet data");
+      toast.error(err instanceof Error ? err.message : "Could not load wallet data");
     } finally {
       setLoading(false);
     }
-  }
+  }, [user]);
 
   useEffect(() => {
     loadData();
-  }, [user]);
+  }, [loadData]);
+
+  async function loadMore() {
+    if (!user || cursor == null) return;
+    setLoadingMore(true);
+    try {
+      const idToken = await user.getIdToken();
+      const page = await fetchWalletV2LedgerPage(idToken, cursor);
+      setEntries((prev) => [...prev, ...page.entries]);
+      setCursor(page.nextBefore);
+      setHasMore(page.hasMore);
+    } catch {
+      toast.error("Could not load more transactions");
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   async function handleWithdraw() {
     if (!user) return;
     const amount = Number(withdrawAmount);
     if (!amount || amount < 10) {
-      toast.error("Minimum withdrawal is 10");
+      toast.error("Minimum withdrawal is ৳10");
       return;
     }
-    if (amount > balance) {
+    if (data && amount > data.wallet.availableMinor / 100) {
       toast.error("Insufficient balance");
       return;
     }
@@ -140,12 +151,7 @@ function WalletPage({ profile }: { profile: SellerProfile }) {
     setSubmitting(true);
     try {
       const idToken = await user.getIdToken();
-      await requestSellerWithdrawal({
-        idToken,
-        amount,
-        method: withdrawMethod,
-        destination,
-      });
+      await requestWalletWithdrawalV2({ idToken, amountTaka: amount, method: withdrawMethod, destination });
       toast.success(`Withdrawal requested: ${formatPrice(amount)}`);
       setShowWithdraw(false);
       setWithdrawAmount("");
@@ -165,7 +171,12 @@ function WalletPage({ profile }: { profile: SellerProfile }) {
     );
   }
 
-  const withdrawable = Math.max(0, balance);
+  const wallet = data?.wallet;
+  const available = (wallet?.availableMinor ?? 0) / 100;
+  const pending = (wallet?.pendingMinor ?? 0) / 100;
+  const totalEarned = (wallet?.totalEarnedMinor ?? 0) / 100;
+  const totalWithdrawn = (wallet?.totalWithdrawnMinor ?? 0) / 100;
+  const walletStatus = wallet?.status ?? "ACTIVE";
 
   return (
     <div className="space-y-5">
@@ -173,9 +184,9 @@ function WalletPage({ profile }: { profile: SellerProfile }) {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-[#0f172a] tracking-tight">Wallet</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Manage your balance and withdrawals</p>
+          <p className="text-sm text-slate-500 mt-0.5">Your balance, earnings and withdrawals</p>
         </div>
-        {withdrawable >= 10 && (
+        {walletStatus === "ACTIVE" && available >= 10 && (
           <button
             onClick={() => setShowWithdraw(!showWithdraw)}
             className="bg-[#f57224] hover:bg-orange-600 text-white font-bold py-2.5 px-4 rounded-xl text-sm transition-colors flex items-center gap-1.5"
@@ -185,21 +196,34 @@ function WalletPage({ profile }: { profile: SellerProfile }) {
         )}
       </div>
 
+      {/* Wallet status banner */}
+      {walletStatus !== "ACTIVE" && (
+        <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
+          <ShieldAlert className="mt-0.5 h-5 w-5 text-amber-600" />
+          <div>
+            <p className="text-sm font-semibold text-amber-900">
+              Wallet {walletStatus === "SUSPENDED" ? "temporarily suspended" : walletStatus === "LOCKED" ? "locked" : "closed"}
+            </p>
+            <p className="text-xs text-amber-700 mt-0.5">
+              Withdrawals are blocked while your wallet is {walletStatus.toLowerCase()}. Your balance and history remain intact — contact support for details.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Balance Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {/* Available Balance — featured */}
-        <div className="bg-gradient-to-br from-[#0f172a] to-[#1e293b] rounded-xl p-5 text-white shadow-lg sm:col-span-1">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="bg-gradient-to-br from-[#0f172a] to-[#1e293b] rounded-xl p-5 text-white shadow-lg">
           <div className="flex items-center gap-2 mb-3">
             <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-white/10">
               <Wallet className="w-4 h-4" />
             </span>
             <span className="text-xs font-medium text-slate-300">Available Balance</span>
           </div>
-          <div className="text-2xl font-bold break-all">{formatPrice(withdrawable)}</div>
-          <p className="text-xs text-slate-400 mt-1">Withdrawable to your account</p>
+          <div className="text-2xl font-bold break-all">{formatPrice(available)}</div>
+          <p className="text-xs text-slate-400 mt-1">Ready to withdraw</p>
         </div>
 
-        {/* Pending Balance */}
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
           <div className="flex items-center gap-2 mb-3">
             <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-amber-50">
@@ -207,24 +231,30 @@ function WalletPage({ profile }: { profile: SellerProfile }) {
             </span>
             <span className="text-xs font-medium text-slate-500">Pending Balance</span>
           </div>
-          <div className="text-2xl font-bold text-[#0f172a] break-all">
-            {formatPrice(pendingBalance)}
-          </div>
-          <p className="text-xs text-slate-400 mt-1">In hold period</p>
+          <div className="text-2xl font-bold text-[#0f172a] break-all">{formatPrice(pending)}</div>
+          <p className="text-xs text-slate-400 mt-1">On hold — release cycle or withdrawal in review</p>
         </div>
 
-        {/* Total Earnings */}
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
           <div className="flex items-center gap-2 mb-3">
             <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-green-50">
               <Banknote className="w-4 h-4 text-green-600" />
             </span>
-            <span className="text-xs font-medium text-slate-500">Total Earnings</span>
+            <span className="text-xs font-medium text-slate-500">Total Earned</span>
           </div>
-          <div className="text-2xl font-bold text-[#0f172a] break-all">
-            {formatPrice(totalEarnings)}
+          <div className="text-2xl font-bold text-[#0f172a] break-all">{formatPrice(totalEarned)}</div>
+          <p className="text-xs text-slate-400 mt-1">Lifetime credits</p>
+        </div>
+
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-50">
+              <ArrowDownToLine className="w-4 h-4 text-indigo-600" />
+            </span>
+            <span className="text-xs font-medium text-slate-500">Total Withdrawn</span>
           </div>
-          <p className="text-xs text-slate-400 mt-1">Lifetime earnings</p>
+          <div className="text-2xl font-bold text-[#0f172a] break-all">{formatPrice(totalWithdrawn)}</div>
+          <p className="text-xs text-slate-400 mt-1">Paid out to date</p>
         </div>
       </div>
 
@@ -234,7 +264,7 @@ function WalletPage({ profile }: { profile: SellerProfile }) {
           <h2 className="text-sm font-bold text-[#0f172a] mb-4">Request Withdrawal</h2>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-slate-700">Amount</label>
+              <label className="text-sm font-medium text-slate-700">Amount (৳)</label>
               <input
                 type="number"
                 value={withdrawAmount}
@@ -242,7 +272,7 @@ function WalletPage({ profile }: { profile: SellerProfile }) {
                 placeholder="Minimum 10"
                 className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#f57224]"
               />
-              <p className="mt-1 text-xs text-slate-400">Available: {formatPrice(withdrawable)}</p>
+              <p className="mt-1 text-xs text-slate-400">Available: {formatPrice(available)}</p>
             </div>
             <div>
               <label className="text-sm font-medium text-slate-700">Payout Method</label>
@@ -258,27 +288,30 @@ function WalletPage({ profile }: { profile: SellerProfile }) {
                     onClick={() => setWithdrawMethod(m.id as "bank" | "bkash" | "nagad" | "rocket")}
                     className={`flex items-center gap-2 rounded-lg border px-3 py-2.5 text-sm transition-colors ${
                       withdrawMethod === m.id
-                        ? "border-[#f57224] bg-[#fff7ed] text-[#f57224] font-semibold"
-                        : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                        ? "border-[#f57224] bg-orange-50 text-[#f57224] font-semibold"
+                        : "border-slate-200 text-slate-600 hover:border-slate-300"
                     }`}
                   >
-                    <m.icon className="w-4 h-4" />
-                    {m.label}
+                    <m.icon className="w-4 h-4" /> {m.label}
                   </button>
                 ))}
               </div>
+            </div>
+            <div className="rounded-lg bg-slate-50 p-3 text-xs text-slate-500">
+              Funds are reserved from your available balance immediately and released once an admin
+              processes the request. Rejected requests return to your available balance.
             </div>
             <div className="flex gap-2">
               <button
                 onClick={handleWithdraw}
                 disabled={submitting}
-                className="rounded-lg bg-[#f57224] px-4 py-2.5 text-sm font-bold text-white hover:bg-orange-600 disabled:opacity-50 transition-colors"
+                className="bg-[#f57224] hover:bg-orange-600 disabled:opacity-60 text-white font-bold py-2.5 px-4 rounded-xl text-sm transition-colors"
               >
-                {submitting ? "Processing..." : "Submit Request"}
+                {submitting ? "Requesting..." : "Request Withdrawal"}
               </button>
               <button
                 onClick={() => setShowWithdraw(false)}
-                className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
+                className="border border-slate-200 hover:border-slate-300 text-slate-600 font-semibold py-2.5 px-4 rounded-xl text-sm transition-colors"
               >
                 Cancel
               </button>
@@ -287,70 +320,114 @@ function WalletPage({ profile }: { profile: SellerProfile }) {
         </div>
       )}
 
+      {/* Pending withdrawal requests */}
+      {data && data.withdrawals.length > 0 && (
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+          <h2 className="text-sm font-bold text-[#0f172a] mb-3">Withdrawal Requests</h2>
+          <div className="divide-y divide-slate-100">
+            {data.withdrawals.map((w) => (
+              <div key={w.withdrawalId} className="flex items-center justify-between gap-3 py-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-[#0f172a] truncate">
+                    {formatPrice(w.amountMinor / 100)} · {w.method}
+                  </p>
+                  <p className="text-xs text-slate-400">{formatDateTime(w.requestedAt)}</p>
+                </div>
+                <span
+                  className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                    w.status === "COMPLETED"
+                      ? "bg-green-50 text-green-700"
+                      : w.status === "REJECTED" || w.status === "FAILED"
+                        ? "bg-red-50 text-red-600"
+                        : "bg-amber-50 text-amber-700"
+                  }`}
+                >
+                  {w.status === "COMPLETED" ? (
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                  ) : w.status === "REJECTED" || w.status === "FAILED" ? (
+                    <XCircle className="h-3.5 w-3.5" />
+                  ) : null}
+                  {w.status === "REQUESTED" ? "Pending review" : w.status.toLowerCase()}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Transaction History */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
-        <div className="border-b border-slate-200 px-4 py-3">
-          <h2 className="flex items-center gap-2 text-sm font-bold text-[#0f172a]">
-            <History className="w-4 h-4" />
-            Transaction History
-          </h2>
+        <div className="flex items-center gap-2 border-b border-slate-100 px-4 py-3">
+          <History className="w-4 h-4 text-slate-400" />
+          <h2 className="text-sm font-bold text-[#0f172a]">Transaction History</h2>
+          {wallet && (
+            <span className="ml-auto text-xs text-slate-400">
+              {wallet.transactionCount} total
+            </span>
+          )}
         </div>
-        <div className="divide-y divide-slate-100 max-h-96 overflow-y-auto">
-          {transactions.length === 0 ? (
-            <div className="py-12 text-center">
-              <History className="w-10 h-10 text-slate-200 mx-auto mb-2" />
-              <p className="text-sm text-slate-400">No transactions yet</p>
-              <p className="text-xs text-slate-300 mt-1">Your wallet activity will appear here</p>
-            </div>
-          ) : (
-            transactions.map((tx) => {
-              const cfg = TX_TYPE_CONFIG[tx.type] ?? TX_TYPE_CONFIG.earning;
-              const statusCfg = TX_STATUS_CONFIG[tx.status] ?? TX_STATUS_CONFIG.completed;
+
+        {entries.length === 0 ? (
+          <div className="px-4 py-10 text-center">
+            <p className="text-sm text-slate-400">
+              No transactions yet. Your sales, fees and payouts will appear here.
+            </p>
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-100">
+            {entries.map((e) => {
+              const isCredit = e.direction === "CREDIT";
               return (
-                <div key={tx.id} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50">
-                  <div
-                    className="flex h-9 w-9 items-center justify-center rounded-full"
-                    style={{ backgroundColor: cfg.bgColor, color: cfg.color }}
+                <div key={e.transactionId} className="flex items-center gap-3 px-4 py-3">
+                  <span
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
+                      isCredit ? "bg-green-50" : "bg-slate-100"
+                    }`}
                   >
-                    <cfg.icon className="w-4 h-4" />
+                    {isCredit ? (
+                      <Plus className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <Minus className="h-4 w-4 text-slate-500" />
+                    )}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-[#0f172a]">{entryLabel(e)}</p>
+                    <p className="truncate text-xs text-slate-400">
+                      {formatDateTime(e.createdAt)}
+                      {e.orderId ? ` · Order ${e.orderId.slice(0, 8)}` : ""}
+                      {e.reference && !e.orderId ? ` · ${String(e.reference).slice(0, 16)}` : ""}
+                    </p>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-[#0f172a] truncate">
-                      {tx.note || cfg.label}
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-slate-400">
-                      <span>{cfg.label}</span>
-                      <span>·</span>
-                      <span>{formatDateTime(tx.createdAt)}</span>
-                      {tx.orderId && (
-                        <>
-                          <span>·</span>
-                          <span>Order: {tx.orderId.substring(0, 8)}…</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <span
+                  <div className="shrink-0 text-right">
+                    <p
                       className={`text-sm font-bold ${
-                        tx.amount > 0 ? "text-green-600" : "text-red-600"
+                        isCredit ? "text-green-600" : "text-slate-700"
                       }`}
                     >
-                      {tx.amount > 0 ? "+" : "-"}
-                      {formatPrice(Math.abs(tx.amount))}
-                    </span>
-                    <span
-                      className="text-[10px] font-medium px-1.5 py-0.5 rounded-full"
-                      style={{ backgroundColor: statusCfg.bgColor, color: statusCfg.color }}
-                    >
-                      {statusCfg.label}
-                    </span>
+                      {isCredit ? "+" : "−"}
+                      {formatPrice(Math.abs(e.amountMinor) / 100)}
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      Balance {formatPrice(e.balanceAfter / 100)}
+                    </p>
                   </div>
                 </div>
               );
-            })
-          )}
-        </div>
+            })}
+          </div>
+        )}
+
+        {hasMore && (
+          <div className="border-t border-slate-100 p-3 text-center">
+            <button
+              onClick={loadMore}
+              disabled={loadingMore}
+              className="text-sm font-semibold text-[#f57224] hover:text-orange-600 disabled:opacity-60"
+            >
+              {loadingMore ? "Loading..." : "Load more"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

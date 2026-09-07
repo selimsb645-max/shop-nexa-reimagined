@@ -10,11 +10,12 @@ import {
 import { SellerGate } from "@/components/seller/SellerGate";
 import { listSellerProducts } from "@/services/firebase/sellerProducts";
 import { listSellerOrders } from "@/services/firebase/sellerOrders";
-import { getSellerWalletBalance, getSellerTotalEarnings, getSellerPendingBalance } from "@/services/firebase/sellerWallet";
+import { fetchWalletV2 } from "@/services/firebase/sellerWallet";
 import { countUnreadNotifications } from "@/services/firebase/sellers";
 import { formatPrice } from "@/utils/format";
 import type { Product } from "@/types/commerce";
 import type { SellerOrder, SellerProfile } from "@/types/seller";
+import { useAuth } from "@/context/AuthContext";
 import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/seller/")({
@@ -33,31 +34,37 @@ function Dashboard({ sellerId, profile }: { sellerId: string; profile: SellerPro
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
+  const { user } = useAuth();
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setLoading(true);
       try {
-        const [p, o, bal, earn, pend, unread] = await Promise.all([
+        // Wallet balances come from the server-authoritative finance
+        // engine (verified idToken) — never client-computed sums.
+        const [p, o, unread, wallet] = await Promise.all([
           listSellerProducts(sellerId),
           listSellerOrders(sellerId),
-          getSellerWalletBalance(sellerId),
-          getSellerTotalEarnings(sellerId),
-          getSellerPendingBalance(sellerId),
           countUnreadNotifications(sellerId),
+          user
+            ? user.getIdToken().then((idToken) => fetchWalletV2(idToken))
+            : Promise.resolve(null),
         ]);
         if (cancelled) return;
         setProducts(p);
         setOrders(o);
-        setWalletBalance(bal);
-        setTotalEarnings(earn);
-        setPendingBalance(pend);
         setUnreadCount(unread);
+        if (wallet) {
+          setWalletBalance(wallet.wallet.availableMinor / 100);
+          setTotalEarnings(wallet.wallet.totalEarnedMinor / 100);
+          setPendingBalance(wallet.wallet.pendingMinor / 100);
+        }
       } catch { /* ignore */ }
       if (!cancelled) setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [sellerId]);
+  }, [sellerId, user]);
 
   if (loading) {
     return (

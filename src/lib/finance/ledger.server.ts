@@ -75,15 +75,26 @@ export interface LedgerEntryInput {
   /** Deterministic idempotency key (suffix of the doc id). */
   idempotencyKey?: string | null;
   createdAt?: number;
+  /**
+   * Additional writes committed ATOMICALLY with the ledger entry +
+   * balance doc (e.g. the withdrawal request document that reserves
+   * the funds). If the tx fails, these writes never land — no orphan
+   * reservation documents can exist.
+   */
+  extraWrites?: FsWrite[];
 }
 
-export interface LedgerEntry extends Required<Omit<LedgerEntryInput, "orderId" | "reference" | "idempotencyKey">> {
+export interface LedgerEntry extends Required<Omit<LedgerEntryInput, "orderId" | "reference" | "idempotencyKey" | "extraWrites">> {
   /** Monotonic per-seller sequence — the authoritative replay order
    *  (createdAt ties at ms resolution are otherwise ambiguous). */
   seq: number;
   transactionId: string;
   orderId: string | null;
   reference: string | null;
+  /** Explicit financial direction — NEVER inferred from UI labels. */
+  direction: "CREDIT" | "DEBIT";
+  /** Ledger entries are COMPLETED at append time (atomic commit). */
+  status: "COMPLETED";
   balanceBefore: number;
   balanceAfter: number;
   heldBefore: number;
@@ -91,15 +102,39 @@ export interface LedgerEntry extends Required<Omit<LedgerEntryInput, "orderId" |
   createdAt: number;
 }
 
+/** Wallet lifecycle status (Prompt: Wallet §16). */
+export const WALLET_STATUSES = ["ACTIVE", "SUSPENDED", "LOCKED", "CLOSED"] as const;
+export type WalletStatus = (typeof WALLET_STATUSES)[number];
+
+/** Withdrawal-like entries are blocked unless the wallet is ACTIVE. */
+const WITHDRAWAL_ENTRY_TYPES: readonly LedgerEntryType[] = ["SETTLEMENT_HOLD", "PAYOUT"];
+
+/** Explicit direction per entry type — single source of truth. */
+export function entryDirection(type: LedgerEntryType, amountMinor: number): "CREDIT" | "DEBIT" {
+  switch (type) {
+    case "ORDER_CREDIT":
+    case "SETTLEMENT_RELEASE":
+    case "PAYOUT_REVERSAL":
+      return "CREDIT";
+    case "ADJUSTMENT":
+      return amountMinor >= 0 ? "CREDIT" : "DEBIT";
+    default:
+      return "DEBIT";
+  }
+}
+
 interface Balances {
   availableMinor: number;
   heldMinor: number;
   paidOutMinor: number;
+  /** Lifetime sale credits — order earnings + positive adjustments.
+   *  NOT decreased by withdrawals (paidOutMinor tracks those). */
+  totalEarnedMinor: number;
   currency: "BDT";
 }
 
 function zeroBalances(): Balances {
-  return { availableMinor: 0, heldMinor: 0, paidOutMinor: 0, currency: "BDT" };
+  return { availableMinor: 0, heldMinor: 0, paidOutMinor: 0, totalEarnedMinor: 0, currency: "BDT" };
 }
 
 function readBalances(raw: Record<string, unknown> | undefined): Balances {
@@ -110,8 +145,16 @@ function readBalances(raw: Record<string, unknown> | undefined): Balances {
     availableMinor: Number(b.availableMinor ?? 0),
     heldMinor: Number(b.heldMinor ?? 0),
     paidOutMinor: Number(b.paidOutMinor ?? 0),
+    totalEarnedMinor: Number(b.totalEarnedMinor ?? 0),
     currency: "BDT",
   };
+}
+
+/** Wallet status defaults to ACTIVE for wallets created before the
+ *  status field existed (backward compatible). */
+function readWalletStatus(raw: Record<string, unknown> | undefined): WalletStatus {
+  const s = String(raw?.["status"] ?? "ACTIVE");
+  return (WALLET_STATUSES as readonly string[]).includes(s) ? (s as WalletStatus) : "ACTIVE";
 }
 
 const MAX_ATTEMPTS = 5;
@@ -127,6 +170,14 @@ export async function appendLedgerEntry(
 ): Promise<LedgerEntry> {
   if (!Number.isSafeInteger(input.amountMinor)) {
     throw new Error(`finance/ledger: unsafe amountMinor ${input.amountMinor}`);
+  }
+  if (input.amountMinor === 0) {
+    throw new Error(`finance/ledger: zero-amount entries are invalid`);
+  }
+  // Only ADJUSTMENT may carry a negative amount; every typed entry
+  // derives direction from its type and must be positive.
+  if (input.type !== "ADJUSTMENT" && input.amountMinor < 0) {
+    throw new Error(`finance/ledger: ${input.type} requires a positive amountMinor`);
   }
   if (input.currency !== "BDT") {
     throw new Error(`finance/ledger: unsupported currency ${input.currency}`);
@@ -158,6 +209,9 @@ export async function appendLedgerEntry(
           orderId: (data["orderId"] as string) ?? null,
           reference: (data["reference"] as string) ?? null,
           createdBy: data["createdBy"] as string,
+          direction: (data["direction"] as "CREDIT" | "DEBIT" | undefined)
+            ?? entryDirection(data["type"] as LedgerEntryType, Number(data["amountMinor"])),
+          status: "COMPLETED",
           balanceBefore: Number(data["balanceBefore"]),
           balanceAfter: Number(data["balanceAfter"]),
           heldBefore: Number(data["heldBefore"]),
@@ -169,6 +223,22 @@ export async function appendLedgerEntry(
       // ── Compute balance movement (integer math only).
       const financeRaw = (docs.get(financeName)?.data as Record<string, unknown>) ?? undefined;
       const balances = readBalances(financeRaw);
+      const walletStatus = readWalletStatus(financeRaw);
+      // ── WALLET STATUS POLICY (§16): withdrawals (funds leaving the
+      // available balance by seller/admin payout action) require an
+      // ACTIVE wallet. Order flow entries always post so the ledger
+      // stays consistent with order lifecycle events.
+      if (WITHDRAWAL_ENTRY_TYPES.includes(input.type) && walletStatus !== "ACTIVE") {
+        await rollbackTransaction(projectId, tx);
+        throw new Error(
+          `finance/wallet: wallet is ${walletStatus} — withdrawal operations are blocked ` +
+          `(${input.type} on seller ${input.sellerId})`,
+        );
+      }
+      if (input.type === "ADJUSTMENT" && input.amountMinor < 0 && walletStatus === "CLOSED") {
+        await rollbackTransaction(projectId, tx);
+        throw new Error(`finance/wallet: wallet is CLOSED — debits are blocked`);
+      }
       const nextSeq = Number((financeRaw?.["entrySeq"] as number | undefined) ?? 0) + 1;
       const before: Balances = { ...balances };
       const amt = input.amountMinor;
@@ -192,6 +262,10 @@ export async function appendLedgerEntry(
         default:
           throw new Error(`finance/ledger: unknown entry type ${input.type}`);
       }
+      // totalEarned: lifetime credits (sales + positive adjustments).
+      if (input.type === "ORDER_CREDIT" || (input.type === "ADJUSTMENT" && amt > 0)) {
+        balances.totalEarnedMinor += amt;
+      }
       if (balances.availableMinor < 0 || balances.heldMinor < 0) {
         await rollbackTransaction(projectId, tx);
         throw new Error(
@@ -210,6 +284,8 @@ export async function appendLedgerEntry(
         currency: "BDT",
         orderId: input.orderId ?? null,
         reference: input.reference ?? null,
+        direction: entryDirection(input.type, amt),
+        status: "COMPLETED",
         createdBy: input.createdBy,
         balanceBefore: before.availableMinor,
         balanceAfter: balances.availableMinor,
@@ -234,13 +310,20 @@ export async function appendLedgerEntry(
               availableMinor: balances.availableMinor,
               heldMinor: balances.heldMinor,
               paidOutMinor: balances.paidOutMinor,
+              totalEarnedMinor: balances.totalEarnedMinor,
               currency: "BDT",
+              status: walletStatus,
               entrySeq: nextSeq,
+              lastEntryAt: createdAt,
+              lastEntryType: input.type,
               updatedAt: createdAt,
             }),
           },
         },
       ];
+      // Caller-supplied companion writes (e.g. the withdrawal request
+      // doc) commit in the SAME transaction — all-or-nothing.
+      if (input.extraWrites?.length) writes.push(...input.extraWrites);
       const committed = await commitWithTx(projectId, writes, tx);
       if (committed) return entry;
       lastError = new Error("finance/ledger: transaction conflict, retrying");
@@ -299,6 +382,7 @@ export async function verifyLedgerIntegrity(
   });
   const replayed = zeroBalances();
   const mismatches: string[] = [];
+  let expectedEarned = 0;
   let expectedBefore = 0;
   let expectedHeldBefore = 0;
   for (const e of sorted) {
@@ -309,7 +393,10 @@ export async function verifyLedgerIntegrity(
       );
     }
     switch (e.type) {
-      case "ORDER_CREDIT": replayed.availableMinor += e.amountMinor; break;
+      case "ORDER_CREDIT":
+        replayed.availableMinor += e.amountMinor;
+        replayed.totalEarnedMinor += e.amountMinor;
+        break;
       case "COMMISSION_DEBIT":
       case "SHIPPING_DEBIT":
       case "REFUND_DEBIT": replayed.availableMinor -= e.amountMinor; break;
@@ -321,10 +408,14 @@ export async function verifyLedgerIntegrity(
         replayed.availableMinor -= e.amountMinor; replayed.paidOutMinor += e.amountMinor; break;
       case "PAYOUT_REVERSAL":
         replayed.availableMinor += e.amountMinor; replayed.paidOutMinor -= e.amountMinor; break;
-      case "ADJUSTMENT": replayed.availableMinor += e.amountMinor; break;
+      case "ADJUSTMENT":
+        replayed.availableMinor += e.amountMinor;
+        if (e.amountMinor > 0) replayed.totalEarnedMinor += e.amountMinor;
+        break;
     }
     expectedBefore = replayed.availableMinor;
     expectedHeldBefore = replayed.heldMinor;
+    expectedEarned = replayed.totalEarnedMinor;
   }
   const stored = await getSellerBalances(projectId, sellerId);
   if (stored.availableMinor !== replayed.availableMinor) {
@@ -335,6 +426,12 @@ export async function verifyLedgerIntegrity(
   }
   if (stored.paidOutMinor !== replayed.paidOutMinor) {
     mismatches.push(`paidOut mismatch: stored=${stored.paidOutMinor} replayed=${replayed.paidOutMinor}`);
+  }
+  if ((stored as Balances & { totalEarnedMinor?: number }).totalEarnedMinor !== undefined
+    && (stored as Balances & { totalEarnedMinor?: number }).totalEarnedMinor !== expectedEarned) {
+    mismatches.push(
+      `totalEarned mismatch: stored=${(stored as Balances & { totalEarnedMinor?: number }).totalEarnedMinor} replayed=${expectedEarned}`,
+    );
   }
   return { ok: mismatches.length === 0, replayed, stored, mismatches };
 }

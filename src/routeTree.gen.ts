@@ -87,6 +87,7 @@ import { Route as AuthenticatedAdminSellersRouteImport } from './routes/_authent
 import { Route as AuthenticatedAdminSeoRouteImport } from './routes/_authenticated/admin.seo'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin.settings'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
+import { Route as AuthenticatedAdminWalletsRouteImport } from './routes/_authenticated/admin.wallets'
 import { Route as AuthenticatedDeliveryDashboardRouteImport } from './routes/_authenticated/delivery/dashboard'
 import { Route as AuthenticatedOrderOrderIdRouteImport } from './routes/_authenticated/order.$orderId'
 import { Route as AuthenticatedOrdersStatusRouteImport } from './routes/_authenticated/orders_.$status'
@@ -110,6 +111,7 @@ import { Route as AuthenticatedSellerStoreRouteImport } from './routes/_authenti
 import { Route as AuthenticatedSellerWalletRouteImport } from './routes/_authenticated/seller.wallet'
 import { Route as AuthenticatedAdminProductsNewRouteImport } from './routes/_authenticated/admin.products.new'
 import { Route as AuthenticatedAdminQcReviewIdRouteImport } from './routes/_authenticated/admin.qc.$reviewId'
+import { Route as AuthenticatedAdminWalletsSellerIdRouteImport } from './routes/_authenticated/admin.wallets.$sellerId'
 import { Route as AuthenticatedSellerOrdersIndexRouteImport } from './routes/_authenticated/seller.orders.index'
 import { Route as AuthenticatedSellerOrdersOrderIdRouteImport } from './routes/_authenticated/seller.orders.$orderId'
 import { Route as AuthenticatedSellerProductsIndexRouteImport } from './routes/_authenticated/seller.products.index'
@@ -534,6 +536,12 @@ const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminWalletsRoute =
+  AuthenticatedAdminWalletsRouteImport.update({
+    id: '/wallets',
+    path: '/wallets',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedDeliveryDashboardRoute =
   AuthenticatedDeliveryDashboardRouteImport.update({
     id: '/delivery/dashboard',
@@ -672,6 +680,12 @@ const AuthenticatedAdminQcReviewIdRoute =
     path: '/$reviewId',
     getParentRoute: () => AuthenticatedAdminQcRoute,
   } as any)
+const AuthenticatedAdminWalletsSellerIdRoute =
+  AuthenticatedAdminWalletsSellerIdRouteImport.update({
+    id: '/$sellerId',
+    path: '/$sellerId',
+    getParentRoute: () => AuthenticatedAdminWalletsRoute,
+  } as any)
 const AuthenticatedSellerOrdersIndexRoute =
   AuthenticatedSellerOrdersIndexRouteImport.update({
     id: '/',
@@ -798,6 +812,7 @@ export interface FileRoutesByFullPath {
   '/admin/seo': typeof AuthenticatedAdminSeoRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/admin/wallets': typeof AuthenticatedAdminWalletsRouteWithChildren
   '/delivery/dashboard': typeof AuthenticatedDeliveryDashboardRoute
   '/order/$orderId': typeof AuthenticatedOrderOrderIdRoute
   '/orders/$status': typeof AuthenticatedOrdersStatusRoute
@@ -822,6 +837,7 @@ export interface FileRoutesByFullPath {
   '/seller/': typeof AuthenticatedSellerIndexRoute
   '/admin/products/new': typeof AuthenticatedAdminProductsNewRoute
   '/admin/qc/$reviewId': typeof AuthenticatedAdminQcReviewIdRoute
+  '/admin/wallets/$sellerId': typeof AuthenticatedAdminWalletsSellerIdRoute
   '/seller/orders/$orderId': typeof AuthenticatedSellerOrdersOrderIdRoute
   '/seller/products/new': typeof AuthenticatedSellerProductsNewRoute
   '/seller/orders/': typeof AuthenticatedSellerOrdersIndexRoute
@@ -906,6 +922,7 @@ export interface FileRoutesByTo {
   '/admin/seo': typeof AuthenticatedAdminSeoRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/admin/wallets': typeof AuthenticatedAdminWalletsRouteWithChildren
   '/delivery/dashboard': typeof AuthenticatedDeliveryDashboardRoute
   '/order/$orderId': typeof AuthenticatedOrderOrderIdRoute
   '/orders/$status': typeof AuthenticatedOrdersStatusRoute
@@ -928,6 +945,7 @@ export interface FileRoutesByTo {
   '/seller': typeof AuthenticatedSellerIndexRoute
   '/admin/products/new': typeof AuthenticatedAdminProductsNewRoute
   '/admin/qc/$reviewId': typeof AuthenticatedAdminQcReviewIdRoute
+  '/admin/wallets/$sellerId': typeof AuthenticatedAdminWalletsSellerIdRoute
   '/seller/orders/$orderId': typeof AuthenticatedSellerOrdersOrderIdRoute
   '/seller/products/new': typeof AuthenticatedSellerProductsNewRoute
   '/seller/orders': typeof AuthenticatedSellerOrdersIndexRoute
@@ -1016,6 +1034,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/seo': typeof AuthenticatedAdminSeoRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/_authenticated/admin/wallets': typeof AuthenticatedAdminWalletsRouteWithChildren
   '/_authenticated/delivery/dashboard': typeof AuthenticatedDeliveryDashboardRoute
   '/_authenticated/order/$orderId': typeof AuthenticatedOrderOrderIdRoute
   '/_authenticated/orders_/$status': typeof AuthenticatedOrdersStatusRoute
@@ -1040,6 +1059,7 @@ export interface FileRoutesById {
   '/_authenticated/seller/': typeof AuthenticatedSellerIndexRoute
   '/_authenticated/admin/products/new': typeof AuthenticatedAdminProductsNewRoute
   '/_authenticated/admin/qc/$reviewId': typeof AuthenticatedAdminQcReviewIdRoute
+  '/_authenticated/admin/wallets/$sellerId': typeof AuthenticatedAdminWalletsSellerIdRoute
   '/_authenticated/seller/orders/$orderId': typeof AuthenticatedSellerOrdersOrderIdRoute
   '/_authenticated/seller/products/new': typeof AuthenticatedSellerProductsNewRoute
   '/_authenticated/seller/orders/': typeof AuthenticatedSellerOrdersIndexRoute
@@ -1128,6 +1148,7 @@ export interface FileRouteTypes {
     | '/admin/seo'
     | '/admin/settings'
     | '/admin/users'
+    | '/admin/wallets'
     | '/delivery/dashboard'
     | '/order/$orderId'
     | '/orders/$status'
@@ -1152,6 +1173,7 @@ export interface FileRouteTypes {
     | '/seller/'
     | '/admin/products/new'
     | '/admin/qc/$reviewId'
+    | '/admin/wallets/$sellerId'
     | '/seller/orders/$orderId'
     | '/seller/products/new'
     | '/seller/orders/'
@@ -1236,6 +1258,7 @@ export interface FileRouteTypes {
     | '/admin/seo'
     | '/admin/settings'
     | '/admin/users'
+    | '/admin/wallets'
     | '/delivery/dashboard'
     | '/order/$orderId'
     | '/orders/$status'
@@ -1258,6 +1281,7 @@ export interface FileRouteTypes {
     | '/seller'
     | '/admin/products/new'
     | '/admin/qc/$reviewId'
+    | '/admin/wallets/$sellerId'
     | '/seller/orders/$orderId'
     | '/seller/products/new'
     | '/seller/orders'
@@ -1345,6 +1369,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/seo'
     | '/_authenticated/admin/settings'
     | '/_authenticated/admin/users'
+    | '/_authenticated/admin/wallets'
     | '/_authenticated/delivery/dashboard'
     | '/_authenticated/order/$orderId'
     | '/_authenticated/orders_/$status'
@@ -1369,6 +1394,7 @@ export interface FileRouteTypes {
     | '/_authenticated/seller/'
     | '/_authenticated/admin/products/new'
     | '/_authenticated/admin/qc/$reviewId'
+    | '/_authenticated/admin/wallets/$sellerId'
     | '/_authenticated/seller/orders/$orderId'
     | '/_authenticated/seller/products/new'
     | '/_authenticated/seller/orders/'
@@ -1957,6 +1983,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/wallets': {
+      id: '/_authenticated/admin/wallets'
+      path: '/wallets'
+      fullPath: '/admin/wallets'
+      preLoaderRoute: typeof AuthenticatedAdminWalletsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/delivery/dashboard': {
       id: '/_authenticated/delivery/dashboard'
       path: '/delivery/dashboard'
@@ -2118,6 +2151,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminQcReviewIdRouteImport
       parentRoute: typeof AuthenticatedAdminQcRoute
     }
+    '/_authenticated/admin/wallets/$sellerId': {
+      id: '/_authenticated/admin/wallets/$sellerId'
+      path: '/$sellerId'
+      fullPath: '/admin/wallets/$sellerId'
+      preLoaderRoute: typeof AuthenticatedAdminWalletsSellerIdRouteImport
+      parentRoute: typeof AuthenticatedAdminWalletsRoute
+    }
     '/_authenticated/seller/orders/': {
       id: '/_authenticated/seller/orders/'
       path: '/'
@@ -2220,6 +2260,21 @@ const AuthenticatedAdminQcRouteChildren: AuthenticatedAdminQcRouteChildren = {
 const AuthenticatedAdminQcRouteWithChildren =
   AuthenticatedAdminQcRoute._addFileChildren(AuthenticatedAdminQcRouteChildren)
 
+interface AuthenticatedAdminWalletsRouteChildren {
+  AuthenticatedAdminWalletsSellerIdRoute: typeof AuthenticatedAdminWalletsSellerIdRoute
+}
+
+const AuthenticatedAdminWalletsRouteChildren: AuthenticatedAdminWalletsRouteChildren =
+  {
+    AuthenticatedAdminWalletsSellerIdRoute:
+      AuthenticatedAdminWalletsSellerIdRoute,
+  }
+
+const AuthenticatedAdminWalletsRouteWithChildren =
+  AuthenticatedAdminWalletsRoute._addFileChildren(
+    AuthenticatedAdminWalletsRouteChildren,
+  )
+
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAnalyticsRoute: typeof AuthenticatedAdminAnalyticsRoute
   AuthenticatedAdminAnnouncementsRoute: typeof AuthenticatedAdminAnnouncementsRoute
@@ -2245,6 +2300,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminSeoRoute: typeof AuthenticatedAdminSeoRoute
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
+  AuthenticatedAdminWalletsRoute: typeof AuthenticatedAdminWalletsRouteWithChildren
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
@@ -2274,6 +2330,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminSeoRoute: AuthenticatedAdminSeoRoute,
   AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
+  AuthenticatedAdminWalletsRoute: AuthenticatedAdminWalletsRouteWithChildren,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
 }
 

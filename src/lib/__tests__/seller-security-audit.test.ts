@@ -123,9 +123,15 @@ describe("Seller Authorization — Trusted sellerId Source", () => {
     expect(content).toContain("SellerGate");
   });
 
-  it("wallet route uses profile.uid", () => {
+  it("wallet route is server-authoritative (no client-computed balances)", () => {
     const content = readRoute("seller.wallet.tsx");
-    expect(content).toContain("profile.uid");
+    // v2: balances/ledger come from verified server functions only
+    expect(content).toContain("SellerGate");
+    expect(content).toContain("fetchWalletV2");
+    expect(content).toContain("getIdToken()");
+    // legacy float-era reads must NOT appear on the wallet page
+    expect(content).not.toContain("getSellerWalletBalance");
+    expect(content).not.toContain("getSellerPendingBalance");
   });
 
   it("settlements route uses profile from SellerGate", () => {

@@ -370,6 +370,7 @@ export function createFirestoreEmulator(port = 8080): Promise<Server> {
           const structuredQuery = body.structuredQuery as {
             from: Array<{ collectionId: string }>;
             where?: Record<string, unknown>;
+            orderBy?: Array<{ field: { fieldPath: string }; direction?: string }>;
             limit?: number;
           };
 
@@ -403,6 +404,22 @@ export function createFirestoreEmulator(port = 8080): Promise<Server> {
                 results.push(doc);
               }
             }
+          }
+
+          // Apply orderBy (Firestore-style: sort before limit)
+          const orderBys = structuredQuery.orderBy ?? [];
+          if (orderBys.length > 0) {
+            results.sort((a, b) => {
+              for (const ob of orderBys) {
+                const av = Number(decodeValue(a.fields[ob.field.fieldPath as string] as Record<string, unknown>) ?? 0);
+                const bv = Number(decodeValue(b.fields[ob.field.fieldPath as string] as Record<string, unknown>) ?? 0);
+                const cmp = Number.isNaN(av) || Number.isNaN(bv)
+                  ? String(decodeValue(a.fields[ob.field.fieldPath as string] as Record<string, unknown>) ?? "").localeCompare(String(decodeValue(b.fields[ob.field.fieldPath as string] as Record<string, unknown>) ?? ""))
+                  : av < bv ? -1 : av > bv ? 1 : 0;
+                if (cmp !== 0) return ob.direction === "DESCENDING" ? -cmp : cmp;
+              }
+              return 0;
+            });
           }
 
           const limit = structuredQuery.limit ?? 100;

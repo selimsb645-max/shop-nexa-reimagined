@@ -26,6 +26,7 @@ import {
   MessageSquare,
   Crown,
   ClipboardCheck,
+  Wallet,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { signOut } from "@/services/firebase/auth";
@@ -60,6 +61,12 @@ const NAV_ITEMS: NavItem[] = [
     to: "/admin/finance",
     icon: <DollarSign className="h-4 w-4" />,
     label: "Finance",
+    permission: "finance.view",
+  },
+  {
+    to: "/admin/wallets",
+    icon: <Wallet className="h-4 w-4" />,
+    label: "Wallets",
     permission: "finance.view",
   },
   {
