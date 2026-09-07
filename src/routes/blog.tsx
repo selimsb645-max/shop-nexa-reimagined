@@ -3,13 +3,13 @@ import { BackButton } from "@/components/common/BackButton";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { Calendar, Clock, ArrowRight, TrendingUp, ShoppingBag, Tag } from "lucide-react";
-import { buildMetaTags, blogArticleJsonLd, jsonLdScript, getSiteUrl } from "@/lib/seo";
+import { seoHead, blogArticleJsonLd, jsonLdScript, getSiteUrl } from "@/lib/seo";
 
 export const Route = createFileRoute("/blog")({
   ssr: true,
   component: BlogPage,
   head: () => ({
-    meta: buildMetaTags({
+    ...seoHead({
       title: "AVENTA SHOP Blog — Shopping Guides, Deals & Tips",
       description: "Read the AVENTA SHOP Blog for shopping guides, product reviews, deal alerts, and smart buying tips for online shoppers in Bangladesh. Stay informed and save more.",
       path: "/blog",

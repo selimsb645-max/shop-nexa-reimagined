@@ -4,13 +4,13 @@ import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { ShoppingCart, Search, CreditCard, Truck, PackageCheck } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { buildMetaTags } from "@/lib/seo";
+import { seoHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/how-to-buy")({
   ssr: true,
   component: HowToBuyPage,
   head: () => ({
-    meta: buildMetaTags({
+    ...seoHead({
       title: "How to Buy on AVENTA SHOP — Shopping Guide",
       description: "Learn how to shop on AVENTA SHOP — search products, add to cart, checkout securely, and get your products delivered fast. Complete step-by-step buying guide.",
       path: "/how-to-buy",

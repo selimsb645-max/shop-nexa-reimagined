@@ -150,28 +150,71 @@
 }
 
 @keyframes fab-bounce {
-  0% { transform: scale(1.1); }
-  40% { transform: scale(0.9); }
-  70% { transform: scale(1.06); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1.1);
+  }
+  40% {
+    transform: scale(0.9);
+  }
+  70% {
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 @keyframes shimmer {
-  100% { transform: translateX(100%); }
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 @keyframes fade-up {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes ripple-out {
-  from { opacity: 0.35; transform: scale(0); }
-  to { opacity: 0; transform: scale(2.4); }
+  from {
+    opacity: 0.35;
+    transform: scale(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(2.4);
+  }
 }
 
 @utility animate-fab-bounce {
   animation: fab-bounce 450ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Shared form input styling (used by seller product/register forms) */
+@utility input-field {
+  width: 100%;
+  min-width: 0;
+  border-radius: var(--radius-md, 0.375rem);
+  border: 1px solid var(--color-slate-200, #e2e8f0);
+  background-color: white;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--color-slate-900, #0f172a);
+  outline: none;
+}
+.input-field::placeholder {
+  color: var(--color-slate-400, #94a3b8);
+}
+.input-field:focus {
+  border-color: #f57224;
+  box-shadow: 0 0 0 3px rgb(245 114 36 / 0.12);
 }
 
 @utility animate-fade-up {
@@ -238,8 +281,6 @@
     transition-duration: 0.01ms !important;
   }
 }
-
-
 
 /* Safe area padding for mobile bottom navigation (iPhone X+ notch/home indicator) */
 .safe-area-pb {

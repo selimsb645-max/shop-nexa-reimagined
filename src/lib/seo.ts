@@ -50,8 +50,6 @@ export function buildMetaTags(opts: MetaOptions): Array<Record<string, string>> 
   const meta: Array<Record<string, string>> = [
     { title: opts.title },
     { name: "description", content: opts.description },
-    // Canonical
-    { tagName: "link", rel: "canonical", href: canonical },
     // Open Graph
     { property: "og:title", content: opts.title },
     { property: "og:description", content: opts.description },
@@ -88,7 +86,8 @@ export function organizationJsonLd() {
     name: "AVENTA SHOP",
     url: siteUrl,
     logo: `${siteUrl}${DEFAULT_OG_IMAGE}`,
-    description: "AVENTA SHOP is your one-stop online shop for electronics, fashion, grocery, beauty and more.",
+    description:
+      "AVENTA SHOP is your one-stop online shop for electronics, fashion, grocery, beauty and more.",
     sameAs: [
       "https://www.facebook.com/aventashop",
       "https://www.instagram.com/aventashop",
@@ -225,17 +224,37 @@ export function storeJsonLd(store: {
   return schema;
 }
 
+/**
+ * Canonical link entry for route `head().links`.
+ * NOTE: canonical MUST be a <link rel="canonical"> — in TanStack Router v1.170
+ * every `meta` entry renders as <meta {...attrs}>, so a `tagName: "link"` meta
+ * object renders as an invalid <meta> tag (and React warns about the unknown
+ * `tagName` DOM prop). Put canonical in `links`, never in `meta`.
+ */
+export function buildCanonicalLink(opts: MetaOptions): Array<Record<string, string>> {
+  const siteUrl = getSiteUrl();
+  const canonical = opts.path ? `${siteUrl}${opts.path}` : siteUrl;
+  return [{ rel: "canonical", href: canonical }];
+}
+
+/**
+ * Full route `head()` object: meta tags + canonical link.
+ * Usage: `head: () => ({ ...seoHead({ title, description, path }) })`
+ */
+export function seoHead(opts: MetaOptions) {
+  return {
+    meta: buildMetaTags(opts),
+    links: buildCanonicalLink(opts),
+  };
+}
+
 /** JSON-LD script tag for head */
 export function jsonLdScript(data: Record<string, unknown>): string {
   return JSON.stringify(data);
 }
 
 /** Build JSON-LD for a product listing / collection page */
-export function collectionPageJsonLd(opts: {
-  name: string;
-  description: string;
-  path: string;
-}) {
+export function collectionPageJsonLd(opts: { name: string; description: string; path: string }) {
   const siteUrl = getSiteUrl();
   return {
     "@context": "https://schema.org",

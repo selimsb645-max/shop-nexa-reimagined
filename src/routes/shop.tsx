@@ -16,7 +16,7 @@ import {
   PackageX,
 } from "lucide-react";
 import { BackButton } from "@/components/common/BackButton";
-import { buildMetaTags, collectionPageJsonLd, breadcrumbJsonLd, jsonLdScript } from "@/lib/seo";
+import { seoHead, collectionPageJsonLd, breadcrumbJsonLd, jsonLdScript } from "@/lib/seo";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
@@ -91,7 +91,7 @@ export const Route = createFileRoute("/shop")({
   },
   component: ShopPage,
   head: () => ({
-    meta: buildMetaTags({
+    ...seoHead({
       title: "Shop All Products & Categories — AVENTA SHOP",
       description:
         "Browse thousands of products across electronics, fashion, grocery, beauty and home essentials on AVENTA SHOP. Filter by price, brand, rating and category.",

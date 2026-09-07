@@ -13,13 +13,13 @@ import {
   Package,
   CheckCircle2,
 } from "lucide-react";
-import { buildMetaTags } from "@/lib/seo";
+import { seoHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/mart")({
   ssr: true,
   component: MartPage,
   head: () => ({
-    meta: buildMetaTags({
+    ...seoHead({
       title: "AVENTA SHOP Mart — Daily Groceries & Essentials Delivery",
       description: "AVENTA SHOP Mart delivers fresh groceries, daily essentials, and household items to your doorstep. Same-day delivery in Dhaka, fast nationwide shipping across Bangladesh.",
       path: "/mart",

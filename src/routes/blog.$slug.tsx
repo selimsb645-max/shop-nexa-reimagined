@@ -8,7 +8,7 @@ import { BackButton } from "@/components/common/BackButton";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
-import { buildMetaTags, blogArticleJsonLd, jsonLdScript, getSiteUrl } from "@/lib/seo";
+import { seoHead, blogArticleJsonLd, jsonLdScript, getSiteUrl } from "@/lib/seo";
 import { useEffect } from "react";
 
 interface BlogPost {
@@ -200,7 +200,7 @@ export const Route = createFileRoute("/blog/$slug")({
     const description = post?.excerpt ?? "Read the latest shopping guides, deals, and tips on the AVENTA SHOP blog.";
 
     return {
-      meta: buildMetaTags({
+      ...seoHead({
         title,
         description,
         path: `/blog/${params.slug}`,

@@ -126,7 +126,7 @@ function SellerInsightsPage({ profile }: { profile: SellerProfile }) {
                 >
                   <span className="w-6 text-sm font-bold text-muted-foreground">#{i + 1}</span>
                   <img
-                    src={product.images[0] ?? ""}
+                    src={product.images[0] || "/placeholder.svg"}
                     alt={product.title}
                     className="h-12 w-12 rounded-lg object-cover"
                   />
@@ -166,7 +166,7 @@ function SellerInsightsPage({ profile }: { profile: SellerProfile }) {
               {lowStock.map((product: Product) => (
                 <div key={product.id} className="flex items-center gap-3 rounded-lg bg-white p-3">
                   <img
-                    src={product.images[0] ?? ""}
+                    src={product.images[0] || "/placeholder.svg"}
                     alt={product.title}
                     className="h-10 w-10 rounded-lg object-cover"
                   />

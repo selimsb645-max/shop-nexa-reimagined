@@ -22,7 +22,7 @@ import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { CategoryShowcase, type ShowcaseCategory } from "@/components/home/CategoryShowcase";
 import { CampaignHomeSection } from "@/components/campaigns/CampaignHomeSection";
 
-import { buildMetaTags, getSiteUrl } from "@/lib/seo";
+import { seoHead, getSiteUrl } from "@/lib/seo";
 import { ProductCard } from "@/components/product/ProductCard";
 import { listCategories } from "@/services/firebase/categories";
 import { listProducts } from "@/services/firebase/products";
@@ -33,7 +33,7 @@ import type { Product } from "@/types/commerce";
 export const Route = createFileRoute("/")({
   component: HomePage,
   head: () => ({
-    meta: buildMetaTags({
+    ...seoHead({
       title: "AVENTA SHOP — Online Shopping Marketplace in Bangladesh",
       description: "Discover amazing deals on electronics, fashion, grocery, beauty and home essentials on AVENTA SHOP. Fast delivery, secure payments, and free shipping over $50. Shop from verified sellers.",
       path: "/",

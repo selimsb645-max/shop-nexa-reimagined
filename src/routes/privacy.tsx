@@ -3,13 +3,13 @@ import { BackButton } from "@/components/common/BackButton";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { ShieldCheck } from "lucide-react";
-import { buildMetaTags } from "@/lib/seo";
+import { seoHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/privacy")({
   ssr: true,
   component: PrivacyPolicyPage,
   head: () => ({
-    meta: buildMetaTags({
+    ...seoHead({
       title: "Privacy Policy — AVENTA SHOP Data Protection",
       description: "Read AVENTA SHOP's Privacy Policy — how we collect, use, store, and protect your personal data. Your privacy and security are our top priorities.",
       path: "/privacy",

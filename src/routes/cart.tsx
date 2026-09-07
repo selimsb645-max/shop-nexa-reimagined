@@ -43,7 +43,7 @@ import {
 } from "@/services/firebase/coupons";
 import { useI18n } from "@/i18n";
 import type { Product } from "@/types/commerce";
-import { buildMetaTags, breadcrumbJsonLd, jsonLdScript } from "@/lib/seo";
+import { seoHead, breadcrumbJsonLd, jsonLdScript } from "@/lib/seo";
 
 // ----------------------------------------------------------------------
 // Route Definition
@@ -52,7 +52,7 @@ import { buildMetaTags, breadcrumbJsonLd, jsonLdScript } from "@/lib/seo";
 export const Route = createFileRoute("/cart")({
   component: CartPage,
   head: () => ({
-    meta: buildMetaTags({
+    ...seoHead({
       title: "Your Shopping Cart — AVENTA SHOP",
       description:
         "Review the items in your AVENTA SHOP cart, apply vouchers, check delivery charges and continue to secure checkout with cash on delivery or online payment.",

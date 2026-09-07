@@ -1,3 +1,17 @@
+// ─────────────────────────────────────────────────────────────────────
+// Node-runtime compatibility shim (DEV ONLY in practice)
+//
+// Server modules access env vars via Deno.env.get() (the production
+// target provides Deno globals). On Node runtimes — `vite dev`, node
+// preview — Deno is undefined and every server function crashes with
+// "Deno is not defined". Polyfill only the env surface, delegating to
+// process.env. On real Deno runtimes this is a no-op (guard above).
+// ─────────────────────────────────────────────────────────────────────
+const g = globalThis as unknown as { Deno?: { env: { get(key: string): string | undefined } } };
+if (!g.Deno) {
+  g.Deno = { env: { get: (key: string) => process.env?.[key] } };
+}
+
 import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";

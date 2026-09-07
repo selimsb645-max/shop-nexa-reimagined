@@ -12,13 +12,13 @@ import {
   Search,
   Info,
 } from "lucide-react";
-import { buildMetaTags } from "@/lib/seo";
+import { seoHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/track-orders-info")({
   ssr: true,
   component: TrackOrdersInfoPage,
   head: () => ({
-    meta: buildMetaTags({
+    ...seoHead({
       title: "Track Your Order — AVENTA SHOP Order Tracking",
       description: "Track your AVENTA SHOP order in real-time. Learn how order tracking works, delivery stages, and how to check your order status anytime.",
       path: "/track-orders-info",

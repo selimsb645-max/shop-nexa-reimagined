@@ -10,13 +10,13 @@ import { listAllProducts } from "@/services/firebase/products";
 import { getPublicStoreBySlug, type PublicStoreData } from "@/lib/store.functions";
 import { formatPrice } from "@/utils/format";
 import type { Product } from "@/types/commerce";
-import { buildMetaTags, storeJsonLd, jsonLdScript, getSiteUrl } from "@/lib/seo";
+import { seoHead, storeJsonLd, jsonLdScript, getSiteUrl } from "@/lib/seo";
 
 export const Route = createFileRoute("/store/$slug")({
   ssr: true,
   component: StorePage,
   head: ({ params }) => ({
-    meta: buildMetaTags({
+    ...seoHead({
       title: `${params.slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())} Store — AVENTA SHOP`,
       description: `Browse products from ${params.slug.replace(/-/g, " ")} on AVENTA SHOP. Verified seller with quality products and fast delivery.`,
       path: `/store/${params.slug}`,

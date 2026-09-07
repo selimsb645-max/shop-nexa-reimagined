@@ -4,9 +4,10 @@ import {
   browserLocalPersistence,
   setPersistence,
   GoogleAuthProvider,
+  connectAuthEmulator,
   type Auth,
 } from "firebase/auth";
-import { getFirestore, type Firestore } from "firebase/firestore";
+import { connectFirestoreEmulator, getFirestore, type Firestore } from "firebase/firestore";
 import { getStorage, type FirebaseStorage } from "firebase/storage";
 
 /**
@@ -50,12 +51,26 @@ export function getFirebaseAuth(): Auth {
     if (typeof window !== "undefined") {
       setPersistence(authInstance, browserLocalPersistence).catch(() => {});
     }
+    // Dev-only: point the SDK at local Firebase emulators when explicitly
+    // requested (never active in production builds unless env is set).
+    if (import.meta.env.VITE_USE_FIREBASE_EMULATORS === "true") {
+      connectAuthEmulator(authInstance, "http://localhost:9099", { disableWarnings: true });
+    }
   }
   return authInstance;
 }
 
 export function getDb(): Firestore {
-  if (!dbInstance) dbInstance = getFirestore(getApp());
+  if (!dbInstance) {
+    dbInstance = getFirestore(getApp());
+    if (import.meta.env.VITE_USE_FIREBASE_EMULATORS === "true") {
+      try {
+        connectFirestoreEmulator(dbInstance, "localhost", 8080);
+      } catch {
+        // already connected (hot reload)
+      }
+    }
+  }
   return dbInstance;
 }
 

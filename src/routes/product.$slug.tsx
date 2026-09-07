@@ -38,7 +38,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { getProductBySlug, listProducts } from "@/services/firebase/products";
-import { buildMetaTags, productJsonLd, breadcrumbJsonLd, jsonLdScript, getSiteUrl } from "@/lib/seo";
+import { seoHead, productJsonLd, breadcrumbJsonLd, jsonLdScript, getSiteUrl } from "@/lib/seo";
 import { listReviews, upsertReview } from "@/services/firebase/reviews";
 import { firebaseConfigured } from "@/services/firebase/config";
 import { toast } from "sonner";
@@ -70,7 +70,7 @@ type ProductWithExtras = Product & {
 export const Route = createFileRoute("/product/$slug")({
   component: ProductDetailPage,
   head: ({ params }) => ({
-    meta: buildMetaTags({
+    ...seoHead({
       title: `${params.slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())} — AVENTA SHOP`,
       description: `Buy ${params.slug.replace(/-/g, " ")} at the best price on AVENTA SHOP. Fast delivery, secure payments, and verified sellers.`,
       path: `/product/${params.slug}`,

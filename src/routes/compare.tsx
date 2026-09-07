@@ -10,13 +10,13 @@ import { listAllProducts } from "@/services/firebase/products";
 import { firebaseConfigured } from "@/services/firebase/config";
 import { formatPrice } from "@/utils/format";
 import type { Product } from "@/types/commerce";
-import { buildMetaTags } from "@/lib/seo";
+import { seoHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/compare")({
   ssr: true,
   component: ComparePage,
   head: () => ({
-    meta: buildMetaTags({
+    ...seoHead({
       title: "Compare Products Side by Side — AVENTA SHOP",
       description: "Compare products side by side on AVENTA SHOP. Compare prices, specifications, ratings, and features to make the best buying decision.",
       path: "/compare",

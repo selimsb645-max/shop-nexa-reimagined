@@ -62,9 +62,10 @@ let cachedToken: { token: string; expiresAt: number } | null = null;
 
 /** OAuth2 access token for the Firestore REST API (cached until near expiry). */
 export async function getAccessToken(): Promise<string> {
-  // In emulator mode, auth is disabled — return a dummy token
+  // In emulator mode, auth is disabled — Firestore REST accepts the documented
+  // `owner` pseudo-token for emulator requests.
   if (Deno.env.get("FIRESTORE_EMULATOR_HOST")) {
-    return "emulator-token";
+    return "owner";
   }
   if (cachedToken && cachedToken.expiresAt > Date.now() + 60_000) {
     return cachedToken.token;
@@ -115,11 +116,36 @@ export async function getAccessToken(): Promise<string> {
  * Verify a Firebase ID token and return the caller's uid.
  * Uses Google's Identity Toolkit, which rejects expired/forged/revoked tokens.
  */
+
+/** Decode the payload of an emulator-signed Firebase ID token.
+ * Returns null for anything that is not a three-part JWT. */
+function decodeEmulatorJwt(token: string): { uid: string; email: string | null } | null {
+  const parts = token.split(".");
+  if (parts.length !== 3) return null;
+  try {
+    const b64 = parts[1].replace(/-/g, "+").replace(/_/g, "/").replace(/=+$/, "");
+    const payload = JSON.parse(atob(b64)) as {
+      sub?: string;
+      user_id?: string;
+      email?: string;
+    };
+    const uid = payload.sub ?? payload.user_id;
+    if (!uid) return null;
+    return { uid, email: payload.email ?? null };
+  } catch {
+    return null;
+  }
+}
+
 export async function verifyIdToken(
   idToken: string,
 ): Promise<{ uid: string; email: string | null }> {
-  // In emulator/test mode, accept test tokens directly
+  // In emulator/test mode, accept emulator-signed JWTs (what the real
+  // browser client sends via getIdToken) and legacy base64 JSON test tokens.
+  // NEVER active in production: gated on FIRESTORE_EMULATOR_HOST.
   if (Deno.env.get("FIRESTORE_EMULATOR_HOST")) {
+    const fromJwt = decodeEmulatorJwt(idToken);
+    if (fromJwt) return fromJwt;
     try {
       const decoded = JSON.parse(atob(idToken));
       return { uid: decoded.uid, email: decoded.email ?? null };

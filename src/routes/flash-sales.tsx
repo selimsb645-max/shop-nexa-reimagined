@@ -26,7 +26,7 @@ import { listProducts } from "@/services/firebase/products";
 import { getPublicCampaignFlashSale } from "@/lib/campaigns/campaigns.functions";
 import { firebaseConfigured } from "@/services/firebase/config";
 import type { Product } from "@/types/commerce";
-import { buildMetaTags, collectionPageJsonLd, breadcrumbJsonLd, jsonLdScript } from "@/lib/seo";
+import { seoHead, collectionPageJsonLd, breadcrumbJsonLd, jsonLdScript } from "@/lib/seo";
 
 /* ──────────────────────────────────────────────────────────────
    Campaign Flash Sale bar (Prompt 05 wiring) — additive section.
@@ -126,7 +126,7 @@ export const Route = createFileRoute("/flash-sales")({
   ssr: true,
   component: FlashSalesPage,
   head: () => ({
-    meta: buildMetaTags({
+    ...seoHead({
       title: "Flash Sales — Mega Deals & Discounts on AVENTA SHOP",
       description:
         "AVENTA SHOP Flash Sales: Unbeatable mega discounts on electronics, fashion, home essentials and more! Limited quantities, hurry before stock runs out.",

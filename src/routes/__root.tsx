@@ -16,7 +16,13 @@ import { I18nProvider } from "../i18n/I18nContext";
 import { MobileBottomNav } from "../components/layout/MobileBottomNav";
 import { PushNotificationProvider } from "../context/PushNotificationContext";
 import { PWAInstallPrompt } from "../components/layout/PWAInstallPrompt";
-import { buildMetaTags, organizationJsonLd, websiteJsonLd, jsonLdScript, getSiteUrl } from "../lib/seo";
+import {
+  buildMetaTags,
+  organizationJsonLd,
+  websiteJsonLd,
+  jsonLdScript,
+  getSiteUrl,
+} from "../lib/seo";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -92,6 +98,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "icon", href: "/favicon.svg?v=2", type: "image/svg+xml" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png?v=2" },
       { rel: "manifest", href: "/manifest.json" },
+      { rel: "canonical", href: getSiteUrl() + "/" },
     ],
     meta: [
       { charSet: "utf-8" },
@@ -103,13 +110,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "mobile-web-app-capable", content: "yes" },
       { name: "application-name", content: "AVENTA SHOP" },
       { title: "AVENTA SHOP - Shop Smarter. Live Better." },
-      { name: "description", content: "AVENTA SHOP is your one-stop online shop for electronics, fashion, grocery, beauty and more. Top quality products at unbeatable prices with free delivery over $50." },
+      {
+        name: "description",
+        content:
+          "AVENTA SHOP is your one-stop online shop for electronics, fashion, grocery, beauty and more. Top quality products at unbeatable prices with free delivery over $50.",
+      },
       { name: "author", content: "AVENTA SHOP" },
       { name: "robots", content: "index, follow" },
       // Canonical
       // Open Graph
       { property: "og:title", content: "AVENTA SHOP - Shop Smarter. Live Better." },
-      { property: "og:description", content: "Everything you need in one place. Top quality products at unbeatable prices with free delivery over $50." },
+      {
+        property: "og:description",
+        content:
+          "Everything you need in one place. Top quality products at unbeatable prices with free delivery over $50.",
+      },
       { property: "og:type", content: "website" },
       { property: "og:url", content: getSiteUrl() + "/" },
       { property: "og:image", content: getSiteUrl() + "/brand/aventa-shop-logo.png" },
@@ -119,11 +134,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@AventaShop" },
       { name: "twitter:title", content: "AVENTA SHOP - Shop Smarter. Live Better." },
-      { name: "twitter:description", content: "Everything you need in one place. Top quality products at unbeatable prices." },
+      {
+        name: "twitter:description",
+        content: "Everything you need in one place. Top quality products at unbeatable prices.",
+      },
       { name: "twitter:image", content: getSiteUrl() + "/brand/aventa-shop-logo.png" },
-      // JSON-LD: Organization + WebSite
-      { tagName: "script", attrs: { type: "application/ld+json" }, content: jsonLdScript(organizationJsonLd()) },
-      { tagName: "script", attrs: { type: "application/ld+json" }, content: jsonLdScript(websiteJsonLd()) },
+    ],
+    scripts: [
+      { type: "application/ld+json", children: jsonLdScript(organizationJsonLd()) },
+      { type: "application/ld+json", children: jsonLdScript(websiteJsonLd()) },
     ],
   }),
   shellComponent: RootShell,
@@ -156,13 +175,13 @@ function RootComponent() {
           <I18nBridge>
             <CartProvider>
               <WishlistProvider>
-              {/* Required: nested routes render here. */}
-              <div className="animate-fade-in pb-24 md:pb-0">
-                <Outlet />
-              </div>
-              <MobileBottomNav />
-              <PWAInstallPrompt />
-              <Toaster position="top-right" richColors />
+                {/* Required: nested routes render here. */}
+                <div className="animate-fade-in pb-24 md:pb-0">
+                  <Outlet />
+                </div>
+                <MobileBottomNav />
+                <PWAInstallPrompt />
+                <Toaster position="top-right" richColors />
               </WishlistProvider>
             </CartProvider>
           </I18nBridge>
@@ -177,4 +196,3 @@ function I18nBridge({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   return <I18nProvider uid={user?.uid}>{children}</I18nProvider>;
 }
-

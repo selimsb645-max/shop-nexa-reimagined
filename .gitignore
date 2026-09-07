@@ -35,3 +35,7 @@ dist-ssr
 .env
 .env.local
 .env.*.local
+
+# Local audit/emulator artifacts
+scripts/audit-shots/
+scripts/audit-results.jsonl

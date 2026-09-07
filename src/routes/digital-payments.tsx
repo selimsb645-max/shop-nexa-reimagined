@@ -11,13 +11,13 @@ import {
   CheckCircle2,
   Info,
 } from "lucide-react";
-import { buildMetaTags } from "@/lib/seo";
+import { seoHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/digital-payments")({
   ssr: true,
   component: DigitalPaymentsPage,
   head: () => ({
-    meta: buildMetaTags({
+    ...seoHead({
       title: "Digital Payment Methods — AVENTA SHOP Secure Payments",
       description: "Pay your way on AVENTA SHOP — Cash on Delivery, bKash, Nagad, Rocket, credit/debit cards, and bank transfers. Secure, fast, and trusted payment options.",
       path: "/digital-payments",

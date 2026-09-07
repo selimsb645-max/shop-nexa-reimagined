@@ -13,13 +13,13 @@ import {
   Info,
   CheckCircle2,
 } from "lucide-react";
-import { buildMetaTags } from "@/lib/seo";
+import { seoHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/returns-policy")({
   ssr: true,
   component: ReturnsPolicyPage,
   head: () => ({
-    meta: buildMetaTags({
+    ...seoHead({
       title: "Returns & Refunds Policy — AVENTA SHOP",
       description: "AVENTA SHOP return and refund policy — how to request a return, eligibility, timelines, and refund methods. Shop with confidence with our hassle-free returns.",
       path: "/returns-policy",

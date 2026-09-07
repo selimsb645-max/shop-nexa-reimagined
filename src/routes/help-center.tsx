@@ -12,13 +12,13 @@ import {
 import { BackButton } from "@/components/common/BackButton";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
-import { buildMetaTags } from "@/lib/seo";
+import { seoHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/help-center")({
   ssr: true,
   component: HelpCenterPage,
   head: () => ({
-    meta: buildMetaTags({
+    ...seoHead({
       title: "Help Center — AVENTA SHOP Support & FAQ",
       description: "Find answers about AVENTA SHOP shipping, returns, payments, orders, account support, and seller policies. Get help with your shopping experience.",
       path: "/help-center",

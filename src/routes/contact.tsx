@@ -3,13 +3,13 @@ import { BackButton } from "@/components/common/BackButton";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { Mail, Phone, MessageCircle, MapPin, Clock, Headphones } from "lucide-react";
-import { buildMetaTags } from "@/lib/seo";
+import { seoHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/contact")({
   ssr: true,
   component: ContactPage,
   head: () => ({
-    meta: buildMetaTags({
+    ...seoHead({
       title: "Contact AVENTA SHOP — Customer Support & Inquiries",
       description: "Get in touch with AVENTA SHOP customer support. Find our email, phone number, and office address. We're here to help with orders, returns, payments and more.",
       path: "/contact",

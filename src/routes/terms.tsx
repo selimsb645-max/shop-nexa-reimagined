@@ -3,13 +3,13 @@ import { BackButton } from "@/components/common/BackButton";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { FileText } from "lucide-react";
-import { buildMetaTags } from "@/lib/seo";
+import { seoHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/terms")({
   ssr: true,
   component: TermsPage,
   head: () => ({
-    meta: buildMetaTags({
+    ...seoHead({
       title: "Terms & Conditions — AVENTA SHOP Marketplace Rules",
       description: "Read AVENTA SHOP's Terms & Conditions — the rules and guidelines for using our online marketplace, buying products, and selling as a vendor.",
       path: "/terms",

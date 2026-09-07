@@ -57,7 +57,7 @@ function StorePage({ profile }: { profile: SellerProfile }) {
   const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const statusConfig = SELLER_STATUS_CONFIG[profile.status];
+  const statusConfig = SELLER_STATUS_CONFIG[profile.status] ?? SELLER_STATUS_CONFIG.draft;
   const storeUrl = `/store/${profile.shopSlug}`;
 
   const onLogo = async (e: React.ChangeEvent<HTMLInputElement>) => {
