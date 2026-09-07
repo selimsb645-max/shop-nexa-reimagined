@@ -71,14 +71,17 @@ Operations that do NOT require billing (free on Spark):
 
 ### Blocked or limited WITHOUT billing ❌
 
-1. **Cloud Storage — product images + avatars** (`ProductForm.tsx`,
-   `edit-profile.tsx`, `seller.settings.tsx` use Firebase Storage).
-   Bucket provisioning requires Blaze (2024 policy). If AVENTA's bucket
-   predates Oct 2024, access still required Blaze by Oct 1, 2025.
-   → **This is the architecture's one hard billing dependency.** Without
-   billing, image upload/download in production fails.
-   Mitigation option: move images to Vercel Blob / another CDN and drop
-   the Storage dependency, or enable billing.
+1. **Cloud Storage — REFINED Sep 7 (storage-vs-Cloudinary audit):**
+   product images, avatars, and shop logos all upload to CLOUDINARY
+   (unsigned preset, no billing dependency on Firebase). The ONLY active
+   Firebase Storage path is `uploadBannerImage` (admin banner images,
+   `admin.banners.tsx`). So Storage is a *partial* dependency: banner
+   upload fails without a working bucket; migrating banners to the
+   existing Cloudinary service (~1 function + 1 route call) would remove
+   the Firebase Storage dependency entirely (legacy `deleteStorageObject`
+   Firebase-path support is dead code — zero callers). If historic
+   Firestore rows still hold Firebase Storage image URLs, those images
+   also depend on the bucket remaining readable.
 2. **Firestore at scale** — past 50K reads/20K writes per day the default
    DB stops serving (Spark) or starts billing (Blaze). A multi-vendor
    marketplace will need Blaze eventually.
