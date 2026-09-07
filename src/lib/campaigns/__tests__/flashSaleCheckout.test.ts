@@ -149,8 +149,16 @@ describe("checkout-side lookup: getActiveFlashSaleForProduct", () => {
   });
 
   it("serves the soonest-ending sale when several are active", async () => {
-    await createFlashSale(PID, input({ campaignId: "c_late", endAt: Date.now() + 7_200_000 }));
-    await createFlashSale(PID, input({ campaignId: "c_soon", endAt: Date.now() + 1_800_000 }));
+    // Option-A conflict prevention now rejects overlapping windows at
+    // WRITE time; legacy overlapping data can still exist, so this
+    // test uses the test-only escape hatch to prove the checkout-side
+    // precedence remains deterministic as defense-in-depth.
+    await createFlashSale(PID, input({ campaignId: "c_late", endAt: Date.now() + 7_200_000 }), {
+      allowOverlap: true,
+    });
+    await createFlashSale(PID, input({ campaignId: "c_soon", endAt: Date.now() + 1_800_000 }), {
+      allowOverlap: true,
+    });
     const sale = await getActiveFlashSaleForProduct(PID, "p_wireless_buds");
     expect(sale!.campaignId).toBe("c_soon");
   });

@@ -24,6 +24,7 @@ import {
   runFirestoreQuery,
 } from "../firebase-admin.server";
 import { validateCampaignPricing, type DiscountRules } from "./pricing";
+import { appendAuditEntry, type EventActor } from "../kernel/audit";
 
 export const FLASH_SALES_COLLECTION = "flashSales";
 export const FLASH_SALE_PURCHASES_COLLECTION = "flashSalePurchases";
@@ -62,6 +63,7 @@ export interface CreateFlashSaleInput {
 export async function createFlashSale(
   projectId: string,
   input: CreateFlashSaleInput,
+  opts: AdminOpOpts = {},
 ): Promise<FlashSaleDoc> {
   if (input.stockLimit < 1) throw new Error("flashsale/validation: stockLimit must be >= 1");
   if (input.perCustomerLimit < 1)
@@ -83,11 +85,34 @@ export async function createFlashSale(
   );
   if (!result.ok) throw new Error(`flashsale/validation: ${result.errors.join("; ")}`);
 
-  const doc: FlashSaleDoc = {
-    campaignId: input.campaignId,
+  const doc0 = {
     productId: input.productId?.trim() ?? null,
     startAt: input.startAt,
     endAt: input.endAt,
+  };
+  // Option-A conflict prevention (Flash Sale Scheduling spec): the
+  // same product must never have two overlapping ACTIVE sale windows
+  // — pricing ambiguity is rejected at write time. The checkout-side
+  // soonest-endAt precedence stays as defense-in-depth for legacy data.
+  if (doc0.productId && !opts.allowOverlap) {
+    const conflict = await findFlashSaleConflict(projectId, {
+      productId: doc0.productId,
+      startAt: doc0.startAt,
+      endAt: doc0.endAt,
+      excludeCampaignId: input.campaignId,
+    });
+    if (conflict) {
+      throw new Error(
+        `flashsale/conflict: product ${doc0.productId} already has an overlapping active flash sale (campaign ${conflict})`,
+      );
+    }
+  }
+
+  const doc: FlashSaleDoc = {
+    campaignId: input.campaignId,
+    productId: doc0.productId,
+    startAt: doc0.startAt,
+    endAt: doc0.endAt,
     stockTotal: input.stockLimit,
     stockReserved: 0,
     perCustomerLimit: input.perCustomerLimit,
@@ -103,6 +128,14 @@ export async function createFlashSale(
       },
     },
   ]);
+  if (opts.actor) {
+    await appendAuditEntry(projectId, {
+      actor: opts.actor,
+      action: "FLASH_SALE_CREATED",
+      target: `flashSales/${input.campaignId}`,
+      meta: { productId: doc.productId, startAt: doc.startAt, endAt: doc.endAt },
+    });
+  }
   return doc;
 }
 
@@ -373,4 +406,310 @@ export async function getActiveFlashSaleForProduct(
     if (!best || sale.endAt < best.endAt) best = sale;
   }
   return best;
+}
+
+/* ──────────────────────────────────────────────────────────────── */
+/* Admin scheduling layer (Flash Sale Scheduling system)           */
+/* ──────────────────────────────────────────────────────────────── */
+
+/**
+ * Deterministic effective lifecycle, ALWAYS derived from
+ * isEnabled + window against the SERVER clock — never a persisted
+ * cosmetic status field, never a device countdown:
+ *
+ *   DISABLED  !active
+ *   ENDED     active && now >= endAt
+ *   SCHEDULED active && now < startAt
+ *   ACTIVE    active && startAt <= now < endAt
+ *
+ * (DRAFT is not an engine state: every created sale is immediately
+ * publishable; the admin UI simply points at a future window.)
+ */
+export type FlashSaleStatus = "SCHEDULED" | "ACTIVE" | "ENDED" | "DISABLED";
+
+export function computeFlashSaleStatus(
+  sale: Pick<FlashSaleDoc, "active" | "startAt" | "endAt">,
+  now: number = Date.now(),
+): FlashSaleStatus {
+  if (!sale.active) return "DISABLED";
+  if (now >= sale.endAt) return "ENDED";
+  if (now < sale.startAt) return "SCHEDULED";
+  return "ACTIVE";
+}
+
+/** Admin operation options: the acting admin (for the audit trail). */
+export interface AdminOpOpts {
+  actor?: EventActor;
+  /**
+   * Escape hatch used ONLY by tests to prove the checkout-side
+   * precedence over legacy overlapping data. Admin surfaces must
+   * never pass this — overlapping windows are rejected at write.
+   */
+  allowOverlap?: boolean;
+}
+
+interface ConflictInput {
+  productId: string;
+  startAt: number;
+  endAt: number;
+  excludeCampaignId: string;
+}
+
+/** Any other ACTIVE sale for the same product overlapping [startAt,endAt). */
+async function findFlashSaleConflict(
+  projectId: string,
+  input: ConflictInput,
+): Promise<string | null> {
+  const rows = await runFirestoreQuery(projectId, {
+    from: [{ collectionId: FLASH_SALES_COLLECTION }],
+    where: {
+      fieldFilter: {
+        field: { fieldPath: "productId" },
+        op: "EQUAL",
+        value: { stringValue: input.productId },
+      },
+    },
+    limit: 25,
+  });
+  for (const row of rows) {
+    const doc = (row as { document?: { name?: string; fields?: Record<string, unknown> } })
+      .document;
+    if (!doc?.fields) continue;
+    const other = fromFsFields(
+      doc.fields as Parameters<typeof fromFsFields>[0],
+    ) as unknown as FlashSaleDoc;
+    if (other.campaignId === input.excludeCampaignId) continue;
+    if (!other.active) continue; // a disabled sale cannot serve — no ambiguity
+    if (input.startAt < other.endAt && other.startAt < input.endAt) return other.campaignId;
+  }
+  return null;
+}
+
+export interface UpdateFlashSalePatch {
+  startAt?: number;
+  endAt?: number;
+  stockLimit?: number;
+  perCustomerLimit?: number;
+  salePriceMinor?: number;
+  originalPriceMinor?: number;
+  /** May only change while NO stock is reserved (in-flight orders). */
+  productId?: string | null;
+}
+
+/**
+ * Edit/reschedule a flash sale. Validations run against the MERGED
+ * doc (endAt > startAt, stockLimit >= stockReserved, price safety,
+ * no past endAt while reservations are live, product switch only at
+ * rest, Option-A conflict prevention when the window/product moves).
+ * The write carries an explicit updateMask — only the changed
+ * fields are touched, never a full-doc overwrite.
+ */
+export async function updateFlashSale(
+  projectId: string,
+  campaignId: string,
+  patch: UpdateFlashSalePatch,
+  opts: AdminOpOpts = {},
+): Promise<FlashSaleDoc> {
+  const current = await getFlashSale(projectId, campaignId);
+  if (!current) throw new Error(`flashsale/notfound: ${campaignId}`);
+
+  const next: FlashSaleDoc = { ...current };
+  const fieldMask: string[] = [];
+  if (patch.productId !== undefined) {
+    const pid = patch.productId === null ? null : patch.productId.trim();
+    if (pid === "") throw new Error("flashsale/validation: productId must be a non-empty string");
+    if (pid !== current.productId && current.stockReserved > 0) {
+      throw new Error(
+        "flashsale/validation: cannot change the sale product while stock is reserved",
+      );
+    }
+    next.productId = pid;
+    fieldMask.push("productId");
+  }
+  if (patch.startAt !== undefined) {
+    next.startAt = patch.startAt;
+    fieldMask.push("startAt");
+  }
+  if (patch.endAt !== undefined) {
+    next.endAt = patch.endAt;
+    fieldMask.push("endAt");
+  }
+  if (patch.stockLimit !== undefined) {
+    next.stockTotal = patch.stockLimit;
+    fieldMask.push("stockTotal");
+  }
+  if (patch.perCustomerLimit !== undefined) {
+    next.perCustomerLimit = patch.perCustomerLimit;
+    fieldMask.push("perCustomerLimit");
+  }
+  if (patch.salePriceMinor !== undefined || patch.originalPriceMinor !== undefined) {
+    const orig = patch.originalPriceMinor ?? next.originalPriceMinor;
+    const sale = patch.salePriceMinor ?? next.salePriceMinor;
+    const { result } = validateCampaignPricing(
+      orig,
+      { type: "PRICE_OVERRIDE", valueMinor: sale },
+      null,
+    );
+    if (!result.ok) throw new Error(`flashsale/validation: ${result.errors.join("; ")}`);
+    if (patch.originalPriceMinor !== undefined) {
+      next.originalPriceMinor = orig;
+      fieldMask.push("originalPriceMinor");
+    }
+    if (patch.salePriceMinor !== undefined) {
+      next.salePriceMinor = sale;
+      fieldMask.push("salePriceMinor");
+    }
+  }
+
+  if (fieldMask.length === 0) return current; // nothing to do
+
+  // Window + general validation on the merged doc.
+  if (next.endAt <= next.startAt) {
+    throw new Error("flashsale/validation: endAt must be after startAt");
+  }
+  if (next.stockTotal < 1) throw new Error("flashsale/validation: stockLimit must be >= 1");
+  if (next.perCustomerLimit < 1)
+    throw new Error("flashsale/validation: perCustomerLimit must be >= 1");
+  if (next.stockTotal < next.stockReserved) {
+    throw new Error(
+      `flashsale/validation: stockLimit cannot drop below ${next.stockReserved} reserved units`,
+    );
+  }
+  // A live sale with in-flight orders must never be retro-ended —
+  // reserved stock can only drain through the order workflow.
+  if (next.endAt <= Date.now() && next.stockReserved > 0) {
+    throw new Error(
+      "flashsale/validation: cannot schedule the end in the past while stock is reserved",
+    );
+  }
+
+  // Conflict prevention when the window/product moved and the sale serves.
+  const windowMoved =
+    (patch.startAt !== undefined && patch.startAt !== current.startAt) ||
+    (patch.endAt !== undefined && patch.endAt !== current.endAt);
+  const productMoved = next.productId !== current.productId;
+  if (next.productId && next.active && (windowMoved || productMoved) && !opts.allowOverlap) {
+    const conflict = await findFlashSaleConflict(projectId, {
+      productId: next.productId,
+      startAt: next.startAt,
+      endAt: next.endAt,
+      excludeCampaignId: campaignId,
+    });
+    if (conflict) {
+      throw new Error(
+        `flashsale/conflict: product ${next.productId} already has an overlapping active flash sale (campaign ${conflict})`,
+      );
+    }
+  }
+
+  await commitWrites(projectId, [
+    {
+      update: {
+        name: docPath(projectId, [FLASH_SALES_COLLECTION, campaignId]),
+        fields: toFsFields(
+          Object.fromEntries(
+            fieldMask.map((f) => [f, (next as unknown as Record<string, unknown>)[f]]),
+          ),
+        ),
+        updateMask: { fieldPaths: fieldMask },
+      },
+    },
+  ]);
+  if (opts.actor) {
+    const rescheduled = windowMoved;
+    await appendAuditEntry(projectId, {
+      actor: opts.actor,
+      action: rescheduled ? "FLASH_SALE_RESCHEDULED" : "FLASH_SALE_UPDATED",
+      target: `flashSales/${campaignId}`,
+      meta: {
+        before: { startAt: current.startAt, endAt: current.endAt, productId: current.productId },
+        after: { startAt: next.startAt, endAt: next.endAt, productId: next.productId },
+      },
+    });
+  }
+  return next;
+}
+
+/**
+ * Enable/disable a flash sale (admin manual control). Enabling runs
+ * the same Option-A conflict check; a disabled sale releases nothing
+ * by itself — in-flight reservations still drain via order events.
+ */
+export async function setFlashSaleEnabled(
+  projectId: string,
+  campaignId: string,
+  enabled: boolean,
+  opts: AdminOpOpts = {},
+): Promise<FlashSaleDoc> {
+  const current = await getFlashSale(projectId, campaignId);
+  if (!current) throw new Error(`flashsale/notfound: ${campaignId}`);
+  if (current.active === enabled) return current;
+  if (enabled && current.productId) {
+    const conflict = await findFlashSaleConflict(projectId, {
+      productId: current.productId,
+      startAt: current.startAt,
+      endAt: current.endAt,
+      excludeCampaignId: campaignId,
+    });
+    if (conflict) {
+      throw new Error(
+        `flashsale/conflict: product ${current.productId} already has an overlapping active flash sale (campaign ${conflict})`,
+      );
+    }
+  }
+  const next: FlashSaleDoc = { ...current, active: enabled };
+  await commitWrites(projectId, [
+    {
+      update: {
+        name: docPath(projectId, [FLASH_SALES_COLLECTION, campaignId]),
+        fields: toFsFields({ active: enabled }),
+        updateMask: { fieldPaths: ["active"] },
+      },
+    },
+  ]);
+  if (opts.actor) {
+    await appendAuditEntry(projectId, {
+      actor: opts.actor,
+      action: enabled ? "FLASH_SALE_ENABLED" : "FLASH_SALE_DISABLED",
+      target: `flashSales/${campaignId}`,
+      meta: { productId: current.productId, startAt: current.startAt, endAt: current.endAt },
+    });
+  }
+  return next;
+}
+
+/** Admin listing view: the doc + the DERIVED effective status. */
+export interface AdminFlashSaleView extends FlashSaleDoc {
+  status: FlashSaleStatus;
+  stockRemaining: number;
+}
+
+/**
+ * List all flash sales with their server-clock-derived effective
+ * status for the admin dashboard. Read-only, no internal writes.
+ */
+export async function listFlashSales(
+  projectId: string,
+  now: number = Date.now(),
+): Promise<AdminFlashSaleView[]> {
+  const rows = await runFirestoreQuery(projectId, {
+    from: [{ collectionId: FLASH_SALES_COLLECTION }],
+    limit: 100,
+  });
+  const out: AdminFlashSaleView[] = [];
+  for (const row of rows) {
+    const doc = (row as { document?: { name?: string; fields?: Record<string, unknown> } })
+      .document;
+    if (!doc?.fields) continue;
+    const sale = fromFsFields(
+      doc.fields as Parameters<typeof fromFsFields>[0],
+    ) as unknown as FlashSaleDoc;
+    out.push({
+      ...sale,
+      status: computeFlashSaleStatus(sale, now),
+      stockRemaining: sale.stockTotal - sale.stockReserved,
+    });
+  }
+  out.sort((a, b) => b.startAt - a.startAt);
+  return out;
 }
