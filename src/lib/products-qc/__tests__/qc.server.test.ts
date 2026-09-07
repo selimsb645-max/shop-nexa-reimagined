@@ -44,7 +44,9 @@ afterAll(async () => {
   delete process.env.FIRESTORE_EMULATOR_HOST;
   delete process.env.FIRESTORE_TEST_PROJECT;
 });
-beforeEach(() => { clearEmulatorStore(); });
+beforeEach(() => {
+  clearEmulatorStore();
+});
 
 function goodSnapshot() {
   return {
@@ -113,10 +115,14 @@ describe("QC lifecycle", () => {
     expect(started.status).toBe("IN_QC");
     expect(started.reviewerUid).toBe(REVIEWER.uid);
 
-    const passed = await completeQcReview("test-project", {
-      reviewId: review.reviewId,
-      checklist: fullChecklist(true),
-    }, REVIEWER);
+    const passed = await completeQcReview(
+      "test-project",
+      {
+        reviewId: review.reviewId,
+        checklist: fullChecklist(true),
+      },
+      REVIEWER,
+    );
     expect(passed.status).toBe("QC_PASSED");
     expect(passed.failReasons).toEqual([]);
 
@@ -126,13 +132,20 @@ describe("QC lifecycle", () => {
 
     // backbone events landed in the bus
     const res = await fetch(`${BASE}/${DOMAIN_EVENTS_COLLECTION}`);
-    const json = (await res.json()) as { documents?: Array<{ fields: Record<string, unknown> }>; };
-    const types = (json.documents ?? []).map((d) => String((d.fields.type as Record<string, unknown>).stringValue));
+    const json = (await res.json()) as { documents?: Array<{ fields: Record<string, unknown> }> };
+    const types = (json.documents ?? []).map((d) =>
+      String((d.fields.type as Record<string, unknown>).stringValue),
+    );
     expect(types).toContain("product.qc.passed");
     expect(types).toContain("product.listed");
 
     // listed product can be taken down and relisted
-    const unlisted = await unlistProduct("test-project", review.reviewId, REVIEWER, "photo mismatch");
+    const unlisted = await unlistProduct(
+      "test-project",
+      review.reviewId,
+      REVIEWER,
+      "photo mismatch",
+    );
     expect(unlisted.status).toBe("UNLISTED");
     const relisted = await listQcPassedProduct("test-project", review.reviewId, REVIEWER);
     expect(relisted.status).toBe("LISTED");
@@ -141,38 +154,58 @@ describe("QC lifecycle", () => {
   it("failed checklist → QC_FAILED with reasons → seller resubmits → passes", async () => {
     const review = await submitProductForQc("test-project", submitInput());
     await startQcReview("test-project", review.reviewId, REVIEWER);
-    const failed = await completeQcReview("test-project", {
-      reviewId: review.reviewId,
-      checklist: fullChecklist(false),
-    }, REVIEWER);
+    const failed = await completeQcReview(
+      "test-project",
+      {
+        reviewId: review.reviewId,
+        checklist: fullChecklist(false),
+      },
+      REVIEWER,
+    );
     expect(failed.status).toBe("QC_FAILED");
     expect(failed.failReasons.length).toBe(QC_CHECKLIST.length);
 
     // the failed event was emitted too
     const res = await fetch(`${BASE}/${DOMAIN_EVENTS_COLLECTION}`);
-    const json = (await res.json()) as { documents?: Array<{ fields: Record<string, unknown> }>; };
-    const types = (json.documents ?? []).map((d) => String((d.fields.type as Record<string, unknown>).stringValue));
+    const json = (await res.json()) as { documents?: Array<{ fields: Record<string, unknown> }> };
+    const types = (json.documents ?? []).map((d) =>
+      String((d.fields.type as Record<string, unknown>).stringValue),
+    );
     expect(types).toContain("product.qc.failed");
 
     // a QC_FAILED product cannot be listed directly (the gate holds)
-    await expect(
-      listQcPassedProduct("test-project", review.reviewId, REVIEWER),
-    ).rejects.toThrow(/illegal transition/);
+    await expect(listQcPassedProduct("test-project", review.reviewId, REVIEWER)).rejects.toThrow(
+      /illegal transition/,
+    );
 
     // seller fixes and resubmits
-    const resub = await submitProductForQc("test-project", submitInput({ description: "Fixed: premium wireless headphones, ANC, 30h battery, USB-C fast charge." }));
+    const resub = await submitProductForQc(
+      "test-project",
+      submitInput({
+        description: "Fixed: premium wireless headphones, ANC, 30h battery, USB-C fast charge.",
+      }),
+    );
     expect(resub.status).toBe("PENDING_QC");
     await startQcReview("test-project", review.reviewId, REVIEWER);
-    const passed = await completeQcReview("test-project", {
-      reviewId: review.reviewId, checklist: fullChecklist(true),
-    }, REVIEWER);
+    const passed = await completeQcReview(
+      "test-project",
+      {
+        reviewId: review.reviewId,
+        checklist: fullChecklist(true),
+      },
+      REVIEWER,
+    );
     expect(passed.status).toBe("QC_PASSED");
   });
 
   it("cannot complete a review that is not IN_QC", async () => {
     const review = await submitProductForQc("test-project", submitInput());
     await expect(
-      completeQcReview("test-project", { reviewId: review.reviewId, checklist: fullChecklist(true) }, REVIEWER),
+      completeQcReview(
+        "test-project",
+        { reviewId: review.reviewId, checklist: fullChecklist(true) },
+        REVIEWER,
+      ),
     ).rejects.toThrow(/not IN_QC/);
   });
 
@@ -189,9 +222,9 @@ describe("QC lifecycle", () => {
     const a = await submitProductForQc("test-project", submitInput());
     expect(a.reviewId).toBe("qc_p1");
     // same product again while still queued → refused, not duplicated
-    await expect(
-      submitProductForQc("test-project", submitInput()),
-    ).rejects.toThrow(/cannot submit/);
+    await expect(submitProductForQc("test-project", submitInput())).rejects.toThrow(
+      /cannot submit/,
+    );
     const read = await readQcReview("test-project", "qc_p1");
     expect(read.status).toBe("PENDING_QC");
   });
@@ -219,9 +252,9 @@ describe("QC lifecycle", () => {
   it("sellers cannot act from states they don't own (e.g. IN_QC)", async () => {
     const review = await submitProductForQc("test-project", submitInput());
     await startQcReview("test-project", review.reviewId, REVIEWER);
-    await expect(
-      submitProductForQc("test-project", submitInput()),
-    ).rejects.toThrow(/cannot submit/);
+    await expect(submitProductForQc("test-project", submitInput())).rejects.toThrow(
+      /cannot submit/,
+    );
   });
 });
 
@@ -239,11 +272,15 @@ describe("QC permissions", () => {
   it("non-reviewers cannot start or complete reviews", async () => {
     const review = await submitProductForQc("test-project", submitInput());
     const sellerActor = { uid: SELLER.uid, adminRole: null };
+    await expect(startQcReview("test-project", review.reviewId, sellerActor)).rejects.toThrow(
+      /permission/,
+    );
     await expect(
-      startQcReview("test-project", review.reviewId, sellerActor),
-    ).rejects.toThrow(/permission/);
-    await expect(
-      completeQcReview("test-project", { reviewId: review.reviewId, checklist: fullChecklist(true) }, sellerActor),
+      completeQcReview(
+        "test-project",
+        { reviewId: review.reviewId, checklist: fullChecklist(true) },
+        sellerActor,
+      ),
     ).rejects.toThrow(/permission/);
     // and the review is untouched
     expect((await readQcReview("test-project", review.reviewId)).status).toBe("PENDING_QC");
@@ -254,16 +291,27 @@ describe("kernel bus stays decoupled from QC", () => {
   it("events emitted by QC are consumable by a platform subscriber", async () => {
     const seen: string[] = [];
     const { registerSubscriber, processDispatch } = await import("../../kernel/events");
-    registerSubscriber({ name: "test-analytics", types: ["product.qc.passed", "product.qc.failed"], handler: async (e) => { seen.push(String((e.payload as Record<string, unknown>).productId)); } });
+    registerSubscriber({
+      name: "test-analytics",
+      types: ["product.qc.passed", "product.qc.failed"],
+      handler: async (e) => {
+        seen.push(String((e.payload as Record<string, unknown>).productId));
+      },
+    });
 
     const review = await submitProductForQc("test-project", submitInput());
     await startQcReview("test-project", review.reviewId, REVIEWER);
-    await completeQcReview("test-project", { reviewId: review.reviewId, checklist: fullChecklist(true) }, REVIEWER);
+    await completeQcReview(
+      "test-project",
+      { reviewId: review.reviewId, checklist: fullChecklist(true) },
+      REVIEWER,
+    );
 
     const res = await fetch(`${BASE}/domainDispatches`);
-    const json = (await res.json()) as { documents?: Array<{ fields: Record<string, unknown> }>; };
-    const dispatchIds = (json.documents ?? []).map((d) =>
-      `${String((d.fields.subscriber as Record<string, unknown>).stringValue)}__${String((d.fields.eventId as Record<string, unknown>).stringValue)}`,
+    const json = (await res.json()) as { documents?: Array<{ fields: Record<string, unknown> }> };
+    const dispatchIds = (json.documents ?? []).map(
+      (d) =>
+        `${String((d.fields.subscriber as Record<string, unknown>).stringValue)}__${String((d.fields.eventId as Record<string, unknown>).stringValue)}`,
     );
     const analytics = dispatchIds.filter((d) => d.startsWith("test-analytics__"));
     expect(analytics.length).toBe(1);

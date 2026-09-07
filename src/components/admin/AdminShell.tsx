@@ -25,6 +25,7 @@ import {
   Truck,
   MessageSquare,
   Crown,
+  ClipboardCheck,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { signOut } from "@/services/firebase/auth";
@@ -43,29 +44,150 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { to: "/admin", icon: <LayoutDashboard className="h-4 w-4" />, label: "Dashboard", exact: true },
-  { to: "/admin/manage-admins", icon: <Crown className="h-4 w-4" />, label: "Manage Admins", superAdminOnly: true },
-  { to: "/admin/analytics", icon: <BarChart3 className="h-4 w-4" />, label: "Analytics", permission: "analytics.view" },
-  { to: "/admin/finance", icon: <DollarSign className="h-4 w-4" />, label: "Finance", permission: "finance.view" },
-  { to: "/admin/products", icon: <Package className="h-4 w-4" />, label: "Products", permission: "products.view" },
-  { to: "/admin/inventory", icon: <Boxes className="h-4 w-4" />, label: "Inventory", permission: "products.view" },
-  { to: "/admin/categories", icon: <Layers className="h-4 w-4" />, label: "Categories", permission: "categories.view" },
-  { to: "/admin/commission-setup", icon: <Percent className="h-4 w-4" />, label: "Commission Setup", permission: "finance.commissions" },
-  { to: "/admin/sellers", icon: <Store className="h-4 w-4" />, label: "Sellers", permission: "sellers.view" },
-  { to: "/admin/users", icon: <Users className="h-4 w-4" />, label: "Users", permission: "users.view" },
-  { to: "/admin/orders", icon: <ShoppingBag className="h-4 w-4" />, label: "Orders", permission: "orders.view" },
-  { to: "/admin/delivery", icon: <Truck className="h-4 w-4" />, label: "Delivery", permission: "orders.view" },
-  { to: "/admin/delivery-zones", icon: <MapPin className="h-4 w-4" />, label: "Delivery Zones", permission: "settings.view" },
-  { to: "/admin/coupons", icon: <Ticket className="h-4 w-4" />, label: "Coupons", permission: "coupons.view" },
-  { to: "/admin/promo-codes", icon: <Tag className="h-4 w-4" />, label: "Promo Codes", permission: "coupons.view" },
-  { to: "/admin/banners", icon: <ImageIcon className="h-4 w-4" />, label: "Banners", permission: "settings.view" },
-  { to: "/admin/announcements", icon: <Megaphone className="h-4 w-4" />, label: "Announcements", permission: "settings.view" },
-  { to: "/admin/locations", icon: <MapPin className="h-4 w-4" />, label: "Locations", permission: "settings.view" },
-  { to: "/admin/homepage", icon: <Home className="h-4 w-4" />, label: "Homepage", permission: "settings.view" },
-  { to: "/admin/seo", icon: <Search className="h-4 w-4" />, label: "SEO", permission: "settings.view" },
-  { to: "/admin/reviews", icon: <MessageSquare className="h-4 w-4" />, label: "Reviews", permission: "products.view" },
-  { to: "/admin/notifications", icon: <Bell className="h-4 w-4" />, label: "Notifications", permission: "settings.view" },
-  { to: "/admin/settings", icon: <Settings className="h-4 w-4" />, label: "Settings", permission: "settings.view" },
-  { to: "/admin/logs", icon: <Activity className="h-4 w-4" />, label: "Activity Logs", permission: "settings.view" },
+  {
+    to: "/admin/manage-admins",
+    icon: <Crown className="h-4 w-4" />,
+    label: "Manage Admins",
+    superAdminOnly: true,
+  },
+  {
+    to: "/admin/analytics",
+    icon: <BarChart3 className="h-4 w-4" />,
+    label: "Analytics",
+    permission: "analytics.view",
+  },
+  {
+    to: "/admin/finance",
+    icon: <DollarSign className="h-4 w-4" />,
+    label: "Finance",
+    permission: "finance.view",
+  },
+  {
+    to: "/admin/products",
+    icon: <Package className="h-4 w-4" />,
+    label: "Products",
+    permission: "products.view",
+  },
+  {
+    to: "/admin/qc",
+    icon: <ClipboardCheck className="h-4 w-4" />,
+    label: "Product QC",
+    permission: "products.view",
+  },
+  {
+    to: "/admin/inventory",
+    icon: <Boxes className="h-4 w-4" />,
+    label: "Inventory",
+    permission: "products.view",
+  },
+  {
+    to: "/admin/categories",
+    icon: <Layers className="h-4 w-4" />,
+    label: "Categories",
+    permission: "categories.view",
+  },
+  {
+    to: "/admin/commission-setup",
+    icon: <Percent className="h-4 w-4" />,
+    label: "Commission Setup",
+    permission: "finance.commissions",
+  },
+  {
+    to: "/admin/sellers",
+    icon: <Store className="h-4 w-4" />,
+    label: "Sellers",
+    permission: "sellers.view",
+  },
+  {
+    to: "/admin/users",
+    icon: <Users className="h-4 w-4" />,
+    label: "Users",
+    permission: "users.view",
+  },
+  {
+    to: "/admin/orders",
+    icon: <ShoppingBag className="h-4 w-4" />,
+    label: "Orders",
+    permission: "orders.view",
+  },
+  {
+    to: "/admin/delivery",
+    icon: <Truck className="h-4 w-4" />,
+    label: "Delivery",
+    permission: "orders.view",
+  },
+  {
+    to: "/admin/delivery-zones",
+    icon: <MapPin className="h-4 w-4" />,
+    label: "Delivery Zones",
+    permission: "settings.view",
+  },
+  {
+    to: "/admin/coupons",
+    icon: <Ticket className="h-4 w-4" />,
+    label: "Coupons",
+    permission: "coupons.view",
+  },
+  {
+    to: "/admin/promo-codes",
+    icon: <Tag className="h-4 w-4" />,
+    label: "Promo Codes",
+    permission: "coupons.view",
+  },
+  {
+    to: "/admin/banners",
+    icon: <ImageIcon className="h-4 w-4" />,
+    label: "Banners",
+    permission: "settings.view",
+  },
+  {
+    to: "/admin/announcements",
+    icon: <Megaphone className="h-4 w-4" />,
+    label: "Announcements",
+    permission: "settings.view",
+  },
+  {
+    to: "/admin/locations",
+    icon: <MapPin className="h-4 w-4" />,
+    label: "Locations",
+    permission: "settings.view",
+  },
+  {
+    to: "/admin/homepage",
+    icon: <Home className="h-4 w-4" />,
+    label: "Homepage",
+    permission: "settings.view",
+  },
+  {
+    to: "/admin/seo",
+    icon: <Search className="h-4 w-4" />,
+    label: "SEO",
+    permission: "settings.view",
+  },
+  {
+    to: "/admin/reviews",
+    icon: <MessageSquare className="h-4 w-4" />,
+    label: "Reviews",
+    permission: "products.view",
+  },
+  {
+    to: "/admin/notifications",
+    icon: <Bell className="h-4 w-4" />,
+    label: "Notifications",
+    permission: "settings.view",
+  },
+  {
+    to: "/admin/settings",
+    icon: <Settings className="h-4 w-4" />,
+    label: "Settings",
+    permission: "settings.view",
+  },
+  {
+    to: "/admin/logs",
+    icon: <Activity className="h-4 w-4" />,
+    label: "Activity Logs",
+    permission: "settings.view",
+  },
 ];
 
 export function AdminShell({ children }: { children: ReactNode }) {
@@ -93,7 +215,11 @@ export function AdminShell({ children }: { children: ReactNode }) {
       <header className="border-b bg-background">
         <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-4">
           <Link to="/" className="flex items-center gap-2">
-            <img src="/brand/aventa-shop-logo.png" alt="AVENTA SHOP Admin" className="h-10 w-auto object-contain" />
+            <img
+              src="/brand/aventa-shop-logo.png"
+              alt="AVENTA SHOP Admin"
+              className="h-10 w-auto object-contain"
+            />
             <div className="flex flex-col leading-tight">
               <span className="text-sm font-semibold text-muted-foreground">Admin</span>
               <span className="text-xs text-muted-foreground">
@@ -121,7 +247,13 @@ export function AdminShell({ children }: { children: ReactNode }) {
         <aside className="rounded-lg border bg-background p-3">
           <nav className="space-y-1 text-sm">
             {visibleItems.map((item) => (
-              <AItem key={item.to} to={item.to} icon={item.icon} label={item.label} exact={item.exact} />
+              <AItem
+                key={item.to}
+                to={item.to}
+                icon={item.icon}
+                label={item.label}
+                exact={item.exact}
+              />
             ))}
           </nav>
           {isSuperAdmin && (

@@ -1,14 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Edit2, Plus, Search, Trash2, Package } from "lucide-react";
+import { Edit2, Plus, Search, Trash2, Package, ClipboardCheck, Send, Archive } from "lucide-react";
 import { toast } from "sonner";
 import { SellerGate } from "@/components/seller/SellerGate";
 import { Spinner } from "@/components/common/Spinner";
+import { useAuth } from "@/context/AuthContext";
 import {
   deleteSellerProduct,
   listSellerProducts,
+  listMyQcReviews,
   setProductStatus,
+  type SellerQcReview,
 } from "@/services/firebase/sellerProducts";
+import { sellerSubmitProductForQc } from "@/lib/products-qc/qc.functions";
 import { mapFirebaseError } from "@/utils/errors";
 import { formatPrice } from "@/utils/format";
 import type { Product } from "@/types/commerce";
@@ -18,10 +22,32 @@ export const Route = createFileRoute("/_authenticated/seller/products/")({
   component: () => <SellerGate>{(profile) => <ProductsPage sellerId={profile.uid} />}</SellerGate>,
 });
 
+/** Derive the QC pipeline status shown for a product row. */
+function qcStatusFor(p: Product, review: SellerQcReview | undefined) {
+  if (p.status === "archived") return "ARCHIVED" as const;
+  if (review && review.status !== "DRAFT") return review.status;
+  return "DRAFT" as const;
+}
+
+const QC_BADGES: Record<string, { label: string; cls: string }> = {
+  DRAFT: { label: "Draft", cls: "bg-muted text-muted-foreground" },
+  PENDING_QC: { label: "Pending QC", cls: "bg-amber-500/10 text-amber-600" },
+  IN_QC: { label: "Under Review", cls: "bg-blue-500/10 text-blue-600" },
+  QC_PASSED: { label: "Approved — awaiting publish", cls: "bg-emerald-500/10 text-emerald-600" },
+  QC_FAILED: { label: "Changes Required", cls: "bg-orange-500/10 text-orange-600" },
+  REJECTED: { label: "Rejected", cls: "bg-destructive/10 text-destructive" },
+  LISTED: { label: "Published", cls: "bg-green-500/10 text-green-600" },
+  UNLISTED: { label: "Unlisted", cls: "bg-destructive/10 text-destructive" },
+  ARCHIVED: { label: "Archived", cls: "bg-muted text-muted-foreground" },
+};
+
 function ProductsPage({ sellerId }: { sellerId: string }) {
   const { t } = useI18n();
+  const { user } = useAuth();
   const [products, setProducts] = useState<Product[] | null>(null);
+  const [qcReviews, setQcReviews] = useState<Map<string, SellerQcReview>>(new Map());
   const [loading, setLoading] = useState(true);
+  const [submittingId, setSubmittingId] = useState<string | null>(null);
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "draft" | "published" | "archived">(
     "all",
@@ -30,7 +56,14 @@ function ProductsPage({ sellerId }: { sellerId: string }) {
   const refresh = async () => {
     setLoading(true);
     try {
-      setProducts(await listSellerProducts(sellerId));
+      const [prods, reviews] = await Promise.all([
+        listSellerProducts(sellerId),
+        listMyQcReviews(sellerId),
+      ]);
+      setProducts(prods);
+      setQcReviews(new Map(reviews.map((r) => [r.productId, r])));
+    } catch (err) {
+      toast.error(mapFirebaseError(err));
     } finally {
       setLoading(false);
     }
@@ -40,6 +73,15 @@ function ProductsPage({ sellerId }: { sellerId: string }) {
     void refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sellerId]);
+
+  const qcCounts = useMemo(() => {
+    const counts = { PENDING_QC: 0, IN_QC: 0, QC_FAILED: 0, QC_PASSED: 0, LISTED: 0 };
+    if (!qcReviews) return counts;
+    for (const r of qcReviews.values()) {
+      if (r.status in counts) counts[r.status as keyof typeof counts] += 1;
+    }
+    return counts;
+  }, [qcReviews]);
 
   const filtered = useMemo(() => {
     if (!products) return [];
@@ -65,14 +107,29 @@ function ProductsPage({ sellerId }: { sellerId: string }) {
     }
   };
 
-  const onToggleStatus = async (p: Product) => {
-    const next = (p.status ?? "published") === "published" ? "draft" : "published";
+  const onArchive = async (p: Product) => {
     try {
-      await setProductStatus(sellerId, p.id, next);
-      toast.success(next === "published" ? "Product published" : "Moved to draft");
+      await setProductStatus(sellerId, p.id, "archived");
+      toast.success("Product archived");
       void refresh();
     } catch (err) {
       toast.error(mapFirebaseError(err));
+    }
+  };
+
+  /** Submit (or resubmit) a product into the QC queue — the only path to publication. */
+  const onSubmitForQc = async (p: Product) => {
+    if (!user) return;
+    setSubmittingId(p.id);
+    try {
+      const idToken = await user.getIdToken();
+      await sellerSubmitProductForQc({ data: { idToken, productId: p.id } });
+      toast.success(`"${p.title}" submitted for QC. We'll notify you once it's reviewed.`);
+      void refresh();
+    } catch (err) {
+      toast.error(mapFirebaseError(err));
+    } finally {
+      setSubmittingId(null);
     }
   };
 
@@ -89,6 +146,30 @@ function ProductsPage({ sellerId }: { sellerId: string }) {
         >
           <Plus className="h-4 w-4" /> Add product
         </Link>
+      </div>
+
+      {/* QC pipeline summary */}
+      <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-background p-3 text-sm">
+        <span className="mr-1 flex items-center gap-1.5 font-medium">
+          <ClipboardCheck className="h-4 w-4 text-primary" /> QC Pipeline:
+        </span>
+        {[
+          ["Pending QC", qcCounts.PENDING_QC, "text-amber-600"],
+          ["Under Review", qcCounts.IN_QC, "text-blue-600"],
+          ["Changes Required", qcCounts.QC_FAILED, "text-orange-600"],
+          ["Approved", qcCounts.QC_PASSED, "text-emerald-600"],
+          ["Published", qcCounts.LISTED, "text-green-600"],
+        ].map(([label, count, cls]) => (
+          <span
+            key={String(label)}
+            className={`rounded-full bg-muted px-3 py-1 text-xs font-medium ${cls}`}
+          >
+            {label}: {String(count)}
+          </span>
+        ))}
+        <span className="ml-auto text-xs text-muted-foreground">
+          Products are published only after passing QC review.
+        </span>
       </div>
 
       <div className="flex flex-wrap items-center gap-3 rounded-lg border bg-background p-3">
@@ -148,19 +229,30 @@ function ProductsPage({ sellerId }: { sellerId: string }) {
                 <th className="px-4 py-3 text-left">SKU</th>
                 <th className="px-4 py-3 text-right">Price</th>
                 <th className="px-4 py-3 text-right">Stock</th>
-                <th className="px-4 py-3 text-left">Status</th>
+                <th className="px-4 py-3 text-left">QC Status</th>
                 <th className="px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {filtered.map((p) => {
-                const status = p.status ?? "published";
+                const review = qcReviews.get(p.id);
+                const qcStatus = qcStatusFor(p, review);
+                const badge =
+                  QC_BADGES[
+                    qcStatus === "QC_FAILED" && review?.decision === "rejected"
+                      ? "REJECTED"
+                      : qcStatus
+                  ] ?? QC_BADGES.DRAFT;
+                const canSubmit = qcStatus === "DRAFT" || qcStatus === "QC_FAILED";
                 return (
                   <tr key={p.id} className="hover:bg-muted/30">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <img
-                          src={p.images[0] || "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5jcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMzAwIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YzZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzljYTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg=="}
+                          src={
+                            p.images[0] ||
+                            "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5jcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMzAwIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YzZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzljYTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg=="
+                          }
                           alt=""
                           className="h-10 w-10 rounded-md object-cover"
                         />
@@ -182,18 +274,38 @@ function ProductsPage({ sellerId }: { sellerId: string }) {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <button
-                        onClick={() => onToggleStatus(p)}
-                        className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                          status === "published"
-                            ? "bg-green-500/10 text-green-600"
-                            : status === "draft"
-                              ? "bg-muted text-muted-foreground"
-                              : "bg-destructive/10 text-destructive"
-                        }`}
-                      >
-                        {status}
-                      </button>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {qcStatus === "DRAFT" || qcStatus === "ARCHIVED" ? (
+                          <span
+                            className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${badge.cls}`}
+                          >
+                            {badge.label}
+                          </span>
+                        ) : (
+                          <Link
+                            to="/seller/products/$id/qc"
+                            params={{ id: p.id }}
+                            className={`rounded-full px-2.5 py-0.5 text-xs font-medium underline-offset-2 hover:underline ${badge.cls}`}
+                            title="View QC details"
+                          >
+                            {badge.label}
+                          </Link>
+                        )}
+                        {canSubmit && (
+                          <button
+                            onClick={() => onSubmitForQc(p)}
+                            disabled={submittingId === p.id}
+                            className="flex items-center gap-1 rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                          >
+                            {submittingId === p.id ? (
+                              <Spinner className="h-3 w-3" />
+                            ) : (
+                              <Send className="h-3 w-3" />
+                            )}
+                            {qcStatus === "QC_FAILED" ? "Resubmit for QC" : "Submit for QC"}
+                          </button>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-1">
@@ -205,6 +317,15 @@ function ProductsPage({ sellerId }: { sellerId: string }) {
                         >
                           <Edit2 className="h-4 w-4" />
                         </Link>
+                        {qcStatus === "DRAFT" && (
+                          <button
+                            onClick={() => onArchive(p)}
+                            className="flex h-8 w-8 items-center justify-center rounded-md border text-muted-foreground hover:bg-muted"
+                            title="Archive"
+                          >
+                            <Archive className="h-4 w-4" />
+                          </button>
+                        )}
                         <button
                           onClick={() => onDelete(p.id, p.title)}
                           className="flex h-8 w-8 items-center justify-center rounded-md border text-destructive hover:bg-destructive/10"

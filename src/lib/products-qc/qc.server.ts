@@ -24,28 +24,26 @@ import {
   toFsFields,
   batchGetDocs,
   commitWrites,
+  type FsWrite,
 } from "../firebase-admin.server";
 import { appendAuditEntry, type EventActor } from "../kernel/audit";
-import {
-  emitDomainEvent,
-  type DomainEventType,
-} from "../kernel/events";
-import {
-  isValidQcTransition,
-  allowsSellerQcActions,
-  type QcState,
-} from "./qcStateMachine";
+import { emitDomainEvent, type DomainEventType } from "../kernel/events";
+import { isValidQcTransition, allowsSellerQcActions, type QcState } from "./qcStateMachine";
 
 export const QC_REVIEWS_COLLECTION = "qcReviews";
+export const PRODUCTS_COLLECTION = "products";
+
+/** Structured decision recorded on QC_FAILED reviews. */
+export type QcDecision = "changes_required" | "rejected";
 
 export const QC_CHECKLIST = [
-  "titleClear",        // title is accurate, non-misleading, brand-correct
-  "photosReal",       // real photos of the actual product
+  "titleClear", // title is accurate, non-misleading, brand-correct
+  "photosReal", // real photos of the actual product
   "descriptionAccurate",
-  "priceSanePaisa",   // integer paisa, within category sanity range
+  "priceSanePaisa", // integer paisa, within category sanity range
   "categoryCorrect",
-  "stockCounted",     // declared stock matches reality
-  "noProhibitedItems",// weapons/drugs/counterfeit etc. blocked
+  "stockCounted", // declared stock matches reality
+  "noProhibitedItems", // weapons/drugs/counterfeit etc. blocked
 ] as const;
 
 export type QcChecklistKey = (typeof QC_CHECKLIST)[number];
@@ -64,6 +62,9 @@ export interface QcReview {
   checklist: QcChecklistResult[];
   reviewerUid: string | null;
   failReasons: string[];
+  /** Distinguishes "fix and resubmit" from a hard rejection (both land in QC_FAILED). */
+  decision: QcDecision | null;
+  reviewerNote: string | null;
   submittedAt: number;
   reviewedAt: number | null;
   listedAt: number | null;
@@ -111,7 +112,8 @@ export function validateProductForQc(input: SubmitForQcInput): QcValidation {
     errors.push("Price must be a positive integer paisa amount.");
   }
   if (!p.categoryId) errors.push("Category is required.");
-  if (!Number.isSafeInteger(p.stockQty) || p.stockQty < 0) errors.push("Stock must be a non-negative integer.");
+  if (!Number.isSafeInteger(p.stockQty) || p.stockQty < 0)
+    errors.push("Stock must be a non-negative integer.");
   if ((p.description ?? "").trim().length < 10) errors.push("Description is too short.");
   if (p.flagged) errors.push("Product is flagged and must be resolved first.");
   return { ok: errors.length === 0, errors };
@@ -134,9 +136,7 @@ export async function submitProductForQc(
   const reviewId = `qc_${input.productId}`;
   const reviewName = docPath(projectId, [QC_REVIEWS_COLLECTION, reviewId]);
   const existing = (await batchGetDocs(projectId, [reviewName])).get(reviewName);
-  const current = existing?.exists
-    ? (existing.data as Record<string, unknown>)
-    : null;
+  const current = existing?.exists ? (existing.data as Record<string, unknown>) : null;
   const currentStatus = (current?.["status"] as QcState) ?? "DRAFT";
 
   if (current && !allowsSellerQcActions(currentStatus)) {
@@ -154,22 +154,58 @@ export async function submitProductForQc(
     checklist: [],
     reviewerUid: (current?.["reviewerUid"] as string | null) ?? null,
     failReasons: [],
+    decision: null,
+    reviewerNote: null,
     submittedAt: now,
     reviewedAt: null,
     listedAt: (current?.["listedAt"] as number | null) ?? null,
   };
 
-  await commitWrites(projectId, [{
-    update: {
-      name: reviewName,
-      fields: toFsFields({
-        ...review,
-        productSnapshot: JSON.stringify(input.productSnapshot),
-        // seller edits after a failed review must reach the reviewer:
-        updatedAt: now,
-      }),
+  // Atomic commit: review doc + product visibility sync + seller notification
+  // land together. The product is forced back to draft/unapproved while it
+  // waits for QC — sellers can never expose it by writing status directly.
+  await commitWrites(projectId, [
+    {
+      update: {
+        name: reviewName,
+        fields: toFsFields({
+          ...review,
+          decision: null,
+          reviewerNote: null,
+          productSnapshot: JSON.stringify(input.productSnapshot),
+          // seller edits after a failed review must reach the reviewer:
+          updatedAt: now,
+        }),
+      },
     },
-  }]);
+    {
+      update: {
+        name: docPath(projectId, [PRODUCTS_COLLECTION, input.productId]),
+        fields: toFsFields({ status: "draft", approved: false, updatedAt: now }),
+      },
+    },
+    {
+      update: {
+        name: docPath(projectId, [
+          "sellers",
+          input.sellerUid,
+          "notifications",
+          `${reviewId}_SUBMITTED_${now}`,
+        ]),
+        fields: toFsFields({
+          type: "system",
+          title:
+            currentStatus === "QC_FAILED"
+              ? "Product resubmitted for QC"
+              : "Product submitted for QC",
+          message: `"${input.productSnapshot.title}" is now in the QC queue. You will be notified once a reviewer has checked it.`,
+          link: `/seller/products`,
+          read: false,
+          createdAt: now,
+        }),
+      },
+    },
+  ]);
 
   await appendAuditEntry(projectId, {
     actor: { id: `seller:${input.sellerUid}`, role: "seller" },
@@ -210,12 +246,20 @@ export async function startQcReview(
   return writeTransition(projectId, review, "IN_QC", {
     actor: { id: `admin:${actor.uid}`, role: actor.adminRole },
     reviewerUid: actor.uid,
+    notify: {
+      type: "system",
+      title: "QC review started",
+      message: `A reviewer has started checking "${review.productId}" for QC.`,
+      link: "/seller/products",
+    },
   });
 }
 
 export interface CompleteQcInput {
   reviewId: string;
   checklist: QcChecklistResult[];
+  /** changes_required (default) lets the seller resubmit; rejected still records reasons. */
+  decision?: QcDecision;
   reviewerNote?: string | null;
 }
 
@@ -241,19 +285,48 @@ export async function completeQcReview(
 
   const failReasons = input.checklist.filter((c) => !c.passed).map((c) => c.key);
   const target: QcState = failReasons.length === 0 ? "QC_PASSED" : "QC_FAILED";
+  const decision: QcDecision = input.decision ?? "changes_required";
+  if (target === "QC_FAILED" && decision === "rejected" && !(input.reviewerNote ?? "").trim()) {
+    throw new Error("qc/complete: rejection requires a reviewer note explaining why");
+  }
   const updated = await writeTransition(projectId, review, target, {
     actor: { id: `admin:${actor.uid}`, role: actor.adminRole },
     reviewerUid: actor.uid,
     extra: {
       checklist: input.checklist,
       failReasons,
+      decision: target === "QC_FAILED" ? decision : null,
       reviewerNote: input.reviewerNote ?? null,
       reviewedAt: Date.now(),
     },
+    // A failed review keeps the product invisible; passed products stay
+    // invisible until an explicit LISTED decision publishes them.
+    productPatch: target === "QC_FAILED" ? { approved: false, status: "draft" } : undefined,
+    notify:
+      target === "QC_FAILED"
+        ? {
+            type: decision === "rejected" ? "product_rejected" : "system",
+            title:
+              decision === "rejected"
+                ? "Product rejected in QC"
+                : "Changes required before approval",
+            message:
+              decision === "rejected"
+                ? `"${review.productId}" was rejected. Reviewer note: ${input.reviewerNote ?? ""}`
+                : `"${review.productId}" needs corrections: ${failReasons.join(", ")}. Fix the issues and resubmit.`,
+            link: "/seller/products",
+          }
+        : {
+            type: "system",
+            title: "QC passed",
+            message: `"${review.productId}" passed the QC checklist and is awaiting publication.`,
+            link: "/seller/products",
+          },
   });
 
   // §backbone: emit the domain event the rest of the platform listens to
-  const eventType: DomainEventType = target === "QC_PASSED" ? "product.qc.passed" : "product.qc.failed";
+  const eventType: DomainEventType =
+    target === "QC_PASSED" ? "product.qc.passed" : "product.qc.failed";
   await emitDomainEvent(projectId, {
     source: "product",
     type: eventType,
@@ -264,6 +337,7 @@ export async function completeQcReview(
       productId: review.productId,
       sellerUid: review.sellerUid,
       failReasons,
+      decision: target === "QC_FAILED" ? decision : null,
       reviewId: review.reviewId,
     },
   });
@@ -282,9 +356,18 @@ export async function listQcPassedProduct(
   if (!isValidQcTransition(review.status, "LISTED")) {
     throw new Error(`qc/list: illegal transition ${review.status} → LISTED`);
   }
+  // Publication moment: the product becomes publicly visible (approved +
+  // published) ONLY through this auditable QC transition.
   const updated = await writeTransition(projectId, review, "LISTED", {
     actor: { id: `admin:${actor.uid}`, role: actor.adminRole },
     extra: { listedAt: Date.now() },
+    productPatch: { approved: true, status: "published" },
+    notify: {
+      type: "product_approved",
+      title: "Product approved and published",
+      message: `"${review.productId}" passed QC and is now live on the storefront.`,
+      link: "/seller/products",
+    },
   });
   await emitDomainEvent(projectId, {
     source: "product",
@@ -312,6 +395,13 @@ export async function unlistProduct(
   const updated = await writeTransition(projectId, review, "UNLISTED", {
     actor: { id: `admin:${actor.uid}`, role: actor.adminRole },
     extra: { unlistReason: reason, unlistedAt: Date.now() },
+    productPatch: { approved: false, status: "draft" },
+    notify: {
+      type: "system",
+      title: "Product unlisted",
+      message: `"${review.productId}" was taken down from the storefront. Reason: ${reason}`,
+      link: "/seller/products",
+    },
   });
   await emitDomainEvent(projectId, {
     source: "product",
@@ -345,6 +435,8 @@ export async function readQcReview(projectId: string, reviewId: string): Promise
     checklist: (d.checklist as QcChecklistResult[]) ?? [],
     reviewerUid: (d.reviewerUid as string | null) ?? null,
     failReasons: (d.failReasons as string[]) ?? [],
+    decision: (d.decision as QcDecision | null) ?? null,
+    reviewerNote: (d.reviewerNote as string | null) ?? null,
     submittedAt: Number(d.submittedAt ?? 0),
     reviewedAt: (d.reviewedAt as number | null) ?? null,
     listedAt: (d.listedAt as number | null) ?? null,
@@ -363,6 +455,14 @@ async function writeTransition(
     actor: EventActor;
     reviewerUid?: string | null;
     extra?: Record<string, unknown>;
+    /**
+     * Fields synced onto the product document in the SAME commit —
+     * the product's public visibility (approved/status) can only
+     * change together with an auditable QC transition, never directly.
+     */
+    productPatch?: Record<string, unknown>;
+    /** Seller notification written in the SAME commit (atomic with the transition). */
+    notify?: { type: string; title: string; message: string; link?: string };
   },
 ): Promise<QcReview> {
   const from = review.status;
@@ -388,16 +488,47 @@ async function writeTransition(
   const rawSnapshot = rawDoc?.exists
     ? (rawDoc.data as Record<string, unknown>)["productSnapshot"] ?? null
     : null;
-  await commitWrites(projectId, [{
-    update: {
-      name: docPath(projectId, [QC_REVIEWS_COLLECTION, review.reviewId]),
-      fields: toFsFields({
-        ...updated,
-        ...(rawSnapshot != null ? { productSnapshot: rawSnapshot } : {}),
-        updatedAt: now,
-      }),
+  const writes: FsWrite[] = [
+    {
+      update: {
+        name: docPath(projectId, [QC_REVIEWS_COLLECTION, review.reviewId]),
+        fields: toFsFields({
+          ...updated,
+          ...(rawSnapshot != null ? { productSnapshot: rawSnapshot } : {}),
+          updatedAt: now,
+        }),
+      },
     },
-  }]);
+  ];
+  if (opts.productPatch) {
+    writes.push({
+      update: {
+        name: docPath(projectId, [PRODUCTS_COLLECTION, review.productId]),
+        fields: toFsFields({ ...opts.productPatch, updatedAt: now }),
+      },
+    });
+  }
+  if (opts.notify) {
+    writes.push({
+      update: {
+        name: docPath(projectId, [
+          "sellers",
+          review.sellerUid,
+          "notifications",
+          `${review.reviewId}_${to}_${now}`,
+        ]),
+        fields: toFsFields({
+          type: opts.notify.type,
+          title: opts.notify.title,
+          message: opts.notify.message,
+          link: opts.notify.link ?? "/seller/products",
+          read: false,
+          createdAt: now,
+        }),
+      },
+    });
+  }
+  await commitWrites(projectId, writes);
   await appendAuditEntry(projectId, {
     actor: opts.actor,
     action: `qc.${to.toLowerCase()}`,

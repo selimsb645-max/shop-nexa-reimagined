@@ -285,6 +285,7 @@ service cloud.firestore {
         || (isApprovedSeller()
           && request.resource.data.sellerId == request.auth.uid
           && request.resource.data.approved == false
+          && request.resource.data.status == 'draft'
           && (!('featured' in request.resource.data) || request.resource.data.featured == false));
       allow delete: if roleIn(['super_admin', 'admin', 'platform_admin', 'content_admin', 'catalog_manager']) ||
         (isApprovedSeller() && resource.data.sellerId == request.auth.uid);
@@ -309,7 +310,12 @@ service cloud.firestore {
           && !request.resource.data.diff(resource.data).affectedKeys()
                .hasAny(['approved', 'featured', 'rating', 'reviewCount', 'sellerId'])
           && !request.resource.data.diff(resource.data).affectedKeys()
-               .hasAny(['stock', 'availableStock', 'reservedStock', 'soldStock']));
+               .hasAny(['stock', 'availableStock', 'reservedStock', 'soldStock'])
+          // Product QC (Prompt 06): sellers can NEVER self-publish —
+          // status → published happens only through the auditable QC
+          // LISTED transition in qc.server.ts (service account).
+          && !('status' in request.resource.data.diff(resource.data).affectedKeys()
+               && request.resource.data.status == 'published'));
 
       match /reviews/{rid} {
         // Public can read approved reviews; review author can read their own; admins can read all

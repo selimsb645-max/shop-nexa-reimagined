@@ -167,6 +167,9 @@ export async function createSellerProduct(
     rating: 0,
     reviewCount: 0,
     approved: false,
+    // New products always enter as drafts — publication happens only
+    // through the QC pipeline (qc.server LISTED transition).
+    status: "draft",
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
@@ -237,4 +240,63 @@ export async function setProductStock(sellerId: string, id: string, stock: numbe
   if (previousStock !== null && newStock < previousStock) {
     await notifyLowStock(sellerId, id, title, newStock);
   }
+}
+
+// ───────────────────────────────────────────────────────────────
+// Product QC — seller-side reads (client SDK, rules-gated)
+// ───────────────────────────────────────────────────────────────
+// Reviews are written ONLY by server functions (qc.server.ts);
+// the rules allow a seller to read their own review docs. One
+// query returns the seller's whole QC pipeline state — no N+1.
+
+export type SellerQcStatus =
+  "DRAFT" | "PENDING_QC" | "IN_QC" | "QC_PASSED" | "QC_FAILED" | "LISTED" | "UNLISTED";
+
+export interface SellerQcChecklistResult {
+  key: string;
+  passed: boolean;
+  note?: string | null;
+}
+
+export interface SellerQcReview {
+  reviewId: string;
+  productId: string;
+  sellerUid: string;
+  status: SellerQcStatus;
+  checklist: SellerQcChecklistResult[];
+  reviewerUid: string | null;
+  failReasons: string[];
+  decision: "changes_required" | "rejected" | null;
+  reviewerNote: string | null;
+  submittedAt: number;
+  reviewedAt: number | null;
+  listedAt: number | null;
+}
+
+/** All QC reviews owned by this seller, newest submissions first. */
+export async function listMyQcReviews(sellerUid: string): Promise<SellerQcReview[]> {
+  const snap = await getDocs(
+    query(
+      collection(getDb(), "qcReviews"),
+      where("sellerUid", "==", sellerUid),
+      orderBy("submittedAt", "desc"),
+    ),
+  );
+  return snap.docs.map((d) => {
+    const v = d.data() as Record<string, unknown>;
+    return {
+      reviewId: String(v.reviewId ?? d.id),
+      productId: String(v.productId ?? ""),
+      sellerUid: String(v.sellerUid ?? ""),
+      status: (v.status as SellerQcStatus) ?? "DRAFT",
+      checklist: (v.checklist as SellerQcChecklistResult[]) ?? [],
+      reviewerUid: (v.reviewerUid as string | null) ?? null,
+      failReasons: (v.failReasons as string[]) ?? [],
+      decision: (v.decision as "changes_required" | "rejected" | null) ?? null,
+      reviewerNote: (v.reviewerNote as string | null) ?? null,
+      submittedAt: Number(v.submittedAt ?? 0),
+      reviewedAt: (v.reviewedAt as number | null) ?? null,
+      listedAt: (v.listedAt as number | null) ?? null,
+    };
+  });
 }
