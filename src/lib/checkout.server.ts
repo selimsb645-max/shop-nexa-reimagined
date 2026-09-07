@@ -246,6 +246,8 @@ export interface PlaceOrderResult {
   discount: number;
   /** Human-readable reason a submitted coupon was NOT applied (null if no coupon or it applied). */
   couponRejection: string | null;
+  /** Machine-readable rejection code for the same case ("coupon/…") — the storefront localizes it. */
+  couponRejectionReason: string | null;
   promoDiscount: number;
   tax: number;
   taxRate: number;
@@ -444,6 +446,7 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
   let couponUses = 0;
   let couponUserUses = 0;
   let couponRejection: string | null = null;
+  let couponRejectionReason: string | null = null;
   if (couponCode && couponName) {
     const cDoc = docs.get(couponName);
     if (cDoc?.exists) {
@@ -477,7 +480,13 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
         // (the order proceeds). The reason is surfaced in the response
         // so the storefront can explain WHY it was skipped.
         couponRejection = couponRejectionMessage(evaluation.reason);
+        couponRejectionReason = evaluation.reason;
       }
+    } else if (couponCode) {
+      // Additive: a submitted code with no matching coupon doc (legacy
+      // behavior keeps the order flowing) — surface the machine code so
+      // the storefront can explain WHY nothing was discounted.
+      couponRejectionReason = "coupon/not-found";
     }
   }
 
@@ -1221,5 +1230,6 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
     couponCode: appliedCoupon,
     promoCode: appliedPromo,
     couponRejection,
+    couponRejectionReason,
   };
 }

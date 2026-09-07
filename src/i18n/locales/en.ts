@@ -204,6 +204,19 @@ export const en: TranslationKeys = {
   "account.wishlist": "Wishlist",
   "account.vouchers": "Vouchers",
   "checkout.couponFailed": "Failed to validate coupon",
+  "coupon.invalid": "This coupon code is invalid or cannot be used right now.",
+  "coupon.notStarted": "This coupon is not active yet. Please try again after the scheduled time.",
+  "coupon.expired": "This coupon has expired.",
+  "coupon.customerLimit": "You have reached the maximum usage limit for this coupon.",
+  "coupon.usageLimit": "This coupon has been fully redeemed.",
+  "coupon.minOrder": "Add more items to your cart to use this coupon.",
+  "coupon.notApplicable": "This coupon does not apply to the selected items in your cart.",
+  "coupon.networkError":
+    "Could not verify the coupon. Check your internet connection and try again.",
+  "coupon.applied": "Coupon applied!",
+  "coupon.alreadyApplied": "This coupon is already applied.",
+  "coupon.removed": "Coupon removed",
+  "coupon.scopedNote": "This discount applies only to eligible items.",
   "checkout.voucherRemoved": "Voucher removed",
   "checkout.promoFailed": "Failed to validate promo code",
   "checkout.promoRemoved": "Promo removed",
@@ -682,13 +695,20 @@ export const en: TranslationKeys = {
   "orders.backToAccount": "Back to Account",
   "messages.paymentMethod": "Method",
   "messages.paymentStatus": "Status",
-  "messages.aiWelcome": "Hi! I'm your AI Shopping Assistant. I can help you find products, track orders, suggest coupons, and more. How can I help today?",
-  "messages.aiTrackOrder": "To track your order, go to the Orders tab above and tap on any order to see real-time tracking updates. You can also visit the Track Orders page for live delivery tracking.",
-  "messages.aiCoupon": "You can find all available coupons on the Coupons page. We frequently offer flash sale discounts and promo codes. Check back often for new deals!",
-  "messages.aiFlashSale": "Flash sales are live on the Flash Sales page! These are limited-time deals with significant discounts. Act fast before they end!",
-  "messages.aiReturn": "You can request a return from the Returns & Refunds page. We accept returns within 7 days of delivery for eligible products.",
-  "messages.aiProduct": "You can browse all products on the Shop page. Use the search bar at the top to find specific items, or filter by category to discover new products.",
-  "messages.aiDefault": "I'm here to help! You can ask me about orders, products, coupons, returns, flash sales, and more. What would you like to know?",
+  "messages.aiWelcome":
+    "Hi! I'm your AI Shopping Assistant. I can help you find products, track orders, suggest coupons, and more. How can I help today?",
+  "messages.aiTrackOrder":
+    "To track your order, go to the Orders tab above and tap on any order to see real-time tracking updates. You can also visit the Track Orders page for live delivery tracking.",
+  "messages.aiCoupon":
+    "You can find all available coupons on the Coupons page. We frequently offer flash sale discounts and promo codes. Check back often for new deals!",
+  "messages.aiFlashSale":
+    "Flash sales are live on the Flash Sales page! These are limited-time deals with significant discounts. Act fast before they end!",
+  "messages.aiReturn":
+    "You can request a return from the Returns & Refunds page. We accept returns within 7 days of delivery for eligible products.",
+  "messages.aiProduct":
+    "You can browse all products on the Shop page. Use the search bar at the top to find specific items, or filter by category to discover new products.",
+  "messages.aiDefault":
+    "I'm here to help! You can ask me about orders, products, coupons, returns, flash sales, and more. What would you like to know?",
   "messages.notifAllRead": "All notifications marked as read",
   "messages.notifMarkAllRead": "Mark all read",
   "messages.filterAll": "All",
@@ -814,5 +834,4 @@ export const en: TranslationKeys = {
   "seller.updateStatus": "Update status",
   "checkout.voucherDiscount": "Voucher Discount",
   "checkout.walletCredit": "Wallet Credit",
-
 };

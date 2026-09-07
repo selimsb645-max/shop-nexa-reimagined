@@ -44,7 +44,11 @@ import {
 import { CheckoutAddressSelector } from "@/components/address/CheckoutAddressSelector";
 import type { DeliveryAddressSnapshot, StructuredAddress } from "@/types/address";
 import { getWalletBalance, getRewardPoints } from "@/services/firebase/wallet";
-import { validateCoupon, CouponError } from "@/services/firebase/coupons";
+import {
+  previewCouponForCart,
+  couponRejectionKey,
+  type CouponPreviewResult,
+} from "@/services/firebase/coupons";
 import { createOrder, detectZoneFromSnapshot } from "@/services/firebase/orders";
 import type { PaymentMethod, Coupon, CartItem, Product } from "@/types/commerce";
 import { DELIVERY_ZONES, type DeliveryZoneId } from "@/data/bd-locations/deliveryZones";
@@ -197,11 +201,13 @@ function CheckoutPage() {
 
   // ---- Coupon ----
   const [couponInput, setCouponInput] = useState("");
-  const [appliedCoupon, setAppliedCoupon] = useState<{
-    coupon: Coupon;
-    discount: number;
-  } | null>(null);
+  // Server-authoritative preview result (the canonical evaluation
+  // core decides; this is only a re-display of what it produced).
+  const [appliedCoupon, setAppliedCoupon] = useState<
+    Extract<CouponPreviewResult, { ok: true }> | null
+  >(null);
   const [couponError, setCouponError] = useState("");
+  const [couponNetworkError, setCouponNetworkError] = useState(false);
   const [couponBusy, setCouponBusy] = useState(false);
 
   // ---- Promo Code (NEXA####) ----
@@ -326,28 +332,46 @@ function CheckoutPage() {
     })}`;
   }, [deliveryZoneConfig]);
 
-  // ---- Coupon handlers ----
+  // ---- Coupon handlers (server-authoritative preview) ----
+  const previewItems = cartItems.map((i) => ({
+    productId: i.productId as string,
+    quantity: Number(i.quantity ?? 1),
+  }));
+
   const handleApplyCoupon = async () => {
     const code = couponInput.trim().toUpperCase();
     if (!code) {
-      setCouponError("Enter a voucher code");
+      setCouponError(t("coupon.invalid"));
+      setCouponNetworkError(false);
+      return;
+    }
+    // Duplicate-apply guard: the same code is already active.
+    if (appliedCoupon?.code === code) {
+      setCouponError(t("coupon.alreadyApplied"));
+      setCouponNetworkError(false);
       return;
     }
     setCouponError("");
+    setCouponNetworkError(false);
     setCouponBusy(true);
     try {
-      const result = await validateCoupon(code, itemsSubtotal);
-      setAppliedCoupon(result);
-      setCouponInput("");
-      toast.success(`Voucher "${result.coupon.code}" applied!`);
-    } catch (err) {
-      if (err instanceof CouponError) {
-        setCouponError(err.message);
-        toast.error(err.message);
+      const result = await previewCouponForCart(code, previewItems);
+      if (result.ok) {
+        setAppliedCoupon(result);
+        setCouponInput("");
+        toast.success(`${result.code} — ${t("coupon.applied")}`);
       } else {
-        setCouponError("Failed to validate coupon");
-        toast.error(t("checkout.couponFailed"));
+        // A server-evaluated rejection is the authoritative verdict.
+        const msg = t(couponRejectionKey(result.reason));
+        setCouponError(msg);
+        toast.error(msg);
       }
+    } catch {
+      // Network/server failure is NOT "coupon invalid".
+      const msg = t("coupon.networkError");
+      setCouponError(msg);
+      setCouponNetworkError(true);
+      toast.error(msg);
     } finally {
       setCouponBusy(false);
     }
@@ -356,7 +380,8 @@ function CheckoutPage() {
   const handleRemoveCoupon = () => {
     setAppliedCoupon(null);
     setCouponError("");
-    toast.info("Voucher removed");
+    setCouponNetworkError(false);
+    toast.info(t("coupon.removed"));
   };
 
   // ---- Promo handlers (NEXA user-specific codes) ----
@@ -369,19 +394,22 @@ function CheckoutPage() {
     setPromoError("");
     setPromoBusy(true);
     try {
-      const result = await validateCoupon(code, itemsSubtotal);
-      setAppliedPromoCode(result.coupon.code);
+      const result = await previewCouponForCart(code, previewItems);
+      if (!result.ok) {
+        const msg = t(couponRejectionKey(result.reason));
+        setPromoError(msg);
+        toast.error(msg);
+        return;
+      }
+      setAppliedPromoCode(result.code);
       setAppliedCoupon(result);
       setPromoInput("");
-      toast.success(`Promo "${result.coupon.code}" applied!`);
-    } catch (err) {
-      if (err instanceof CouponError) {
-        setPromoError(err.message);
-        toast.error(err.message);
-      } else {
-        setPromoError("Failed to validate promo code");
-        toast.error(t("checkout.promoFailed"));
-      }
+      toast.success(`Promo "${result.code}" applied!`);
+    } catch {
+      // Network/server failure is NOT an invalid promo.
+      const msg = t("coupon.networkError");
+      setPromoError(msg);
+      toast.error(msg);
     } finally {
       setPromoBusy(false);
     }
@@ -444,7 +472,7 @@ function CheckoutPage() {
           notes: deliveryAddressSnapshot.deliveryInstructions || undefined,
         },
         paymentMethod,
-        couponCode: appliedCoupon?.coupon.code ?? null,
+        couponCode: appliedCoupon?.code ?? null,
         promoCode: appliedPromoCode,
         discount: couponDiscount,
         rewardPoints: useRewardPoints ? rewardPointsToUse : 0,
@@ -708,25 +736,34 @@ function CheckoutPage() {
               title="Voucher / Coupon"
             >
               {appliedCoupon ? (
-                <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-xl p-3">
+                <div
+                  className="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-xl p-3"
+                  role="status"
+                  aria-live="polite"
+                >
                   <div className="flex items-center gap-2">
                     <Tag className="w-4 h-4 text-emerald-600" />
                     <div>
                       <span className="text-sm font-bold text-emerald-700">
-                        {appliedCoupon.coupon.code}
+                        {appliedCoupon.code}
                       </span>
                       <p className="text-xs text-emerald-600">
-                        {appliedCoupon.coupon.type === "percent"
-                          ? `${appliedCoupon.coupon.value}% off`
-                          : `${formatPrice(appliedCoupon.coupon.value)} off`}
-                        {" · "}
-                        You save {formatPrice(appliedCoupon.discount)}
+                        You save {formatPrice(appliedCoupon.discount)} on{" "}
+                        {appliedCoupon.base > 0
+                          ? `${formatPrice(appliedCoupon.base)} of eligible items`
+                          : "your order"}
                       </p>
+                      {appliedCoupon.scoped && (
+                        <p className="text-xs text-emerald-600 mt-0.5">
+                          {t("coupon.scopedNote")} ({appliedCoupon.eligibleLines})
+                        </p>
+                      )}
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={handleRemoveCoupon}
+                    aria-label={`${t("coupon.removed")} ${appliedCoupon.code}`}
                     className="p-1.5 text-slate-400 hover:text-rose-600 rounded-full hover:bg-rose-50 transition-colors"
                   >
                     <X className="w-4 h-4" />
@@ -765,9 +802,22 @@ function CheckoutPage() {
                 </div>
               )}
               {couponError && (
-                <p className="text-xs text-rose-600 mt-2 flex items-center gap-1">
+                <p
+                  role="alert"
+                  aria-live="assertive"
+                  className="text-xs text-rose-600 mt-2 flex items-center gap-1"
+                >
                   <AlertCircle className="w-3 h-3" />
                   {couponError}
+                  {couponNetworkError && (
+                    <button
+                      type="button"
+                      onClick={handleApplyCoupon}
+                      className="ml-2 underline underline-offset-2 font-semibold"
+                    >
+                      {t("checkout.applyCoupon")}
+                    </button>
+                  )}
                 </p>
               )}
             </CheckoutSection>

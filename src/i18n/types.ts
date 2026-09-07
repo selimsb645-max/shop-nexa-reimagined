@@ -217,6 +217,18 @@ export interface TranslationKeys {
   "account.wishlist": string;
   "account.vouchers": string;
   "checkout.couponFailed": string;
+  "coupon.invalid": string;
+  "coupon.notStarted": string;
+  "coupon.expired": string;
+  "coupon.customerLimit": string;
+  "coupon.usageLimit": string;
+  "coupon.minOrder": string;
+  "coupon.notApplicable": string;
+  "coupon.networkError": string;
+  "coupon.applied": string;
+  "coupon.alreadyApplied": string;
+  "coupon.removed": string;
+  "coupon.scopedNote": string;
   "checkout.voucherRemoved": string;
   "checkout.promoFailed": string;
   "checkout.promoRemoved": string;

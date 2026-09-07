@@ -36,7 +36,12 @@ import { useQuery } from "@tanstack/react-query";
 import { getProductById } from "@/services/firebase/products";
 import { getSellerProfile } from "@/services/firebase/sellers";
 import { firebaseConfigured } from "@/services/firebase/config";
-import { validateCoupon, CouponError } from "@/services/firebase/coupons";
+import {
+  previewCouponForCart,
+  couponRejectionKey,
+  type CouponPreviewResult,
+} from "@/services/firebase/coupons";
+import { useI18n } from "@/i18n";
 import type { Product } from "@/types/commerce";
 import { buildMetaTags, breadcrumbJsonLd, jsonLdScript } from "@/lib/seo";
 
@@ -252,10 +257,15 @@ export default function CartPage() {
     });
   }, [items]);
 
-  // Coupon Code State
+  // Coupon Code State — server-authoritative preview (the engine decides,
+  // this page only re-displays its result)
+  const { t } = useI18n();
   const [couponInput, setCouponCodeInput] = useState<string>("");
-  const [appliedCoupon, setAppliedCoupon] = useState<CouponType | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<
+    Extract<CouponPreviewResult, { ok: true }> | null
+  >(null);
   const [couponError, setCouponError] = useState<string>("");
+  const [couponNetworkError, setCouponNetworkError] = useState<boolean>(false);
   const [isApplyingCoupon, setIsApplyingCoupon] = useState<boolean>(false);
 
   // Free Delivery Threshold
@@ -310,14 +320,9 @@ export default function CartPage() {
   const shippingFee =
     selectedItems.length === 0 || isFreeShipping ? 0 : STANDARD_SHIPPING_FEE;
 
-  // Coupon Discount Calculation
-  const couponDiscountAmount = useMemo(() => {
-    if (!appliedCoupon) return 0;
-    if (appliedCoupon.discountType === "percent") {
-      return (itemsSubtotal * appliedCoupon.value) / 100;
-    }
-    return Math.min(itemsSubtotal, appliedCoupon.value);
-  }, [appliedCoupon, itemsSubtotal]);
+  // Coupon Discount — the server computed this over the previewed
+  // selection; we never derive a discount client side.
+  const couponDiscountAmount = appliedCoupon?.discount ?? 0;
 
   // Final Order Total
   const finalTotal = useMemo(() => {
@@ -510,38 +515,47 @@ export default function CartPage() {
     toast.info("Shopping cart cleared");
   };
 
-  // Coupon Application Handler — validates against Firestore (server-authoritative)
+  // Coupon Application Handler — server-authoritative preview through the
+  // canonical evaluation core (same rules as checkout redemption).
   const handleApplyCoupon = async (codeToApply?: string) => {
     const code = (codeToApply || couponInput).trim().toUpperCase();
     setCouponError("");
+    setCouponNetworkError(false);
 
     if (!code) {
-      setCouponError("Please enter a voucher code");
+      setCouponError(t("coupon.invalid"));
+      return;
+    }
+    if (appliedCoupon?.code === code) {
+      setCouponError(t("coupon.alreadyApplied"));
       return;
     }
 
     setIsApplyingCoupon(true);
     try {
-      const result = await validateCoupon(code, itemsSubtotal);
-      setAppliedCoupon({
-        code: result.coupon.code,
-        discountType: result.coupon.type,
-        value: result.coupon.value,
-        minSubtotal: result.coupon.minSubtotal,
-        description: result.coupon.type === "percent"
-          ? `${result.coupon.value}% OFF`
-          : `${formatPrice(result.coupon.value)} OFF`,
-      });
-      setCouponCodeInput("");
-      toast.success(`Voucher code "${result.coupon.code}" applied!`);
-    } catch (err) {
-      if (err instanceof CouponError) {
-        setCouponError(err.message);
-        toast.error(err.message);
+      const previewItems = selectedItems
+        .filter((i) => !!i.productId)
+        .map((i) => ({
+          productId: i.productId as string,
+          quantity: Number(i.quantity ?? 1),
+        }));
+      const result = await previewCouponForCart(code, previewItems);
+      if (result.ok) {
+        setAppliedCoupon(result);
+        setCouponCodeInput("");
+        toast.success(`${result.code} — ${t("coupon.applied")}`);
       } else {
-        setCouponError("Failed to validate coupon");
-        toast.error("Failed to validate coupon");
+        // Authoritative server verdict — show WHY it was rejected.
+        const msg = t(couponRejectionKey(result.reason));
+        setCouponError(msg);
+        toast.error(msg);
       }
+    } catch {
+      // Network/server failure is NOT an invalid-coupon verdict.
+      const msg = t("coupon.networkError");
+      setCouponError(msg);
+      setCouponNetworkError(true);
+      toast.error(msg);
     } finally {
       setIsApplyingCoupon(false);
     }
@@ -549,7 +563,9 @@ export default function CartPage() {
 
   const handleRemoveCoupon = () => {
     setAppliedCoupon(null);
-    toast.info("Voucher code removed");
+    setCouponError("");
+    setCouponNetworkError(false);
+    toast.info(t("coupon.removed"));
   };
 
   // Checkout Handler
@@ -983,23 +999,30 @@ export default function CartPage() {
 
                 {/* Applied Coupon Display */}
                 {appliedCoupon ? (
-                  <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 flex items-center justify-between gap-2">
+                  <div
+                    role="status"
+                    aria-live="polite"
+                    className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 flex items-center justify-between gap-2"
+                  >
                     <div className="flex items-center gap-2 min-w-0">
                       <div className="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center flex-shrink-0">
                         <Check className="w-4 h-4" />
                       </div>
                       <div className="min-w-0">
                         <p className="text-xs font-bold text-emerald-900 truncate">
-                          {appliedCoupon.code} Applied
+                          {appliedCoupon.code} {t("coupon.applied")}
                         </p>
                         <p className="text-[11px] text-emerald-700 truncate">
-                          {appliedCoupon.description}
+                          -{formatPrice(appliedCoupon.discount)}
+                          {appliedCoupon.scoped &&
+                            ` · ${t("coupon.scopedNote")} (${appliedCoupon.eligibleLines})`}
                         </p>
                       </div>
                     </div>
                     <button
                       type="button"
                       onClick={handleRemoveCoupon}
+                      aria-label={`${t("coupon.removed")} ${appliedCoupon.code}`}
                       className="p-1 text-slate-400 hover:text-rose-600 rounded-full hover:bg-emerald-100 transition-colors flex-shrink-0"
                       title="Remove Voucher"
                     >
@@ -1036,8 +1059,21 @@ export default function CartPage() {
                     </div>
 
                     {couponError && (
-                      <p className="text-xs text-rose-600 font-medium">
+                      <p
+                        role="alert"
+                        aria-live="assertive"
+                        className="text-xs text-rose-600 font-medium"
+                      >
                         {couponError}
+                        {couponNetworkError && (
+                          <button
+                            type="button"
+                            onClick={() => handleApplyCoupon()}
+                            className="ml-2 underline underline-offset-2 font-bold"
+                          >
+                            Retry
+                          </button>
+                        )}
                       </p>
                     )}
 

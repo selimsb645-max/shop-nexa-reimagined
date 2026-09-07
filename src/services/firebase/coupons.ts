@@ -42,3 +42,51 @@ export async function validateCoupon(code: string, subtotal: number): Promise<Co
 // Coupon `uses` is incremented only by the trusted server-side checkout, so
 // there is intentionally no client-side increment helper here. `validateCoupon`
 // above is a read-only preview; the server revalidates the coupon at checkout.
+
+// ═══════════════════════════════════════════════════════════════
+// Coupon v2 — SERVER-AUTHORITATIVE preview (the only path the
+// storefront uses to validate a coupon). The legacy client-side
+// `validateCoupon` above is kept only for backward compatibility;
+// it is NOT authoritative and must not gate any new flow: the
+// canonical evaluation core (server) decides, the UI re-displays
+// its result.
+// ═══════════════════════════════════════════════════════════════
+
+import { previewCoupon } from "@/lib/coupons/preview.functions";
+import type { CouponPreviewResult, CouponPreviewReason } from "@/lib/coupons/preview.server";
+import { getFirebaseAuth } from "./config";
+
+export type { CouponPreviewResult, CouponPreviewReason };
+
+/**
+ * Server-authoritative coupon preview for the current cart.
+ *
+ * Sends product ids + quantities + the code; the server loads real
+ * prices, applies flash-sale pricing and runs the SAME evaluation
+ * core as the checkout redemption. Returns a machine-readable
+ * result — the caller localizes the rejection via
+ * `couponRejectionKey` below.
+ *
+ * Throws on network/server failure — callers MUST distinguish that
+ * from a coupon rejection (show the network-error message, retry).
+ */
+export async function previewCouponForCart(
+  code: string,
+  items: Array<{ productId: string; quantity: number }>,
+): Promise<CouponPreviewResult> {
+  const normalized = code.trim().toUpperCase();
+  if (!normalized) {
+    return { ok: false, code: "", reason: "coupon/not-found" };
+  }
+  // The cart is a public page — an anonymous preview is allowed; it
+  // simply cannot see the per-customer usage counter (checkout, which
+  // requires auth, enforces it authoritatively).
+  const currentUser = getFirebaseAuth().currentUser;
+  const idToken = currentUser ? await currentUser.getIdToken() : undefined;
+  return previewCoupon({
+    data: { idToken, items, couponCode: normalized },
+  });
+}
+
+export { couponRejectionKey } from "@/lib/coupons/rejection-keys";
+export type { CouponRejectionI18nKey as CouponRejectionKey } from "@/lib/coupons/rejection-keys";
