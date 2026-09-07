@@ -72,6 +72,21 @@ export function computeSellerSettlement(input: {
   orderTax: number;
   commissionRate: number;
   nowMs: number;
+  /**
+   * AUDIT FIX (money-flow audit, Sep 7 2026): exact per-seller discount
+   * share. When provided (checkout computes it from the coupon's
+   * ELIGIBLE lines only), it REPLACES the blind pro-rata split — a
+   * seller-scoped coupon can no longer charge other sellers for a
+   * discount they didn't receive. Omitted → legacy pro-rata (unchanged).
+   */
+  sellerDiscountShare?: number;
+  /**
+   * AUDIT FIX: exact per-seller shipping credit (what this seller's
+   * customers actually paid for their items). When provided it replaces
+   * the pro-rata share, which previously double-scaled the caller's
+   * already per-seller value in multi-seller carts. Omitted → pro-rata.
+   */
+  sellerShippingShare?: number;
   // Delivery zone snapshot (immutable per order)
   zoneId?: string | null;
   zoneName?: string | null;
@@ -91,6 +106,8 @@ export function computeSellerSettlement(input: {
     orderTax,
     commissionRate: rawRate,
     nowMs,
+    sellerDiscountShare: sellerDiscountShareOverride,
+    sellerShippingShare: sellerShippingShareOverride,
     zoneId = null,
     zoneName = null,
     zoneCharge = 0,
@@ -109,10 +126,18 @@ export function computeSellerSettlement(input: {
       ? 1
       : 0;
 
-  // Pro-rata share of discount and shipping
+  // Pro-rata share of discount and shipping (legacy default). When the
+  // caller supplies exact per-seller shares (see input docs), those take
+  // precedence — defense-in-depth clamps keep them sane.
   const sellerRatio = orderSubtotal > 0 ? sellerSubtotal / orderSubtotal : 0;
-  const sellerDiscountShare = round2(orderDiscount * sellerRatio);
-  const sellerShippingShare = round2(orderShipping * sellerRatio);
+  const sellerDiscountShare =
+    sellerDiscountShareOverride != null && Number.isFinite(sellerDiscountShareOverride)
+      ? Math.min(Math.max(round2(sellerDiscountShareOverride), 0), sellerSubtotal)
+      : round2(orderDiscount * sellerRatio);
+  const sellerShippingShare =
+    sellerShippingShareOverride != null && Number.isFinite(sellerShippingShareOverride)
+      ? Math.max(round2(sellerShippingShareOverride), 0)
+      : round2(orderShipping * sellerRatio);
   const sellerTaxShare = round2(orderTax * sellerRatio);
 
   const sellerNetSubtotal = round2(

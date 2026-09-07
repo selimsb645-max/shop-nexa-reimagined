@@ -42,7 +42,12 @@ import {
   buildCouponRedemptionWrites,
   couponForEvaluation,
 } from "./coupons/coupon.server";
-import { couponRejectionMessage, evaluateCoupon } from "./coupons/evaluate";
+import {
+  couponRejectionMessage,
+  eligibleLines,
+  evaluateCoupon,
+  type CouponForEvaluation,
+} from "./coupons/evaluate";
 import { checkLowStockAndNotify } from "./stock-alert.server";
 import { reserveInventoryForOrder } from "./inventory.server";
 import {
@@ -447,6 +452,7 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
   let couponUserUses = 0;
   let couponRejection: string | null = null;
   let couponRejectionReason: string | null = null;
+  let appliedCouponScope: CouponForEvaluation | null = null;
   if (couponCode && couponName) {
     const cDoc = docs.get(couponName);
     if (cDoc?.exists) {
@@ -472,6 +478,7 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
       if (evaluation.ok) {
         discount = evaluation.discount;
         appliedCoupon = couponCode;
+        appliedCouponScope = couponEval;
         couponUpdateTime = cDoc.updateTime;
         couponBase = evaluation.base;
         couponSellerId = couponEval.sellerId;
@@ -947,6 +954,56 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
   platformFeeTotal = 0;
   const sellerEarningsBreakdown: SellerEarningsBreakdown[] = [];
 
+  // ── AUDIT FIX (money-flow audit, Sep 7 2026): per-seller COUPON shares ──
+  // A scoped coupon's discount belongs ONLY to the sellers whose lines
+  // were eligible. Previously the full order discount was split pro-rata
+  // across ALL sellers — Seller B was charged for Seller A's coupon.
+  // The eligible base is recomputed with the SAME pure core the
+  // evaluation used; shares are rounded per seller and the residual is
+  // assigned to the largest eligible seller so they sum EXACTLY to the
+  // discount. Sellers with no eligible lines get 0.
+  const sellerDiscountShares = new Map<string, number>();
+  if (appliedCoupon && appliedCouponScope) {
+    const evalLines = lines.map((l) => ({
+      productId: l.productId,
+      sellerId: l.sellerId,
+      categoryId: l.categoryId,
+      subcategoryId: l.subcategoryId,
+      subtotal: l.subtotal,
+    }));
+    const { lines: eligible } = eligibleLines(appliedCouponScope, evalLines);
+    const baseBySeller = new Map<string, number>();
+    for (const el of eligible) {
+      if (el.sellerId == null) continue;
+      baseBySeller.set(el.sellerId, round2((baseBySeller.get(el.sellerId) ?? 0) + el.subtotal));
+    }
+    if (couponBase > 0) {
+      for (const sid of itemsBySeller.keys()) {
+        const base = baseBySeller.get(sid) ?? 0;
+        sellerDiscountShares.set(sid, round2(discount * (base / couponBase)));
+      }
+      // Residual from per-seller rounding goes to the largest eligible
+      // seller so the sum reconciles exactly with the order discount.
+      const allocated = round2(
+        Array.from(sellerDiscountShares.values()).reduce((acc, v) => acc + v, 0),
+      );
+      const residual = round2(discount - allocated);
+      if (residual !== 0) {
+        let top: string | null = null;
+        let topBase = -1;
+        for (const [sid, base] of baseBySeller) {
+          if (base > topBase) {
+            top = sid;
+            topBase = base;
+          }
+        }
+        if (top != null) {
+          sellerDiscountShares.set(top, round2((sellerDiscountShares.get(top) ?? 0) + residual));
+        }
+      }
+    }
+  }
+
   for (const [sid, sItems] of itemsBySeller.entries()) {
     const sellerSubtotal = round2(sItems.reduce((s, it) => s + it.subtotal, 0));
     // Compute effective commission rate for this seller's items
@@ -981,6 +1038,12 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
       orderSubtotal: subtotal,
       orderDiscount: discount,
       orderShipping: sellerCustomerDeliveryCharge, // Only customer-paid portion
+      // AUDIT FIX: exact per-seller shares (see map construction above) —
+      // a scoped coupon no longer charges ineligible sellers, and the
+      // seller's own customers' delivery is credited without the double
+      // pro-rata scaling the legacy path applied in multi-seller carts.
+      sellerDiscountShare: sellerDiscountShares.get(sid) ?? 0,
+      sellerShippingShare: sellerCustomerDeliveryCharge,
       orderTax: tax,
       commissionRate,
       nowMs,
@@ -1091,31 +1154,45 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
   void nowIso;
   await commitWrites(projectId, writes);
 
-  // Mark promo code as used if it was applied
+  // Mark promo code as used if it was applied.
+  // AUDIT FIX (money-flow audit, Sep 7 2026): these writes go into a
+  // FRESH batch. They were previously pushed into `writes` — the array
+  // that was ALREADY committed above — so the second commit re-sent the
+  // whole order batch, hit the buyer-order `exists: false` precondition
+  // and threw AFTER the order had committed (order created, client
+  // shown an error, workflow events never dispatched, promo never
+  // marked used).
   if (appliedPromo) {
-    writes.push({
-      transform: {
-        document: docPath(projectId, ["promoCodes", appliedPromo]),
-        fieldTransforms: [{ fieldPath: "usedCount", increment: { integerValue: "1" } }],
+    const promoWrites: FsWrite[] = [
+      {
+        transform: {
+          document: docPath(projectId, ["promoCodes", appliedPromo]),
+          fieldTransforms: [{ fieldPath: "usedCount", increment: { integerValue: "1" } }],
+        },
+        ...(promoUpdateTime ? { currentDocument: { updateTime: promoUpdateTime } } : {}),
       },
-      ...(promoUpdateTime ? { currentDocument: { updateTime: promoUpdateTime } } : {}),
-    });
-    // Set status to "used" and record order info
-    writes.push({
-      update: {
-        name: docPath(projectId, ["promoCodes", appliedPromo]),
-        fields: toFsFields({
-          status: "used",
-          usedAt: nowMs,
-          usedOrderId: orderId,
-          updatedAt: nowMs,
-        }),
+      {
+        update: {
+          name: docPath(projectId, ["promoCodes", appliedPromo]),
+          fields: toFsFields({
+            status: "used",
+            usedAt: nowMs,
+            usedOrderId: orderId,
+            updatedAt: nowMs,
+          }),
+        },
+        updateMask: { fieldPaths: ["status", "usedAt", "usedOrderId", "updatedAt"] },
       },
-      updateMask: { fieldPaths: ["status", "usedAt", "usedOrderId", "updatedAt"] },
-    });
+    ];
+    try {
+      await commitWrites(projectId, promoWrites);
+    } catch {
+      // Non-fatal by the same non-blocking discipline used elsewhere:
+      // the ORDER is already committed and is the financial authority;
+      // the promo counter/increment carries its own updateTime guard,
+      // so a retry or admin reconciliation cannot double-apply it.
+    }
   }
-
-  await commitWrites(projectId, writes);
 
   // ─────────────────────────────────────────────────────────────
   // ORDER WORKFLOW (Prompt 03 §3 + §7 — event-driven)

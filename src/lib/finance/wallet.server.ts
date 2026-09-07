@@ -44,6 +44,7 @@ import {
   type WalletStatus,
 } from "./ledger.server";
 import { toMinor, type Currency } from "./money";
+import { SETTLEMENTS_COLLECTION, settlementDocId } from "./settlements.server";
 import { requireFinancePermission, requireFreshAuth } from "./settlementBatch.server";
 import { querySellerLedger, computeFinanceDashboard } from "./reconcile.server";
 import { verifyLedgerIntegrity } from "./ledger.server";
@@ -903,7 +904,7 @@ export async function migrateLegacyWalletTx(
   projectId: string,
   adminUid: string,
   sellerId: string,
-): Promise<{ migrated: number; skippedPending: number }> {
+): Promise<{ migrated: number; skippedPending: number; skippedV2Covered: number }> {
   await requireFinancePermission(projectId, adminUid, "finance.adjust");
   // List the seller's legacy subcollection directly (REST collection
   // list; first page of 100 is enough for a migration pass — re-run
@@ -928,6 +929,7 @@ export async function migrateLegacyWalletTx(
         type: String(d["type"] ?? "earning"),
         amount: Number(d["amount"] ?? 0),
         status: String(d["status"] ?? "completed"),
+        orderId: (d["orderId"] as string | null) ?? null,
         createdAt: Number(d["createdAt"] ?? 0),
       };
     })
@@ -935,10 +937,40 @@ export async function migrateLegacyWalletTx(
 
   let migrated = 0;
   let skippedPending = 0;
+  // AUDIT FIX (money-flow audit, Sep 7 2026): v2-covered orders must
+  // never be imported. The v2 engine has posted its own ledger entries
+  // for every order since the workflow finance handler shipped, so
+  // importing a legacy "earning" for the SAME order would double-credit
+  // the seller's v2-available balance (directly withdrawable). Rows
+  // tied to an order that has a v2 settlement (or any v2 ledger entry
+  // for that order) are skipped instead; only pre-v2 / non-order rows
+  // (topups, adjustments) still migrate.
+  let skippedV2Covered = 0;
+  const v2CoverageCache = new Map<string, boolean>();
+  const isV2CoveredOrder = async (orderId: string): Promise<boolean> => {
+    const cached = v2CoverageCache.get(orderId);
+    if (cached !== undefined) return cached;
+    const settlementName = docPath(projectId, [
+      SETTLEMENTS_COLLECTION,
+      settlementDocId(orderId, sellerId),
+    ]);
+    const docs = await batchGetDocs(projectId, [settlementName]);
+    const covered = docs.get(settlementName)?.exists === true;
+    v2CoverageCache.set(orderId, covered);
+    return covered;
+  };
   for (const row of rows) {
     if (row.status === "pending" || row.amount === 0) {
       skippedPending++;
       continue;
+    }
+    const rowOrderId = typeof row.orderId === "string" ? row.orderId : null;
+    if (rowOrderId) {
+      const v2Covered = await isV2CoveredOrder(rowOrderId);
+      if (v2Covered) {
+        skippedV2Covered++;
+        continue;
+      }
     }
     // Legacy float taka → paisa ONCE (display-level floats tolerated
     // only at this read boundary per money.ts rules).
@@ -973,5 +1005,5 @@ export async function migrateLegacyWalletTx(
     });
     migrated++;
   }
-  return { migrated, skippedPending };
+  return { migrated, skippedPending, skippedV2Covered };
 }
