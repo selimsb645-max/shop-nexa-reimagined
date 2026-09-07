@@ -67,6 +67,38 @@ function CampaignFlashSaleBar() {
             </p>
           </div>
         </div>
+        {fs.product && (fs.product.title || fs.product.image)
+          ? // Sale product chip: thumbnail + title; the whole chip links to
+            // the product page when the slug is known (no link = plain chip).
+            (() => {
+              const chip = (
+                <>
+                  {fs.product.image ? (
+                    <img
+                      src={fs.product.image}
+                      alt={fs.product.title ?? "Flash sale product"}
+                      loading="lazy"
+                      className="h-12 w-12 shrink-0 rounded-xl border border-slate-200 object-cover shadow-sm"
+                    />
+                  ) : null}
+                  {fs.product.title ? (
+                    <p className="min-w-0 truncate text-sm font-semibold text-slate-700 sm:max-w-[16rem]">
+                      {fs.product.title}
+                    </p>
+                  ) : null}
+                </>
+              );
+              const chipClass =
+                "flex min-w-0 items-center gap-3 rounded-xl p-1 transition-colors hover:bg-slate-50";
+              return fs.product.slug ? (
+                <Link to="/product/$slug" params={{ slug: fs.product.slug }} className={chipClass}>
+                  {chip}
+                </Link>
+              ) : (
+                <div className={chipClass}>{chip}</div>
+              );
+            })()
+          : null}
         <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-600">
           <span className="rounded-full bg-slate-100 px-3 py-1.5">
             {fs.stockRemaining} left in stock
