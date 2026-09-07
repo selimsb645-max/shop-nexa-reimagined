@@ -6,7 +6,14 @@
  * never accepted — even if the client-side filter misses them.
  */
 import { createServerFn } from "@tanstack/react-start";
-import { getProjectId, getAccessToken, commitWrites, docPath, toFsFields, type FsWrite } from "./firebase-admin.server";
+import {
+  getProjectId,
+  getAccessToken,
+  commitWrites,
+  docPath,
+  toFsFields,
+  type FsWrite,
+} from "./firebase-admin.server";
 
 /**
  * Queries the Firestore REST API for coupons that are active but expired,
@@ -33,8 +40,20 @@ export async function deactivateExpiredCoupons(): Promise<number> {
             compositeFilter: {
               op: "AND",
               filters: [
-                { fieldFilter: { field: { fieldPath: "active" }, op: "==", value: { booleanValue: true } } },
-                { fieldFilter: { field: { fieldPath: "expiresAt" }, op: "<", value: { integerValue: String(nowMs) } } },
+                {
+                  fieldFilter: {
+                    field: { fieldPath: "active" },
+                    op: "EQUAL",
+                    value: { booleanValue: true },
+                  },
+                },
+                {
+                  fieldFilter: {
+                    field: { fieldPath: "expiresAt" },
+                    op: "LESS_THAN",
+                    value: { integerValue: String(nowMs) },
+                  },
+                },
               ],
             },
           },

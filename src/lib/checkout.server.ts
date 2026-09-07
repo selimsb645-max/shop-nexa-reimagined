@@ -37,6 +37,12 @@ import {
   type DeliveryZoneId,
 } from "@/data/bd-locations/deliveryZones";
 import { deactivateExpiredCoupons } from "./coupon-expiry.functions";
+import {
+  COUPON_CUSTOMER_COUNTERS_COLLECTION,
+  buildCouponRedemptionWrites,
+  couponForEvaluation,
+} from "./coupons/coupon.server";
+import { couponRejectionMessage, evaluateCoupon } from "./coupons/evaluate";
 import { checkLowStockAndNotify } from "./stock-alert.server";
 import { reserveInventoryForOrder } from "./inventory.server";
 import {
@@ -45,10 +51,7 @@ import {
   reserveFlashSaleStock,
   type FlashSaleDoc,
 } from "./campaigns/flashSale.server";
-import {
-  advanceOrderStatus,
-  dispatchOrderEvent,
-} from "./orderWorkflow.server";
+import { advanceOrderStatus, dispatchOrderEvent } from "./orderWorkflow.server";
 
 const POINTS_PER_CURRENCY_REDEEM = 100;
 const MAX_LINE_ITEMS = 100;
@@ -101,10 +104,16 @@ export async function computeDeliveryChargeServer(
 
   // Read admin-configured delivery zones from Firestore settings
   let settingsZones: Array<{
-    id: string; labelEn: string; labelBn: string; charge: number;
-    etaDays: [number, number]; description: string; active: boolean; priority: number;
+    id: string;
+    labelEn: string;
+    labelBn: string;
+    charge: number;
+    etaDays: [number, number];
+    description: string;
+    active: boolean;
+    priority: number;
   }> = [];
-  let fallbackConfig: { fallbackZoneId: string; noZoneBehavior: "block" | "fallback" } = {
+  const fallbackConfig: { fallbackZoneId: string; noZoneBehavior: "block" | "fallback" } = {
     fallbackZoneId: "OUTSIDE_DHAKA",
     noZoneBehavior: "fallback",
   };
@@ -116,11 +125,13 @@ export async function computeDeliveryChargeServer(
     const sDoc = settingsDocs.get(settingsDocPath);
     if (sDoc?.exists) {
       const sd = sDoc.data as Record<string, unknown>;
-      const dz = sd["deliveryZones"] as {
-        zones?: typeof settingsZones;
-        fallbackZoneId?: string;
-        noZoneBehavior?: "block" | "fallback";
-      } | undefined;
+      const dz = sd["deliveryZones"] as
+        | {
+            zones?: typeof settingsZones;
+            fallbackZoneId?: string;
+            noZoneBehavior?: "block" | "fallback";
+          }
+        | undefined;
       if (dz?.zones && Array.isArray(dz.zones)) {
         settingsZones = dz.zones;
       }
@@ -221,9 +232,20 @@ export interface DeliverySnapshot {
 
 export interface PlaceOrderResult {
   orderId: string;
-  items: Array<{ productId: string; slug: string; title: string; image: string; price: number; quantity: number; subtotal: number; freeDelivery: boolean }>;
+  items: Array<{
+    productId: string;
+    slug: string;
+    title: string;
+    image: string;
+    price: number;
+    quantity: number;
+    subtotal: number;
+    freeDelivery: boolean;
+  }>;
   subtotal: number;
   discount: number;
+  /** Human-readable reason a submitted coupon was NOT applied (null if no coupon or it applied). */
+  couponRejection: string | null;
   promoDiscount: number;
   tax: number;
   taxRate: number;
@@ -287,8 +309,15 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
   const promoCode = req.promoCode ? req.promoCode.trim().toUpperCase() : null;
   const promoName = promoCode ? docPath(projectId, ["promoCodes", promoCode]) : null;
 
+  // Per-customer coupon counter (Coupon spec §5) — read in the SAME
+  // batch as the coupon itself so validation sees a consistent snapshot.
+  const couponCounterName = couponCode
+    ? docPath(projectId, [COUPON_CUSTOMER_COUNTERS_COLLECTION, `${couponCode}__${req.uid}`])
+    : null;
+
   const extraDocs: string[] = [];
   if (couponName) extraDocs.push(couponName);
+  if (couponCounterName) extraDocs.push(couponCounterName);
   if (promoName) extraDocs.push(promoName);
 
   const docs = await batchGetDocs(
@@ -401,56 +430,53 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
 
   const subtotal = round2(lines.reduce((s, l) => s + l.subtotal, 0));
 
-  // Coupon: re-validated server side, never trusted from the client.
+  // Coupon: re-validated server side via the canonical evaluation core,
+  // never trusted from the client. Multi-seller safety: a scoped coupon
+  // (seller/product/category) computes its discount ONLY over the
+  // eligible lines — no cross-seller discount leakage.
   let discount = 0;
   let appliedCoupon: string | null = null;
   let couponUpdateTime: string | null = null;
+  let couponBase = 0;
+  let couponSellerId: string | null = null;
+  let couponCounterExists = false;
+  let couponCounterUpdateTime: string | null = null;
+  let couponUses = 0;
+  let couponUserUses = 0;
+  let couponRejection: string | null = null;
   if (couponCode && couponName) {
     const cDoc = docs.get(couponName);
     if (cDoc?.exists) {
-      const c = cDoc.data;
-      const active = c["active"] === true;
-      const expiresAt = c["expiresAt"] == null ? null : Number(c["expiresAt"]);
-      const minSubtotal = c["minSubtotal"] == null ? 0 : Number(c["minSubtotal"]);
-      const usageLimit = c["usageLimit"] == null ? null : Number(c["usageLimit"]);
-      const uses = Number(c["uses"] ?? 0);
-      const type = String(c["type"] ?? "fixed");
-      const value = Number(c["value"] ?? 0);
-      const maxDiscount = c["maxDiscount"] == null ? null : Number(c["maxDiscount"]);
-      const couponSellerId = (c["sellerId"] as string | null) ?? null;
-      const couponProductIds = Array.isArray(c["productIds"]) ? (c["productIds"] as string[]) : [];
-
-      // For seller-specific coupons, validate that at least one product
-      // in the cart belongs to that seller. If productIds is specified,
-      // validate that at least one of those products is in the cart.
-      let sellerCouponValid = true;
-      if (couponSellerId) {
-        const sellerHasProductInCart = lines.some((l) => l.sellerId === couponSellerId);
-        if (!sellerHasProductInCart) sellerCouponValid = false;
-
-        // If productIds specified, at least one must be in the cart
-        if (couponProductIds.length > 0) {
-          const hasMatchingProduct = lines.some((l) => couponProductIds.includes(l.productId));
-          if (!hasMatchingProduct) sellerCouponValid = false;
-        }
-      }
-
-      const usable =
-        active &&
-        sellerCouponValid &&
-        (expiresAt == null || expiresAt > nowMs) &&
-        subtotal >= minSubtotal &&
-        (usageLimit == null || uses < usageLimit) &&
-        Number.isFinite(value) &&
-        value > 0;
-      if (usable) {
-        const rawDiscount = type === "percent" ? subtotal * (value / 100) : value;
-        // Cap discount at subtotal and at maxDiscount if specified
-        const cappedDiscount =
-          maxDiscount != null ? Math.min(rawDiscount, maxDiscount) : rawDiscount;
-        discount = round2(Math.min(subtotal, cappedDiscount));
+      const couponEval = couponForEvaluation(couponCode, cDoc.data);
+      couponUses = couponEval.uses;
+      const counterDoc = couponCounterName ? docs.get(couponCounterName) : undefined;
+      couponCounterExists = counterDoc?.exists === true;
+      couponCounterUpdateTime = counterDoc?.updateTime ?? null;
+      const userUses = couponCounterExists ? Number(counterDoc?.data["count"] ?? 0) : 0;
+      couponUserUses = userUses;
+      const evaluation = evaluateCoupon(
+        couponEval,
+        lines.map((l) => ({
+          productId: l.productId,
+          sellerId: l.sellerId,
+          categoryId: l.categoryId,
+          subcategoryId: l.subcategoryId,
+          subtotal: l.subtotal,
+        })),
+        userUses,
+        nowMs,
+      );
+      if (evaluation.ok) {
+        discount = evaluation.discount;
         appliedCoupon = couponCode;
         couponUpdateTime = cDoc.updateTime;
+        couponBase = evaluation.base;
+        couponSellerId = couponEval.sellerId;
+      } else {
+        // Legacy behavior: an unusable coupon silently does not apply
+        // (the order proceeds). The reason is surfaced in the response
+        // so the storefront can explain WHY it was skipped.
+        couponRejection = couponRejectionMessage(evaluation.reason);
       }
     }
   }
@@ -555,11 +581,14 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
   });
 
   // Aggregate per-seller delivery totals for settlement
-  const sellerDeliveryMap = new Map<string, {
-    sellerDeliveryCharge: number;   // Total absorbed by this seller
-    customerDeliveryCharge: number;  // Total customer-paid for this seller's products
-    deliveryLines: typeof deliveryLines;
-  }>();
+  const sellerDeliveryMap = new Map<
+    string,
+    {
+      sellerDeliveryCharge: number; // Total absorbed by this seller
+      customerDeliveryCharge: number; // Total customer-paid for this seller's products
+      deliveryLines: typeof deliveryLines;
+    }
+  >();
   let totalCustomerDelivery = 0;
   let totalSellerAbsorbed = 0;
 
@@ -570,7 +599,9 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
       deliveryLines: [] as typeof deliveryLines,
     };
     existing.sellerDeliveryCharge = round2(existing.sellerDeliveryCharge + dl.sellerAbsorbedCharge);
-    existing.customerDeliveryCharge = round2(existing.customerDeliveryCharge + dl.customerDeliveryCharge);
+    existing.customerDeliveryCharge = round2(
+      existing.customerDeliveryCharge + dl.customerDeliveryCharge,
+    );
     existing.deliveryLines.push(dl);
     sellerDeliveryMap.set(dl.sellerId, existing);
     totalCustomerDelivery = round2(totalCustomerDelivery + dl.customerDeliveryCharge);
@@ -613,8 +644,7 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
                 ? Math.min(Math.max(productTaxRate, 0), 100)
                 : Math.min(Math.max(globalRate, 0), 100);
             // Tax applies to this line's post-discount share
-            const lineAfterDiscount =
-              round2(l.subtotal * (subAfterDiscount / subtotal));
+            const lineAfterDiscount = round2(l.subtotal * (subAfterDiscount / subtotal));
             taxSum += round2((lineAfterDiscount * effectiveRate) / 100);
           }
           tax = round2(taxSum);
@@ -714,8 +744,7 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
     sellerDocPaths.length > 0 ? await batchGetDocs(projectId, sellerDocPaths) : new Map();
   const sellerCommissionRates = new Map<string, number>();
   const commissionConfig = siteSettingsData["commission"] as
-    | { defaultRate?: number; categoryBased?: boolean }
-    | undefined;
+    { defaultRate?: number; categoryBased?: boolean } | undefined;
   const globalDefault = (commissionConfig?.defaultRate ?? 8) / 100;
   for (const sid of sellerIds) {
     const sDoc = sellerDocs.get(docPath(projectId, ["sellers", sid]));
@@ -737,9 +766,10 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
   const allSubcategoryIds = lines
     .filter((l) => l.categoryId && l.subcategoryId)
     .map((l) => ({ categoryId: l.categoryId!, subcategoryId: l.subcategoryId! }));
-  const categoryCommissionCache = categoryBasedEnabled && allCategoryIds.length > 0
-    ? await resolveCategoryCommissions(allCategoryIds, allSubcategoryIds)
-    : new Map();
+  const categoryCommissionCache =
+    categoryBasedEnabled && allCategoryIds.length > 0
+      ? await resolveCategoryCommissions(allCategoryIds, allSubcategoryIds)
+      : new Map();
 
   // Build per-product commission rate map
   const productCommissionRates = new Map<string, number>();
@@ -833,15 +863,29 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
   // commits (inventory.server.ts — true Firestore transaction), so
   // two simultaneous orders can never both take the last unit.
 
-  // Coupon usage increment, guarded by the version we validated.
+  // Coupon redemption — ATOMIC with the order commit (single Firestore
+  // batch): global uses increment (guarded by the validated coupon
+  // version), per-customer counter, and the immutable redemption
+  // record (create-only — replays can never double-write). A
+  // concurrent last-usage collision aborts the WHOLE checkout: no
+  // partial state, no double redemption.
   if (appliedCoupon) {
-    writes.push({
-      transform: {
-        document: docPath(projectId, ["coupons", appliedCoupon]),
-        fieldTransforms: [{ fieldPath: "uses", increment: { integerValue: "1" } }],
-      },
-      ...(couponUpdateTime ? { currentDocument: { updateTime: couponUpdateTime } } : {}),
-    });
+    writes.push(
+      ...buildCouponRedemptionWrites(projectId, {
+        code: appliedCoupon,
+        userId: req.uid,
+        orderId,
+        discount,
+        base: couponBase,
+        couponUpdateTime,
+        couponUses,
+        counterExists: couponCounterExists,
+        counterUpdateTime: couponCounterUpdateTime,
+        counterUserUses: couponUserUses,
+        sellerId: couponSellerId,
+        nowMs,
+      }),
+    );
   }
 
   // Reward points deduction ledger entry.
@@ -906,15 +950,19 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
       const pRate = productCommissionRates.get(it.productId) ?? sellerRate;
       totalCommissionForSeller = round2(totalCommissionForSeller + it.subtotal * pRate);
     }
-    const commissionRate = sellerSubtotal > 0
-      ? totalCommissionForSeller / sellerSubtotal
-      : sellerRate;
+    const commissionRate =
+      sellerSubtotal > 0 ? totalCommissionForSeller / sellerSubtotal : sellerRate;
 
     // Use pre-computed per-product delivery liability from the delivery map
     const deliveryInfo = sellerDeliveryMap.get(sid)!;
-    const { sellerDeliveryCharge, customerDeliveryCharge: sellerCustomerDeliveryCharge, deliveryLines: sellerDeliveryLines } = deliveryInfo;
+    const {
+      sellerDeliveryCharge,
+      customerDeliveryCharge: sellerCustomerDeliveryCharge,
+      deliveryLines: sellerDeliveryLines,
+    } = deliveryInfo;
     // Per-seller freeDelivery: true only if ALL this seller's products have freeDelivery
-    const sellerAllFreeDelivery = sellerDeliveryLines.length > 0 && sellerDeliveryLines.every((dl) => dl.freeDelivery);
+    const sellerAllFreeDelivery =
+      sellerDeliveryLines.length > 0 && sellerDeliveryLines.every((dl) => dl.freeDelivery);
 
     // Compute full settlement breakdown with delivery snapshot
     const settlement = computeSellerSettlement({
@@ -1097,9 +1145,17 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
   // Concurrency-safe stock reservation (§2). Rare race loss → clean cancel.
   const reservation = await reserveInventoryForOrder(projectId, orderId, workflowCtx.items);
   if (!reservation.ok && reservation.state !== "reserved") {
-    await advanceOrderStatus(projectId, req.uid, orderId, "CANCELLED", `Cancelled: ${reservation.reason ?? "stock unavailable"}`);
+    await advanceOrderStatus(
+      projectId,
+      req.uid,
+      orderId,
+      "CANCELLED",
+      `Cancelled: ${reservation.reason ?? "stock unavailable"}`,
+    );
     await dispatchOrderEvent(projectId, orderId, "CANCELLED", workflowCtx);
-    throw new Error(reservation.reason ?? "Order could not be fulfilled — stock changed during checkout.");
+    throw new Error(
+      reservation.reason ?? "Order could not be fulfilled — stock changed during checkout.",
+    );
   }
 
   await advanceOrderStatus(projectId, req.uid, orderId, "INVENTORY_RESERVED", "Stock reserved");
@@ -1164,5 +1220,6 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
     sellerEarnings: sellerEarningsBreakdown,
     couponCode: appliedCoupon,
     promoCode: appliedPromo,
+    couponRejection,
   };
 }

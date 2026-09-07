@@ -337,18 +337,39 @@ service cloud.firestore {
 
     match /coupons/{code} {
       allow read: if true;
-      // Enterprise RBAC: marketing-capable roles (coupons.* permissions)
-      allow create: if roleIn(['super_admin', 'admin', 'platform_admin', 'content_admin', 'marketing_admin'])
-        || (isApprovedSeller()
-          && request.resource.data.sellerId == request.auth.uid
-          && request.resource.data.uses == 0);
-      allow update: if roleIn(['super_admin', 'admin', 'platform_admin', 'content_admin', 'marketing_admin'])
-        || (isApprovedSeller()
-          && resource.data.sellerId == request.auth.uid
-          && request.resource.data.sellerId == resource.data.sellerId
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['active', 'updatedAt']));
-      allow delete: if roleIn(['super_admin', 'admin', 'platform_admin', 'content_admin', 'marketing_admin'])
+      // Coupon v2 — ALL admin mutations are server-authoritative:
+      // the coupon admin core (role-verified, audited, service
+      // account) is the ONLY admin write path; client writes by
+      // admin roles are denied (client financial manipulation —
+      // forging `uses`, limits or discount values — is blocked).
+      // Sellers keep the legacy constrained self-service path:
+      // create own coupons starting at uses == 0, toggle only
+      // active/updatedAt, and delete only when never redeemed.
+      allow create: if isApprovedSeller()
+        && request.resource.data.sellerId == request.auth.uid
+        && request.resource.data.uses == 0;
+      allow update: if isApprovedSeller()
+        && resource.data.sellerId == request.auth.uid
+        && request.resource.data.sellerId == resource.data.sellerId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['active', 'updatedAt']);
+      allow delete: if isApprovedSeller()
+        && resource.data.sellerId == request.auth.uid
+        && resource.data.uses == 0;
+    }
+
+    // Immutable coupon redemption history — written ONLY by the
+    // checkout server commit (service account). Admins read all;
+    // a seller reads only redemptions of their own coupons.
+    match /couponRedemptions/{id} {
+      allow read: if roleIn(['super_admin', 'admin', 'platform_admin', 'content_admin', 'marketing_admin', 'finance_admin'])
         || (isApprovedSeller() && resource.data.sellerId == request.auth.uid);
+      allow write: if false;
+    }
+
+    // Per-customer coupon counters — pure server data (customer
+    // redemption history), never readable or writable by any client.
+    match /couponCustomerCounters/{id} {
+      allow read, write: if false;
     }
 
     match /promoCodes/{code} {

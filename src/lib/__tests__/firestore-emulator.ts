@@ -411,11 +411,32 @@ export function createFirestoreEmulator(port = 8080): Promise<Server> {
           if (orderBys.length > 0) {
             results.sort((a, b) => {
               for (const ob of orderBys) {
-                const av = Number(decodeValue(a.fields[ob.field.fieldPath as string] as Record<string, unknown>) ?? 0);
-                const bv = Number(decodeValue(b.fields[ob.field.fieldPath as string] as Record<string, unknown>) ?? 0);
-                const cmp = Number.isNaN(av) || Number.isNaN(bv)
-                  ? String(decodeValue(a.fields[ob.field.fieldPath as string] as Record<string, unknown>) ?? "").localeCompare(String(decodeValue(b.fields[ob.field.fieldPath as string] as Record<string, unknown>) ?? ""))
-                  : av < bv ? -1 : av > bv ? 1 : 0;
+                const av = Number(
+                  decodeValue(a.fields[ob.field.fieldPath as string] as Record<string, unknown>) ??
+                    0,
+                );
+                const bv = Number(
+                  decodeValue(b.fields[ob.field.fieldPath as string] as Record<string, unknown>) ??
+                    0,
+                );
+                const cmp =
+                  Number.isNaN(av) || Number.isNaN(bv)
+                    ? String(
+                        decodeValue(
+                          a.fields[ob.field.fieldPath as string] as Record<string, unknown>,
+                        ) ?? "",
+                      ).localeCompare(
+                        String(
+                          decodeValue(
+                            b.fields[ob.field.fieldPath as string] as Record<string, unknown>,
+                          ) ?? "",
+                        ),
+                      )
+                    : av < bv
+                      ? -1
+                      : av > bv
+                        ? 1
+                        : 0;
                 if (cmp !== 0) return ob.direction === "DESCENDING" ? -cmp : cmp;
               }
               return 0;
@@ -494,13 +515,43 @@ export function createFirestoreEmulator(port = 8080): Promise<Server> {
               if (current !== readUpdateTime) {
                 txReadSets.delete(commitTxId);
                 res.statusCode = 409;
-                res.end(JSON.stringify({
-                  error: { code: 409, message: "ABORTED: transaction conflict, retry" },
-                }));
+                res.end(
+                  JSON.stringify({
+                    error: { code: 409, message: "ABORTED: transaction conflict, retry" },
+                  }),
+                );
                 return;
               }
             }
             txReadSets.delete(commitTxId);
+          }
+
+          // ATOMICITY (matches real Firestore): every write's
+          // currentDocument precondition is validated FIRST — a single
+          // failure rejects the WHOLE commit with NOTHING applied.
+          // (Previously writes before the failing one were applied —
+          // real Firestore never does partial commits.)
+          const preconditionFailure = writes.some((write) => {
+            const name =
+              (write.update as { name?: string } | undefined)?.name ??
+              (write.delete as string | undefined);
+            if (!name) return false;
+            const match = name.match(/\/databases\/\(default\)\/documents\/(.+)$/);
+            const path = match ? match[1] : "";
+            const precondition = write.currentDocument as Record<string, unknown> | undefined;
+            return !checkPrecondition(store.get(path), precondition);
+          });
+          if (preconditionFailure) {
+            res.statusCode = 409;
+            res.end(
+              JSON.stringify({
+                error: {
+                  code: 409,
+                  message: "FAILED_PRECONDITION: batch write precondition failed",
+                },
+              }),
+            );
+            return;
           }
 
           for (const write of writes) {

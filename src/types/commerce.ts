@@ -22,13 +22,13 @@ export interface Product {
   id: string;
   title: string;
   slug: string;
-  shortDescription: string;  // NEW: short description for cards/previews
+  shortDescription: string; // NEW: short description for cards/previews
   description: string;
-  brand: string | null;      // NEW: product brand
+  brand: string | null; // NEW: product brand
   price: number;
   compareAtPrice: number | null;
-  costPrice: number | null;  // NEW: seller/admin only
-  tax: number;               // NEW: tax percentage (0-100)
+  costPrice: number | null; // NEW: seller/admin only
+  tax: number; // NEW: tax percentage (0-100)
   images: string[];
   categoryId: string;
   categorySlug: string;
@@ -39,7 +39,7 @@ export interface Product {
   reviewCount: number;
   tags: string[];
   featured: boolean;
-  freeDelivery: boolean;  // Seller-controlled: true = seller pays zone charge, false = customer pays
+  freeDelivery: boolean; // Seller-controlled: true = seller pays zone charge, false = customer pays
   sellerId?: string | null;
   sku?: string | null;
   status?: "draft" | "published" | "archived";
@@ -113,12 +113,7 @@ export interface PaymentInfo {
 }
 
 export type OrderStatus =
-  | "pending"
-  | "confirmed"
-  | "processing"
-  | "shipped"
-  | "delivered"
-  | "cancelled";
+  "pending" | "confirmed" | "processing" | "shipped" | "delivered" | "cancelled";
 
 export interface OrderItem {
   productId: string;
@@ -137,10 +132,10 @@ export interface TrackingEvent {
 }
 
 export interface CourierInfo {
-  name: string | null;        // Courier company name (e.g. "Steadfast", "RedX")
+  name: string | null; // Courier company name (e.g. "Steadfast", "RedX")
   trackingNumber: string | null; // Tracking number from courier
-  trackingUrl: string | null;  // Optional URL to track on courier site
-  shippedAt: number | null;    // Timestamp when handed to courier
+  trackingUrl: string | null; // Optional URL to track on courier site
+  shippedAt: number | null; // Timestamp when handed to courier
   estimatedDays: number | null; // Estimated delivery days
 }
 
@@ -166,14 +161,14 @@ export interface Order {
   shippingAddress: ShippingAddress;
   deliveryAddressSnapshot?: DeliveryAddressSnapshot | null;
   // Delivery zone snapshot (saved at checkout, never recalculated)
-  deliveryZone?: string | null;       // "INSIDE_DHAKA" | "DHAKA_SUBURB" | "OUTSIDE_DHAKA"
-  deliveryZoneId?: string | null;      // Zone ID at order time
-  deliveryZoneName?: string | null;    // Zone name at order time
-  deliveryZoneLabel?: string | null;  // Human-readable label
-  deliveryCharge?: number | null;     // Charge at time of order (BDT)
-  zoneCharge?: number | null;          // Admin-configured zone charge snapshot
-  customerDeliveryCharge?: number | null;  // What customer paid for delivery
-  sellerDeliveryCharge?: number | null;    // What seller(s) absorbed
+  deliveryZone?: string | null; // "INSIDE_DHAKA" | "DHAKA_SUBURB" | "OUTSIDE_DHAKA"
+  deliveryZoneId?: string | null; // Zone ID at order time
+  deliveryZoneName?: string | null; // Zone name at order time
+  deliveryZoneLabel?: string | null; // Human-readable label
+  deliveryCharge?: number | null; // Charge at time of order (BDT)
+  zoneCharge?: number | null; // Admin-configured zone charge snapshot
+  customerDeliveryCharge?: number | null; // What customer paid for delivery
+  sellerDeliveryCharge?: number | null; // What seller(s) absorbed
   deliverySnapshot?: {
     zoneId: string;
     zoneName: string;
@@ -213,4 +208,13 @@ export interface Coupon {
   sellerId: string | null;
   productIds: string[];
   maxDiscount: number | null;
+  // ── Coupon v2 (additive; older docs default these to null/[]) ──
+  /** window start, epoch ms — null/0 = open start */
+  startAt?: number | null;
+  /** per-customer usage limit — null = unlimited */
+  perCustomerLimit?: number | null;
+  /** category scope — empty = no category restriction */
+  categoryIds?: string[];
+  createdAt?: number;
+  updatedAt?: number;
 }
