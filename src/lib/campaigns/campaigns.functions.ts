@@ -14,31 +14,32 @@
  * Additive only — no existing storefront code is modified by this module.
  */
 import { createServerFn } from "@tanstack/react-start";
-import { getProjectId } from "../firebase-admin.server";
+import { getProjectId, batchGetDocs, docPath } from "../firebase-admin.server";
 import { getActiveCampaignHome } from "./campaigns.server";
 
-export const getPublicCampaignHome = createServerFn({ method: "GET" })
-  .handler(async () => {
-    try {
-      const projectId = getProjectId();
-      return await getActiveCampaignHome(projectId);
-    } catch {
-      // Campaign infrastructure is best-effort on the storefront —
-      // a campaign error must never break the homepage.
-      return {
-        campaign: null,
-        home: {
-          campaignId: null,
-          campaignName: null,
-          heroBanner: null,
-          campaignBanner: null,
-          flashSaleSection: false,
-          featuredProductIds: [],
-          switchedAt: null,
-        },
-      };
-    }
-  });
+import type { PublicFlashSale } from "./flashSale.server";
+
+export const getPublicCampaignHome = createServerFn({ method: "GET" }).handler(async () => {
+  try {
+    const projectId = getProjectId();
+    return await getActiveCampaignHome(projectId);
+  } catch {
+    // Campaign infrastructure is best-effort on the storefront —
+    // a campaign error must never break the homepage.
+    return {
+      campaign: null,
+      home: {
+        campaignId: null,
+        campaignName: null,
+        heroBanner: null,
+        campaignBanner: null,
+        flashSaleSection: false,
+        featuredProductIds: [],
+        switchedAt: null,
+      },
+    };
+  }
+});
 
 /**
  * Public flash-sale view for the storefront (Prompt 05 §5 wiring).
@@ -47,15 +48,32 @@ export const getPublicCampaignHome = createServerFn({ method: "GET" })
  * so the storefront can drop the section. Never throws — flash-sale
  * failures must never break a customer page.
  */
-export const getPublicCampaignFlashSale = createServerFn({ method: "GET" })
-  .handler(async () => {
-    try {
-      const projectId = getProjectId();
-      const home = await getActiveCampaignHome(projectId);
-      if (!home.campaign || !home.home.flashSaleSection) return null;
-      const { getPublicActiveFlashSale } = await import("./flashSale.server");
-      return await getPublicActiveFlashSale(projectId, home.campaign.campaignId);
-    } catch {
-      return null;
-    }
-  });
+export const getPublicCampaignFlashSale = createServerFn({ method: "GET" }).handler(async () => {
+  try {
+    const projectId = getProjectId();
+    const home = await getActiveCampaignHome(projectId);
+    if (!home.campaign || !home.home.flashSaleSection) return null;
+    const { getPublicActiveFlashSale } = await import("./flashSale.server");
+    const sale = await getPublicActiveFlashSale(projectId, home.campaign.campaignId);
+    if (!sale?.productId) return sale;
+    // Reserve→order wiring: attach the PUBLIC product info the bar
+    // needs for its Buy Now link (all product fields here are
+    // already public on every storefront listing — sanitized).
+    const path = docPath(projectId, ["products", sale.productId]);
+    const docs = await batchGetDocs(projectId, [path]);
+    const p = docs.get(path);
+    if (!p?.exists) return sale;
+    const d = p.data as Record<string, unknown>;
+    const enriched: PublicFlashSale = {
+      ...sale,
+      product: {
+        slug: (d["slug"] as string | null) ?? null,
+        title: (d["title"] as string | null) ?? null,
+        image: (d["image"] as string | null) ?? (d["images"] as string[] | null)?.[0] ?? null,
+      },
+    };
+    return enriched;
+  } catch {
+    return null;
+  }
+});

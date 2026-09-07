@@ -42,7 +42,9 @@ function CampaignFlashSaleBar() {
   });
   if (!fs) return null;
   const taka = (minor: number) => `৳${(minor / 100).toLocaleString("en-US")}`;
-  const discount = Math.round(((fs.originalPriceMinor - fs.salePriceMinor) / fs.originalPriceMinor) * 100);
+  const discount = Math.round(
+    ((fs.originalPriceMinor - fs.salePriceMinor) / fs.originalPriceMinor) * 100,
+  );
   return (
     <section className="rounded-2xl border-2 border-red-500 bg-white p-4 sm:p-5 shadow-lg">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -65,13 +67,23 @@ function CampaignFlashSaleBar() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+        <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-600">
           <span className="rounded-full bg-slate-100 px-3 py-1.5">
             {fs.stockRemaining} left in stock
           </span>
           <span className="rounded-full bg-slate-100 px-3 py-1.5">
             Max {fs.perCustomerLimit} per customer
           </span>
+          {fs.product?.slug ? (
+            <Link
+              to="/product/$slug"
+              params={{ slug: fs.product.slug }}
+              className="inline-flex items-center gap-1.5 rounded-full bg-slate-900 px-4 py-1.5 text-xs font-bold text-white shadow-md transition-colors hover:bg-slate-700"
+            >
+              <ShoppingBag className="h-3.5 w-3.5" />
+              Buy Now
+            </Link>
+          ) : null}
         </div>
       </div>
     </section>
@@ -84,7 +96,8 @@ export const Route = createFileRoute("/flash-sales")({
   head: () => ({
     meta: buildMetaTags({
       title: "Flash Sales — Mega Deals & Discounts on AVENTA SHOP",
-      description: "AVENTA SHOP Flash Sales: Unbeatable mega discounts on electronics, fashion, home essentials and more! Limited quantities, hurry before stock runs out.",
+      description:
+        "AVENTA SHOP Flash Sales: Unbeatable mega discounts on electronics, fashion, home essentials and more! Limited quantities, hurry before stock runs out.",
       path: "/flash-sales",
       type: "website",
     }),
@@ -168,8 +181,12 @@ export function FlashSalesPage() {
   // States
   const [visibleCount, setVisibleCount] = useState<number>(12);
   const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
-  const [activeFilter, setActiveFilter] = useState<"all" | "mega" | "under1000" | "under2500">("all");
-  const [sortBy, setSortBy] = useState<"discount-desc" | "price-asc" | "price-desc" | "popular">("discount-desc");
+  const [activeFilter, setActiveFilter] = useState<"all" | "mega" | "under1000" | "under2500">(
+    "all",
+  );
+  const [sortBy, setSortBy] = useState<"discount-desc" | "price-asc" | "price-desc" | "popular">(
+    "discount-desc",
+  );
   const [toastText, setToastText] = useState<string | null>(null);
 
   // Query Products from Firebase
@@ -259,13 +276,16 @@ export function FlashSalesPage() {
     }, 350);
   }, []);
 
-  const handleAddToCart = useCallback((product: Product, _e: React.MouseEvent<HTMLButtonElement>) => {
-    const name = product.title || (product as { name?: string }).name || "Item";
-    setToastText(`Added "${name}" to cart!`);
-    setTimeout(() => {
-      setToastText(null);
-    }, 3200);
-  }, []);
+  const handleAddToCart = useCallback(
+    (product: Product, _e: React.MouseEvent<HTMLButtonElement>) => {
+      const name = product.title || (product as { name?: string }).name || "Item";
+      setToastText(`Added "${name}" to cart!`);
+      setTimeout(() => {
+        setToastText(null);
+      }, 3200);
+    },
+    [],
+  );
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col font-sans selection:bg-[#f57224] selection:text-white">
@@ -274,7 +294,11 @@ export function FlashSalesPage() {
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 space-y-6">
         <div className="mb-3">
-          <BackButton fallbackTo="/shop" label="Back" className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-200 active:scale-95" />
+          <BackButton
+            fallbackTo="/shop"
+            label="Back"
+            className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-200 active:scale-95"
+          />
         </div>
         {/* Breadcrumb Navigation */}
         <div className="flex items-center justify-between">
@@ -337,7 +361,10 @@ export function FlashSalesPage() {
             {/* Banner Right: Live Countdown Widget */}
             <div className="w-full md:w-auto bg-[#0f172a]/95 backdrop-blur-md rounded-xl p-4 sm:p-5 border border-white/10 shadow-2xl flex flex-col items-center md:items-end gap-2.5">
               <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-orange-400">
-                <Clock className="w-4 h-4 animate-spin text-orange-400" style={{ animationDuration: "8s" }} />
+                <Clock
+                  className="w-4 h-4 animate-spin text-orange-400"
+                  style={{ animationDuration: "8s" }}
+                />
                 <span>Ends In</span>
               </div>
 
@@ -347,7 +374,9 @@ export function FlashSalesPage() {
                   <div className="bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700 rounded-lg w-12 sm:w-14 h-12 sm:h-14 flex items-center justify-center text-xl sm:text-2xl font-black text-white shadow-inner font-mono">
                     {formatTwoDigits(countdown.hours)}
                   </div>
-                  <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mt-1">Hours</span>
+                  <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mt-1">
+                    Hours
+                  </span>
                 </div>
 
                 <span className="text-xl font-bold text-orange-400 pb-4">:</span>
@@ -357,7 +386,9 @@ export function FlashSalesPage() {
                   <div className="bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700 rounded-lg w-12 sm:w-14 h-12 sm:h-14 flex items-center justify-center text-xl sm:text-2xl font-black text-white shadow-inner font-mono">
                     {formatTwoDigits(countdown.minutes)}
                   </div>
-                  <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mt-1">Mins</span>
+                  <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mt-1">
+                    Mins
+                  </span>
                 </div>
 
                 <span className="text-xl font-bold text-orange-400 pb-4">:</span>
@@ -367,7 +398,9 @@ export function FlashSalesPage() {
                   <div className="bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700 rounded-lg w-12 sm:w-14 h-12 sm:h-14 flex items-center justify-center text-xl sm:text-2xl font-black text-amber-400 shadow-inner font-mono">
                     {formatTwoDigits(countdown.seconds)}
                   </div>
-                  <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mt-1">Secs</span>
+                  <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mt-1">
+                    Secs
+                  </span>
                 </div>
               </div>
             </div>
@@ -440,7 +473,11 @@ export function FlashSalesPage() {
             <span className="text-xs text-slate-500 font-medium whitespace-nowrap">Sort by:</span>
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as "discount-desc" | "price-asc" | "price-desc" | "popular")}
+              onChange={(e) =>
+                setSortBy(
+                  e.target.value as "discount-desc" | "price-asc" | "price-desc" | "popular",
+                )
+              }
               className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#f57224] transition-all"
             >
               <option value="discount-desc">Highest Discount</option>
@@ -467,7 +504,9 @@ export function FlashSalesPage() {
             </div>
             <div>
               <h3 className="text-base font-bold text-slate-800">Failed to load Flash Sales</h3>
-              <p className="text-xs text-slate-500 mt-1">Please check your network connection and try again.</p>
+              <p className="text-xs text-slate-500 mt-1">
+                Please check your network connection and try again.
+              </p>
             </div>
             <button
               type="button"
@@ -491,7 +530,8 @@ export function FlashSalesPage() {
             <div className="space-y-1">
               <h3 className="text-lg font-bold text-slate-800">No Flash Sale Products Available</h3>
               <p className="text-xs sm:text-sm text-slate-500 max-w-xs mx-auto">
-                All current flash sale items are either sold out or do not match your filter settings.
+                All current flash sale items are either sold out or do not match your filter
+                settings.
               </p>
             </div>
 
@@ -522,7 +562,7 @@ export function FlashSalesPage() {
               {displayedProducts.map((product) => (
                 <div key={product.id} className="flex flex-col h-full">
                   <ProductCard product={product} onAddToCart={handleAddToCart} />
-                  
+
                   {/* Daraz Flash Sale Simulated Stock Progress Bar */}
                   <div className="mt-1.5 bg-white p-2 rounded-lg border border-slate-100 shadow-2xs space-y-1">
                     <div className="flex items-center justify-between text-[10px] text-slate-500 font-semibold">
@@ -544,8 +584,12 @@ export function FlashSalesPage() {
             {hasMore && (
               <div className="flex flex-col items-center justify-center pt-2 space-y-2">
                 <p className="text-xs text-slate-500 font-medium">
-                  Showing <span className="font-bold text-slate-800">{displayedProducts.length}</span> of{" "}
-                  <span className="font-bold text-slate-800">{filteredAndSortedProducts.length}</span> flash deals
+                  Showing{" "}
+                  <span className="font-bold text-slate-800">{displayedProducts.length}</span> of{" "}
+                  <span className="font-bold text-slate-800">
+                    {filteredAndSortedProducts.length}
+                  </span>{" "}
+                  flash deals
                 </p>
 
                 <button
@@ -584,7 +628,7 @@ export function FlashSalesPage() {
 
       {/* Footer and Mobile Nav */}
       <SiteFooter />
-<MobileBottomNav />
+      <MobileBottomNav />
     </div>
   );
 }

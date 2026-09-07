@@ -272,6 +272,12 @@ export async function releaseFlashSaleStock(
 export interface PublicFlashSale {
   campaignId: string;
   productId: string | null;
+  /**
+   * Storefront convenience (attached by getPublicCampaignFlashSale):
+   * the sale product's public listing info for the Buy Now link.
+   * Absent when the sale has no productId or the product doc is gone.
+   */
+  product?: { slug: string | null; title: string | null; image: string | null } | null;
   salePriceMinor: number;
   originalPriceMinor: number;
   stockRemaining: number;
