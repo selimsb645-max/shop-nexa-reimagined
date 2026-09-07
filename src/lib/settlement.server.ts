@@ -34,6 +34,17 @@ import {
   type FsWrite,
 } from "./firebase-admin.server";
 import { SETTLEMENT_HOLD_DAYS } from "@/types/settlement";
+import {
+  LEGACY_RESOLUTION_FROZEN,
+  LEGACY_WITHDRAWALS_FROZEN,
+  isV2WithdrawalDoc,
+  legacyResolutionFrozenError,
+  legacyWithdrawalsFrozenError,
+} from "./finance/rail-mode.server";
+import {
+  SETTLEMENTS_COLLECTION as V2_SETTLEMENTS,
+  settlementDocId as v2SettlementDocId,
+} from "./finance/settlements.server";
 import type {
   SettlementStatus,
   PayoutStatus,
@@ -48,6 +59,22 @@ function round2(n: number): number {
 }
 
 const SETTLEMENT_TX = "settlementTx";
+
+/**
+ * CANONICAL RAIL (Sep 7 2026): an order the v2 engine has settled must NEVER
+ * also be credited on the legacy rail — that would pay the seller twice for
+ * the same order. True when a v2 settlement doc exists for (orderId, sellerId).
+ */
+async function isOrderV2Covered(
+  projectId: string,
+  orderId: string,
+  sellerId: string,
+): Promise<boolean> {
+  const name = docPath(projectId, [V2_SETTLEMENTS, v2SettlementDocId(orderId, sellerId)]);
+  const docs = await batchGetDocs(projectId, [name]);
+  const doc = docs.get(name);
+  return Boolean(doc && doc.exists);
+}
 const WALLET_TX = "walletTx";
 const WITHDRAWALS = "withdrawals";
 
@@ -457,6 +484,12 @@ export async function releaseSettlementIfEligible(input: {
     return { released: false, amount: null };
   }
 
+  // CANONICAL RAIL (Sep 7 2026): v2-covered orders are released by the v2
+  // engine (settlements → ledger). Never credit them on the legacy rail.
+  if (await isOrderV2Covered(projectId, input.orderId, input.sellerId)) {
+    return { released: false, amount: null };
+  }
+
   const nowMs = Date.now();
 
   const writes: FsWrite[] = [
@@ -519,6 +552,7 @@ export async function releaseSettlementIfEligible(input: {
 export async function batchReleaseSettlements(sellerId: string): Promise<{
   releasedCount: number;
   totalReleased: number;
+  skippedV2Covered: number;
 }> {
   const projectId = getProjectId();
   const token = await getAccessToken();
@@ -545,7 +579,7 @@ export async function batchReleaseSettlements(sellerId: string): Promise<{
     },
   );
 
-  if (!res.ok) return { releasedCount: 0, totalReleased: 0 };
+  if (!res.ok) return { releasedCount: 0, totalReleased: 0, skippedV2Covered: 0 };
 
   const json = (await res.json()) as Array<{
     document?: { name: string; fields?: Record<string, FsValue> };
@@ -553,7 +587,31 @@ export async function batchReleaseSettlements(sellerId: string): Promise<{
   const nowMs = Date.now();
   let releasedCount = 0;
   let totalReleased = 0;
+  let skippedV2Covered = 0;
   const writes: FsWrite[] = [];
+
+  // CANONICAL RAIL (Sep 7 2026): v2-covered orders are released by the v2
+  // engine. Check coverage in ONE batched read, then skip them here.
+  const candidateOrderIds: string[] = [];
+  for (const row of json) {
+    if (!row.document) continue;
+    candidateOrderIds.push(row.document.name.split("/").pop()!);
+  }
+  const coverage = new Set<string>();
+  if (candidateOrderIds.length > 0) {
+    const coveredDocs = await batchGetDocs(
+      projectId,
+      candidateOrderIds.map((orderId) =>
+        docPath(projectId, [V2_SETTLEMENTS, v2SettlementDocId(orderId, sellerId)]),
+      ),
+    );
+    for (const orderId of candidateOrderIds) {
+      const doc = coveredDocs.get(
+        docPath(projectId, [V2_SETTLEMENTS, v2SettlementDocId(orderId, sellerId)]),
+      );
+      if (doc && doc.exists) coverage.add(orderId);
+    }
+  }
 
   for (const row of json) {
     if (!row.document) continue;
@@ -564,6 +622,10 @@ export async function batchReleaseSettlements(sellerId: string): Promise<{
     const orderId = row.document.name.split("/").pop()!;
 
     if (nowMs < eligibleDate) continue;
+    if (coverage.has(orderId)) {
+      skippedV2Covered++;
+      continue;
+    }
 
     // Update seller order settlement → available
     writes.push({
@@ -622,7 +684,7 @@ export async function batchReleaseSettlements(sellerId: string): Promise<{
     await commitWrites(projectId, writes);
   }
 
-  return { releasedCount, totalReleased: round2(totalReleased) };
+  return { releasedCount, totalReleased: round2(totalReleased), skippedV2Covered };
 }
 
 // ====================================================================
@@ -756,6 +818,10 @@ export async function requestSettlementWithdrawal(input: {
   method: "bank" | "bkash" | "nagad" | "rocket";
   destination: string;
 }): Promise<{ withdrawalId: string; remainingBalance: number }> {
+  // CANONICAL RAIL FREEZE (Sep 7 2026): no NEW legacy withdrawals. Sellers
+  // withdraw via the v2 wallet (requestWalletWithdrawal). In-flight legacy
+  // requests are resolved by processSettlementWithdrawal below.
+  if (LEGACY_WITHDRAWALS_FROZEN) throw legacyWithdrawalsFrozenError();
   const projectId = getProjectId();
   const token = await getAccessToken();
   const MIN_WITHDRAWAL = 10;
@@ -904,6 +970,16 @@ export async function processSettlementWithdrawal(input: {
 
   const withdrawDoc = await withdrawRes.json();
   const withdrawData = fromFsFields(withdrawDoc.fields ?? {});
+  // CANONICAL RAIL (Sep 7 2026): after all in-flight legacy withdrawals have
+  // been resolved, the resolution path itself is frozen (stage 2).
+  if (LEGACY_RESOLUTION_FROZEN) throw legacyResolutionFrozenError();
+  // v2-shaped withdrawals must be processed by the v2 engine only — the
+  // legacy writer would create legacy walletTx entries against v2 money.
+  if (isV2WithdrawalDoc(withdrawData)) {
+    throw new Error(
+      "finance/v2-withdrawal-use-v2-console: this is a v2 wallet withdrawal — process it via processWalletWithdrawal (v2 admin wallets console).",
+    );
+  }
   const amount = Number(withdrawData.amount ?? 0);
   const method = String(withdrawData.method ?? "bank");
   const currentStatus = String(withdrawData.status ?? "pending");

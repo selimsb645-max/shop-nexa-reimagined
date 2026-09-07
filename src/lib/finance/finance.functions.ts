@@ -300,3 +300,91 @@ export const migrateLegacyWallet = createServerFn({ method: "POST" })
     const { migrateLegacyWalletTx } = await import("./wallet.server");
     return migrateLegacyWalletTx(projectId, uid, data.sellerId);
   });
+
+// ────────────────────────────────────────────────────────────────────
+// 11. ADMIN — CROSS-RAIL RECONCILIATION (finance.reconcile; report-only)
+// ────────────────────────────────────────────────────────────────────
+
+const crossRailSchema = z.object({
+  idToken: z.string().min(10),
+  sellerId: z.string().min(6).max(64).optional(),
+});
+
+export const getCrossRailReconciliation = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => crossRailSchema.parse(data))
+  .handler(async ({ data }) => {
+    const projectId = getProjectId();
+    const { requireFinancePermission } = await import("./settlementBatch.server");
+    const { verifyIdToken } = await import("../firebase-admin.server");
+    const { uid } = await verifyIdToken(data.idToken);
+    await requireFinancePermission(projectId, uid, "finance.reconcile");
+    const { runCrossRailReconciliation, runCrossRailReconciliationAll } =
+      await import("./crossRail.server");
+    if (data.sellerId) {
+      return {
+        mode: "seller" as const,
+        report: await runCrossRailReconciliation(projectId, data.sellerId),
+      };
+    }
+    return { mode: "all" as const, result: await runCrossRailReconciliationAll(projectId) };
+  });
+
+// ────────────────────────────────────────────────────────────────────
+// 12. ADMIN — WITHDRAWAL MIGRATION REPORT (finance.reconcile; report-only)
+// ────────────────────────────────────────────────────────────────────
+
+export const getWithdrawalMigrationReport = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => crossRailSchema.parse(data))
+  .handler(async ({ data }) => {
+    const projectId = getProjectId();
+    const { requireFinancePermission } = await import("./settlementBatch.server");
+    const { verifyIdToken } = await import("../firebase-admin.server");
+    const { uid } = await verifyIdToken(data.idToken);
+    await requireFinancePermission(projectId, uid, "finance.reconcile");
+    if (!data.sellerId) {
+      throw new Error("sellerId is required for the withdrawal migration report");
+    }
+    const { reportWithdrawalMigration } = await import("./crossRail.server");
+    return reportWithdrawalMigration(projectId, data.sellerId);
+  });
+
+// ────────────────────────────────────────────────────────────────────
+// 13. ADMIN — V2 RELEASE SWEEP (finance.settle + fresh auth)
+//
+// Activates the v2 return-window release engine (advanceReturnWindow-
+// Settlements). The sweep is idempotent (deterministic settlement ids
+// + transition guard) and REFUSES to run while any order is credited on
+// both rails (double-credit conflicts) — resolve those first.
+// ────────────────────────────────────────────────────────────────────
+
+const releaseSweepSchema = z.object({ idToken: z.string().min(10) });
+
+export const runReleaseSweep = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => releaseSweepSchema.parse(data))
+  .handler(async ({ data }) => {
+    const projectId = getProjectId();
+    const { requireFreshAuth, requireFinancePermission } = await import("./settlementBatch.server");
+    const uid = await requireFreshAuth(data.idToken);
+    await requireFinancePermission(projectId, uid, "finance.settlement");
+    const { runCrossRailReconciliationAll } = await import("./crossRail.server");
+    const reconciliation = await runCrossRailReconciliationAll(projectId);
+    if (!reconciliation.clean) {
+      // Never sweep while any order is credited on both rails — the sweep
+      // would release v2 money on top of legacy-released money.
+      return {
+        blocked: true as const,
+        reason: "REQUIRES_MANUAL_REVIEW" as const,
+        requiresReview: reconciliation.requiresReview,
+        released: 0,
+        eligible: 0,
+      };
+    }
+    const { advanceReturnWindowSettlements, readFinanceConfig } =
+      await import("./settlements.server");
+    const config = await readFinanceConfig(projectId);
+    const result = await advanceReturnWindowSettlements(projectId, config);
+    return {
+      blocked: false as const,
+      ...result,
+    };
+  });

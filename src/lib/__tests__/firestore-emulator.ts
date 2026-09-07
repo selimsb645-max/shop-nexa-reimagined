@@ -155,17 +155,23 @@ function getNestedField(fields: Record<string, unknown>, dottedPath: string): un
   for (const part of parts) {
     if (!current || typeof current !== "object") return undefined;
     const curr = current as Record<string, unknown>;
+    let next: unknown;
     if (part in curr) {
-      current = curr[part];
+      next = curr[part];
     } else {
-      // Try nested mapValue
-      const mv = curr[part] as { mapValue?: { fields?: Record<string, unknown> } } | undefined;
-      if (mv?.mapValue?.fields) {
-        current = mv.mapValue.fields;
+      // The value at this level may live inside a mapValue wrapper
+      const mv = (curr as { mapValue?: { fields?: Record<string, unknown> } }).mapValue?.fields;
+      if (mv && part in mv) {
+        next = mv[part];
       } else {
         return undefined;
       }
     }
+    // Unwrap mapValue containers so the next dotted segment can descend
+    if (next && typeof next === "object" && "mapValue" in (next as Record<string, unknown>)) {
+      next = (next as { mapValue: { fields: Record<string, unknown> } }).mapValue.fields;
+    }
+    current = next;
   }
   return current;
 }

@@ -547,19 +547,25 @@ service cloud.firestore {
         allow delete: if isSuperAdmin();
       }
 
+      // CANONICAL RAIL (Sep 7 2026): customer wallet/ledger docs are
+      // server-write-only (Admin SDK / verified server functions).
+      // Verified: NO client-side code writes these collections (all
+      // writers are server fns: giftcards.server, wallet.server,
+      // checkout.server). Historical records stay immutable + auditable;
+      // this collection is never an authoritative balance source.
       match /walletTx/{txId} {
         allow read: if isSelf(uid) || isAdmin();
-        allow write: if isAdmin();
+        allow write: if false;
       }
 
       match /rewardTx/{txId} {
         allow read: if isSelf(uid) || isAdmin();
-        allow write: if isAdmin();
+        allow write: if false;
       }
 
       match /referrals/{refId} {
         allow read: if isSelf(uid) || isAdmin();
-        allow write: if isAdmin();
+        allow write: if false;
       }
 
       match /addresses/{addressId} {

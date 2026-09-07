@@ -490,7 +490,7 @@ describe("money-flow: promo checkout completes after the order commits", () => {
 // D. Order → commission → wallet lifecycle (legacy rail)
 // ====================================================================
 describe("money-flow: delivered order → hold → release → wallet (legacy rail)", () => {
-  it("credits the wallet EXACTLY once and reverses cleanly on refund", async () => {
+  it("never double-credits a v2-covered order on the legacy rail and reverses cleanly on refund (CANONICAL RAIL, Sep 7 2026)", async () => {
     await seedSeller(SELLER_A, 0.08);
     await seedProduct("pa", SELLER_A, 1000);
 
@@ -539,12 +539,14 @@ describe("money-flow: delivered order → hold → release → wallet (legacy ra
       },
     });
 
+    // CANONICAL RAIL (Sep 7 2026): this order was placed through the current
+    // checkout, which already wrote a v2 settlement — so the legacy release
+    // MUST skip it (single-rail credit; the v2 engine owns this order).
     const released = await releaseSettlementIfEligible({
       sellerId: SELLER_A,
       orderId: result.orderId,
     });
-    expect(released.released).toBe(true);
-    expect(released.amount).toBe(earnings);
+    expect(released.released).toBe(false);
 
     const releasedAgain = await releaseSettlementIfEligible({
       sellerId: SELLER_A,
@@ -552,10 +554,12 @@ describe("money-flow: delivered order → hold → release → wallet (legacy ra
     });
     expect(releasedAgain.released).toBe(false);
 
+    // No legacy wallet credit exists for this v2-covered order.
     const walletRows = await listDocs(`sellers/${SELLER_A}/walletTx`);
-    const balance = walletRows.reduce((s, t) => s + Number(t["amount"] ?? 0), 0);
-    expect(balance).toBe(earnings);
+    expect(walletRows.length).toBe(0);
 
+    // Refund reversal: mirror flips to reversed, ZERO legacy wallet impact
+    // (nothing was legacy-credited), and it's idempotent.
     const rev = await reverseSellerSettlement({
       sellerId: SELLER_A,
       orderId: result.orderId,
@@ -563,7 +567,7 @@ describe("money-flow: delivered order → hold → release → wallet (legacy ra
       adminUid: "admin-uid",
     });
     expect(rev.reversed).toBe(true);
-    expect(rev.walletImpact).toBe(-earnings);
+    expect(rev.walletImpact).toBe(0);
 
     const revAgain = await reverseSellerSettlement({
       sellerId: SELLER_A,
@@ -574,8 +578,7 @@ describe("money-flow: delivered order → hold → release → wallet (legacy ra
     expect(revAgain.reversed).toBe(false);
 
     const rowsAfter = await listDocs(`sellers/${SELLER_A}/walletTx`);
-    const balanceAfter = rowsAfter.reduce((s, t) => s + Number(t["amount"] ?? 0), 0);
-    expect(balanceAfter).toBe(0);
+    expect(rowsAfter.length).toBe(0);
   });
 });
 

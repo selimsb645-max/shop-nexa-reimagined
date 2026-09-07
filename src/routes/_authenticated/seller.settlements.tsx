@@ -19,7 +19,6 @@ import { useAuth } from "@/context/AuthContext";
 import { useSellerProfile } from "@/hooks/useSellerProfile";
 import {
   fetchSellerFinancials,
-  requestSellerWithdrawal,
   triggerSettlementRelease,
   type SellerSettlementData,
 } from "@/services/firebase/sellerSettlements";
@@ -86,52 +85,14 @@ function SellerSettlementsPage({
     loadData();
   }, [user]);
 
-  async function handleWithdraw() {
-    if (!user) return;
-    const amount = Number(withdrawAmount);
-    if (!amount || amount < 10) {
-      toast.error("Minimum withdrawal is $10");
-      return;
-    }
-    if (data && amount > data.availableBalance) {
-      toast.error(t("seller.insufficientBalance"));
-      return;
-    }
-
-    // Get destination from seller profile
-    let destination = "";
-    if (withdrawMethod === "bank") {
-      destination = seller?.bankInfo?.accountNumber ?? "";
-      if (!destination) {
-        toast.error(t("seller.addBankFirst"));
-        return;
-      }
-    } else {
-      destination = seller?.bankInfo?.mobileBankingNumber ?? "";
-      if (!destination) {
-        toast.error(t("seller.addMobileBankingFirst"));
-        return;
-      }
-    }
-
-    setSubmitting(true);
-    try {
-      const idToken = await user.getIdToken();
-      const result = await requestSellerWithdrawal({
-        idToken,
-        amount,
-        method: withdrawMethod,
-        destination,
-      });
-      toast.success(`Withdrawal requested: ${formatPrice(amount)}`);
-      setShowWithdraw(false);
-      setWithdrawAmount("");
-      loadData();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not request withdrawal");
-    } finally {
-      setSubmitting(false);
-    }
+  /**
+   * CANONICAL RAIL (Sep 7 2026): legacy withdrawal requests are frozen
+   * server-side (finance/legacy-rail-frozen). Sellers withdraw exclusively
+   * via the v2 Wallet page (requestWalletWithdrawal — ledger-backed).
+   */
+  function handleWithdraw() {
+    toast.info("Withdrawals now run on the new Wallet page.");
+    setShowWithdraw(false);
   }
 
   if (loading) {
@@ -154,13 +115,18 @@ function SellerSettlementsPage({
               Your sales, earnings, and withdrawal management
             </p>
           </div>
-          {data && data.availableBalance >= 10 && (
-            <button
-              onClick={() => setShowWithdraw(!showWithdraw)}
+          {/*
+            CANONICAL RAIL (Sep 7 2026): legacy withdrawal requests are
+            frozen server-side. Seller withdrawals run exclusively on the
+            v2 Wallet page (requestWalletWithdrawal — ledger-backed).
+          */}
+          {data && data.availableBalance > 0 && (
+            <a
+              href="/seller/wallet"
               className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
             >
-              Request Withdrawal
-            </button>
+              Withdraw from Wallet
+            </a>
           )}
         </div>
 
@@ -219,12 +185,14 @@ function SellerSettlementsPage({
               <div>
                 <label className="text-sm font-medium">{t("seller.payoutMethod")}</label>
                 <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {([
-                    { id: "bkash" as const, label: "bKash", icon: Smartphone },
-                    { id: "nagad" as const, label: "Nagad", icon: Smartphone },
-                    { id: "rocket" as const, label: "Rocket", icon: Smartphone },
-                    { id: "bank" as const, label: "Bank", icon: Landmark },
-                  ] as const).map((m) => (
+                  {(
+                    [
+                      { id: "bkash" as const, label: "bKash", icon: Smartphone },
+                      { id: "nagad" as const, label: "Nagad", icon: Smartphone },
+                      { id: "rocket" as const, label: "Rocket", icon: Smartphone },
+                      { id: "bank" as const, label: "Bank", icon: Landmark },
+                    ] as const
+                  ).map((m) => (
                     <button
                       key={m.id}
                       onClick={() => setWithdrawMethod(m.id)}

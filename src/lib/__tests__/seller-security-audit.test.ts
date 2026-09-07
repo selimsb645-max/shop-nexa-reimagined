@@ -394,15 +394,21 @@ describe("Server Validation — Financial Functions", () => {
     // SECURITY AUDIT: hardened from an inline role check to the shared
     // verifyAdminAccount helper — blocks blocked admins + stale roles,
     // mirrors the Firestore rules' roleIn() semantics.
-    expect(fnCode).toMatch(/processSettlementWithdrawal[\s\S]*?verifyAdminAccount\(projectId, uid, \["super_admin", "finance_admin"\]\)/);
+    expect(fnCode).toMatch(
+      /processSettlementWithdrawal[\s\S]*?verifyAdminAccount\(projectId, uid, \["super_admin", "finance_admin"\]\)/,
+    );
   });
 
   it("reverseSettlement requires active admin role (blocked-aware)", () => {
-    expect(fnCode).toMatch(/reverseSettlement[\s\S]*?verifyAdminAccount\(projectId, uid, \["super_admin", "admin"\]\)/);
+    expect(fnCode).toMatch(
+      /reverseSettlement[\s\S]*?verifyAdminAccount\(projectId, uid, \["super_admin", "admin"\]\)/,
+    );
   });
 
   it("getAdminFinanceOverview requires active admin role (blocked-aware)", () => {
-    expect(fnCode).toMatch(/getAdminFinanceOverview[\s\S]*?verifyAdminAccount\(projectId, uid, null\)/);
+    expect(fnCode).toMatch(
+      /getAdminFinanceOverview[\s\S]*?verifyAdminAccount\(projectId, uid, null\)/,
+    );
   });
 });
 
@@ -424,7 +430,9 @@ describe("IDOR Protection — markOrderDelivered", () => {
   it("markOrderDelivered admin override is blocked-aware (verifyAdminAccount)", () => {
     // SECURITY AUDIT: the admin-on-behalf path now uses the shared
     // blocked-aware verifier instead of a raw role fetch.
-    expect(fnCode).toMatch(/if \(uid !== data\.sellerId\) \{[\s\S]*?verifyAdminAccount\(getProjectId\(\), uid, null\)/);
+    expect(fnCode).toMatch(
+      /if \(uid !== data\.sellerId\) \{[\s\S]*?verifyAdminAccount\(getProjectId\(\), uid, null\)/,
+    );
   });
 
   it("markOrderDelivered does NOT blindly trust client-supplied sellerId", () => {
@@ -514,5 +522,61 @@ describe("CRUD Authorization — Ownership Verification", () => {
     expect(code).toMatch(
       /updateSellerOrderStatus[\s\S]*?doc\(getDb\(\),\s*SELLERS,\s*sellerId,\s*ORDERS,\s*orderId\)/,
     );
+  });
+});
+
+// ====================================================================
+// 9. CANONICAL RAIL LOCKS (Sep 7, 2026) — v2 is the only live rail
+// ====================================================================
+
+describe("Canonical Rail Locks — legacy withdrawal rail frozen, v2 sole writer", () => {
+  const rules = readRules();
+  const readLib = (name: string): string => fs.readFileSync(path.join("src/lib", name), "utf-8");
+
+  it("legacy requestSettlementWithdrawal contains the freeze guard", () => {
+    const code = readLib("settlement.server.ts");
+    expect(code).toMatch(/LEGACY_WITHDRAWALS_FROZEN/);
+    expect(code).toMatch(/legacyWithdrawalsFrozenError/);
+    // The freeze error code lives in the shared rail-mode module.
+    const railMode = readLib("finance/rail-mode.server.ts");
+    expect(railMode).toMatch(/legacy-rail-frozen/);
+  });
+
+  it("legacy processSettlementWithdrawal contains the v2-shaped withdrawal guard", () => {
+    const code = readLib("settlement.server.ts");
+    expect(code).toMatch(/isV2WithdrawalDoc/);
+    expect(code).toMatch(/v2-withdrawal-use-v2-console/);
+  });
+
+  it("legacy release path contains the v2-coverage guard (no double credit)", () => {
+    const code = readLib("settlement.server.ts");
+    expect(code).toMatch(/isOrderV2Covered/);
+    expect(code).toMatch(/skippedV2Covered/);
+  });
+
+  it("dead-code withdraw.server is fully frozen", () => {
+    const code = readLib("withdraw.server.ts");
+    // Both legacy entry points guard on the shared freeze flag.
+    expect(code.match(/LEGACY_WITHDRAWALS_FROZEN/g)?.length ?? 0).toBeGreaterThanOrEqual(2);
+    expect(code.match(/legacyWithdrawalsFrozenError/g)?.length ?? 0).toBeGreaterThanOrEqual(2);
+  });
+
+  it("Firestore rules deny ALL client writes to users/{uid} walletTx, rewardTx, referrals", () => {
+    // The legacy customer money subcollections are server-write-only now.
+    const forMoney = (collection: string): boolean => {
+      const re = new RegExp(
+        `match \\/${collection}\\/\\{\\w+\\} \\{[\\s\\S]*?allow write: if false`,
+      );
+      return re.test(rules);
+    };
+    expect(forMoney("walletTx")).toBe(true);
+    expect(forMoney("rewardTx")).toBe(true);
+    expect(forMoney("referrals")).toBe(true);
+  });
+
+  it("seller settlements route no longer calls the legacy withdrawal writer", () => {
+    const code = readRoute("seller.settlements.tsx");
+    expect(code).not.toMatch(/requestSellerWithdrawal\(/);
+    expect(code).toMatch(/Withdraw from Wallet/);
   });
 });

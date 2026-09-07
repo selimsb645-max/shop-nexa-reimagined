@@ -10,6 +10,11 @@ import {
   type FsWrite,
 } from "./firebase-admin.server";
 import type { WithdrawalMethod } from "@/types/seller";
+import {
+  LEGACY_RESOLUTION_FROZEN,
+  LEGACY_WITHDRAWALS_FROZEN,
+  legacyWithdrawalsFrozenError,
+} from "./finance/rail-mode.server";
 
 export const MIN_WITHDRAWAL_AMOUNT = 10;
 
@@ -38,6 +43,10 @@ interface WithdrawResult {
  * - All in a single atomic batch
  */
 export async function requestWithdrawalServer(req: WithdrawRequest): Promise<WithdrawResult> {
+  // CANONICAL RAIL FREEZE (Sep 7 2026): this first-generation withdrawal
+  // path predates settlement.server.ts and has no live callers. New seller
+  // withdrawals run exclusively on the v2 wallet (requestWalletWithdrawal).
+  if (LEGACY_WITHDRAWALS_FROZEN) throw legacyWithdrawalsFrozenError();
   const projectId = getProjectId();
   const token = await getAccessToken();
 
@@ -146,6 +155,12 @@ export async function processWithdrawalServer(input: {
   action: "approve" | "reject";
   note?: string;
 }): Promise<{ status: string }> {
+  // CANONICAL RAIL FREEZE (Sep 7 2026): dead-code path, kept only as
+  // historical record. New withdrawals: v2 wallet. In-flight resolution:
+  // settlement.server.processSettlementWithdrawal.
+  if (LEGACY_WITHDRAWALS_FROZEN || LEGACY_RESOLUTION_FROZEN) {
+    throw legacyWithdrawalsFrozenError();
+  }
   const projectId = getProjectId();
   const token = await getAccessToken();
 

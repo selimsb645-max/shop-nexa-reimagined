@@ -524,25 +524,30 @@ describe("Seller Isolation — No Cross-Seller Data Leaks", () => {
     expect(financialsB.availableBalance).toBe(1800);
   });
 
-  it("Withdrawal by Seller A should not affect Seller B balance", async () => {
+  it("Withdrawal by Seller A should not affect Seller B balance (frozen rail: request rejected, both balances untouched)", async () => {
     await writeWalletTx(SELLER_A, "tx-a-1", "earning", 1000, "completed", ORDER_1);
     await writeWalletTx(SELLER_B, "tx-b-1", "earning", 1000, "completed", ORDER_2);
 
     const { requestSettlementWithdrawal } = await import("../settlement.server");
 
-    await requestSettlementWithdrawal({
-      uid: SELLER_A,
-      amount: 500,
-      method: "bkash",
-      destination: "01712345678",
-    });
+    // CANONICAL RAIL FREEZE (Sep 7 2026): new legacy withdrawals are banned;
+    // the freeze applies identically to every seller, and Seller B is never
+    // touched by Seller A's attempt.
+    await expect(
+      requestSettlementWithdrawal({
+        uid: SELLER_A,
+        amount: 500,
+        method: "bkash",
+        destination: "01712345678",
+      }),
+    ).rejects.toThrow(/legacy-rail-frozen/);
 
     const { readSellerFinancials } = await import("../settlement.server");
 
     const financialsA = await readSellerFinancials(SELLER_A);
     const financialsB = await readSellerFinancials(SELLER_B);
 
-    expect(financialsA.availableBalance).toBe(500);
+    expect(financialsA.availableBalance).toBe(1000);
     expect(financialsB.availableBalance).toBe(1000);
   });
 });
@@ -595,23 +600,32 @@ describe("Wallet Balance Consistency", () => {
 // 6. WITHDRAWAL PROCESSING
 // ====================================================================
 
-describe("Withdrawal Request", () => {
+describe("Withdrawal Request (CANONICAL RAIL FREEZE — Sep 7 2026)", () => {
   beforeEach(async () => {
     await writeSellerProfile(SELLER_A, 0.08);
     await writeWalletTx(SELLER_A, "tx-1", "earning", 1000, "completed", ORDER_1);
   });
 
-  it("should reject withdrawal exceeding available balance", async () => {
+  it("should reject ALL new withdrawal requests (legacy rail frozen)", async () => {
     const { requestSettlementWithdrawal } = await import("../settlement.server");
 
-    await expect(
-      requestSettlementWithdrawal({
-        uid: SELLER_A,
-        amount: 2000,
-        method: "bkash",
-        destination: "01712345678",
-      }),
-    ).rejects.toThrow();
+    // Freeze fires before any balance read or write: no amount — in-balance,
+    // over-balance, or below-minimum — can ever create legacy money movement.
+    for (const amount of [2000, 500, 5]) {
+      await expect(
+        requestSettlementWithdrawal({
+          uid: SELLER_A,
+          amount,
+          method: "bkash",
+          destination: "01712345678",
+        }),
+      ).rejects.toThrow(/legacy-rail-frozen/);
+    }
+
+    const walletDocs = await listEmulatorDocs(`sellers/${SELLER_A}/walletTx`);
+    const allDocs = mapToArray(walletDocs);
+    // Only the beforeEach earning exists — no pending withdrawal debit was created.
+    expect(allDocs.every((d) => String(d.status ?? "") !== "pending")).toBe(true);
   });
 
   it("should reject withdrawal below minimum amount", async () => {
@@ -627,49 +641,40 @@ describe("Withdrawal Request", () => {
     ).rejects.toThrow();
   });
 
-  it("should create pending walletTx and withdrawal record", async () => {
+  it("should NEVER create a pending walletTx or withdrawal record on the frozen legacy rail", async () => {
     const { requestSettlementWithdrawal } = await import("../settlement.server");
 
-    const result = await requestSettlementWithdrawal({
-      uid: SELLER_A,
-      amount: 500,
-      method: "bkash",
-      destination: "01712345678",
-    });
+    await expect(
+      requestSettlementWithdrawal({
+        uid: SELLER_A,
+        amount: 500,
+        method: "bkash",
+        destination: "01712345678",
+      }),
+    ).rejects.toThrow(/legacy-rail-frozen/);
 
-    expect(result.withdrawalId).toBeTruthy();
-    expect(result.remainingBalance).toBe(500);
-
-    const withdrawalDoc = await getEmulatorDoc(
-      `sellers/${SELLER_A}/withdrawals/${result.withdrawalId}`,
-    );
-    expect(withdrawalDoc).toBeTruthy();
-    expect(withdrawalDoc!.status).toBe("pending");
+    // Nothing was written: no withdrawal doc, no pending debit.
+    const withdrawalDocs = await listEmulatorDocs(`sellers/${SELLER_A}/withdrawals`);
+    expect(mapToArray(withdrawalDocs).length).toBe(0);
 
     const walletDocs = await listEmulatorDocs(`sellers/${SELLER_A}/walletTx`);
-    const pendingTx = mapToArray(walletDocs).find((d) => {
-      const status = String(d.status ?? "completed");
-      return status === "pending";
-    });
-    expect(pendingTx).toBeTruthy();
+    expect(mapToArray(walletDocs).every((d) => String(d.status ?? "") !== "pending")).toBe(true);
   });
 
-  it("should mask payout destination for security", async () => {
+  it("should never reach destination handling — freeze precedes all writes (payout destinations can no longer leak through this rail)", async () => {
     const { requestSettlementWithdrawal } = await import("../settlement.server");
 
-    const result = await requestSettlementWithdrawal({
-      uid: SELLER_A,
-      amount: 100,
-      method: "bkash",
-      destination: "01712345678",
-    });
+    await expect(
+      requestSettlementWithdrawal({
+        uid: SELLER_A,
+        amount: 100,
+        method: "bkash",
+        destination: "01712345678",
+      }),
+    ).rejects.toThrow(/legacy-rail-frozen/);
 
-    const withdrawalDoc = await getEmulatorDoc(
-      `sellers/${SELLER_A}/withdrawals/${result.withdrawalId}`,
-    );
-    const dest = String(withdrawalDoc!.destination ?? "");
-    expect(dest).not.toBe("01712345678");
-    expect(dest).toContain("*");
+    const withdrawalDocs = await listEmulatorDocs(`sellers/${SELLER_A}/withdrawals`);
+    expect(mapToArray(withdrawalDocs).length).toBe(0);
   });
 });
 
