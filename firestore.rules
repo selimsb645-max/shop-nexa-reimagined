@@ -261,6 +261,20 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // ADMIN MFA — server-only. Clients can NEVER read or write MFA
+    // state: TOTP secrets (encrypted), enabled flags, failed-attempt
+    // counters, lockouts, and recovery-code hashes are managed
+    // exclusively by the MFA service-account bridge.
+    match /adminMfa/{uid} {
+      allow read, write: if false;
+    }
+
+    // MFA SESSIONS — server-only (server-verifiable session docs;
+    // never forgeable through the client SDK).
+    match /mfaSessions/{uid} {
+      allow read, write: if false;
+    }
+
     // SETTINGS — read is public; write is Super Admin only (settings.edit)
     match /settings/{id} {
       allow read: if true;
@@ -598,7 +612,8 @@ service cloud.firestore {
         allow read, write: if (isSelf(uid) || isAdmin())
           && !(sub in ['orders', 'walletTx', 'rewardTx', 'referrals',
                        'prefs', 'sessions', 'verificationSessions',
-                       'notificationLogs', 'emailLogs', 'aiRequests']);
+                       'notificationLogs', 'emailLogs', 'aiRequests',
+                       'adminMfa', 'mfaSessions']);
       }
     }
 
