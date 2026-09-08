@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { BackButton } from "@/components/common/BackButton";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
-import { Truck, ShieldCheck, Headphones, Tag, Store, Users } from "lucide-react";
+import { Truck, ShieldCheck, Headphones, Tag, Store, Users, Mail } from "lucide-react";
 import { seoHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/about")({
@@ -11,7 +11,8 @@ export const Route = createFileRoute("/about")({
   head: () => ({
     ...seoHead({
       title: "About AVENTA SHOP — Online Shopping Marketplace in Bangladesh",
-      description: "AVENTA SHOP is your one-stop online marketplace for electronics, fashion, groceries, and more — quality products at unbeatable prices across Bangladesh with fast delivery and secure payments.",
+      description:
+        "AVENTA SHOP is your one-stop online marketplace for electronics, fashion, groceries, and more — quality products at unbeatable prices across Bangladesh with fast delivery and secure payments.",
       path: "/about",
       type: "website",
     }),
@@ -19,10 +20,26 @@ export const Route = createFileRoute("/about")({
 });
 
 const VALUES = [
-  { icon: <Tag className="h-6 w-6" />, title: "Best Prices", description: "Unbeatable prices on thousands of products across every category." },
-  { icon: <Truck className="h-6 w-6" />, title: "Fast Delivery", description: "Quick and reliable delivery across Bangladesh with free shipping over ৳500." },
-  { icon: <ShieldCheck className="h-6 w-6" />, title: "Secure Shopping", description: "Your data and payments are protected with industry-standard security." },
-  { icon: <Headphones className="h-6 w-6" />, title: "24/7 Support", description: "Our customer support team is always ready to help you with any questions." },
+  {
+    icon: <Tag className="h-6 w-6" />,
+    title: "Best Prices",
+    description: "Unbeatable prices on thousands of products across every category.",
+  },
+  {
+    icon: <Truck className="h-6 w-6" />,
+    title: "Fast Delivery",
+    description: "Quick and reliable delivery across Bangladesh with free shipping over ৳500.",
+  },
+  {
+    icon: <ShieldCheck className="h-6 w-6" />,
+    title: "Secure Shopping",
+    description: "Your data and payments are protected with industry-standard security.",
+  },
+  {
+    icon: <Headphones className="h-6 w-6" />,
+    title: "24/7 Support",
+    description: "Our customer support team is always ready to help you with any questions.",
+  },
 ];
 
 const STATS = [
@@ -46,8 +63,9 @@ function AboutPage() {
           <h1 className="text-3xl font-bold">About AVENTA SHOP</h1>
           <p className="mt-3 text-orange-50">
             AVENTA SHOP is Bangladesh's growing online marketplace — your one-stop destination for
-            electronics, fashion, groceries, home essentials, and more. We connect buyers and sellers
-            across the country, bringing quality products at unbeatable prices right to your doorstep.
+            electronics, fashion, groceries, home essentials, and more. We connect buyers and
+            sellers across the country, bringing quality products at unbeatable prices right to your
+            doorstep.
           </p>
         </div>
 
@@ -96,7 +114,9 @@ function AboutPage() {
             <Users className="h-5 w-5 text-primary" />
             <h2 className="text-lg font-semibold text-foreground">Join the AVENTA SHOP Family</h2>
           </div>
-          <p className="text-sm text-muted-foreground">Whether you're a buyer or a seller, we've got you covered.</p>
+          <p className="text-sm text-muted-foreground">
+            Whether you're a buyer or a seller, we've got you covered.
+          </p>
           <div className="mt-4 flex flex-wrap justify-center gap-3">
             <Link
               to="/register"
@@ -111,6 +131,36 @@ function AboutPage() {
               Become a Seller
             </Link>
           </div>
+        </div>
+        {/* General contact */}
+        <h2 className="mb-4 text-xl font-bold text-foreground">Contact AVENTA SHOP</h2>
+        <div className="mb-8 grid gap-4 sm:grid-cols-2">
+          <a
+            href="mailto:info.aventashop@gmail.com"
+            className="flex items-center gap-3 rounded-2xl border bg-background p-5 shadow-sm transition hover:border-primary/40 hover:shadow-md"
+          >
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+              <Mail className="h-6 w-6" />
+            </span>
+            <div>
+              <h3 className="text-base font-semibold text-foreground">
+                General &amp; Business Inquiries
+              </h3>
+              <p className="mt-1 text-sm text-muted-foreground">info.aventashop@gmail.com</p>
+            </div>
+          </a>
+          <a
+            href="mailto:help.aventashop@gmail.com"
+            className="flex items-center gap-3 rounded-2xl border bg-background p-5 shadow-sm transition hover:border-primary/40 hover:shadow-md"
+          >
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+              <Headphones className="h-6 w-6" />
+            </span>
+            <div>
+              <h3 className="text-base font-semibold text-foreground">Customer Support</h3>
+              <p className="mt-1 text-sm text-muted-foreground">help.aventashop@gmail.com</p>
+            </div>
+          </a>
         </div>
       </main>
       <SiteFooter />

@@ -21,7 +21,8 @@ export const Route = createFileRoute("/returns-policy")({
   head: () => ({
     ...seoHead({
       title: "Returns & Refunds Policy — AVENTA SHOP",
-      description: "AVENTA SHOP return and refund policy — how to request a return, eligibility, timelines, and refund methods. Shop with confidence with our hassle-free returns.",
+      description:
+        "AVENTA SHOP return and refund policy — how to request a return, eligibility, timelines, and refund methods. Shop with confidence with our hassle-free returns.",
       path: "/returns-policy",
       type: "website",
     }),
@@ -70,9 +71,21 @@ const NOT_ELIGIBLE = [
 ];
 
 const REFUND_METHODS = [
-  { method: "Original Payment Method", time: "7-10 business days", note: "For card, mobile banking, and bank transfer payments." },
-  { method: "AVENTA SHOP Wallet", time: "1-2 business days", note: "Fastest option. Wallet refunds can be used immediately for new purchases." },
-  { method: "Bank Transfer", time: "7-10 business days", note: "For COD orders where the original payment was cash." },
+  {
+    method: "Original Payment Method",
+    time: "7-10 business days",
+    note: "For card, mobile banking, and bank transfer payments.",
+  },
+  {
+    method: "AVENTA SHOP Wallet",
+    time: "1-2 business days",
+    note: "Fastest option. Wallet refunds can be used immediately for new purchases.",
+  },
+  {
+    method: "Bank Transfer",
+    time: "7-10 business days",
+    note: "For COD orders where the original payment was cash.",
+  },
 ];
 
 function ReturnsPolicyPage() {
@@ -172,7 +185,9 @@ function ReturnsPolicyPage() {
             <thead>
               <tr className="border-b bg-muted/30">
                 <th className="px-5 py-3 text-left font-semibold text-foreground">Refund Method</th>
-                <th className="px-5 py-3 text-left font-semibold text-foreground">Processing Time</th>
+                <th className="px-5 py-3 text-left font-semibold text-foreground">
+                  Processing Time
+                </th>
                 <th className="px-5 py-3 text-left font-semibold text-foreground">Notes</th>
               </tr>
             </thead>
@@ -195,11 +210,31 @@ function ReturnsPolicyPage() {
             <h2 className="text-lg font-semibold text-foreground">Important Notes</h2>
           </div>
           <ol className="space-y-2 text-sm text-muted-foreground">
-            <li>1. The 7-day return window starts from the date your order is marked "Delivered".</li>
-            <li>2. For damaged or wrong items, contact support immediately with photos as evidence.</li>
-            <li>3. Refunds to cards and mobile banking may take additional time depending on your bank or provider.</li>
-            <li>4. Exchange is available for size or color variations in fashion items, subject to stock availability.</li>
-            <li>5. AVENTA SHOP reserves the right to reject return requests that don't meet the eligibility criteria.</li>
+            <li>
+              1. The 7-day return window starts from the date your order is marked "Delivered".
+            </li>
+            <li>
+              2. For damaged or wrong items, contact support immediately at{" "}
+              <a
+                href="mailto:help.aventashop@gmail.com"
+                className="text-primary underline underline-offset-2"
+              >
+                help.aventashop@gmail.com
+              </a>{" "}
+              with photos as evidence.
+            </li>
+            <li>
+              3. Refunds to cards and mobile banking may take additional time depending on your bank
+              or provider.
+            </li>
+            <li>
+              4. Exchange is available for size or color variations in fashion items, subject to
+              stock availability.
+            </li>
+            <li>
+              5. AVENTA SHOP reserves the right to reject return requests that don't meet the
+              eligibility criteria.
+            </li>
           </ol>
         </div>
 

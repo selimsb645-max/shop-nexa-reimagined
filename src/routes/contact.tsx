@@ -11,7 +11,8 @@ export const Route = createFileRoute("/contact")({
   head: () => ({
     ...seoHead({
       title: "Contact AVENTA SHOP — Customer Support & Inquiries",
-      description: "Get in touch with AVENTA SHOP customer support. Find our email, phone number, and office address. We're here to help with orders, returns, payments and more.",
+      description:
+        "Get in touch with AVENTA SHOP customer support. Find our email, phone number, and office address. We're here to help with orders, returns, payments and more.",
       path: "/contact",
       type: "website",
     }),
@@ -29,8 +30,8 @@ const CONTACT_OPTIONS = [
   {
     icon: <Mail className="h-6 w-6" />,
     title: "Email Us",
-    description: "support@aventashop.com",
-    link: "mailto:support@aventashop.com",
+    description: "help.aventashop@gmail.com",
+    link: "mailto:help.aventashop@gmail.com",
     linkText: "Send Email",
   },
   {
@@ -105,8 +106,10 @@ function ContactPage() {
             <h2 className="text-lg font-semibold text-foreground">Our Office</h2>
           </div>
           <p className="text-sm text-muted-foreground">
-            AVENTA SHOP Headquarters<br />
-            Dhaka, Bangladesh<br />
+            AVENTA SHOP Headquarters
+            <br />
+            Dhaka, Bangladesh
+            <br />
             Level 5, Gulshan Avenue, Gulshan-1, Dhaka 1212
           </p>
         </div>

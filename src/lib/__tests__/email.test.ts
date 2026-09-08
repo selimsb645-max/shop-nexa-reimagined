@@ -17,8 +17,13 @@ import {
   sendWithdrawalEmail,
   _resetEmailProvider,
   _clearSentKeys,
+  _clearMockSends,
+  _getMockSends,
+  emailRoleForEvent,
   type EmailEvent,
 } from "../email.server";
+import { EMAIL_ROLES, replyToForRole } from "../email-config";
+import fs from "node:fs";
 
 const mockOrder: OrderEmailData = {
   orderId: "order_abc123def456",
@@ -566,5 +571,144 @@ describe("Source Code Security Audit", () => {
       expect(content).not.toContain('from "@/lib/email.server"');
       expect(content).not.toContain('from "@/lib/email-templates.server"');
     }
+  });
+});
+
+/* ─── Email role routing (four department mailboxes) ─────────────── */
+describe("Email Role Routing", () => {
+  beforeEach(() => {
+    _resetEmailProvider();
+    _clearSentKeys();
+    _clearMockSends();
+    vi.stubEnv("EMAIL_PROVIDER", "mock");
+  });
+  afterEach(() => {
+    _resetEmailProvider();
+    _clearMockSends();
+    vi.unstubAllEnvs();
+  });
+
+  it("ORDER_* emails are sent from orders.aventashop@gmail.com with Reply-To", async () => {
+    await sendTransactionalEmail({
+      event: "ORDER_CREATED",
+      recipient: "customer@example.com",
+      data: { order: mockOrder },
+      entityId: mockOrder.orderId,
+    });
+    const send = _getMockSends()[0];
+    expect(send.sender.role).toBe("orders");
+    expect(send.sender.from).toBe("orders.aventashop@gmail.com");
+    expect(send.sender.displayName).toBe("AVENTA SHOP Orders");
+    expect(send.sender.replyTo).toBe("orders.aventashop@gmail.com");
+  });
+
+  it("PASSWORD_RESET emails are sent from noreply with NO Reply-To", async () => {
+    await sendTransactionalEmail({
+      event: "PASSWORD_RESET",
+      recipient: "user@example.com",
+      data: { recipientName: "Rahim", resetLink: "https://shopnexa.app/reset?oobCode=x" },
+      entityId: "user_1",
+    });
+    const send = _getMockSends()[0];
+    expect(send.sender.role).toBe("noreply");
+    expect(send.sender.from).toBe("noreply.aventashop@gmail.com");
+    expect(send.sender.replyTo).toBeUndefined();
+  });
+
+  it("WITHDRAWAL_* emails (automated seller notifications) route to noreply", () => {
+    expect(emailRoleForEvent("WITHDRAWAL_REQUESTED")).toBe("noreply");
+    expect(emailRoleForEvent("WITHDRAWAL_COMPLETED")).toBe("noreply");
+  });
+
+  it("explicit role override reaches support/info mailboxes", async () => {
+    await sendTransactionalEmail({
+      event: "ORDER_CREATED",
+      recipient: "x@example.com",
+      data: { order: mockOrder },
+      entityId: "order_role",
+      role: "support",
+    });
+    await sendTransactionalEmail({
+      event: "ORDER_CREATED",
+      recipient: "x@example.com",
+      data: { order: mockOrder },
+      entityId: "order_role2",
+      role: "info",
+    });
+    const sends = _getMockSends();
+    expect(sends[0].sender.from).toBe("help.aventashop@gmail.com");
+    expect(sends[0].sender.replyTo).toBe("help.aventashop@gmail.com");
+    expect(sends[1].sender.from).toBe("info.aventashop@gmail.com");
+    expect(sends[1].sender.replyTo).toBe("info.aventashop@gmail.com");
+  });
+
+  it("Gmail provider fails gracefully when the role's app password is missing", async () => {
+    vi.stubEnv("EMAIL_PROVIDER", "gmail");
+    vi.stubEnv("GMAIL_ORDERS_APP_PASSWORD", "");
+    _resetEmailProvider();
+    const result = await sendTransactionalEmail({
+      event: "ORDER_CREATED",
+      recipient: "x@example.com",
+      data: { order: mockOrder },
+      entityId: "order_gmail",
+    });
+    expect(result.delivered).toBe(false);
+    expect(result.error).toContain("GMAIL_ORDERS_APP_PASSWORD");
+  });
+
+  it("role config: noreply accepts no replies; the rest do", () => {
+    expect(EMAIL_ROLES.noreply.acceptsReplies).toBe(false);
+    expect(EMAIL_ROLES.orders.acceptsReplies).toBe(true);
+    expect(EMAIL_ROLES.support.acceptsReplies).toBe(true);
+    expect(EMAIL_ROLES.info.acceptsReplies).toBe(true);
+    expect(replyToForRole("noreply")).toBeUndefined();
+    expect(replyToForRole("orders")).toBe("orders.aventashop@gmail.com");
+  });
+});
+
+/* ─── Repository-wide email address audit lock ───────────────────── */
+describe("Email address audit (static)", () => {
+  function collectFiles(dir: string, acc: string[] = []): string[] {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = `${dir}/${e.name}`;
+      if (e.isDirectory()) {
+        if (e.name !== "__tests__") collectFiles(full, acc);
+      } else if (/\.(ts|tsx)$/.test(e.name)) acc.push(full);
+    }
+    return acc;
+  }
+
+  it("no stale/wrong email addresses anywhere in src/", () => {
+    const offenders = collectFiles("src").filter((f) =>
+      /[A-Za-z0-9._%+-]+@(aventashop\.com|aventa-shop\.com|shopnexa\.com)/.test(
+        fs.readFileSync(f, "utf-8"),
+      ),
+    );
+    expect(offenders).toEqual([]);
+  });
+
+  it("UI surfaces use the correct department mailboxes", () => {
+    const footer = fs.readFileSync("src/components/layout/SiteFooter.tsx", "utf-8");
+    expect(footer).toContain("mailto:help.aventashop@gmail.com");
+    expect(footer).toContain("mailto:orders.aventashop@gmail.com");
+    expect(footer).toContain("mailto:info.aventashop@gmail.com");
+
+    const contact = fs.readFileSync("src/routes/contact.tsx", "utf-8");
+    expect(contact).toContain("help.aventashop@gmail.com");
+    expect(contact).not.toContain("support@aventashop.com");
+
+    const helpCenter = fs.readFileSync("src/routes/help-center.tsx", "utf-8");
+    expect(helpCenter).toContain("help.aventashop@gmail.com");
+
+    const about = fs.readFileSync("src/routes/about.tsx", "utf-8");
+    expect(about).toContain("info.aventashop@gmail.com");
+
+    const returns = fs.readFileSync("src/routes/returns-policy.tsx", "utf-8");
+    expect(returns).toContain("help.aventashop@gmail.com");
+  });
+
+  it("order email templates reference the orders mailbox in their footer", () => {
+    const templates = fs.readFileSync("src/lib/email-templates.server.ts", "utf-8");
+    expect(templates).toMatch(/EmailFooter\(EMAIL_ROLES\.orders\.email\)/);
   });
 });

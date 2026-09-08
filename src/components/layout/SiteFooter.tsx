@@ -155,9 +155,7 @@ export function SiteFooter() {
                   <p className="text-xs font-semibold uppercase text-[#f97316] tracking-wide">
                     Happy Shopping
                   </p>
-                  <p className="text-sm font-bold text-slate-800">
-                    Download AVENTA SHOP App
-                  </p>
+                  <p className="text-sm font-bold text-slate-800">Download AVENTA SHOP App</p>
                 </div>
               </div>
 
@@ -224,9 +222,7 @@ export function SiteFooter() {
                       <p className="text-[8px] uppercase font-medium text-slate-300">
                         Download on the
                       </p>
-                      <p className="text-xs font-semibold text-white">
-                        App Store
-                      </p>
+                      <p className="text-xs font-semibold text-white">App Store</p>
                     </div>
                   </a>
 
@@ -240,12 +236,8 @@ export function SiteFooter() {
                       <path d="M3.609 1.814L13.792 12 3.61 22.186a1.98 1.98 0 01-.61-1.428V3.242c0-.53.223-1.037.61-1.428zM15.206 13.414l2.586 2.586-11.455 6.613 8.869-9.199zm0-2.828L6.337 1.387l11.455 6.613-2.586 2.586zm1.414 1.414l3.83-2.212c.732-.423.732-1.11 0-1.533l-3.83-2.212-2.828 2.828 2.828 2.828z" />
                     </svg>
                     <div className="text-left leading-tight">
-                      <p className="text-[8px] uppercase font-medium text-slate-300">
-                        GET IT ON
-                      </p>
-                      <p className="text-xs font-semibold text-white">
-                        Google Play
-                      </p>
+                      <p className="text-[8px] uppercase font-medium text-slate-300">GET IT ON</p>
+                      <p className="text-xs font-semibold text-white">Google Play</p>
                     </div>
                   </a>
                 </div>
@@ -264,18 +256,38 @@ export function SiteFooter() {
               </div>
             </div>
             <p className="text-xs text-slate-600 mb-4 leading-relaxed">
-              Bangladesh&apos;s leading e-commerce marketplace for authentic electronics, lifestyle products, and everyday essentials.
+              Bangladesh&apos;s leading e-commerce marketplace for authentic electronics, lifestyle
+              products, and everyday essentials.
             </p>
 
             <ul className="space-y-2.5 text-xs text-slate-700">
-
               <li className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-[#f97316] shrink-0" />
                 <a
                   href="mailto:help.aventashop@gmail.com"
                   className="hover:text-[#f97316] font-medium transition-colors"
                 >
+                  <span className="text-slate-500">Customer Support:</span>{" "}
                   help.aventashop@gmail.com
+                </a>
+              </li>
+              <li className="flex items-center gap-2">
+                <Mail className="w-4 h-4 text-[#f97316] shrink-0" />
+                <a
+                  href="mailto:orders.aventashop@gmail.com"
+                  className="hover:text-[#f97316] font-medium transition-colors"
+                >
+                  <span className="text-slate-500">Order Support:</span> orders.aventashop@gmail.com
+                </a>
+              </li>
+              <li className="flex items-center gap-2">
+                <Mail className="w-4 h-4 text-[#f97316] shrink-0" />
+                <a
+                  href="mailto:info.aventashop@gmail.com"
+                  className="hover:text-[#f97316] font-medium transition-colors"
+                >
+                  <span className="text-slate-500">General/Business:</span>{" "}
+                  info.aventashop@gmail.com
                 </a>
               </li>
               <li className="flex items-start gap-2">
@@ -283,8 +295,6 @@ export function SiteFooter() {
                 <span>Dhaka, Bangladesh</span>
               </li>
             </ul>
-
-
           </div>
         </div>
       </div>

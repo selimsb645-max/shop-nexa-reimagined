@@ -62,7 +62,7 @@ export function EmailHeader(): string {
 </tr>`;
 }
 
-export function EmailFooter(): string {
+export function EmailFooter(contactEmail: string = "help.aventashop@gmail.com"): string {
   const siteUrl = getSiteUrl();
   return `<tr>
 <td style="padding:24px 40px; background:#f8fafc; border-top:1px solid #e2e8f0;" class="px">
@@ -70,7 +70,7 @@ export function EmailFooter(): string {
     AVENTA SHOP \u2014 Your trusted marketplace
   </p>
   <p style="margin:0 0 12px 0; font-size:12px; color:#94a3b8; text-align:center;">
-    Need help? Visit our <a href="${siteUrl}/help-center" style="color:#f97316; text-decoration:none;">Help Center</a> or contact help.aventashop@gmail.com
+    Need help? Visit our <a href="${siteUrl}/help-center" style="color:#f97316; text-decoration:none;">Help Center</a> or contact ${contactEmail}
   </p>
   <p style="margin:0; font-size:11px; color:#cbd5e1; text-align:center;">
     \u00A9 ${new Date().getFullYear()} AVENTA SHOP. All rights reserved.<br>
@@ -234,7 +234,7 @@ export function orderCreatedEmail(data: OrderEmailData): { subject: string; html
       <p style="margin:0; font-size:14px; color:#475569; line-height:1.6;">${data.deliveryAddress.fullName}<br>${data.deliveryAddress.addressLine}<br>${data.deliveryAddress.city}, ${data.deliveryAddress.postalCode}<br>${data.deliveryAddress.phone}</p>
     </td></tr>
     <tr><td style="padding:8px 40px;" class="px">${ActionButton("View Order", `${siteUrl}/orders/${data.orderId}`)}</td></tr>
-    ${EmailFooter()}`;
+    ${EmailFooter(EMAIL_ROLES.orders.email)}`;
   return {
     subject: `AVENTA SHOP \u2014 Order #${shortId} Confirmed`,
     html: EmailLayout(`Order #${shortId} Confirmed`, body),
@@ -279,7 +279,7 @@ export function orderStatusEmail(
     ${event === "ORDER_SHIPPED" || event === "OUT_FOR_DELIVERY" ? InfoCard(`<p style="margin:0; font-size:14px; color:#475569; line-height:1.6;">${data.deliveryAddress.fullName}<br>${data.deliveryAddress.addressLine}<br>${data.deliveryAddress.city}, ${data.deliveryAddress.postalCode}</p>`) : ""}
     <tr><td style="padding:8px 40px;" class="px">${ActionButton("View Order", `${siteUrl}/orders/${data.orderId}`)}</td></tr>
     ${event === "ORDER_CANCELLED" ? SecurityNotice("If you did not request this cancellation, please contact support immediately.") : ""}
-    ${EmailFooter()}`;
+    ${EmailFooter(EMAIL_ROLES.orders.email)}`;
   const label = statusLabels[event];
   return {
     subject: `AVENTA SHOP \u2014 Order #${shortId} ${label.charAt(0).toUpperCase() + label.slice(1)}`,
@@ -356,6 +356,8 @@ export function withdrawalEmail(
 /* ------------------------------------------------------------------ */
 /* Centralized template dispatcher                                     */
 /* ------------------------------------------------------------------ */
+
+import { EMAIL_ROLES } from "./email-config";
 
 export type EmailEvent =
   | "ORDER_CREATED"

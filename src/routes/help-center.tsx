@@ -20,12 +20,12 @@ export const Route = createFileRoute("/help-center")({
   head: () => ({
     ...seoHead({
       title: "Help Center — AVENTA SHOP Support & FAQ",
-      description: "Find answers about AVENTA SHOP shipping, returns, payments, orders, account support, and seller policies. Get help with your shopping experience.",
+      description:
+        "Find answers about AVENTA SHOP shipping, returns, payments, orders, account support, and seller policies. Get help with your shopping experience.",
       path: "/help-center",
       type: "website",
     }),
   }),
-
 });
 
 const HELP_CATEGORIES = [
@@ -56,11 +56,26 @@ const HELP_CATEGORIES = [
 ];
 
 const FAQS = [
-  { q: "How can I track my order?", a: "Go to Track Orders in your account to see real-time delivery tracking." },
-  { q: "What is the return policy?", a: "You can request a return within 7 days of delivery for eligible products." },
-  { q: "How do I use my wallet balance?", a: "Wallet balance can be used during checkout as a payment option." },
-  { q: "How do I become a seller?", a: "Visit 'Become a Seller' from your account to start the registration process." },
-  { q: "How do I use coupons?", a: "Go to the Coupons page to see available vouchers and apply them at checkout." },
+  {
+    q: "How can I track my order?",
+    a: "Go to Track Orders in your account to see real-time delivery tracking.",
+  },
+  {
+    q: "What is the return policy?",
+    a: "You can request a return within 7 days of delivery for eligible products.",
+  },
+  {
+    q: "How do I use my wallet balance?",
+    a: "Wallet balance can be used during checkout as a payment option.",
+  },
+  {
+    q: "How do I become a seller?",
+    a: "Visit 'Become a Seller' from your account to start the registration process.",
+  },
+  {
+    q: "How do I use coupons?",
+    a: "Go to the Coupons page to see available vouchers and apply them at checkout.",
+  },
 ];
 
 function HelpCenterPage() {
@@ -69,7 +84,11 @@ function HelpCenterPage() {
       <SiteHeader />
       <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
         <div className="mb-4">
-          <BackButton fallbackTo="/" label="Back" className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-200 active:scale-95" />
+          <BackButton
+            fallbackTo="/"
+            label="Back"
+            className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-200 active:scale-95"
+          />
         </div>
         <div className="mb-6 flex items-center gap-3">
           <Link to="/" className="text-muted-foreground hover:text-foreground">
@@ -97,6 +116,19 @@ function HelpCenterPage() {
             <ChevronRight className="h-5 w-5 text-muted-foreground" />
           </Link>
 
+          <a
+            href="mailto:help.aventashop@gmail.com"
+            className="flex items-center gap-3 rounded-2xl border bg-background p-4 shadow-sm transition hover:border-primary/40 hover:shadow-md"
+          >
+            <span className="grid h-12 w-12 place-items-center rounded-xl bg-primary/10 text-primary">
+              <Mail className="h-6 w-6" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-sm font-semibold">Email Us</h3>
+              <p className="text-xs text-muted-foreground">help.aventashop@gmail.com</p>
+            </div>
+            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+          </a>
         </div>
 
         {/* Help categories */}
@@ -124,7 +156,9 @@ function HelpCenterPage() {
 
         {/* FAQs */}
         <div className="mb-6">
-          <h2 className="mb-3 text-sm font-semibold text-muted-foreground">Frequently Asked Questions</h2>
+          <h2 className="mb-3 text-sm font-semibold text-muted-foreground">
+            Frequently Asked Questions
+          </h2>
           <div className="space-y-2">
             {FAQS.map((faq, i) => (
               <details key={i} className="group rounded-xl border bg-background p-4 shadow-sm">
@@ -145,6 +179,6 @@ function HelpCenterPage() {
         </div>
       </main>
       <SiteFooter />
-</div>
+    </div>
   );
 }
