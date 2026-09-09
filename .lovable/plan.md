@@ -1,92 +1,54 @@
-# Phase 1 — Foundation & Authentication
+# My Services — independent pages, no sidebar
 
-Keep the existing homepage design untouched. Add Firebase-powered auth, a scalable folder structure, and protected routes. Only the header's Login/Register/Account area gets wired to real auth.
+## What I found
 
-## Folder architecture
+The old sidebar menu (`AppShell`) is already unused — no service page renders it. All eight
+services already open as their own full-screen pages with the orange header, back arrow to
+`/account`, footer and mobile bottom bar (`ServicePageLayout`), and all read live data.
 
-```text
-src/
-  components/
-    ui/                    (existing shadcn — untouched)
-    layout/                Header, Footer (extracted from index.tsx, visuals unchanged)
-    auth/                  LoginForm, RegisterForm, ForgotPasswordForm, GoogleButton, ProtectedRoute
-    common/                LoadingSpinner, ErrorMessage, FormField
-  context/                 AuthContext (user, loading, signIn/up/out, google, reset, updateProfile)
-  hooks/                   useAuth, useRequireAuth
-  services/
-    firebase/              config.ts (reads VITE_FIREBASE_*), auth.ts, firestore.ts, storage.ts
-  types/                   user.ts, auth.ts
-  utils/                   validation.ts (zod schemas), errors.ts (Firebase error → readable msg)
-  routes/                  (TanStack file routes — see below)
-```
+So the remaining work is: delete the dead sidebar file for good, add the missing sections the
+brief asks for on each page, and give every page a proper loading skeleton, empty state and
+error state.
 
-Existing `src/routes/index.tsx` stays visually identical; internally its Header/Footer JSX moves to `components/layout/*` and gets re-composed. No color/spacing/copy changes.
+## Changes per page
 
-## Firebase integration
+**Wallet** — keep balance and transaction history; add a Cashback earned total next to
+credited/spent, and a Withdraw button that is present but disabled with a "Coming soon" note
+so it is ready for later.
 
-- Client SDK only (`firebase/app`, `firebase/auth`, `firebase/firestore`, `firebase/storage`).
-- Config via `import.meta.env.VITE_FIREBASE_*` (API key, authDomain, projectId, storageBucket, messagingSenderId, appId).
-- Ship `.env.example` with every required key.
-- Persistence: `browserLocalPersistence` so sessions survive reloads.
-- Firestore `users/{uid}` doc created on signup: `{ uid, email, displayName, photoURL, role: 'customer', createdAt }`. Used later by seller/admin panels.
+**Vouchers** — split into three tabs: Available, Used, Expired. Used vouchers come from the
+codes actually applied on the customer's past orders; expired ones from voucher end dates.
 
-Because the user explicitly asked for Firebase, we do NOT enable Lovable Cloud. Firebase keys are safe in the client bundle (protected by Firebase Security Rules, which the user configures in their Firebase console).
+**Rewards** — keep points balance and tier; split the activity list into Earn history and
+Redeem history tabs.
 
-## Auth features
+**Refer & Earn** — already has code, link, invited friends and earnings; add the missing
+loading skeleton and error state.
 
-1. **Email/Password signup** → `createUserWithEmailAndPassword` → `sendEmailVerification` → create Firestore user doc → redirect to `/verify-email` notice.
-2. **Email/Password login** → `signInWithEmailAndPassword`. Warn (non-blocking) if `emailVerified === false`.
-3. **Google OAuth** → `signInWithPopup(GoogleAuthProvider)` → upsert Firestore user doc.
-4. **Forgot password** → `sendPasswordResetEmail`, dedicated `/forgot-password` page + `/reset-password` info page.
-5. **Auth state** → `onAuthStateChanged` inside `AuthProvider` at the root; global `loading` gate prevents protected-route flash.
-6. **Sign out** → clears Firebase session; header updates reactively.
+**Messages** — already an independent inbox with unread badges and its own conversation page;
+add skeleton and error state.
 
-All forms use `react-hook-form` + `zod` with inline errors, disabled state during submit, `sonner` toasts for success/failure, and Firebase error codes mapped to readable messages (`auth/wrong-password` → "Incorrect email or password.", etc.).
+**Addresses** — already lists, adds, edits and deletes saved addresses; add skeleton and
+error state.
 
-## Routes (TanStack Start file-based)
+**Notifications** — already a timeline with mark-as-read and real unread count; add skeleton
+and error state.
 
-Public:
-- `/` — untouched homepage
-- `/login`
-- `/register`
-- `/forgot-password`
-- `/verify-email`
+**Be a Seller** — new dedicated page: introduction, benefits list, and an Apply button that
+starts the existing seller registration flow. The Account service card and banner point here
+instead of jumping straight into the form.
 
-Protected (via `_authenticated` pathless layout that checks `AuthContext` client-side and redirects to `/login?redirect=<path>`):
-- `/_authenticated/account` — profile page (display name edit, avatar upload to `avatars/{uid}` in Storage, email display, email-verified badge, link to orders, sign-out)
-- `/_authenticated/orders` — placeholder route file that renders an empty-state ("No orders yet") — real order data is Phase 2. This is not fake content; it's the correct empty state for a new account.
-- `/_authenticated/seller` — gated by `role === 'seller' | 'admin'`; renders "Seller access required" when not authorized.
-- `/_authenticated/admin` — gated by `role === 'admin'`; same pattern.
+## Kept exactly as-is
 
-`_authenticated/route.tsx` is `ssr: false` (Firebase auth lives in browser storage) and redirects unauthenticated users to `/login`.
+Colors, spacing, typography, animations, branding, Firestore data and all existing routes.
+Nothing in checkout, products, seller or admin areas is touched.
 
-## Homepage wiring (only change to existing UI)
+## Technical notes
 
-In the extracted `Header`:
-- When `user === null` → show existing "Login / Register" link → routes to `/login`.
-- When `user` exists → same slot renders account name + dropdown (Account, Orders, Sign out). Uses existing shadcn `DropdownMenu`, matching current header typography and colors. No new visual style introduced.
-
-Nothing else on the homepage changes.
-
-## Validation, loading, errors
-
-- Zod schemas in `utils/validation.ts` (email, password ≥ 8 with letter+number, displayName 2–50).
-- Every async action shows a spinner state on its button and disables the form.
-- Root `AuthProvider` renders a full-page spinner until the first `onAuthStateChanged` fires — prevents header flicker and protected-route flash.
-- Firebase error mapper produces user-friendly copy; raw codes never surface.
-
-## Deliverables checklist
-
-- [ ] `.env.example` with all `VITE_FIREBASE_*` keys
-- [ ] `firebase` package installed
-- [ ] Services + context + hooks + types + utils scaffolded
-- [ ] Header/Footer extracted, homepage visually identical
-- [ ] `/login`, `/register`, `/forgot-password`, `/verify-email` pages
-- [ ] `_authenticated` layout + `/account`, `/orders`, `/seller`, `/admin`
-- [ ] Avatar upload to Firebase Storage
-- [ ] Firestore user doc created on signup + Google sign-in
-- [ ] No TODOs, no placeholder text, no dead code
-
-## Note on env
-
-You'll need to paste your Firebase web-app config into a `.env` file (I'll provide `.env.example`). Until real keys are set, auth calls fail with a clear "Firebase not configured" error — the UI still renders.
+- Remove `src/components/layout/AppShell.tsx` (dead sidebar shell).
+- New `src/routes/_authenticated/be-a-seller.tsx`; update the two links in `account.tsx`.
+- New `listCustomerVouchers(uid)` in `src/services/firebase/customerCoupons.ts` returning
+  available / used / expired buckets, using coupon docs plus the customer's order coupon codes.
+- Shared `ServiceSkeleton` / `ServiceError` blocks in `src/components/common/` so every page
+  uses the same premium placeholders.
+- Verify with typecheck and a browser pass over each route.
