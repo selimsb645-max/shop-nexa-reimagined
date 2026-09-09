@@ -118,7 +118,7 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
     if (!firebaseConfigured) return;
     listCategories()
       .then(setCategories)
-      .catch(() => {});
+      .catch(() => toast.error("Failed to load categories. Refresh the page and try again."));
   }, []);
 
   // Load subcategories when category changes
@@ -129,7 +129,7 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
     }
     listSubcategories(form.categoryId)
       .then(setSubcategories)
-      .catch(() => {});
+      .catch(() => toast.error("Failed to load subcategories. Refresh the page and try again."));
   }, [form.categoryId]);
 
   // Auto-save draft to localStorage (debounced)
@@ -206,8 +206,8 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
     }
     if (!form.categoryId) e.categoryId = "Category is required";
     if (!form.price || Number(form.price) <= 0) e.price = "Price must be greater than 0";
-    if (form.compareAtPrice && Number(form.compareAtPrice) <= Number(form.price)) {
-      e.compareAtPrice = "Sale price should be higher than regular price";
+    if (form.compareAtPrice && Number(form.compareAtPrice) > Number(form.price)) {
+      e.compareAtPrice = "Sale price must be less than or equal to regular price";
     }
     if (!form.stock || Number(form.stock) < 0) e.stock = "Stock is required";
     if (images.length === 0) e.images = "At least one product image is required";
@@ -238,8 +238,11 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
         shortDescription: form.shortDescription.trim(),
         description: form.description,
         brand: form.brand.trim() || null,
-        price: Number(form.price),
-        compareAtPrice: form.compareAtPrice ? Number(form.compareAtPrice) : null,
+        // Form fields: price = Regular Price, compareAtPrice = optional Sale Price.
+        // Storefront convention: `price` = current selling price (sale when set),
+        // `compareAtPrice` = crossed-out original price (only when a sale exists).
+        price: form.compareAtPrice ? Number(form.compareAtPrice) : Number(form.price),
+        compareAtPrice: form.compareAtPrice ? Number(form.price) : null,
         costPrice: form.costPrice ? Number(form.costPrice) : null,
         tax: form.tax ? Number(form.tax) : 0,
         images,
@@ -538,13 +541,13 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
                         </span>
                       </div>
                     )}
-                    {form.compareAtPrice && Number(form.compareAtPrice) > Number(form.price) && (
+                    {form.compareAtPrice && Number(form.compareAtPrice) < Number(form.price) && (
                       <div className="flex justify-between">
                         <span className="text-slate-500">{t("seller.discountLabel")}</span>
                         <span className="font-semibold text-[#f57224]">
-                          ৳{(Number(form.compareAtPrice) - Number(form.price)).toFixed(2)}
+                          ৳{(Number(form.price) - Number(form.compareAtPrice)).toFixed(2)}
                           {" ("}
-                          {((1 - Number(form.price) / Number(form.compareAtPrice)) * 100).toFixed(
+                          {((1 - Number(form.compareAtPrice) / Number(form.price)) * 100).toFixed(
                             0,
                           )}
                           % off{")"}
@@ -703,11 +706,11 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
                 </p>
                 <div className="flex items-center gap-2 mt-2">
                   <span className="text-base font-bold text-[#f57224]">
-                    ৳{Number(form.price || 0).toFixed(0)}
+                    ৳{Number(form.compareAtPrice || form.price || 0).toFixed(0)}
                   </span>
-                  {form.compareAtPrice && Number(form.compareAtPrice) > Number(form.price) && (
+                  {form.compareAtPrice && (
                     <span className="text-xs text-slate-400 line-through">
-                      ৳{Number(form.compareAtPrice).toFixed(0)}
+                      ৳{Number(form.price).toFixed(0)}
                     </span>
                   )}
                 </div>
