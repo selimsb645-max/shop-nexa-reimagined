@@ -145,7 +145,9 @@ describe("SIGNUP REWARD — Security", () => {
 
   it("rewardTx writes are blocked for clients in Firestore rules", () => {
     expect(firestoreRules).toContain("match /rewardTx/{txId}");
-    expect(firestoreRules).toContain("allow write: if isAdmin()");
+    // Stricter than the original design: deny-ALL client writes (even admins)
+    // — rewardTx is only ever written server-side via the service account.
+    expect(firestoreRules).toContain("allow write: if false");
   });
 
   it("promoCodes writes are blocked for clients in Firestore rules", () => {
