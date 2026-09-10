@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { listAllSellers, setSellerStatus } from "@/services/firebase/adminSellers";
+import { auditShopSlugCollisions } from "@/lib/store.functions";
 import { logActivity } from "@/services/firebase/adminLogs";
 import { useAuth } from "@/context/AuthContext";
 import { Spinner } from "@/components/common/Spinner";
@@ -21,6 +22,16 @@ function SellersAdmin() {
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<"" | SellerStatus>("");
+  const [auditing, setAuditing] = useState(false);
+  const [auditReport, setAuditReport] = useState<{
+    totalSellers: number;
+    collisionCount: number;
+    collisions: Array<{
+      slug: string;
+      sellers: Array<{ uid: string; shopName: string; status: string; keepsSlug: boolean }>;
+    }>;
+    repaired: Array<{ uid: string; shopName: string; from: string; to: string }>;
+  } | null>(null);
 
   const refresh = async () => {
     setLoading(true);
@@ -63,6 +74,38 @@ function SellersAdmin() {
     }
   };
 
+  const runSlugAudit = async (repair: boolean) => {
+    if (!user) return;
+    setAuditing(true);
+    try {
+      const idToken = await user.getIdToken();
+      const report = await auditShopSlugCollisions({ data: { idToken, repair } });
+      setAuditReport(report);
+      if (repair) {
+        toast.success(
+          report.repaired.length
+            ? `Fixed ${report.repaired.length} duplicate store URL${report.repaired.length > 1 ? "s" : ""}`
+            : "No changes needed",
+        );
+        await logActivity(
+          { uid: user.uid, email: user.email },
+          "store.slugAuditRepair",
+          "sellers",
+          `${report.repaired.length} slugs renamed`,
+        );
+        await refresh();
+      } else if (report.collisionCount === 0) {
+        toast.success("No store URL conflicts found");
+      } else {
+        toast.warning(`Found ${report.collisionCount} conflicting store URL${report.collisionCount > 1 ? "s" : ""}`);
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : mapFirebaseError(err));
+    } finally {
+      setAuditing(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -88,7 +131,47 @@ function SellersAdmin() {
             <option value="rejected">{t("admin.rejected")}</option>
             <option value="suspended">{t("admin.suspended")}</option>
           </select>
+          <button
+            onClick={() => runSlugAudit(false)}
+            disabled={auditing}
+            className="rounded-md border bg-background px-3 py-2 text-sm text-muted-foreground hover:bg-muted disabled:opacity-50 transition-colors"
+          >
+            {auditing ? "Checking…" : "Check store URLs"}
+          </button>
         </div>
+
+        {auditReport && auditReport.collisionCount > 0 && (
+          <div className="mt-4 rounded-md border border-amber-300 bg-amber-50 p-4 text-sm">
+            <div className="font-semibold text-amber-900">
+              {auditReport.collisionCount} store URL conflict{auditReport.collisionCount > 1 ? "s" : ""} found
+              {" "}(same /store/ address used by multiple sellers)
+            </div>
+            <ul className="mt-2 space-y-1">
+              {auditReport.collisions.map((c) => (
+                <li key={c.slug} className="text-amber-900">
+                  <span className="font-mono">/store/{c.slug}</span> —{" "}
+                  {c.sellers.map((s) => `${s.shopName}${s.keepsSlug ? " (keeps URL)" : ""}`).join(", ")}
+                </li>
+              ))}
+            </ul>
+            <button
+              onClick={() => runSlugAudit(true)}
+              disabled={auditing || auditReport.repaired.length > 0}
+              className="mt-3 rounded-md bg-amber-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-amber-700 disabled:opacity-50 transition-colors"
+            >
+              {auditReport.repaired.length > 0 ? "Fixed" : "Fix conflicts"}
+            </button>
+            {auditReport.repaired.length > 0 && (
+              <ul className="mt-2 space-y-1 text-green-700">
+                {auditReport.repaired.map((r) => (
+                  <li key={r.uid}>
+                    {r.shopName}: <span className="font-mono">/store/{r.from}</span> → <span className="font-mono">/store/{r.to}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
       </div>
       <div className="overflow-x-auto rounded-lg border bg-background">
         {loading ? (

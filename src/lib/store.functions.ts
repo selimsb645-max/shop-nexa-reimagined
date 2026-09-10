@@ -266,3 +266,183 @@ export const reserveShopSlug = createServerFn({ method: "POST" })
     // Extremely unlikely: 50 collisions. Append uid fragment for uniqueness.
     return `${base}-${data.uid.slice(0, 8).toLowerCase()}`;
   });
+
+/**
+ * ADMIN: Audit (and optionally repair) shopSlug collisions across ALL sellers.
+ *
+ * History: slugs used to be generated as slugify(shopName) with no uniqueness
+ * check, so two sellers named "Tech Zone" could both own "tech-zone" — and the
+ * public /store/{slug} lookup (limit: 1) would show the first seller's store
+ * for both URLs. reserveShopSlug() prevents NEW collisions; this function
+ * finds and fixes the ones that may already exist in production data.
+ *
+ * Auth: caller must be an admin (super_admin / admin / seller_manager),
+ * verified via ID token — same as the Firestore rules for seller management.
+ *
+ * repair=false → returns a report only.
+ * repair=true  → keeps the OLDEST seller's slug and renames later duplicates
+ *                to slug-2, slug-3, … (never deletes or touches any other field).
+ */
+export const auditShopSlugCollisions = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        idToken: z.string().min(10),
+        repair: z.boolean().optional(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data }) => {
+    const { verifyIdToken, getAccessToken, getProjectId, fromFsFields } = await import(
+      "./firebase-admin.server"
+    );
+
+    // 1. Authenticate the admin caller
+    const { uid } = await verifyIdToken(data.idToken);
+    const projectId = getProjectId();
+    const token = await getAccessToken();
+
+    const userRes = await fetch(
+      `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${encodeURIComponent(uid)}`,
+      { headers: { authorization: `Bearer ${token}` } },
+    );
+    if (!userRes.ok) throw new Error("Could not verify admin permissions.");
+    const userDoc = (await userRes.json()) as { fields?: Record<string, { stringValue?: string }> };
+    const role = userDoc.fields?.role?.stringValue;
+    const adminRole = userDoc.fields?.adminRole?.stringValue ?? null;
+    const allowed = ["super_admin", "admin", "seller_manager"];
+    if (role !== "admin" || !allowed.includes(adminRole ?? "")) {
+      throw new Error("Only seller-management admins can run this audit.");
+    }
+
+    // 2. Page through ALL sellers (masked to the fields we need)
+    interface SellerRow {
+      uid: string;
+      shopSlug: string;
+      shopName: string;
+      status: string;
+      createdAt: number;
+    }
+    const rows: SellerRow[] = [];
+    let pageToken: string | undefined;
+    do {
+      const params = new URLSearchParams({ pageSize: "300" });
+      if (pageToken) params.set("pageToken", pageToken);
+      for (const f of ["shopSlug", "shopName", "status", "createdAt"]) {
+        params.append("mask.fieldPaths", f);
+      }
+      const listRes = await fetch(
+        `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/sellers?${params.toString()}`,
+        { headers: { authorization: `Bearer ${token}` } },
+      );
+      if (!listRes.ok) throw new Error("Could not list sellers for the audit.");
+      const page = (await listRes.json()) as {
+        documents?: Array<{ name: string; fields?: Record<string, unknown> }>;
+        nextPageToken?: string;
+      };
+      for (const doc of page.documents ?? []) {
+        const f = fromFsFields((doc.fields ?? {}) as Record<string, never>) as Record<
+          string,
+          unknown
+        >;
+        const created = f.createdAt as { _seconds?: number } | number | undefined;
+        rows.push({
+          uid: doc.name.split("/").pop()!,
+          shopSlug: String(f.shopSlug ?? ""),
+          shopName: String(f.shopName ?? ""),
+          status: String(f.status ?? "draft"),
+          createdAt:
+            typeof created === "number"
+              ? created
+              : typeof created?._seconds === "number"
+                ? created._seconds * 1000
+                : Number.MAX_SAFE_INTEGER,
+        });
+      }
+      pageToken = page.nextPageToken;
+    } while (pageToken);
+
+    // 3. Group by slug and find collisions
+    const bySlug = new Map<string, SellerRow[]>();
+    for (const row of rows) {
+      if (!row.shopSlug) continue;
+      const list = bySlug.get(row.shopSlug) ?? [];
+      list.push(row);
+      bySlug.set(row.shopSlug, list);
+    }
+    const collisions: Array<{ slug: string; sellers: SellerRow[] }> = [];
+    for (const [slug, sellers] of bySlug) {
+      if (sellers.length > 1) {
+        sellers.sort((a, b) => a.createdAt - b.createdAt);
+        collisions.push({ slug, sellers });
+      }
+    }
+
+    if (!data.repair) {
+      return {
+        totalSellers: rows.length,
+        collisionCount: collisions.length,
+        collisions: collisions.map((c) => ({
+          slug: c.slug,
+          sellers: c.sellers.map((s) => ({
+            uid: s.uid,
+            shopName: s.shopName,
+            status: s.status,
+            keepsSlug: s === c.sellers[0],
+          })),
+        })),
+        repaired: [],
+      };
+    }
+
+    // 4. Repair: oldest seller keeps the slug, later ones get -2, -3, …
+    const taken = new Set(bySlug.keys());
+    const repaired: Array<{ uid: string; shopName: string; from: string; to: string }> = [];
+    for (const c of collisions) {
+      const suffixes = c.sellers.slice(1);
+      for (const seller of suffixes) {
+        let n = 2;
+        while (taken.has(`${c.slug}-${n}`)) n++;
+        const newSlug = `${c.slug}-${n}`;
+        const patchRes = await fetch(
+          `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/sellers/${encodeURIComponent(seller.uid)}?updateMask.fieldPaths=shopSlug`,
+          {
+            method: "PATCH",
+            headers: {
+              authorization: `Bearer ${token}`,
+              "content-type": "application/json",
+            },
+            body: JSON.stringify({
+              fields: { shopSlug: { stringValue: newSlug } },
+            }),
+          },
+        );
+        if (!patchRes.ok) {
+          throw new Error(`Failed to rename slug for seller ${seller.shopName || seller.uid}`);
+        }
+        taken.add(newSlug);
+        taken.delete(c.slug); // still owned by the first seller
+        repaired.push({
+          uid: seller.uid,
+          shopName: seller.shopName,
+          from: c.slug,
+          to: newSlug,
+        });
+      }
+    }
+
+    return {
+      totalSellers: rows.length,
+      collisionCount: collisions.length,
+      collisions: collisions.map((c) => ({
+        slug: c.slug,
+        sellers: c.sellers.map((s) => ({
+          uid: s.uid,
+          shopName: s.shopName,
+          status: s.status,
+          keepsSlug: s === c.sellers[0],
+        })),
+      })),
+      repaired,
+    };
+  });
