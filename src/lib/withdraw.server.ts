@@ -6,8 +6,13 @@ import {
   newDocId,
   toFsFields,
   fromFsFields,
+  beginTransaction,
+  batchGetDocsWithTx,
+  commitWithTx,
+  rollbackTransaction,
   type FsValue,
   type FsWrite,
+  type FetchedDoc,
 } from "./firebase-admin.server";
 import type { WithdrawalMethod } from "@/types/seller";
 import {
@@ -36,11 +41,72 @@ interface WithdrawResult {
   remainingBalance: number;
 }
 
+// ═══════════════════════════════════════════════════════════════
+// TRANSACTION-SAFE WITHDRAWAL (concurrency protection)
+// ═══════════════════════════════════════════════════════════════
+// Mirrors the checkout wallet-deduction transaction pattern.
+// Uses a Firestore transaction with the seller document as a
+// concurrency lock to prevent double-spending via concurrent
+// withdrawal requests.
+
+const MAX_WITHDRAWAL_TX_RETRIES = 5;
+
+/**
+ * List walletTx document IDs for a seller (outside transaction — names only).
+ * Same pattern as listWalletTxDocIds in checkout.server.ts / giftcards.server.ts.
+ */
+async function listSellerWalletTxDocIds(projectId: string, uid: string): Promise<string[]> {
+  const token = await getAccessToken();
+  const res = await fetch(
+    `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/sellers/${encodeURIComponent(uid)}/walletTx:runQuery`,
+    {
+      method: "POST",
+      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+      body: JSON.stringify({
+        structuredQuery: {
+          from: [{ collectionId: "walletTx" }],
+          select: { fields: [{ fieldPath: "__name__" }] },
+          limit: 1000,
+        },
+      }),
+    },
+  );
+  if (!res.ok) throw new Error("Could not read wallet data. Please try again.");
+  const json = (await res.json()) as Array<{ document?: { name?: string } }>;
+  return json.filter((r) => r.document?.name).map((r) => r.document!.name!);
+}
+
+/**
+ * Calculate seller wallet balance from fetched walletTx documents.
+ * Same logic as the non-transactional version: completed entries count
+ * fully, pending debits reduce available balance.
+ */
+function calculateSellerBalanceFromDocs(docs: Map<string, FetchedDoc>): number {
+  let balance = 0;
+  for (const doc of docs.values()) {
+    if (!doc.exists) continue;
+    const amount = Number(doc.data.amount ?? 0);
+    const status = String(doc.data.status ?? "completed");
+    if (status === "completed") {
+      balance += amount;
+    } else if (status === "pending" && amount < 0) {
+      balance += amount; // pending withdrawals reduce available
+    }
+  }
+  return Math.round(balance * 100) / 100;
+}
+
 /**
  * Creates a withdrawal request server-side.
- * - Reads wallet balance from Firestore (authoritative)
- * - Creates withdrawal doc + pending walletTx entry
- * - All in a single atomic batch
+ *
+ * TRANSACTION-SAFE: Uses a Firestore transaction with the seller document
+ * as a concurrency lock — same pattern as checkout wallet deduction and
+ * gift card purchases. Two concurrent withdrawal requests cannot both
+ * pass the balance check; the second will abort and retry with fresh data.
+ *
+ * - Reads wallet balance within transaction (authoritative + locked)
+ * - Creates withdrawal doc + pending walletTx entry within transaction
+ * - Bumps seller walletTxVersion to release the lock
  */
 export async function requestWithdrawalServer(req: WithdrawRequest): Promise<WithdrawResult> {
   // CANONICAL RAIL FREEZE (Sep 7 2026): this first-generation withdrawal
@@ -48,97 +114,115 @@ export async function requestWithdrawalServer(req: WithdrawRequest): Promise<Wit
   // withdrawals run exclusively on the v2 wallet (requestWalletWithdrawal).
   if (LEGACY_WITHDRAWALS_FROZEN) throw legacyWithdrawalsFrozenError();
   const projectId = getProjectId();
-  const token = await getAccessToken();
 
   if (req.amount < MIN_WITHDRAWAL_AMOUNT) {
     throw new Error(`Minimum withdrawal amount is $${MIN_WITHDRAWAL_AMOUNT}.`);
   }
 
-  // Read wallet balance from Firestore ledger
-  const walletRes = await fetch(
-    `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/sellers/${encodeURIComponent(req.uid)}/walletTx:runQuery`,
-    {
-      method: "POST",
-      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-      body: JSON.stringify({
-        structuredQuery: { from: [{ collectionId: "walletTx" }], limit: 1000 },
-      }),
-    },
-  );
+  const sellerDocName = docPath(projectId, ["sellers", req.uid]);
+  let lastError: Error | null = null;
 
-  if (!walletRes.ok) {
-    throw new Error("Could not read wallet balance. Please try again.");
-  }
+  for (let attempt = 0; attempt <= MAX_WITHDRAWAL_TX_RETRIES; attempt++) {
+    let tx: string | null = null;
+    try {
+      // 1. Begin transaction
+      tx = await beginTransaction(projectId);
 
-  const walletJson = (await walletRes.json()) as Array<{
-    document?: { fields?: Record<string, FsValue> };
-  }>;
+      // 2. List walletTx document IDs (outside tx — just for names)
+      const walletTxNames = await listSellerWalletTxDocIds(projectId, req.uid);
 
-  let balance = 0;
-  for (const row of walletJson) {
-    if (!row.document) continue;
-    const fields = fromFsFields(row.document.fields ?? {});
-    const amount = Number(fields.amount ?? 0);
-    const status = String(fields.status ?? "completed");
-    if (status === "completed") {
-      balance += amount;
-    } else if (status === "pending" && amount < 0) {
-      balance += amount; // pending withdrawals reduce available
+      // 3. Read seller doc + all walletTx docs WITHIN the transaction
+      const allNames = [sellerDocName, ...walletTxNames];
+      const docs = await batchGetDocsWithTx(projectId, allNames, tx);
+
+      // 4. Calculate balance from transaction-locked reads
+      const sellerDoc = docs.get(sellerDocName);
+      void sellerDoc; // read as lock — no field check needed
+      const walletDocs = new Map(
+        Array.from(docs.entries()).filter(([name]) => name !== sellerDocName),
+      );
+      const balance = calculateSellerBalanceFromDocs(walletDocs);
+
+      // 5. Check balance — this is the CRITICAL concurrency-safe check
+      if (req.amount > balance) {
+        await rollbackTransaction(projectId, tx);
+        throw new Error(`Insufficient balance. Available: $${balance.toFixed(2)}`);
+      }
+
+      // 6. Prepare atomic writes within the transaction
+      const withdrawalId = newDocId();
+      const txId = newDocId();
+      const nowMs = Date.now();
+      const now = new Date().toISOString();
+
+      const writes: FsWrite[] = [
+        // Withdrawal request document
+        {
+          update: {
+            name: docPath(projectId, ["sellers", req.uid, "withdrawals", withdrawalId]),
+            fields: toFsFields({
+              sellerId: req.uid,
+              amount: req.amount,
+              method: req.method,
+              destination: req.destination,
+              status: "pending",
+              requestedAt: nowMs,
+              processedAt: null,
+              note: null,
+              txId: null,
+            }),
+          },
+          currentDocument: { exists: false },
+        },
+        // Pending walletTx entry (debit)
+        {
+          update: {
+            name: docPath(projectId, ["sellers", req.uid, "walletTx", txId]),
+            fields: toFsFields({
+              type: "withdrawal",
+              amount: -req.amount,
+              orderId: null,
+              note: `Withdrawal #${withdrawalId.slice(0, 8)} via ${req.method}`,
+              status: "pending",
+              createdAt: nowMs,
+            }),
+          },
+          currentDocument: { exists: false },
+        },
+        // Seller document update (the "lock release" — bumps walletTxVersion
+        // so any concurrent transaction reading the same seller doc will abort)
+        {
+          update: {
+            name: sellerDocName,
+            fields: toFsFields({
+              walletTxVersion: attempt + 1,
+              updatedAt: now,
+            }),
+          },
+          updateMask: { fieldPaths: ["walletTxVersion", "updatedAt"] },
+        },
+      ];
+
+      // 7. Commit within the transaction
+      const committed = await commitWithTx(projectId, writes, tx);
+      if (committed) {
+        return {
+          withdrawalId,
+          amount: req.amount,
+          method: req.method,
+          remainingBalance: round2(balance - req.amount),
+        };
+      }
+
+      // 8. ABORTED — concurrent transaction modified our reads. Retry.
+      lastError = new Error("Another transaction modified your wallet. Retrying...");
+    } catch (err) {
+      if (tx) await rollbackTransaction(projectId, tx);
+      throw err; // Non-retryable error (e.g., insufficient balance)
     }
   }
 
-  if (req.amount > balance) {
-    throw new Error(`Insufficient balance. Available: $${balance.toFixed(2)}`);
-  }
-
-  const withdrawalId = newDocId();
-  const txId = newDocId();
-  const nowMs = Date.now();
-
-  const writes: FsWrite[] = [
-    // Withdrawal request document
-    {
-      update: {
-        name: docPath(projectId, ["sellers", req.uid, "withdrawals", withdrawalId]),
-        fields: toFsFields({
-          sellerId: req.uid,
-          amount: req.amount,
-          method: req.method,
-          destination: req.destination,
-          status: "pending",
-          requestedAt: nowMs,
-          processedAt: null,
-          note: null,
-          txId: null,
-        }),
-      },
-      currentDocument: { exists: false },
-    },
-    // Pending walletTx entry (debit)
-    {
-      update: {
-        name: docPath(projectId, ["sellers", req.uid, "walletTx", txId]),
-        fields: toFsFields({
-          type: "withdrawal",
-          amount: -req.amount,
-          orderId: null,
-          note: `Withdrawal #${withdrawalId.slice(0, 8)} via ${req.method}`,
-          status: "pending",
-          createdAt: nowMs,
-        }),
-      },
-      currentDocument: { exists: false },
-    },
-  ];
-
-  await commitWrites(projectId, writes);
-
-  return {
-    withdrawalId,
-    amount: req.amount,
-    method: req.method,
-    remainingBalance: round2(balance - req.amount),
-  };
+  throw lastError ?? new Error("Withdrawal failed after multiple retries. Please try again.");
 }
 
 /**

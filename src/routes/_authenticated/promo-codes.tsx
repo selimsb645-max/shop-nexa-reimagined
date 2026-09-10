@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { listMyPromoCodes, type PromoCode, formatPromoDiscount, isPromoUsable, formatPromoExpiry } from "@/services/firebase/promoCodes";
 import { generatePromoCode } from "@/lib/promo.functions";
 import { useAuth } from "@/context/AuthContext";
@@ -13,6 +14,7 @@ export const Route = createFileRoute("/_authenticated/promo-codes")({
 function PromoCodesPage() {
   const { t } = useI18n();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [promos, setPromos] = useState<PromoCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
@@ -41,6 +43,7 @@ function PromoCodesPage() {
     try {
       const idToken = await user.getIdToken();
       await generatePromoCode({ data: { idToken, campaignType: "welcome" } });
+      await queryClient.invalidateQueries({ queryKey: ["promoCodes"] });
       await loadPromos();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not generate promo code.");

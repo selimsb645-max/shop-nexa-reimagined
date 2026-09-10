@@ -24,7 +24,7 @@ export function referralCodeFor(uid: string): string {
   for (let i = 0; i < uid.length; i += 1) {
     hash = (hash * 31 + uid.charCodeAt(i)) % 2176782336; // 36^6
   }
-  return `NEXA${hash.toString(36).toUpperCase().padStart(6, "0")}`;
+  return `AVENTA${hash.toString(36).toUpperCase().padStart(6, "0")}`;
 }
 
 export function referralLink(uid: string): string {

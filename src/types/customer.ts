@@ -55,7 +55,7 @@ export interface WalletTx {
   createdAt: number;
 }
 
-export type RewardTxType = "earn" | "redeem" | "bonus" | "referral";
+export type RewardTxType = "earn" | "redeem" | "bonus" | "referral" | "welcome_signup";
 
 export interface RewardTx {
   id: string;

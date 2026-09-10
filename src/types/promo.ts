@@ -37,6 +37,6 @@ export interface PromoCode {
  * to 6 digits (1M codes) without rewriting the system.
  */
 export interface PromoCodeGeneratorConfig {
-  prefix: string;          // default: "NEXA"
+  prefix: string;          // default: "AVENTA"
   numericLength: number;   // default: 4, upgrade to 6 later
 }

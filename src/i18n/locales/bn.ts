@@ -358,7 +358,7 @@ export const bn: TranslationKeys = {
   "admin.joined": "যোগ দিয়েছে",
   "admin.location": "লোকেশন",
   "admin.manageCategoriesDesc": "ক্যাটাগরি এবং সাবক্যাটাগরি ম্যানেজ করুন।",
-  "admin.managePromoCodes": "NEXA প্রোমো কোড ম্যানেজ করুন",
+  "admin.managePromoCodes": "AVENTA প্রোমো কোড ম্যানেজ করুন",
   "admin.middle": "মিডল",
   "admin.minOrderAmount": "ন্যূনতম অর্ডার পরিমাণ",
   "admin.minSubtotal": "ন্যূনতম সাবটোটাল",

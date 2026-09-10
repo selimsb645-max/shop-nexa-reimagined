@@ -13,7 +13,7 @@
  * - Collision handling retries up to a configurable max, then returns a
  *   controlled error if the code space is saturated.
  * - Code length (numeric digits) is configurable for future upgrade from
- *   NEXA#### (4 digits, 10K codes) to NEXA###### (6 digits, 1M codes).
+ *   AVENTA###### (6 digits, 1M codes). Historical NEXA#### codes remain valid.
  * - The "coupons" collection already handles admin-created coupons. Promo codes
  *   are a separate, user-bound system — but checkout validates both.
  */
@@ -34,8 +34,8 @@ import {
 // Config
 // ====================================================================
 
-export const PROMO_PREFIX = "NEXA";
-export const PROMO_NUMERIC_LENGTH = 4; // Configurable: upgrade to 6 later
+export const PROMO_PREFIX = "AVENTA";
+export const PROMO_NUMERIC_LENGTH = 6; // 6 digits = 1M code capacity
 const MAX_GENERATE_ATTEMPTS = 50; // Safety valve against infinite loops
 const COLLECTION = "promoCodes";
 

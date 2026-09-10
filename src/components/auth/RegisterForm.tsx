@@ -3,33 +3,58 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import { registerSchema, type RegisterValues } from "@/utils/validation";
 import { signInWithGoogle, signUpWithEmail, waitForAuthUser } from "@/services/firebase/auth";
 import { mapFirebaseError } from "@/utils/errors";
 import { generatePromoCode } from "@/lib/promo.functions";
+import { grantSignupReward, ensurePromoNotification } from "@/lib/rewards.functions";
 import { Spinner } from "@/components/common/Spinner";
 import { GoogleButton } from "./GoogleButton";
 import { firebaseConfigured } from "@/services/firebase/config";
 import { useAuth } from "@/context/AuthContext";
 
 /**
- * Attempts to generate a welcome promo code for a newly registered user.
+ * Completes the signup benefit flow for a newly registered user.
  * Called after successful registration / Google sign-in.
- * Failures are non-blocking — we don't want promo code issues to break
- * the registration flow. The user can manually claim from /promo-codes.
+ * All three steps are idempotent and non-blocking:
+ * 1. Grant 100 welcome reward points (+ real notification)
+ * 2. Generate AVENTA###### welcome promo code (existing system)
+ * 3. Create promo notification with the actual code
+ *
+ * Failures are non-blocking — we don't want reward/promo issues to break
+ * the registration flow. All functions are idempotent so retries are safe.
  */
-async function tryGenerateWelcomePromo(user: { uid: string; getIdToken: () => Promise<string> }): Promise<void> {
+async function completeSignupBenefits(
+  user: { uid: string; getIdToken: () => Promise<string> },
+  queryClient: { invalidateQueries: (opts: { queryKey: unknown[] }) => Promise<void> },
+): Promise<void> {
   try {
     const idToken = await user.getIdToken();
+
+    // 1. Grant 100 signup reward points (idempotent, transaction-safe)
+    await grantSignupReward({ data: { idToken } });
+
+    // 2. Generate AVENTA###### welcome promo code (existing system, idempotent)
     await generatePromoCode({ data: { idToken, campaignType: "welcome" } });
+
+    // 3. Create promo notification with the actual generated code (idempotent)
+    await ensurePromoNotification({ data: { idToken } });
+
+    // 4. Sync account state — make sure every page showing reward points or
+    // vouchers refetches the freshly awarded data instead of serving stale caches.
+    await queryClient.invalidateQueries({ queryKey: ["rewards", "points"] });
+    await queryClient.invalidateQueries({ queryKey: ["rewardTx"] });
+    await queryClient.invalidateQueries({ queryKey: ["promoCodes"] });
   } catch {
     // Non-blocking: duplicate / network / server errors are swallowed.
-    // checkQualification already prevents duplicates server-side.
+    // All functions are idempotent — safe to retry on next login/signup.
   }
 }
 
 export function RegisterForm() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user, loading } = useAuth();
   const {
     register,
@@ -50,9 +75,9 @@ export function RegisterForm() {
     try {
       await signUpWithEmail(values.email, values.password, values.displayName);
       const authUser = await waitForAuthUser();
-      // Auto-generate welcome promo code (non-blocking)
-      await tryGenerateWelcomePromo(authUser);
-      toast.success("Account created! You got a welcome NEXA promo code — check My Promo Codes.");
+      // Grant 100 reward points + welcome promo + notifications (idempotent, non-blocking)
+      await completeSignupBenefits(authUser, queryClient);
+      toast.success("Account created! You got 100 bonus points and a welcome promo code.");
       navigate({ to: "/", replace: true });
     } catch (err) {
       toast.error(mapFirebaseError(err));
@@ -68,9 +93,9 @@ export function RegisterForm() {
     try {
       await signInWithGoogle();
       const authUser = await waitForAuthUser();
-      // Auto-generate welcome promo code for new Google users (non-blocking)
-      await tryGenerateWelcomePromo(authUser);
-      toast.success("Welcome to AVENTA SHOP! Check My Promo Codes for your welcome discount.");
+      // Grant 100 reward points + welcome promo + notifications (idempotent, non-blocking)
+      await completeSignupBenefits(authUser, queryClient);
+      toast.success("Welcome to AVENTA SHOP! You got 100 bonus points and a welcome promo code.");
       navigate({ to: "/", replace: true });
     } catch (err) {
       toast.error(mapFirebaseError(err));

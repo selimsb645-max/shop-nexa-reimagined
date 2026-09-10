@@ -358,7 +358,7 @@ export const en: TranslationKeys = {
   "admin.joined": "Joined",
   "admin.location": "Location",
   "admin.manageCategoriesDesc": "Manage categories and subcategories.",
-  "admin.managePromoCodes": "Manage NEXA promo codes",
+  "admin.managePromoCodes": "Manage AVENTA promo codes",
   "admin.middle": "Middle",
   "admin.minOrderAmount": "Min Order Amount",
   "admin.minSubtotal": "Min subtotal",

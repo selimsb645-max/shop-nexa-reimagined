@@ -18,7 +18,13 @@ import {
   newDocId,
   toFsFields,
   toFsValue,
+  beginTransaction,
+  batchGetDocsWithTx,
+  commitWithTx,
+  rollbackTransaction,
+  fromFsFields,
   type FsWrite,
+  type FetchedDoc,
 } from "./firebase-admin.server";
 import {
   computeSellerSettlement,
@@ -278,6 +284,156 @@ export interface PlaceOrderResult {
 
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TRANSACTION-SAFE WALLET DEDUCTION
+// ═══════════════════════════════════════════════════════════════
+// Mirrors the gift card purchase transaction pattern from
+// giftcards.server.ts — uses a Firestore transaction with the user
+// document as a concurrency lock to prevent double-spending.
+
+const MAX_WALLET_TX_RETRIES = 5;
+
+/**
+ * List walletTx document IDs for a user (outside transaction — names only).
+ * Same pattern as listWalletTxDocIds in giftcards.server.ts.
+ */
+async function listWalletTxDocIds(projectId: string, uid: string): Promise<string[]> {
+  const token = await getAccessToken();
+  const res = await fetch(
+    `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${encodeURIComponent(uid)}:runQuery`,
+    {
+      method: "POST",
+      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+      body: JSON.stringify({
+        structuredQuery: {
+          from: [{ collectionId: "walletTx" }],
+          select: { fields: [{ fieldPath: "__name__" }] },
+          limit: 1000,
+        },
+      }),
+    },
+  );
+  if (!res.ok) throw new Error("Could not read wallet data. Please try again.");
+  const json = (await res.json()) as Array<{ document?: { name?: string } }>;
+  return json.filter((r) => r.document?.name).map((r) => r.document!.name!);
+}
+
+/**
+ * Calculate wallet balance from fetched walletTx documents.
+ * Same logic as calculateBalanceFromDocs in giftcards.server.ts.
+ */
+function calculateWalletBalanceFromDocs(docs: Map<string, FetchedDoc>): number {
+  let balance = 0;
+  for (const doc of docs.values()) {
+    if (!doc.exists) continue;
+    balance += Number(doc.data.amount ?? 0);
+  }
+  return Math.round(balance * 100) / 100;
+}
+
+/**
+ * Deduct wallet balance for checkout using a Firestore transaction.
+ *
+ * This is the CRITICAL concurrency-safe function that prevents
+ * double-spending. It mirrors the transaction pattern from
+ * giftcards.server.ts:purchaseGiftCardServer.
+ *
+ * The user document (users/{uid}) is read within the transaction as a
+ * "lock". Any concurrent wallet-affecting write (gift card purchase,
+ * another checkout, withdrawal) also writes to the user document,
+ * causing conflicting transactions to abort and retry.
+ *
+ * @returns The new walletTxVersion (for the user document).
+ * @throws Error if balance is insufficient after retries.
+ */
+async function deductWalletInTransaction(input: {
+  projectId: string;
+  uid: string;
+  amount: number;
+  orderId: string;
+  nowMs: number;
+}): Promise<number> {
+  const { projectId, uid, amount, orderId, nowMs } = input;
+  const userDocName = docPath(projectId, ["users", uid]);
+
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= MAX_WALLET_TX_RETRIES; attempt++) {
+    let tx: string | null = null;
+    try {
+      // 1. Begin transaction
+      tx = await beginTransaction(projectId);
+
+      // 2. List walletTx document IDs (outside tx — just for names)
+      const walletTxNames = await listWalletTxDocIds(projectId, uid);
+
+      // 3. Read user doc + all walletTx docs WITHIN the transaction
+      const allNames = [userDocName, ...walletTxNames];
+      const docs = await batchGetDocsWithTx(projectId, allNames, tx);
+
+      // 4. Calculate balance from transaction-locked reads
+      const walletBalance = calculateWalletBalanceFromDocs(
+        new Map(
+          Array.from(docs.entries()).filter(([name]) => name !== userDocName),
+        ),
+      );
+
+      // 5. Check balance — this is the CRITICAL concurrency-safe check
+      if (walletBalance < amount) {
+        await rollbackTransaction(projectId, tx);
+        throw new Error(
+          `Insufficient wallet balance. You have \u{09F3}${walletBalance.toFixed(0)} but need \u{09F3}${amount.toFixed(0)}.`,
+        );
+      }
+
+      // 6. Prepare atomic writes within the transaction
+      const now = new Date().toISOString();
+      const writes = [
+        // Wallet debit (negative entry in the user's wallet ledger)
+        {
+          update: {
+            name: docPath(projectId, ["users", uid, "walletTx", newDocId()]),
+            fields: toFsFields({
+              type: "spend",
+              amount: -amount,
+              note: `Used at checkout for order #${orderId.slice(0, 8)}`,
+              orderId,
+              createdAt: nowMs,
+            }),
+          },
+          currentDocument: { exists: false },
+        },
+        // User document update (the "lock release" — bumps walletTxVersion
+        // so any concurrent transaction reading the same user doc will abort)
+        {
+          update: {
+            name: userDocName,
+            fields: toFsFields({
+              walletTxVersion: attempt + 1,
+              updatedAt: now,
+            }),
+          },
+          updateMask: { fieldPaths: ["walletTxVersion", "updatedAt"] },
+        },
+      ];
+
+      // 7. Commit within the transaction
+      const committed = await commitWithTx(projectId, writes, tx);
+      if (committed) {
+        return attempt + 1; // success — return the new walletTxVersion
+      }
+
+      // 8. ABORTED — concurrent transaction modified our reads. Retry.
+      lastError = new Error("Another transaction modified your wallet. Retrying...");
+    } catch (err) {
+      if (tx) await rollbackTransaction(projectId, tx);
+      throw err; // Non-retryable error (e.g., insufficient balance)
+    }
+  }
+
+  throw lastError ?? new Error("Wallet deduction failed after multiple retries. Please try again.");
 }
 
 export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrderResult> {
@@ -710,38 +866,36 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
     }
   }
 
-  // Wallet deduction (server-side verified)
+  // Wallet deduction (transaction-safe, prevents concurrent double-spend).
+  //
+  // CONCURRENCY GUARANTEE:
+  // The user document (users/{uid}) is read within a Firestore transaction as
+  // a "lock". Any concurrent wallet-affecting write (another checkout, gift
+  // card purchase, etc.) also writes to the user document. This causes
+  // conflicting transactions to abort and retry with fresh data, preventing
+  // double-spending.
+  //
+  // FLOW (per transaction attempt):
+  // 1. Begin transaction
+  // 2. List walletTx document IDs (outside tx — just for names)
+  // 3. Read user doc + all walletTx docs WITHIN the transaction
+  // 4. Calculate balance from transaction-locked reads
+  // 5. If balance < requested → rollback, throw "Insufficient balance"
+  // 6. Write wallet debit + user doc update (lock release) WITHIN the transaction
+  // 7. Commit (fails with ABORTED if user doc was modified by another tx)
+  // 8. If ABORTED, retry from step 1
   let walletUsed = 0;
   if (req.walletUsed > 0) {
-    const token = await getAccessToken();
-    const walletRes = await fetch(
-      `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${encodeURIComponent(req.uid)}:runQuery`,
-      {
-        method: "POST",
-        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-        body: JSON.stringify({
-          structuredQuery: { from: [{ collectionId: "walletTx" }], limit: 1000 },
-        }),
-      },
-    );
-    if (walletRes.ok) {
-      const walletJson = (await walletRes.json()) as Array<{
-        document?: { fields?: Record<string, unknown> };
-      }>;
-      let walletBalance = 0;
-      for (const row of walletJson) {
-        if (!row.document) continue;
-        const fields = row.document.fields ?? {};
-        const amountVal = fields.amount as
-          { integerValue?: string | number; doubleValue?: number } | undefined;
-        const amount = Number(amountVal?.integerValue ?? amountVal?.doubleValue ?? 0);
-        walletBalance += amount;
-      }
-      walletUsed = Math.min(req.walletUsed, walletBalance);
-      if (walletUsed <= 0) {
-        throw new Error("You do not have enough wallet balance.");
-      }
-    }
+    const walletTxVersion = await deductWalletInTransaction({
+      projectId,
+      uid: req.uid,
+      amount: req.walletUsed,
+      orderId,
+      nowMs,
+    });
+    // The transaction succeeded — walletUsed is the actual deducted amount.
+    walletUsed = req.walletUsed;
+    void walletTxVersion;
   }
 
   const totalBeforeRewardWallet = round2(subAfterDiscount + shipping + tax);
@@ -921,22 +1075,9 @@ export async function placeOrderServer(req: PlaceOrderRequest): Promise<PlaceOrd
     });
   }
 
-  // Wallet deduction ledger entry.
-  if (walletUsed > 0) {
-    writes.push({
-      update: {
-        name: docPath(projectId, ["users", req.uid, "walletTx", newDocId()]),
-        fields: toFsFields({
-          type: "spend",
-          amount: -walletUsed,
-          note: `Used at checkout for order #${orderId.slice(0, 8)}`,
-          orderId,
-          createdAt: nowMs,
-        }),
-      },
-      currentDocument: { exists: false },
-    });
-  }
+  // Wallet deduction ledger entry is written inside the Firestore transaction
+  // (see deductWalletInTransaction above) to ensure atomic balance check + debit.
+  // It is NOT part of the batch writes below.
 
   // Clear the purchased cart items.
   for (const l of lines) {

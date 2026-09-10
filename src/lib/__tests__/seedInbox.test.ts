@@ -22,11 +22,9 @@ describe("seedInbox — race condition fix", () => {
     expect(SOURCE).toContain('doc(threadsCol, "welcome-thread")');
   });
 
-  it("uses deterministic doc IDs for the welcome message and notifications", () => {
+  it("uses deterministic doc IDs for the welcome message and system notification", () => {
     expect(SOURCE).toContain('"welcome-msg"');
     expect(SOURCE).toContain('"welcome-notif"');
-    expect(SOURCE).toContain('"promo-notif"');
-    expect(SOURCE).toContain('"reward-notif"');
   });
 
   it("wraps the seed writes in a Firestore transaction for atomicity", () => {
@@ -66,9 +64,28 @@ describe("seedInbox — race condition fix", () => {
     );
   });
 
-  it("notification content (bonus points, promo code) is preserved", () => {
-    expect(SOURCE).toContain("100 Bonus Points");
-    expect(SOURCE).toContain("WELCOME10");
+  it("does NOT create fake '100 Bonus Points' or 'WELCOME10' notifications", () => {
+    expect(SOURCE).not.toContain("100 Bonus Points");
+    expect(SOURCE).not.toContain("WELCOME10");
+  });
+
+  it("does NOT create 'reward-notif' or 'promo-notif' as new notifications", () => {
+    // These old cosmetic IDs should only appear in the self-heal cleanup,
+    // never in a tx.set() call for creating notifications.
+    const setMatches = SOURCE.match(/tx\.set\([^)]+\)/g) ?? [];
+    for (const setCall of setMatches) {
+      expect(setCall).not.toContain("reward-notif");
+      expect(setCall).not.toContain("promo-notif");
+    }
+  });
+
+  it("self-heals old cosmetic 'reward-notif' and 'promo-notif' notifications", () => {
+    expect(SOURCE).toContain('"reward-notif"');
+    expect(SOURCE).toContain('"promo-notif"');
+    expect(SOURCE).toContain("deleteDoc");
+  });
+
+  it("welcome system notification content is preserved", () => {
     expect(SOURCE).toContain("Welcome to AVENTA SHOP! 🎉");
   });
 });

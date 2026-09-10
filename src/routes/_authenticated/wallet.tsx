@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowDownLeft, ArrowUpRight, Wallet, Loader, Sparkles, TrendingUp } from "lucide-react";
 import { ServicePageLayout } from "@/components/common/ServicePageLayout";
 import { useAuth } from "@/context/AuthContext";
@@ -29,6 +29,7 @@ const TYPE_LABEL: Record<string, string> = {
 function WalletPage() {
   const { t } = useI18n();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [redeeming, setRedeeming] = useState(false);
 
   const tx = useQuery({
@@ -37,7 +38,7 @@ function WalletPage() {
     enabled: !!user,
   });
   const points = useQuery({
-    queryKey: ["rewardPoints", user?.uid],
+    queryKey: ["rewards", "points", user?.uid],
     queryFn: () => getRewardPoints(user!.uid),
     enabled: !!user,
   });
@@ -54,6 +55,11 @@ function WalletPage() {
     try {
       const credit = await redeemPoints(user.uid, redeemable);
       toast.success(`${formatPrice(credit)} added to your wallet`);
+      // Invalidate the unified keys so every page showing reward points /
+      // wallet balances (account, membership, checkout) re-syncs.
+      await queryClient.invalidateQueries({ queryKey: ["rewards", "points"] });
+      await queryClient.invalidateQueries({ queryKey: ["rewardTx"] });
+      await queryClient.invalidateQueries({ queryKey: ["wallet"] });
       await Promise.all([tx.refetch(), points.refetch()]);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not redeem points");

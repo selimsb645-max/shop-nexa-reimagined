@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useMemo, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   MapPin,
@@ -93,6 +93,7 @@ function CheckoutPage() {
   const { t } = useI18n();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   // ---- Cart ----
   const cartContext = useCart();
@@ -210,7 +211,7 @@ function CheckoutPage() {
   const [couponNetworkError, setCouponNetworkError] = useState(false);
   const [couponBusy, setCouponBusy] = useState(false);
 
-  // ---- Promo Code (NEXA####) ----
+  // ---- Promo Code (AVENTA######) ----
   const [promoInput, setPromoInput] = useState("");
   const [appliedPromoCode, setAppliedPromoCode] = useState<string | null>(null);
   const [promoError, setPromoError] = useState("");
@@ -218,10 +219,9 @@ function CheckoutPage() {
 
   // ---- Reward Points ----
   const { data: rewardPoints = 0 } = useQuery({
-    queryKey: ["reward-points", user?.uid],
+    queryKey: ["rewards", "points", user?.uid],
     queryFn: () => getRewardPoints(user!.uid),
     enabled: !!user && firebaseConfigured,
-    staleTime: 30_000,
   });
   const [useRewardPoints, setUseRewardPoints] = useState(false);
   const [rewardPointsToUse, setRewardPointsToUse] = useState(0);
@@ -384,7 +384,7 @@ function CheckoutPage() {
     toast.info(t("coupon.removed"));
   };
 
-  // ---- Promo handlers (NEXA user-specific codes) ----
+  // ---- Promo handlers (AVENTA user-specific codes) ----
   const handleApplyPromo = async () => {
     const code = promoInput.trim().toUpperCase();
     if (!code) {
@@ -486,6 +486,14 @@ function CheckoutPage() {
       }
 
       toast.success("Order placed successfully!");
+      // Sync account state: reward points spent, wallet balance, promo/voucher
+      // usage, and order lists must reflect the new server-side ledger writes.
+      queryClient.invalidateQueries({ queryKey: ["rewards", "points"] });
+      queryClient.invalidateQueries({ queryKey: ["rewardTx"] });
+      queryClient.invalidateQueries({ queryKey: ["wallet"] });
+      queryClient.invalidateQueries({ queryKey: ["walletTx"] });
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({ queryKey: ["promoCodes"] });
       navigate({
         to: "/order-success",
         search: { orderId },
@@ -822,11 +830,11 @@ function CheckoutPage() {
               )}
             </CheckoutSection>
 
-            {/* ---- PROMO CODE (NEXA####) ---- */}
+            {/* ---- PROMO CODE (AVENTA######) ---- */}
             <CheckoutSection
               number={5}
               icon={<Gift className="w-4 h-4" />}
-              title="Promo Code (NEXA)"
+              title="Promo Code (AVENTA)"
             >
               {appliedPromoCode ? (
                 <div className="flex items-center justify-between bg-orange-50 border border-orange-200 rounded-xl p-3">
@@ -861,7 +869,7 @@ function CheckoutPage() {
                         handleApplyPromo();
                       }
                     }}
-                    placeholder="Enter NEXA promo code"
+                    placeholder="Enter AVENTA promo code"
                     className="flex-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#f57224] transition-colors uppercase font-mono"
                     maxLength={10}
                   />

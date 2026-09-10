@@ -136,7 +136,7 @@ function ReferralPage() {
             <input
               value={friendCode}
               onChange={(e) => setFriendCode(e.target.value.toUpperCase())}
-              placeholder="NEXA123ABC"
+              placeholder="AVENTA123ABC"
               maxLength={20}
               className="w-56 rounded-xl border border-slate-200 px-3 py-2.5 text-sm uppercase outline-none focus:border-[#f57224]"
             />

@@ -53,7 +53,7 @@ import { Spinner } from "@/components/common/Spinner";
 import { firebaseConfigured } from "@/services/firebase/config";
 import { listOrders } from "@/services/firebase/orders";
 import { getWalletBalance, getRewardPoints } from "@/services/firebase/wallet";
-import { listAvailableCoupons } from "@/services/firebase/customerCoupons";
+import { listMyPromoCodes, isPromoUsable } from "@/services/firebase/promoCodes";
 import { countUnreadNotifications } from "@/services/firebase/notifications";
 import { countUnreadMessages } from "@/services/firebase/messages";
 import { listAddresses } from "@/services/firebase/addresses";
@@ -115,11 +115,13 @@ function AccountPage() {
     queryFn: () => getRewardPoints(uid!),
     ...live,
   });
-  const { data: coupons } = useQuery({
-    queryKey: ["coupons", "available"],
-    queryFn: () => listAvailableCoupons(),
+  const { data: myPromos } = useQuery({
+    queryKey: ["promoCodes", uid],
+    queryFn: () => listMyPromoCodes(uid!),
     ...live,
   });
+  // Count only active/usable promo codes as vouchers
+  const voucherCount = (myPromos ?? []).filter(isPromoUsable).length;
   const { data: unreadNotifs } = useQuery({
     queryKey: ["notifications", "unread", uid],
     queryFn: () => countUnreadNotifications(uid!),
@@ -286,7 +288,7 @@ function AccountPage() {
             </Link>
             <Link to="/coupons" className="flex flex-col items-center gap-0.5 rounded-xl py-1.5 transition hover:bg-white/10">
               <TicketPercent className="h-5 w-5" strokeWidth={2} />
-              <span className="text-sm font-bold">{coupons?.length ?? 0}</span>
+              <span className="text-sm font-bold">{voucherCount}</span>
               <span className="text-[10px] text-white/80">{t("account.vouchers")}</span>
             </Link>
           </div>
@@ -323,7 +325,7 @@ function AccountPage() {
           <DarazCardHeader title={t("account.myServices")} />
           <div className="grid grid-cols-4 gap-1 px-2 py-3 sm:grid-cols-5">
             <DarazServiceIcon to="/wishlist" icon={<Heart className="h-6 w-6" />} label={t("account.wishlist")} badge={wishlistCount} />
-            <DarazServiceIcon to="/coupons" icon={<TicketPercent className="h-6 w-6" />} label={t("account.vouchers")} badge={coupons?.length ?? 0} />
+            <DarazServiceIcon to="/coupons" icon={<TicketPercent className="h-6 w-6" />} label={t("account.vouchers")} badge={voucherCount} />
             <DarazServiceIcon to="/rewards" icon={<Gift className="h-6 w-6" />} label={t("account.rewards")} />
             <DarazServiceIcon to="/referral" icon={<UserPlus className="h-6 w-6" />} label={t("account.referEarn")} />
             <DarazServiceIcon to="/wallet" icon={<Wallet className="h-6 w-6" />} label={t("account.wallet")} />
@@ -359,7 +361,7 @@ function AccountPage() {
             <DarazListRow to="/settings" icon={<Settings className="h-5 w-5" />} label={t("account.accountPrefs")} hint={t("account.accountPrefsHint")} />
             <DarazListRow to="/addresses" icon={<MapPin className="h-5 w-5" />} label={t("account.addressBook")} hint={t("account.addressBookHint", { count: addresses?.length ?? 0, suffix: (addresses?.length ?? 0) === 1 ? "" : "es" })} />
             <DarazListRow to="/wallet" icon={<CreditCard className="h-5 w-5" />} label={t("account.paymentWallet")} hint={balance ? formatPrice(balance) : t("account.managePayment")} />
-            <DarazListRow to="/coupons" icon={<TicketPercent className="h-5 w-5" />} label={t("account.myVouchers")} hint={coupons?.length ? t("account.available", { count: coupons.length }) : t("account.noVouchers")} />
+            <DarazListRow to="/coupons" icon={<TicketPercent className="h-5 w-5" />} label={t("account.myVouchers")} hint={voucherCount ? t("account.available", { count: voucherCount }) : t("account.noVouchers")} />
             <DarazListRow to="/referral" icon={<UserPlus className="h-5 w-5" />} label={t("account.referEarn")} hint={t("account.referEarnHint")} />
             <DarazListRow to="/rewards" icon={<Sparkles className="h-5 w-5" />} label={t("account.rewardPoints")} hint={points ? `${points} ${t("account.points")}` : t("account.earnEveryOrder")} />
           </div>

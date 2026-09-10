@@ -1,11 +1,11 @@
 /**
  * AVENTA SHOP — Promo Code Test Suite
  *
- * Tests for the NEXA promo code generation system.
+ * Tests for the AVENTA promo code generation system.
  * Run with: npx vitest run src/lib/__tests__/promo.test.ts
  *
  * Tests cover:
- * 1. Code format (NEXA####)
+ * 1. Code format (AVENTA######)
  * 2. Uniqueness / collision handling
  * 3. Server-side generation (mock)
  * 4. Validation logic (active, expired, used, not found, wrong user)
@@ -27,43 +27,43 @@ import {
 // ====================================================================
 
 describe("Promo Code Format", () => {
-  it("should generate codes with NEXA prefix", () => {
+  it("should generate codes with AVENTA prefix", () => {
     for (let i = 0; i < 100; i++) {
       const code = generateCandidateCode();
       expect(code.startsWith(PROMO_PREFIX)).toBe(true);
     }
   });
 
-  it("should generate codes with exactly 4 numeric digits", () => {
+  it("should generate codes with exactly 6 numeric digits", () => {
     for (let i = 0; i < 100; i++) {
       const code = generateCandidateCode();
       const numericPart = code.slice(PROMO_PREFIX.length);
       expect(numericPart.length).toBe(PROMO_NUMERIC_LENGTH);
-      expect(numericPart).toMatch(/^\d{4}$/);
+      expect(numericPart).toMatch(/^\d{6}$/);
     }
   });
 
-  it("should always produce NEXA#### format", () => {
+  it("should always produce AVENTA###### format", () => {
     for (let i = 0; i < 1000; i++) {
       const code = generateCandidateCode();
-      expect(code).toMatch(/^NEXA\d{4}$/);
+      expect(code).toMatch(/^AVENTA\d{6}$/);
     }
   });
 
-  it("should have uppercase NEXA prefix", () => {
+  it("should have uppercase AVENTA prefix", () => {
     for (let i = 0; i < 100; i++) {
       const code = generateCandidateCode();
-      expect(code.slice(0, 4)).toBe("NEXA");
-      expect(code.slice(0, 4)).toBe(code.slice(0, 4).toUpperCase());
+      expect(code.slice(0, 6)).toBe("AVENTA");
+      expect(code.slice(0, 6)).toBe(code.slice(0, 6).toUpperCase());
     }
   });
 
   it("should support configurable numeric length", () => {
-    const code6 = generateCandidateCode("NEXA", 6);
-    expect(code6).toMatch(/^NEXA\d{6}$/);
+    const code6 = generateCandidateCode("AVENTA", 6);
+    expect(code6).toMatch(/^AVENTA\d{6}$/);
 
-    const code8 = generateCandidateCode("NEXA", 8);
-    expect(code8).toMatch(/^NEXA\d{8}$/);
+    const code8 = generateCandidateCode("AVENTA", 8);
+    expect(code8).toMatch(/^AVENTA\d{8}$/);
   });
 
   it("should support configurable prefix", () => {
@@ -82,16 +82,17 @@ describe("Code Uniqueness", () => {
     for (let i = 0; i < 500; i++) {
       codes.add(generateCandidateCode());
     }
-    // With 10K possible codes and 500 draws, we expect some collisions
-    // but the vast majority should be unique
-    expect(codes.size).toBeGreaterThan(400);
+    // With 1M possible codes and 500 draws, birthday paradox gives ~12%
+    // chance of at least 1 collision. Allow up to 4 collisions (P < 0.001%)
+    // while still verifying the generator produces overwhelmingly unique codes.
+    expect(codes.size).toBeGreaterThan(495);
   });
 
   it("should cover different digit values across many calls", () => {
     const firstDigits = new Set<string>();
     for (let i = 0; i < 1000; i++) {
       const code = generateCandidateCode();
-      firstDigits.add(code.slice(4, 5)); // first digit
+      firstDigits.add(code.slice(6, 7)); // first digit
     }
     // Should see most digits 0-9
     expect(firstDigits.size).toBeGreaterThanOrEqual(8);
@@ -268,7 +269,7 @@ describe("Security Model (Conceptual)", () => {
     // generateCandidateCode uses crypto.getRandomValues internally
     // This is cryptographically secure, unlike Math.random()
     const code = generateCandidateCode();
-    expect(code).toMatch(/^NEXA\d{4}$/);
+    expect(code).toMatch(/^AVENTA\d{6}$/);
   });
 
   it("client-side promoCodes.ts has NO write functions", () => {

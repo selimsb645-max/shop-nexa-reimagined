@@ -246,7 +246,10 @@ function getEmailProvider(): EmailProvider {
   const isProduction = getEnv("NODE_ENV") === "production";
 
   // PRODUCTION SAFETY: Never fall back to mock in production.
-  // If the env var is missing or "mock" in production, fail safely.
+  // If the env var is missing or "mock" in production, fail loudly
+  // instead of silently dropping all emails (order confirmations, shipping
+  // notifications, etc.). Mirrors the guard in verification.server.ts.
+
   if (isProduction && (name === "mock" || !name)) {
     throw new Error(
       "Email provider is not configured for production. " +
@@ -482,7 +485,7 @@ export async function sendTransactionalEmail(params: SendEmailParams): Promise<E
 
   if (typeof console !== "undefined") {
     if (result.success) {
-      console.log(`[EMAIL] Sent ${event} to ${recipient} (${emailId})`);
+      if (import.meta.env?.DEV) console.log(`[EMAIL] Sent ${event} to ${recipient} (${emailId})`);
     } else {
       console.error(`[EMAIL] Failed to send ${event} to ${recipient}: ${result.error}`);
     }
