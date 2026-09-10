@@ -6,7 +6,7 @@ import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { ProductCard } from "@/components/product/ProductCard";
-import { listAllProducts } from "@/services/firebase/products";
+import { listProductsBySeller } from "@/services/firebase/products";
 import { getPublicStoreBySlug, type PublicStoreData } from "@/lib/store.functions";
 import { formatPrice } from "@/utils/format";
 import type { Product } from "@/types/commerce";
@@ -52,10 +52,9 @@ function StorePage() {
         }
         setStore(s);
 
-        // Load products by this seller (products are publicly readable)
-        const all = await listAllProducts();
+        // Load ONLY this seller's products (server-side filter by sellerId)
+        const sellerProducts = await listProductsBySeller(s.uid);
         if (cancelled) return;
-        const sellerProducts = all.filter((p) => p.sellerId === s.uid);
         setProducts(sellerProducts);
       } catch (e) {
         if (!cancelled) {
@@ -111,13 +110,21 @@ function StorePage() {
         script.type = "application/ld+json";
         document.head.appendChild(script);
       }
+      // Real store rating: weighted average of the seller's product ratings.
+      // (There is no separate seller-level rating collection.)
+      const rated = (products ?? []).filter((p) => p.rating > 0);
+      const totalReviews = (products ?? []).reduce((sum, p) => sum + (p.reviewCount ?? 0), 0);
+      const storeRating = rated.length
+        ? Math.round((rated.reduce((sum, p) => sum + p.rating * (p.reviewCount || 1), 0) / rated.reduce((sum, p) => sum + (p.reviewCount || 1), 0)) * 10) / 10
+        : undefined;
+
       script.textContent = jsonLdScript(
         storeJsonLd({
           name: store.shopName,
           description,
           slug: store.shopSlug,
-          rating: (store.rating ?? 0),
-          reviewCount: (store.reviewCount ?? 0),
+          rating: storeRating,
+          reviewCount: totalReviews > 0 ? totalReviews : undefined,
         }),
       );
     }
@@ -130,7 +137,7 @@ function StorePage() {
           : `Browse products from ${store.shopName} on AVENTA SHOP.`,
       );
     }
-  }, [store]);
+  }, [store, products]);
 
   const visibleProducts = useMemo(() => {
     if (!products) return [];
@@ -273,7 +280,7 @@ function StorePage() {
                 to="/shop"
                 className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-[#f57224] hover:underline whitespace-nowrap"
               >
-                All Stores <ChevronRight className="w-4 h-4" />
+                All Products <ChevronRight className="w-4 h-4" />
               </Link>
             </div>
           </div>

@@ -31,6 +31,16 @@ export async function uploadShopLogo(uid: string, file: File): Promise<string> {
 }
 
 /**
+ * Upload a store banner image (wide cover shown on the public store page).
+ * Returns the CDN URL.
+ */
+export async function uploadShopBanner(uid: string, file: File): Promise<string> {
+  validateImage(file, 5);
+  const result = await uploadToCloudinary(file, "banners", [`uid:${uid}`]);
+  return result.url;
+}
+
+/**
  * Upload a product image to Cloudinary.
  * Returns the CDN URL and a pseudo-path (public ID) for deletion support.
  */

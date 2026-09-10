@@ -62,6 +62,21 @@ export async function listAllProducts(): Promise<Product[]> {
   return snap.docs.map((d) => toProduct(d.id, d.data())).filter(isPublic);
 }
 
+/**
+ * Public products of ONE seller, for the customer-facing /store/{slug} page.
+ * Filters server-side by sellerId (single-field equality — no composite
+ * index needed) instead of fetching the whole catalog and filtering on the
+ * client, which was heavy at scale.
+ */
+export async function listProductsBySeller(sellerUid: string): Promise<Product[]> {
+  const q = query(collection(getDb(), "products"), where("sellerId", "==", sellerUid));
+  const snap = await getDocs(q);
+  return snap.docs
+    .map((d) => toProduct(d.id, d.data()))
+    .filter(isPublic)
+    .sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
+}
+
 export async function listProducts(opts: ListProductsOpts = {}): Promise<Product[]> {
   const clauses = [];
   if (opts.categorySlug) clauses.push(where("categorySlug", "==", opts.categorySlug));

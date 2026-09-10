@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 
 import { getOptimizedImageUrl, getResponsiveSrcSet } from "@/services/cloudinary";
+import { getPublicStoreByUid, type PublicStoreData } from "@/lib/store.functions";
 
 import { BackButton } from "@/components/common/BackButton";
 import { SiteHeader } from "@/components/layout/SiteHeader";
@@ -152,6 +153,29 @@ export function ProductDetailPage() {
   });
 
   const product = rawProduct as Partial<ProductWithExtras> | null;
+
+  // Resolve the seller's public store (approved sellers only) so the
+  // "Visit Store" button leads to /store/{shopSlug} instead of /shop.
+  const [sellerStore, setSellerStore] = useState<PublicStoreData | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const sellerId = product?.sellerId;
+    if (!sellerId) {
+      setSellerStore(null);
+      return;
+    }
+    (async () => {
+      try {
+        const store = await getPublicStoreByUid({ data: { uid: sellerId } });
+        if (!cancelled) setSellerStore(store ?? null);
+      } catch {
+        if (!cancelled) setSellerStore(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [product?.sellerId]);
 
   // Update meta tags dynamically when product data loads
   useEffect(() => {
@@ -517,7 +541,7 @@ export function ProductDetailPage() {
 
   // Seller Details Safe Defaults
   const sellerInfo = (product as ProductWithExtras).seller || {
-    name: (product as ProductWithExtras).brand || "AVENTA SHOP Verified Seller",
+    name: sellerStore?.shopName || (product as ProductWithExtras).brand || "AVENTA SHOP Verified Seller",
     rating: 96,
     responseTime: "< 1 Hour",
     shipOnTime: 99,
@@ -939,7 +963,7 @@ export function ProductDetailPage() {
                 </div>
 
                 <Link
-                  to="/shop"
+                  to={sellerStore?.shopSlug ? `/store/${sellerStore.shopSlug}` : "/shop"}
                   className="px-4 py-2 border border-slate-200 text-xs font-semibold text-[#1a1f3a] rounded-xl hover:bg-slate-50 transition flex items-center gap-1.5"
                 >
                   <Store className="w-3.5 h-3.5 text-[#f97316]" />

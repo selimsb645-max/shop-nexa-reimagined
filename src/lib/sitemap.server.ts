@@ -357,26 +357,32 @@ export async function generateSitemap(): Promise<{ xml: string; count: number }>
   }
 
   // 4. Stores/Sellers
+  // FIX: store data lives in the `sellers` collection with a `shopSlug`
+  // field (not a `stores` collection with `slug`) — the old query read a
+  // non-existent collection and produced no store URLs at all.
   try {
-    const token = await getAccessToken();
-    const storesRes = await fetch(`${fsBaseUrl(projectId)}/stores?pageSize=1000`, {
-      headers: { authorization: `Bearer ${token}` },
-    });
-    if (storesRes.ok) {
-      const storesJson = (await storesRes.json()) as {
-        documents?: Array<{ fields?: Record<string, FsValue> }>;
-      };
-      for (const doc of storesJson.documents ?? []) {
-        const fields = doc.fields ? fromFsFields(doc.fields) : {};
-        const slug = String(fields.slug ?? "").trim();
-        if (!slug) continue;
-        addUrl(
-          `${getSiteUrl()}/store/${encodeURIComponent(slug)}`,
-          undefined,
-          "weekly",
-          "0.6",
-        );
-      }
+    const sellerRows = await runQuery(
+      projectId,
+      "sellers",
+      ["shopSlug", "status"],
+      {
+        fieldFilter: {
+          field: { fieldPath: "status" },
+          op: "EQUAL",
+          value: { stringValue: "approved" },
+        },
+      },
+      1000,
+    );
+    for (const fields of sellerRows) {
+      const slug = String(fields.shopSlug ?? "").trim();
+      if (!slug) continue;
+      addUrl(
+        `${getSiteUrl()}/store/${encodeURIComponent(slug)}`,
+        undefined,
+        "weekly",
+        "0.6",
+      );
     }
   } catch (err) {
     console.error("[sitemap] Failed to fetch stores:", err);

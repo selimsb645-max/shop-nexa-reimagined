@@ -31,7 +31,7 @@ import {
 import { SellerGate } from "@/components/seller/SellerGate";
 import { useAuth } from "@/context/AuthContext";
 import { updateSellerProfile } from "@/services/firebase/sellers";
-import { uploadShopLogo } from "@/services/firebase/storage";
+import { uploadShopLogo, uploadShopBanner } from "@/services/firebase/storage";
 import { SELLER_STATUS_CONFIG } from "@/types/seller";
 import type { SellerProfile } from "@/types/seller";
 import { useI18n } from "@/i18n";
@@ -53,9 +53,11 @@ function StorePage({ profile }: { profile: SellerProfile }) {
   const [area, setArea] = useState(profile.area ?? "");
   const [country, setCountry] = useState(profile.country);
   const [logoUrl, setLogoUrl] = useState<string | null>(profile.logoUrl);
+  const [bannerUrl, setBannerUrl] = useState<string | null>(profile.bannerUrl ?? null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const bannerFileRef = useRef<HTMLInputElement>(null);
 
   const statusConfig = SELLER_STATUS_CONFIG[profile.status] ?? SELLER_STATUS_CONFIG.draft;
   const storeUrl = `/store/${profile.shopSlug}`;
@@ -74,6 +76,23 @@ function StorePage({ profile }: { profile: SellerProfile }) {
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
+  const onBanner = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f || !user) return;
+    setUploading(true);
+    try {
+      const url = await uploadShopBanner(user.uid, f);
+      setBannerUrl(url);
+      await updateSellerProfile(user.uid, { bannerUrl: url });
+      toast.success("Store banner updated");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(false);
+      if (bannerFileRef.current) bannerFileRef.current.value = "";
     }
   };
 
@@ -163,7 +182,10 @@ function StorePage({ profile }: { profile: SellerProfile }) {
         </div>
         <div className="p-4">
           {/* Banner area */}
-          <div className="h-24 rounded-lg bg-gradient-to-r from-[#0f172a] to-[#1e293b] mb-4 relative">
+          <div className="h-24 rounded-lg bg-gradient-to-r from-[#0f172a] to-[#1e293b] mb-4 relative overflow-hidden">
+            {bannerUrl && (
+              <img src={bannerUrl} alt="Store banner" className="absolute inset-0 h-full w-full object-cover" />
+            )}
             {logoUrl && (
               <div className="absolute -bottom-6 left-4">
                 <div className="w-16 h-16 rounded-xl bg-white border-2 border-white shadow-md overflow-hidden">
@@ -241,6 +263,42 @@ function StorePage({ profile }: { profile: SellerProfile }) {
               onChange={onLogo}
             />
             <p className="text-xs text-slate-400 mt-1">Max 5MB · PNG, JPG</p>
+          </div>
+        </div>
+
+        {/* Banner upload */}
+        <div className="mb-5">
+          <div className="h-24 sm:h-28 rounded-xl border border-slate-200 bg-gradient-to-r from-[#0f172a] to-[#1e293b] overflow-hidden relative">
+            {bannerUrl ? (
+              <img src={bannerUrl} alt="Store banner" className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex items-center justify-center h-full text-xs text-slate-400">
+                No banner yet — a wide cover image (e.g. 1600x400) looks best
+              </div>
+            )}
+          </div>
+          <div className="mt-2">
+            <button
+              type="button"
+              onClick={() => bannerFileRef.current?.click()}
+              disabled={uploading}
+              className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-60 transition-colors"
+            >
+              {uploading ? (
+                <Loader className="w-4 h-4 animate-spin" />
+              ) : (
+                <ImageUp className="w-4 h-4" />
+              )}
+              Change banner
+            </button>
+            <input
+              ref={bannerFileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={onBanner}
+            />
+            <p className="text-xs text-slate-400 mt-1">Max 5MB · PNG, JPG · shown on your public store page</p>
           </div>
         </div>
 

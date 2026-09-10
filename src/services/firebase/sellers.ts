@@ -14,6 +14,7 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import { getDb } from "./config";
+import { reserveShopSlug } from "@/lib/store.functions";
 import type {
   SellerNotification,
   SellerNotificationType,
@@ -259,16 +260,11 @@ export interface BankingInput {
   mobileBankingNumber?: string | null;
 }
 
-function slugify(s: string): string {
-  return s
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "")
-    .slice(0, 60);
-}
-
 export async function saveStoreInfo(uid: string, input: StoreInfoInput): Promise<void> {
-  const shopSlug = slugify(input.shopName) || uid;
+  // Reserve a UNIQUE slug — two sellers with the same shop name must not
+  // collide on the public /store/{slug} URL (server-side check, since
+  // Firestore rules don't let a seller read other sellers' docs).
+  const shopSlug = await reserveShopSlug({ data: { uid, shopName: input.shopName } });
   await updateDoc(doc(getDb(), SELLERS, uid), {
     shopName: input.shopName,
     shopSlug,
@@ -406,9 +402,9 @@ export async function updateSellerProfile(
   >,
 ): Promise<void> {
   const update: Record<string, unknown> = { ...patch, updatedAt: serverTimestamp() };
-  if (patch.shopName) {
-    update.shopSlug = slugify(patch.shopName) || uid;
-  }
+  // NOTE: shopSlug is intentionally NOT regenerated when shopName changes —
+  // renaming a shop must not break the public /store/{slug} URL or SEO links.
+  // The slug is only set once during onboarding (see saveStoreInfo).
   // Defense-in-depth: strip any non-editable fields that might slip through.
   // Firestore rules enforce this server-side, but we also validate here.
   for (const key of Object.keys(update)) {
