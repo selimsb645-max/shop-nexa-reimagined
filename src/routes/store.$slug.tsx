@@ -275,12 +275,12 @@ function StorePage() {
                 </div>
               </div>
 
-              {/* Shop link */}
+              {/* All stores directory link */}
               <Link
-                to="/shop"
+                to="/stores"
                 className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-[#f57224] hover:underline whitespace-nowrap"
               >
-                All Products <ChevronRight className="w-4 h-4" />
+                All Stores <ChevronRight className="w-4 h-4" />
               </Link>
             </div>
           </div>

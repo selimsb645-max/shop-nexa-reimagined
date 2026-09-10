@@ -30,6 +30,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ReturnsPolicyRouteImport } from './routes/returns-policy'
 import { Route as ShopRouteImport } from './routes/shop'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as StoresRouteImport } from './routes/stores'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TrackOrdersInfoRouteImport } from './routes/track-orders-info'
 import { Route as VerifyEmailRouteImport } from './routes/verify-email'
@@ -223,6 +224,11 @@ const ShopRoute = ShopRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StoresRoute = StoresRouteImport.update({
+  id: '/stores',
+  path: '/stores',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TermsRoute = TermsRouteImport.update({
@@ -756,6 +762,7 @@ export interface FileRoutesByFullPath {
   '/returns-policy': typeof ReturnsPolicyRoute
   '/shop': typeof ShopRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/stores': typeof StoresRoute
   '/terms': typeof TermsRoute
   '/track-orders-info': typeof TrackOrdersInfoRoute
   '/verify-email': typeof VerifyEmailRoute
@@ -868,6 +875,7 @@ export interface FileRoutesByTo {
   '/returns-policy': typeof ReturnsPolicyRoute
   '/shop': typeof ShopRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/stores': typeof StoresRoute
   '/terms': typeof TermsRoute
   '/track-orders-info': typeof TrackOrdersInfoRoute
   '/verify-email': typeof VerifyEmailRoute
@@ -978,6 +986,7 @@ export interface FileRoutesById {
   '/returns-policy': typeof ReturnsPolicyRoute
   '/shop': typeof ShopRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/stores': typeof StoresRoute
   '/terms': typeof TermsRoute
   '/track-orders-info': typeof TrackOrdersInfoRoute
   '/verify-email': typeof VerifyEmailRoute
@@ -1092,6 +1101,7 @@ export interface FileRouteTypes {
     | '/returns-policy'
     | '/shop'
     | '/sitemap.xml'
+    | '/stores'
     | '/terms'
     | '/track-orders-info'
     | '/verify-email'
@@ -1204,6 +1214,7 @@ export interface FileRouteTypes {
     | '/returns-policy'
     | '/shop'
     | '/sitemap.xml'
+    | '/stores'
     | '/terms'
     | '/track-orders-info'
     | '/verify-email'
@@ -1313,6 +1324,7 @@ export interface FileRouteTypes {
     | '/returns-policy'
     | '/shop'
     | '/sitemap.xml'
+    | '/stores'
     | '/terms'
     | '/track-orders-info'
     | '/verify-email'
@@ -1427,6 +1439,7 @@ export interface RootRouteChildren {
   ReturnsPolicyRoute: typeof ReturnsPolicyRoute
   ShopRoute: typeof ShopRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  StoresRoute: typeof StoresRoute
   TermsRoute: typeof TermsRoute
   TrackOrdersInfoRoute: typeof TrackOrdersInfoRoute
   VerifyEmailRoute: typeof VerifyEmailRoute
@@ -1582,6 +1595,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stores': {
+      id: '/stores'
+      path: '/stores'
+      fullPath: '/stores'
+      preLoaderRoute: typeof StoresRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/terms': {
@@ -2519,6 +2539,7 @@ const rootRouteChildren: RootRouteChildren = {
   ReturnsPolicyRoute: ReturnsPolicyRoute,
   ShopRoute: ShopRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  StoresRoute: StoresRoute,
   TermsRoute: TermsRoute,
   TrackOrdersInfoRoute: TrackOrdersInfoRoute,
   VerifyEmailRoute: VerifyEmailRoute,

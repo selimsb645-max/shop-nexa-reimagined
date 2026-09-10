@@ -446,3 +446,94 @@ export const auditShopSlugCollisions = createServerFn({ method: "POST" })
       repaired,
     };
   });
+
+/**
+ * List ALL approved sellers' public store profiles, for the /stores directory.
+ * Same public-fields contract as getPublicStoreBySlug — never exposes
+ * financial data, bank info, identity docs, or email.
+ */
+export const listPublicStores = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => z.object({}).parse(data ?? {}))
+  .handler(async () => {
+    const { getAccessToken, getProjectId, fromFsFields } = await import(
+      "./firebase-admin.server"
+    );
+
+    const projectId = getProjectId();
+    const token = await getAccessToken();
+
+    const res = await fetch(
+      `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/sellers:runQuery`,
+      {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${token}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          structuredQuery: {
+            from: [{ collectionId: "sellers" }],
+            select: {
+              fields: [
+                { fieldPath: "shopName" },
+                { fieldPath: "shopSlug" },
+                { fieldPath: "description" },
+                { fieldPath: "logoUrl" },
+                { fieldPath: "city" },
+                { fieldPath: "area" },
+                { fieldPath: "country" },
+                { fieldPath: "createdAt" },
+              ],
+            },
+            where: {
+              fieldFilter: {
+                field: { fieldPath: "status" },
+                op: "EQUAL",
+                value: { stringValue: "approved" },
+              },
+            },
+            limit: 500,
+          },
+        }),
+      },
+    );
+
+    if (!res.ok) {
+      throw new Error("Could not load stores. Please try again.");
+    }
+
+    const json = (await res.json()) as Array<{
+      document?: { name: string; fields?: Record<string, unknown> };
+    }>;
+
+    const stores: Array<
+      Pick<
+        PublicStoreData,
+        "shopName" | "shopSlug" | "description" | "logoUrl" | "city" | "area" | "country"
+      >
+    > = [];
+
+    for (const entry of json) {
+      if (!entry.document) continue;
+      const fields = fromFsFields((entry.document.fields ?? {}) as Record<string, never>) as Record<
+        string,
+        unknown
+      >;
+      const slug = String(fields.shopSlug ?? "").trim();
+      const name = String(fields.shopName ?? "").trim();
+      if (!slug || !name) continue; // not publicly reachable yet
+      stores.push({
+        shopName: name,
+        shopSlug: slug,
+        description: String(fields.description ?? ""),
+        logoUrl: (fields.logoUrl as string | null) ?? null,
+        city: String(fields.city ?? ""),
+        area: (fields.area as string | null) ?? null,
+        country: String(fields.country ?? ""),
+      });
+    }
+
+    // Sort by shop name for a stable, browsable directory
+    stores.sort((a, b) => a.shopName.localeCompare(b.shopName));
+    return stores;
+  });

@@ -240,6 +240,7 @@ function staticPages(): SitemapUrl[] {
   return [
     { loc: `${getSiteUrl()}/`, changefreq: "daily", priority: "1.0" },
     { loc: `${getSiteUrl()}/shop`, changefreq: "daily", priority: "0.9" },
+    { loc: `${getSiteUrl()}/stores`, changefreq: "daily", priority: "0.8" },
     { loc: `${getSiteUrl()}/flash-sales`, changefreq: "daily", priority: "0.8" },
     { loc: `${getSiteUrl()}/blog`, changefreq: "weekly", priority: "0.7" },
     { loc: `${getSiteUrl()}/compare`, changefreq: "weekly", priority: "0.5" },
