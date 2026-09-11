@@ -963,7 +963,8 @@ export function ProductDetailPage() {
                 </div>
 
                 <Link
-                  to={sellerStore?.shopSlug ? `/store/${sellerStore.shopSlug}` : "/shop"}
+                  to={sellerStore?.shopSlug ? "/store/$slug" : "/shop"}
+                  params={sellerStore?.shopSlug ? { slug: sellerStore.shopSlug } : undefined}
                   className="px-4 py-2 border border-slate-200 text-xs font-semibold text-[#1a1f3a] rounded-xl hover:bg-slate-50 transition flex items-center gap-1.5"
                 >
                   <Store className="w-3.5 h-3.5 text-[#f97316]" />

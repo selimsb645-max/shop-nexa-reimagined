@@ -149,7 +149,8 @@ function StoresDirectory() {
                 {stores.map((s) => (
                   <Link
                     key={s.shopSlug}
-                    to={`/store/${s.shopSlug}`}
+                    to="/store/$slug"
+                    params={{ slug: s.shopSlug }}
                     className="group rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:shadow-md hover:border-[#f57224]/40 transition-all"
                   >
                     <div className="flex items-start gap-3">

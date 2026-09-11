@@ -154,6 +154,7 @@ export type ActivityAction =
   | "return.cancel"
   | "order.status_update"
   | "order.cancel"
+  | "store.slugAuditRepair"
   | "settings.update";
 
 export interface ActivityLog {
