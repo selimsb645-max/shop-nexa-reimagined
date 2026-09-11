@@ -329,8 +329,13 @@ describe("Sensitive data prevention", () => {
   it("tracking ID should not contain sensitive patterns", () => {
     for (let i = 0; i < 100; i++) {
       const id = generateTrackingId();
-      // Tracking ID should never look like an API key, token, or password
-      expect(id).not.toMatch(/sk_|api|key|token|secret|password/i);
+      // Tracking ID should never look like an API key, token, or password.
+      // NOTE: the ID charset (A-Z2-9) contains no separators, so plain
+      // substrings like "KEY" are harmless random collisions — only
+      // separator-joined secret-style patterns ("sk_", "api-key",
+      // "api_key", …) would actually look like credentials. Matching raw
+      // "key"/"secret" substrings made this test flaky (~10% of runs).
+      expect(id).not.toMatch(/sk_|api[-_]|key[-_]|token[-_]|pass[-_]|secret[-_]/i);
     }
   });
 

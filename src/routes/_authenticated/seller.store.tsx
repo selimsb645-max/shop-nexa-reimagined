@@ -13,7 +13,8 @@
  */
 
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useRef } from "react";
+import { useMemo, useState, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   Store,
@@ -26,12 +27,12 @@ import {
   Globe,
   Star,
   Package,
-  Users,
 } from "lucide-react";
 import { SellerGate } from "@/components/seller/SellerGate";
 import { useAuth } from "@/context/AuthContext";
 import { updateSellerProfile } from "@/services/firebase/sellers";
 import { uploadShopLogo, uploadShopBanner } from "@/services/firebase/storage";
+import { listSellerProducts } from "@/services/firebase/sellerProducts";
 import { SELLER_STATUS_CONFIG } from "@/types/seller";
 import type { SellerProfile } from "@/types/seller";
 import { useI18n } from "@/i18n";
@@ -61,6 +62,24 @@ function StorePage({ profile }: { profile: SellerProfile }) {
 
   const statusConfig = SELLER_STATUS_CONFIG[profile.status] ?? SELLER_STATUS_CONFIG.draft;
   const storeUrl = `/store/${profile.shopSlug}`;
+
+  // REAL catalog stats — computed from the seller's actual products.
+  // (profile.totalProducts / profile.followers are stale fields that are
+  // never updated anywhere in the app, so they must not be displayed.)
+  const { data: myProducts = [] } = useQuery({
+    queryKey: ["seller-store-products", profile.uid],
+    queryFn: async () => listSellerProducts(profile.uid),
+  });
+  const ratedProducts = useMemo(() => myProducts.filter((p) => (p.rating ?? 0) > 0), [myProducts]);
+  const realRating = useMemo(() => {
+    const sum = ratedProducts.reduce((acc, p) => acc + (p.rating ?? 0) * (p.reviewCount || 1), 0);
+    const weight = ratedProducts.reduce((acc, p) => acc + (p.reviewCount || 1), 0);
+    return weight > 0 ? Math.round((sum / weight) * 10) / 10 : 0;
+  }, [ratedProducts]);
+  const realReviewCount = useMemo(
+    () => myProducts.reduce((acc, p) => acc + (p.reviewCount ?? 0), 0),
+    [myProducts],
+  );
 
   const onLogo = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -207,18 +226,15 @@ function StorePage({ profile }: { profile: SellerProfile }) {
               </span>
             )}
           </div>
-          {/* Store stats */}
+          {/* Store stats — computed live from the seller's real products */}
           <div className="flex items-center gap-4 mt-4 text-xs text-slate-500">
             <span className="flex items-center gap-1">
-              <Package className="w-3.5 h-3.5" /> {profile.totalProducts} products
+              <Package className="w-3.5 h-3.5" /> {myProducts.length} products
             </span>
-            <span className="flex items-center gap-1">
-              <Users className="w-3.5 h-3.5" /> {profile.followers} followers
-            </span>
-            {profile.rating > 0 && (
+            {realRating > 0 && (
               <span className="flex items-center gap-1">
                 <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />{" "}
-                {profile.rating.toFixed(1)} ({profile.ratingCount})
+                {realRating.toFixed(1)} ({realReviewCount})
               </span>
             )}
             <span className="flex items-center gap-1">

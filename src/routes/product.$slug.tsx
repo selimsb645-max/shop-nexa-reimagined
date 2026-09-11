@@ -23,7 +23,6 @@ import {
   AlertCircle,
   Package,
   Sparkles,
-  CheckCircle,
   Send,
 } from "lucide-react";
 
@@ -539,13 +538,27 @@ export function ProductDetailPage() {
     );
   }
 
-  // Seller Details Safe Defaults
-  const sellerInfo = (product as ProductWithExtras).seller || {
-    name: sellerStore?.shopName || (product as ProductWithExtras).brand || "AVENTA SHOP Verified Seller",
-    rating: 96,
-    responseTime: "< 1 Hour",
-    shipOnTime: 99,
-  };
+  // Seller Details — REAL data only. The old defaults hardcoded a fake
+  // "96% Positive Rating • Response: < 1 Hour" claim that no real data
+  // backed. What's actually shown:
+  //   name    — the seller's real shop name (fallback: product brand)
+  //   subline — the product's real rating/review count, or the seller's
+  //             real location. Never an invented metric.
+  const sellerDisplayName =
+    sellerStore?.shopName ||
+    (product as ProductWithExtras).brand ||
+    "AVENTA SHOP Seller";
+
+  const sellerSubline = (() => {
+    if ((product.rating ?? 0) > 0 && (product.reviewCount ?? 0) > 0) {
+      return `${Number(product.rating).toFixed(1)}★ · ${product.reviewCount} review${product.reviewCount === 1 ? "" : "s"}`;
+    }
+    if (sellerStore) {
+      const loc = [sellerStore.city, sellerStore.area, sellerStore.country].filter(Boolean).join(", ");
+      if (loc) return loc;
+    }
+    return "Sold on AVENTA SHOP";
+  })();
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] flex flex-col font-sans text-slate-800">
@@ -949,15 +962,14 @@ export function ProductDetailPage() {
               <div className="mt-4 p-4 rounded-xl border border-slate-200 bg-white flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-[#1a1f3a] text-white font-extrabold flex items-center justify-center text-sm shadow-sm">
-                    {sellerInfo.name.charAt(0)}
+                    {sellerDisplayName.charAt(0)}
                   </div>
                   <div>
                     <h4 className="text-sm font-bold text-[#1a1f3a] flex items-center gap-1.5">
-                      {sellerInfo.name}
-                      <CheckCircle className="w-4 h-4 text-blue-500 fill-blue-100" />
+                      {sellerDisplayName}
                     </h4>
                     <p className="text-xs text-slate-500">
-                      {sellerInfo.rating}% Positive Rating • Response: {sellerInfo.responseTime}
+                      {sellerSubline}
                     </p>
                   </div>
                 </div>

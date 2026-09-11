@@ -1,9 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { BackButton } from "@/components/common/BackButton";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { Truck, ShieldCheck, Headphones, Tag, Store, Users, Mail } from "lucide-react";
 import { seoHead } from "@/lib/seo";
+import { getMarketplaceStats } from "@/lib/stats.functions";
 
 export const Route = createFileRoute("/about")({
   ssr: true,
@@ -42,14 +44,23 @@ const VALUES = [
   },
 ];
 
-const STATS = [
-  { value: "10K+", label: "Products" },
-  { value: "50K+", label: "Happy Customers" },
-  { value: "500+", label: "Sellers" },
-  { value: "64", label: "Districts Covered" },
-];
+
 
 function AboutPage() {
+  // REAL stats computed from Firestore — no hardcoded marketing numbers
+  const { data: stats } = useQuery({
+    queryKey: ["marketplace-stats"],
+    queryFn: async () => getMarketplaceStats({ data: {} }),
+    staleTime: 1000 * 60 * 10,
+  });
+
+  const STATS = [
+    { value: stats ? stats.products.toLocaleString() : "—", label: "Products Listed" },
+    { value: stats ? stats.sellers.toLocaleString() : "—", label: "Verified Sellers" },
+    { value: stats ? stats.customers.toLocaleString() : "—", label: "Registered Customers" },
+    { value: stats ? stats.ordersDelivered.toLocaleString() : "—", label: "Orders Delivered" },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
