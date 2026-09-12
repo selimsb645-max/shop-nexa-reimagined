@@ -2,10 +2,10 @@
  * firestore.rules — coupon security audit (regex, flashSaleAdmin style).
  *
  * Locks in the Coupon v2 write-path discipline:
- *  • coupons: NO admin client write path (server-authoritative core)
- *  • sellers: constrained self-service only (own sellerId, uses == 0
- *    on create, active/updatedAt-only updates, delete only if never
- *    redeemed)
+ *  • coupons: NO client write path for ANY role — admin mutations
+ *    go through the coupon admin core, seller self-service through
+ *    the seller coupon core (both service-account, verified,
+ *    validated, audited server-side)
  *  • couponRedemptions: immutable — write denied for EVERY client;
  *    sellers read only their own coupon redemptions
  *  • couponCustomerCounters: server-only (customer redemption
@@ -43,30 +43,19 @@ describe("firestore.rules — coupons block", () => {
     }
   });
 
-  it("seller create is constrained: own sellerId + uses == 0", () => {
-    expect(coupons).toContain("allow create: if isApprovedSeller()");
-    expect(coupons).toContain("request.resource.data.sellerId == request.auth.uid");
-    expect(coupons).toContain("request.resource.data.uses == 0");
+  it("ALL client writes are denied for every role — server-only", () => {
+    expect(coupons).toContain("allow create, update, delete: if false;");
+    // no other write line
+    const writeLines = coupons
+      .split("\n")
+      .filter((l) => l.trim().startsWith("allow "))
+      .map((l) => l.trim())
+      .filter((l) => !l.startsWith("allow read"));
+    expect(writeLines.every((l) => l === "allow create, update, delete: if false;")).toBe(true);
   });
 
-  it("seller update is field-limited to active/updatedAt", () => {
-    expect(coupons).toContain("affectedKeys().hasOnly(['active', 'updatedAt'])");
-  });
-
-  it("seller delete requires uses == 0 (no deleting redemption history)", () => {
-    const idx = coupons.indexOf("allow delete:");
-    expect(idx).toBeGreaterThan(-1);
-    // the full clause, including continuation lines up to the terminator
-    const deleteClause = coupons.slice(idx, coupons.indexOf(";", idx) + 1);
-    expect(deleteClause).toContain("isApprovedSeller()");
-    expect(deleteClause).toContain("resource.data.sellerId == request.auth.uid");
-    expect(deleteClause).toContain("resource.data.uses == 0");
-  });
-
-  it("the `uses` counter is never client-writable", () => {
-    // create forces uses == 0; update's hasOnly(['active','updatedAt'])
-    // excludes `uses` — and there is no other update path.
-    expect(coupons).toContain("hasOnly(['active', 'updatedAt'])");
+  it("the `uses` counter is never client-writable (no client write path at all)", () => {
+    expect(coupons).toContain("allow create, update, delete: if false;");
   });
 });
 

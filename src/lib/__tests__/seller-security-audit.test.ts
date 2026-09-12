@@ -244,32 +244,48 @@ describe("Cross-Seller Data Isolation — Service Layer", () => {
     expect(fs.existsSync(path.join(SVC_DIR, "sellerWithdrawals.ts"))).toBe(false);
   });
 
-  it("listSellerCoupons queries with where('sellerId', '==', sellerId)", () => {
+  it("seller coupons: NO direct client SDK writes — server functions only", () => {
     const code = readService("sellerCoupons.ts");
-    expect(code).toContain('where("sellerId", "==", sellerId)');
+    // The whole service is a transport client for the TanStack server
+    // functions — it must never import Firestore write primitives.
+    expect(code).not.toMatch(/addDoc|updateDoc|deleteDoc|setDoc/);
+    expect(code).toContain("seller-coupons.functions");
+    expect(code).toContain("requireIdToken()");
   });
 
-  it("getSellerCoupon checks coupon.sellerId !== sellerId and returns null", () => {
+  it("listSellerCoupons filters to the caller's own coupons server-side AND client-side", () => {
     const code = readService("sellerCoupons.ts");
-    expect(code).toContain("coupon.sellerId !== sellerId");
-    expect(code).toContain("return null");
+    // ownership comes from the ID token server-side; the client-side
+    // filter is defense-in-depth on top.
+    expect(code).toContain("listSellerCouponsFn");
+    expect(code).toContain("c.sellerId === sellerId");
   });
 
-  it("updateSellerCoupon calls getSellerCoupon for ownership check", () => {
-    const code = readService("sellerCoupons.ts");
-    expect(code).toMatch(/updateSellerCoupon[\s\S]*getSellerCoupon/);
+  it("the server core forces sellerId to the caller's uid (never from the wire)", () => {
+    const server = fs.readFileSync(
+      path.join(process.cwd(), "src/lib/coupons/seller-coupons.server.ts"),
+      "utf-8",
+    );
+    expect(server).toContain("sellerId: uid, // forced");
+    expect(server).toContain("verifyCouponSeller");
   });
 
-  it("deleteSellerCoupon calls getSellerCoupon for ownership check", () => {
+  it("toggle/delete go through server fns (ownership + uses == 0 enforced server-side)", () => {
     const code = readService("sellerCoupons.ts");
-    expect(code).toMatch(/deleteSellerCoupon[\s\S]*getSellerCoupon/);
+    expect(code).toContain("toggleSellerCouponFn");
+    expect(code).toContain("deleteSellerCouponFn");
+    const server = fs.readFileSync(
+      path.join(process.cwd(), "src/lib/coupons/seller-coupons.server.ts"),
+      "utf-8",
+    );
+    expect(server).toMatch(/deleteSellerCouponServer[\s\S]*uses > 0/);
   });
 
-  it("createSellerCoupon sets sellerId from parameter, not from request body", () => {
-    const code = readService("sellerCoupons.ts");
-    // sellerId is a separate function parameter, spread into doc with sellerId
-    expect(code).toMatch(/createSellerCoupon\(\s*sellerId:\s*string/);
-    expect(code).toMatch(/addDoc[\s\S]*sellerId/);
+  it("firestore rules deny ALL client writes on coupons (server-only)", () => {
+    const rules = readRules();
+    const m = rules.match(new RegExp("match /coupons/\\{[a-zA-Z]+\\} \\{[\\s\\S]*?\\n {4}\\}"));
+    const coupons = m?.[0] ?? "";
+    expect(coupons).toContain("allow create, update, delete: if false;");
   });
 
   it("createSellerProduct sets sellerId from parameter", () => {
@@ -348,14 +364,17 @@ describe("Firestore Rules — Seller Data Protection", () => {
     expect(rules).toContain("request.resource.data.sellerId == request.auth.uid");
   });
 
-  it("coupons update only allows active and updatedAt changes", () => {
-    expect(rules).toContain("hasOnly(['active', 'updatedAt'])");
+  it("coupons: ALL client writes are denied (server-only write path)", () => {
+    expect(rules).toMatch(/match \/coupons\/\{code\}[^}]*allow create, update, delete: if false;/);
   });
 
-  it("coupons delete requires sellerId == auth.uid", () => {
-    expect(rules).toMatch(
-      /coupons\/\{code\}[\s\S]*?delete[\s\S]*?resource\.data\.sellerId == request\.auth\.uid/,
+  it("coupon ownership + redemption guard live in the server core", () => {
+    const server = fs.readFileSync(
+      path.join(process.cwd(), "src/lib/coupons/seller-coupons.server.ts"),
+      "utf-8",
     );
+    expect(server).toMatch(/deleteSellerCouponServer[\s\S]*?readOwnedCoupon/);
+    expect(server).toMatch(/coupon\.uses > 0/);
   });
 
   it("seller notifications read requires isSelf(uid)", () => {
@@ -502,13 +521,20 @@ describe("CRUD Authorization — Ownership Verification", () => {
     }
   });
 
-  it("Coupons: all mutations verify ownership via getSellerCoupon (direct or indirect)", () => {
-    const code = readService("sellerCoupons.ts");
-    // updateSellerCoupon and deleteSellerCoupon call getSellerCoupon directly
-    expect(code).toMatch(/updateSellerCoupon[\s\S]*?getSellerCoupon/);
-    expect(code).toMatch(/deleteSellerCoupon[\s\S]*?getSellerCoupon/);
-    // toggleSellerCoupon calls updateSellerCoupon which calls getSellerCoupon (indirect)
-    expect(code).toMatch(/toggleSellerCoupon[\s\S]*?updateSellerCoupon/);
+  it("Coupons: ownership is verified server-side on every mutation", () => {
+    const server = fs.readFileSync(
+      path.join(process.cwd(), "src/lib/coupons/seller-coupons.server.ts"),
+      "utf-8",
+    );
+    // every mutating op verifies the caller is an approved seller FIRST,
+    // then reads the coupon through the ownership-enforcing helper
+    expect(server).toMatch(
+      /setSellerCouponActiveServer[\s\S]*?verifyCouponSeller[\s\S]*?readOwnedCoupon/,
+    );
+    expect(server).toMatch(
+      /deleteSellerCouponServer[\s\S]*?verifyCouponSeller[\s\S]*?readOwnedCoupon/,
+    );
+    expect(server).toMatch(/createSellerCouponServer[\s\S]*?verifyCouponSeller/);
   });
 
   it("Orders: getSellerOrder uses path-based isolation", () => {

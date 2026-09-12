@@ -3,8 +3,9 @@
  *
  * Route: /seller/coupons
  * Reuses existing infrastructure:
- * - listSellerCoupons, createSellerCoupon, updateSellerCoupon,
- *   deleteSellerCoupon, toggleSellerCoupon (from sellerCoupons service)
+ * - listSellerCoupons, createSellerCoupon, deleteSellerCoupon,
+ * - toggleSellerCoupon — all via server-side functions (validation
+ *   + ownership enforced server-side)
  * - Coupon, CouponType types (from commerce types)
  * - SellerGate for auth + seller authorization
  *

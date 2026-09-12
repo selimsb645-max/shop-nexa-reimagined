@@ -351,24 +351,16 @@ service cloud.firestore {
 
     match /coupons/{code} {
       allow read: if true;
-      // Coupon v2 — ALL admin mutations are server-authoritative:
-      // the coupon admin core (role-verified, audited, service
-      // account) is the ONLY admin write path; client writes by
-      // admin roles are denied (client financial manipulation —
-      // forging `uses`, limits or discount values — is blocked).
-      // Sellers keep the legacy constrained self-service path:
-      // create own coupons starting at uses == 0, toggle only
-      // active/updatedAt, and delete only when never redeemed.
-      allow create: if isApprovedSeller()
-        && request.resource.data.sellerId == request.auth.uid
-        && request.resource.data.uses == 0;
-      allow update: if isApprovedSeller()
-        && resource.data.sellerId == request.auth.uid
-        && request.resource.data.sellerId == resource.data.sellerId
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['active', 'updatedAt']);
-      allow delete: if isApprovedSeller()
-        && resource.data.sellerId == request.auth.uid
-        && resource.data.uses == 0;
+      // Coupon v2 — ALL mutations are server-authoritative: the
+      // coupon admin core (role-verified) for admins, the seller
+      // coupon core for seller self-service. Both run as the
+      // service account and enforce verification, canonical field
+      // validation, ownership and the audit trail server-side.
+      // Client SDK writes are denied for EVERY role: the legacy
+      // seller direct-write path also created coupons with auto doc
+      // ids the checkout engine (code-id convention) could never
+      // see — coupons that silently never worked at checkout.
+      allow create, update, delete: if false;
     }
 
     // Immutable coupon redemption history — written ONLY by the

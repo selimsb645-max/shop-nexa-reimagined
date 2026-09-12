@@ -1,20 +1,26 @@
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  getDoc,
-  getDocs,
-  orderBy,
-  query,
-  serverTimestamp,
-  updateDoc,
-  where,
-} from "firebase/firestore";
-import { getDb, firebaseConfigured } from "./config";
+/**
+ * AVENTA SHOP — Seller coupon client service.
+ *
+ * Thin transport client: every call goes through the TanStack server
+ * functions in @/lib/coupons/seller-coupons.functions, which enforce
+ * seller verification, canonical field validation, ownership and the
+ * audit trail server-side. This service NEVER touches Firestore
+ * directly — the security rules deny client SDK writes on coupons,
+ * and the legacy direct-write path also created coupons with auto
+ * doc ids the checkout engine could never see (code-id convention).
+ *
+ * The sellerId arguments are kept for API compatibility with the
+ * existing UI, but ownership is derived from the caller's ID token
+ * server-side — a mismatched sellerId is ignored, never trusted.
+ */
 import type { Coupon, CouponType } from "@/types/commerce";
-
-const COUPONS = "coupons";
+import { getFirebaseAuth, firebaseConfigured } from "./config";
+import {
+  listSellerCouponsFn,
+  createSellerCouponFn,
+  toggleSellerCouponFn,
+  deleteSellerCouponFn,
+} from "@/lib/coupons/seller-coupons.functions";
 
 export interface SellerCouponInput {
   code: string;
@@ -28,118 +34,63 @@ export interface SellerCouponInput {
   active: boolean;
 }
 
-function mapCoupon(id: string, d: Record<string, unknown>): Coupon {
-  const r = d as Record<string, unknown>;
-  return {
-    code: String(r.code ?? id),
-    type: (r.type as CouponType) ?? "fixed",
-    value: Number(r.value ?? 0),
-    minSubtotal: Number(r.minSubtotal ?? 0),
-    expiresAt: r.expiresAt != null ? Number(r.expiresAt) : null,
-    active: Boolean(r.active ?? true),
-    usageLimit: r.usageLimit != null ? Number(r.usageLimit) : null,
-    uses: Number(r.uses ?? 0),
-    sellerId: (r.sellerId as string | null) ?? null,
-    productIds: Array.isArray(r.productIds) ? (r.productIds as string[]) : [],
-    maxDiscount: r.maxDiscount != null ? Number(r.maxDiscount) : null,
-  };
+async function requireIdToken(): Promise<string> {
+  const user = getFirebaseAuth().currentUser;
+  if (!user) throw new Error("Please sign in again.");
+  return user.getIdToken();
 }
 
 /**
- * List all coupons for a specific seller.
+ * List all coupons for the signed-in seller (ownership verified
+ * server-side against the ID token — the passed sellerId is advisory
+ * and ignored when it does not match the caller).
  */
 export async function listSellerCoupons(sellerId: string): Promise<Coupon[]> {
   if (!firebaseConfigured) return [];
-  const snap = await getDocs(
-    query(collection(getDb(), COUPONS), where("sellerId", "==", sellerId), orderBy("code", "asc")),
-  );
-  return snap.docs.map((d) => mapCoupon(d.id, d.data()));
+  const idToken = await requireIdToken();
+  const list = await listSellerCouponsFn({ data: { idToken } });
+  // Defense-in-depth: never surface a coupon the caller does not own.
+  return list.filter((c) => c.sellerId === sellerId);
 }
 
 /**
- * Get a single seller coupon.
+ * Get a single seller coupon (from the seller's own list only).
  */
 export async function getSellerCoupon(sellerId: string, code: string): Promise<Coupon | null> {
-  if (!firebaseConfigured) return null;
-  const snap = await getDoc(doc(getDb(), COUPONS, code.toUpperCase()));
-  if (!snap.exists()) return null;
-  const coupon = mapCoupon(snap.id, snap.data());
-  if (coupon.sellerId !== sellerId) return null;
-  return coupon;
+  const list = await listSellerCoupons(sellerId);
+  return list.find((c) => c.code === code.trim().toUpperCase()) ?? null;
 }
 
 /**
- * Create a seller-specific coupon.
+ * Create a seller-specific coupon (server-validated, code = doc id).
  */
 export async function createSellerCoupon(
-  sellerId: string,
+  _sellerId: string,
   input: SellerCouponInput,
 ): Promise<string> {
-  if (!firebaseConfigured) throw new Error("Firebase is not configured.");
-  const code = input.code.trim().toUpperCase();
-  if (!code) throw new Error("Coupon code is required.");
-
-  // Check if coupon code already exists
-  const existing = await getDoc(doc(getDb(), COUPONS, code));
-  if (existing.exists()) {
-    throw new Error("A coupon with this code already exists.");
-  }
-
-  const ref = await addDoc(collection(getDb(), COUPONS), {
-    code,
-    type: input.type,
-    value: input.value,
-    minSubtotal: input.minSubtotal,
-    expiresAt: input.expiresAt,
-    usageLimit: input.usageLimit,
-    uses: 0,
-    active: input.active,
-    sellerId,
-    productIds: input.productIds,
-    maxDiscount: input.maxDiscount,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
-
-  return ref.id;
+  const idToken = await requireIdToken();
+  const coupon = await createSellerCouponFn({ data: { idToken, input } });
+  return coupon.code;
 }
 
 /**
- * Update a seller coupon.
+ * Delete a seller coupon — only when it has never been redeemed
+ * (enforced server-side; redeemed coupons must be disabled instead).
  */
-export async function updateSellerCoupon(
-  sellerId: string,
-  code: string,
-  patch: Partial<SellerCouponInput>,
-): Promise<void> {
-  if (!firebaseConfigured) throw new Error("Firebase is not configured.");
-  const coupon = await getSellerCoupon(sellerId, code);
-  if (!coupon) throw new Error("Coupon not found or not owned by you.");
-
-  await updateDoc(doc(getDb(), COUPONS, code.toUpperCase()), {
-    ...patch,
-    updatedAt: serverTimestamp(),
-  });
+export async function deleteSellerCoupon(_sellerId: string, code: string): Promise<void> {
+  const idToken = await requireIdToken();
+  await deleteSellerCouponFn({ data: { idToken, code } });
 }
 
 /**
- * Delete a seller coupon.
- */
-export async function deleteSellerCoupon(sellerId: string, code: string): Promise<void> {
-  if (!firebaseConfigured) throw new Error("Firebase is not configured.");
-  const coupon = await getSellerCoupon(sellerId, code);
-  if (!coupon) throw new Error("Coupon not found or not owned by you.");
-
-  await deleteDoc(doc(getDb(), COUPONS, code.toUpperCase()));
-}
-
-/**
- * Toggle coupon active status.
+ * Toggle coupon active status (the ONLY field a seller may change
+ * after creation — enforced by the masked server-side update).
  */
 export async function toggleSellerCoupon(
-  sellerId: string,
+  _sellerId: string,
   code: string,
   active: boolean,
 ): Promise<void> {
-  await updateSellerCoupon(sellerId, code, { active });
+  const idToken = await requireIdToken();
+  await toggleSellerCouponFn({ data: { idToken, code, active } });
 }
