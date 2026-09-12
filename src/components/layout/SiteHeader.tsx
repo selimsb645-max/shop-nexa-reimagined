@@ -112,7 +112,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-40 bg-white font-sans shadow-sm">
       <div className="bg-[#1455c6] px-3 py-1.5 text-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between text-[10px] font-semibold sm:px-4 sm:text-xs">
-          <span className="flex items-center gap-1.5"><ShoppingCart className="h-3 w-3" />Free delivery on orders over $50</span>
+          <span className="flex items-center gap-1.5"><ShoppingCart className="h-3 w-3" />Free delivery on selected products</span>
           <span className="hidden sm:inline">Welcome to AVENTA SHOP</span>
           <span className="hidden sm:inline">Track Order&nbsp;&nbsp;·&nbsp;&nbsp;Help &amp; Support</span>
         </div>

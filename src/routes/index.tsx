@@ -75,24 +75,20 @@ const HERO_SLIDES = [
   },
   {
     id: "electronics",
-    tag: "ELECTRONICS SALE",
+    tag: "ELECTRONICS",
     title: "Better sound. Better everyday tech.",
     description: "Discover capable audio and mobile essentials selected for your next upgrade.",
     ctaText: "Explore Electronics",
     ctaLink: "/shop",
-    badgeText: "UP TO 60% OFF",
-    badgeColor: "bg-[#1455c6] text-white",
     image: "/manus-storage/shopnexa-tech-sale_10bd6408.jpg",
   },
   {
     id: "fashion",
-    tag: "FASHION SALE",
+    tag: "FASHION",
     title: "Find your next favourite look.",
     description: "Fresh styles, easy confidence, and wardrobe essentials for every day.",
     ctaText: "Shop Fashion",
     ctaLink: "/shop",
-    badgeText: "UP TO 70% OFF",
-    badgeColor: "bg-[#ff7a00] text-white",
     image: "/manus-storage/shopnexa-fashion-sale_12251764.jpg",
   },
 ];
@@ -143,9 +139,11 @@ function HomePage() {
   }, [featuredProducts, newestProducts, topRatedProducts, allProducts]);
 
   const flashSaleProducts = useMemo(() => {
-    if (justForYouPool.length === 0) return [];
-    const discounted = justForYouPool.filter((p) => p.compareAtPrice && p.compareAtPrice > p.price);
-    return discounted.length >= 4 ? discounted.slice(0, 8) : justForYouPool.slice(0, 8);
+    // REAL deals only - products with a genuine price drop. The old code
+    // silently padded the list with non-discounted products when fewer
+    // than 4 deals existed, showing full-price items under a
+    // "Flash Sale / On Sale Now" banner.
+    return justForYouPool.filter((p) => p.compareAtPrice && p.compareAtPrice > p.price).slice(0, 8);
   }, [justForYouPool]);
 
   const categoryList: ShowcaseCategory[] = useMemo(() => {
@@ -254,7 +252,13 @@ function HeroCarousel() {
             <div className="relative z-10 flex h-full max-w-[58%] min-h-[276px] flex-col justify-center sm:max-w-md">
               <div className="mb-3 flex flex-col items-start gap-2 sm:mb-4 sm:flex-row sm:items-center">
                 <span className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#ff7a00] sm:text-xs">{slide.tag}</span>
-                <span className={`inline-block rounded-full px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-wider shadow-sm sm:text-[10px] ${slide.badgeColor}`}>{slide.badgeText}</span>
+                {slide.badgeText && (
+                  <span
+                    className={`inline-block rounded-full px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-wider shadow-sm sm:text-[10px] ${slide.badgeColor}`}
+                  >
+                    {slide.badgeText}
+                  </span>
+                )}
               </div>
               <h2 className="text-[28px] font-black leading-[0.98] tracking-[-0.05em] text-slate-950 sm:text-4xl md:text-5xl">{slide.title}</h2>
               <p className="mt-3 max-w-xs text-[11px] font-medium leading-relaxed text-slate-700 sm:mt-4 sm:text-base">{slide.description}</p>
@@ -288,20 +292,18 @@ function HeroCarousel() {
 /* ========================================================================== Flash Sale Section ========================================================================== */
 function FlashSaleSection({ products, isLoading }: { products: Product[]; isLoading: boolean }) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [timeLeft, setTimeLeft] = useState({ hours: 5, minutes: 42, seconds: 19 });
-
-  useEffect(() => {
-    if (isLoading || products.length === 0) return;
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev.seconds > 0) return { ...prev, seconds: prev.seconds - 1 };
-        if (prev.minutes > 0) return { ...prev, minutes: 59, seconds: 59 };
-        if (prev.hours > 0) return { hours: prev.hours - 1, minutes: 59, seconds: 59 };
-        return { hours: 12, minutes: 0, seconds: 0 };
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [isLoading, products.length]);
+  // REAL savings number computed from the actual discounted products
+  // shown below - replaces the old fake "Ends In 5:42:19" countdown that
+  // reset itself forever, implying a time-limited sale that never existed.
+  const maxDiscountPct = useMemo(() => {
+    let best = 0;
+    for (const p of products) {
+      if (p.compareAtPrice && p.compareAtPrice > p.price) {
+        best = Math.max(best, Math.round(((p.compareAtPrice - p.price) / p.compareAtPrice) * 100));
+      }
+    }
+    return best;
+  }, [products]);
 
   const scroll = (direction: "left" | "right") => {
     if (scrollRef.current) scrollRef.current.scrollBy({ left: direction === "left" ? -320 : 320, behavior: "smooth" });
@@ -314,14 +316,14 @@ function FlashSaleSection({ products, isLoading }: { products: Product[]; isLoad
         <div className="flex items-center gap-2.5 mb-4">
           <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-orange-50 text-orange-500"><Zap className="h-5 w-5" /></div>
           <div>
-            <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">Flash Sale</h2>
-            <p className="text-xs text-slate-500">Limited quantity deals refreshed daily</p>
+            <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">Top Deals</h2>
+            <p className="text-xs text-slate-500">Live price drops from sellers</p>
           </div>
         </div>
         <div className="flex flex-col items-center justify-center py-10 sm:py-12 text-center">
           <div className="flex items-center justify-center h-16 w-16 rounded-full bg-orange-50 mb-3"><Flame className="h-8 w-8 text-orange-300" /></div>
-          <p className="text-sm font-semibold text-slate-600">No Flash Sale Available Yet</p>
-          <p className="text-xs text-slate-400 mt-1">Check back soon for exciting deals!</p>
+          <p className="text-sm font-semibold text-slate-600">No Discounted Products Right Now</p>
+          <p className="text-xs text-slate-400 mt-1">When sellers drop their prices, the deals appear here.</p>
         </div>
       </div>
     );
@@ -335,21 +337,12 @@ function FlashSaleSection({ products, isLoading }: { products: Product[]; isLoad
           <div className="flex items-center justify-center h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-orange-500 text-white shadow-md shadow-orange-500/30"><Zap className="h-5 w-5 sm:h-6 sm:w-6 fill-current animate-pulse" /></div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight">Flash Sale</h2>
-              <span className="flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] sm:text-xs font-bold text-red-600"><Flame className="h-3 w-3 sm:h-3.5 w-3.5 fill-red-600" /> On Sale Now</span>
+              <h2 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight">Top Deals</h2>
+              {maxDiscountPct > 0 && (
+                <span className="flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] sm:text-xs font-bold text-red-600"><Flame className="h-3 w-3 sm:h-3.5 w-3.5 fill-red-600" /> Up to {maxDiscountPct}% off</span>
+              )}
             </div>
-            <p className="text-[11px] sm:text-xs text-slate-500">Limited quantity deals refreshed daily</p>
-          </div>
-        </div>
-        {/* Countdown Timer — only when products exist */}
-        <div className="flex items-center gap-2">
-          <span className="hidden sm:inline text-xs font-bold uppercase tracking-wider text-slate-500">Ends In:</span>
-          <div className="flex items-center gap-1 sm:gap-1.5 font-mono">
-            <CountdownBox value={timeLeft.hours} label="HRS" />
-            <span className="font-bold text-slate-700">:</span>
-            <CountdownBox value={timeLeft.minutes} label="MIN" />
-            <span className="font-bold text-slate-700">:</span>
-            <CountdownBox value={timeLeft.seconds} label="SEC" />
+            <p className="text-[11px] sm:text-xs text-slate-500">Live price drops from sellers</p>
           </div>
         </div>
         {/* Shop All + scroll controls */}
@@ -370,14 +363,6 @@ function FlashSaleSection({ products, isLoading }: { products: Product[]; isLoad
   );
 }
 
-function CountdownBox({ value, label }: { value: number; label: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center rounded-lg bg-slate-900 px-2 py-0.5 sm:px-2.5 sm:py-1 text-white shadow-sm min-w-[32px] sm:min-w-[36px]">
-      <span className="text-xs sm:text-sm font-extrabold tabular-nums">{String(value).padStart(2, "0")}</span>
-      <span className="text-[8px] sm:text-[9px] font-medium text-slate-400">{label}</span>
-    </div>
-  );
-}
 
 /* Shop by Category now lives in @/components/home/CategoryShowcase */
 
@@ -392,12 +377,12 @@ function PromotionalBanner() {
       <div className="absolute right-1/3 -top-10 h-32 w-32 sm:h-40 sm:w-40 rounded-full bg-blue-500/20 blur-2xl pointer-events-none" />
       <div className="relative z-10 flex flex-col justify-between gap-4 sm:gap-6 md:flex-row md:items-center">
         <div className="max-w-[62%] sm:max-w-xl">
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-[#1455c6]/15 bg-white/80 px-2.5 py-0.5 text-[10px] font-bold text-[#1455c6] sm:px-3 sm:py-1 sm:text-xs"><Sparkles className="h-3 w-3 text-[#ff7a00] sm:h-3.5 sm:w-3.5" />AVENTA SHOP App Exclusive</div>
-          <h2 className="mt-2 text-xl font-black leading-snug tracking-tight text-slate-950 sm:mt-3 sm:text-3xl">Get Extra 15% OFF + Free Shipping</h2>
-          <p className="mt-1.5 text-[11px] text-slate-700 sm:mt-2 sm:text-sm">Use promo code <span className="font-mono font-bold text-[#ff7a00]">AVENTA15</span> at checkout on your first order.</p>
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-[#1455c6]/15 bg-white/80 px-2.5 py-0.5 text-[10px] font-bold text-[#1455c6] sm:px-3 sm:py-1 sm:text-xs"><Sparkles className="h-3 w-3 text-[#ff7a00] sm:h-3.5 sm:w-3.5" />AVENTA SHOP Rewards</div>
+          <h2 className="mt-2 text-xl font-black leading-snug tracking-tight text-slate-950 sm:mt-3 sm:text-3xl">New here? Get reward points when you join</h2>
+          <p className="mt-1.5 text-[11px] text-slate-700 sm:mt-2 sm:text-sm">Create a free account and receive welcome reward points you can redeem at checkout.</p>
         </div>
         <div className="flex items-center gap-3 shrink-0">
-          <Link to="/shop" className="inline-flex min-h-11 items-center justify-center rounded-lg bg-[#ff7a00] px-5 py-2.5 text-xs font-bold text-white shadow-lg transition hover:bg-[#e56500] active:scale-[0.97] sm:rounded-xl sm:px-6 sm:py-3.5 sm:text-sm">Claim Discount Now</Link>
+          <Link to="/register" className="inline-flex min-h-11 items-center justify-center rounded-lg bg-[#ff7a00] px-5 py-2.5 text-xs font-bold text-white shadow-lg transition hover:bg-[#e56500] active:scale-[0.97] sm:rounded-xl sm:px-6 sm:py-3.5 sm:text-sm">Create Free Account</Link>
         </div>
       </div>
     </div>
@@ -443,10 +428,10 @@ function ProductCardSkeleton() {
 /* ========================================================================== Features Strip ========================================================================== */
 function FeaturesStrip() {
   const features = [
-    { icon: Truck, title: "Free Delivery", description: "On orders over $50 across nationwide delivery routes", bgColor: "bg-blue-50 text-blue-600" },
+    { icon: Truck, title: "Free Delivery", description: "On eligible products when the seller covers the delivery charge", bgColor: "bg-blue-50 text-blue-600" },
     { icon: ShieldCheck, title: "100% Secure Payment", description: "Encrypted checkout & protected payment options", bgColor: "bg-emerald-50 text-emerald-600" },
     { icon: Package, title: "Easy 7-Day Returns", description: "Hassle-free return policy & quick refunds", bgColor: "bg-orange-50 text-orange-600" },
-    { icon: Headset, title: "24/7 Customer Support", description: "Dedicated live assistance whenever you need help", bgColor: "bg-purple-50 text-purple-600" },
+    { icon: Headset, title: "Customer Support", description: "Email, phone & help-center assistance for every order", bgColor: "bg-purple-50 text-purple-600" },
   ];
   return (
       <div className="-mr-3 flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1 pr-3 scrollbar-none sm:mr-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:pr-0 lg:grid-cols-4">

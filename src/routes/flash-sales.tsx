@@ -6,7 +6,6 @@ import {
   Flame,
   ArrowRight,
   Loader,
-  Clock,
   ShoppingBag,
   Tag,
   Check,
@@ -129,7 +128,7 @@ export const Route = createFileRoute("/flash-sales")({
     ...seoHead({
       title: "Flash Sales — Mega Deals & Discounts on AVENTA SHOP",
       description:
-        "AVENTA SHOP Flash Sales: Unbeatable mega discounts on electronics, fashion, home essentials and more! Limited quantities, hurry before stock runs out.",
+        "Live deals on AVENTA SHOP: real price drops on electronics, fashion, home essentials and more, straight from our sellers.",
       path: "/flash-sales",
       type: "website",
     }),
@@ -140,7 +139,7 @@ export const Route = createFileRoute("/flash-sales")({
           collectionPageJsonLd({
             name: "Flash Sales — AVENTA SHOP",
             description:
-              "Limited-time flash sale deals with mega discounts on electronics, fashion, home essentials and more at AVENTA SHOP.",
+              "Live discounted deals on electronics, fashion, home essentials and more at AVENTA SHOP.",
             path: "/flash-sales",
           }),
         ),
@@ -158,57 +157,8 @@ export const Route = createFileRoute("/flash-sales")({
   }),
 });
 
-/**
- * Custom hook to manage the live countdown timer
- */
-function useCountdown(targetTime: number) {
-  const [timeLeft, setTimeLeft] = useState(() => calculateTimeLeft(targetTime));
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      const remaining = calculateTimeLeft(targetTime);
-      setTimeLeft(remaining);
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [targetTime]);
-
-  return timeLeft;
-}
-
-function calculateTimeLeft(targetTime: number) {
-  const difference = Math.max(0, targetTime - Date.now());
-  const seconds = Math.floor((difference / 1000) % 60);
-  const minutes = Math.floor((difference / (1000 * 60)) % 60);
-  const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
-  const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-
-  return {
-    total: difference,
-    days,
-    hours,
-    minutes,
-    seconds,
-  };
-}
-
-function formatTwoDigits(num: number): string {
-  return String(num).padStart(2, "0");
-}
-
-export function FlashSalesPage() {
+function FlashSalesPage() {
   // Target flash sale end time (e.g. Midnight tonight or 12h cycle)
-  const targetEndTime = useMemo(() => {
-    const now = new Date();
-    const endOfDay = new Date(now);
-    endOfDay.setHours(23, 59, 59, 999);
-    if (endOfDay.getTime() - now.getTime() < 3 * 60 * 60 * 1000) {
-      endOfDay.setDate(endOfDay.getDate() + 1);
-    }
-    return endOfDay.getTime();
-  }, []);
-
-  const countdown = useCountdown(targetEndTime);
 
   // States
   const [visibleCount, setVisibleCount] = useState<number>(12);
@@ -250,6 +200,20 @@ export function FlashSalesPage() {
       return typeof compareAt === "number" && compareAt > product.price;
     });
   }, [rawProducts]);
+
+  // REAL stats computed from the actual discounted products - replaces
+  // the old fake "Up to 80% OFF" claim and the daily-reset countdown
+  // that implied a time-limited sale that never existed.
+  const maxDiscountPct = useMemo(() => {
+    let best = 0;
+    for (const product of flashProducts) {
+      const compareAt = product.compareAtPrice ?? (product as { oldPrice?: number }).oldPrice;
+      if (compareAt && compareAt > product.price) {
+        best = Math.max(best, Math.round(((compareAt - product.price) / compareAt) * 100));
+      }
+    }
+    return best;
+  }, [flashProducts]);
 
   // Apply Sub-Filters and Sorting
   const filteredAndSortedProducts = useMemo(() => {
@@ -384,56 +348,22 @@ export function FlashSalesPage() {
                     Flash Sales
                   </h1>
                   <p className="text-xs sm:text-sm text-orange-100 font-medium mt-0.5">
-                    Exclusive AVENTA SHOP Mega Deals • Up to 80% OFF
+                    Live AVENTA SHOP Deals{maxDiscountPct > 0 ? ` • Up to ${maxDiscountPct}% OFF` : ""}
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Banner Right: Live Countdown Widget */}
-            <div className="w-full md:w-auto bg-[#0f172a]/95 backdrop-blur-md rounded-xl p-4 sm:p-5 border border-white/10 shadow-2xl flex flex-col items-center md:items-end gap-2.5">
-              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-orange-400">
-                <Clock
-                  className="w-4 h-4 animate-spin text-orange-400"
-                  style={{ animationDuration: "8s" }}
-                />
-                <span>Ends In</span>
+            {/* Banner Right: REAL deal stats (computed from live products) */}
+            <div className="w-full md:w-auto bg-[#0f172a]/95 backdrop-blur-md rounded-xl p-4 sm:p-5 border border-white/10 shadow-2xl flex items-center gap-4 md:gap-6">
+              <div className="flex flex-col items-center">
+                <span className="text-2xl sm:text-3xl font-black text-white font-mono">{flashProducts.length}</span>
+                <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mt-1">Live Deals</span>
               </div>
-
-              <div className="flex items-center gap-2 text-white">
-                {/* Hours Box */}
-                <div className="flex flex-col items-center">
-                  <div className="bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700 rounded-lg w-12 sm:w-14 h-12 sm:h-14 flex items-center justify-center text-xl sm:text-2xl font-black text-white shadow-inner font-mono">
-                    {formatTwoDigits(countdown.hours)}
-                  </div>
-                  <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mt-1">
-                    Hours
-                  </span>
-                </div>
-
-                <span className="text-xl font-bold text-orange-400 pb-4">:</span>
-
-                {/* Minutes Box */}
-                <div className="flex flex-col items-center">
-                  <div className="bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700 rounded-lg w-12 sm:w-14 h-12 sm:h-14 flex items-center justify-center text-xl sm:text-2xl font-black text-white shadow-inner font-mono">
-                    {formatTwoDigits(countdown.minutes)}
-                  </div>
-                  <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mt-1">
-                    Mins
-                  </span>
-                </div>
-
-                <span className="text-xl font-bold text-orange-400 pb-4">:</span>
-
-                {/* Seconds Box */}
-                <div className="flex flex-col items-center">
-                  <div className="bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700 rounded-lg w-12 sm:w-14 h-12 sm:h-14 flex items-center justify-center text-xl sm:text-2xl font-black text-amber-400 shadow-inner font-mono">
-                    {formatTwoDigits(countdown.seconds)}
-                  </div>
-                  <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mt-1">
-                    Secs
-                  </span>
-                </div>
+              <span className="text-xl font-bold text-orange-400">|</span>
+              <div className="flex flex-col items-center">
+                <span className="text-2xl sm:text-3xl font-black text-amber-400 font-mono">{maxDiscountPct}%</span>
+                <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mt-1">Top Discount</span>
               </div>
             </div>
           </div>
