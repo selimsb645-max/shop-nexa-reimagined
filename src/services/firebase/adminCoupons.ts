@@ -1,39 +1,39 @@
-import {
-  collection,
-  deleteDoc,
-  doc,
-  getDoc,
-  getDocs,
-  orderBy,
-  query,
-  serverTimestamp,
-  setDoc,
-  updateDoc,
-} from "firebase/firestore";
-import { getDb } from "./config";
+/**
+ * AVENTA SHOP — Admin coupon client service.
+ *
+ * Thin transport client for the TanStack server functions in
+ * @/lib/coupons/coupon-admin.functions — every call is role-verified
+ * (COUPON_MANAGER_ROLES), canonical-field-validated and audited
+ * server-side. This service NEVER touches Firestore directly: the
+ * security rules deny client SDK writes on coupons for every role.
+ *
+ * The legacy direct-write path had two real bugs this fixes:
+ *   1. it wrote from the browser, bypassing server validation and
+ *      the audit trail entirely;
+ *   2. upsert used setDoc() on the whole doc, silently WIPING
+ *      sellerId, productIds and maxDiscount whenever an admin edited
+ *      a coupon (data loss on every edit of a seller coupon).
+ */
 import type { Coupon, CouponType } from "@/types/commerce";
+import { getFirebaseAuth, firebaseConfigured } from "./config";
+import {
+  listCouponsFn,
+  upsertCouponFn,
+  updateCouponActiveFn,
+  deleteCouponFn,
+} from "@/lib/coupons/coupon-admin.functions";
 
-const COL = "coupons";
-
-function mapCoupon(id: string, d: Record<string, unknown>): Coupon {
-  return {
-    code: id,
-    type: (d.type as CouponType) ?? "percent",
-    value: Number(d.value ?? 0),
-    minSubtotal: Number(d.minSubtotal ?? 0),
-    expiresAt: d.expiresAt != null ? Number(d.expiresAt) : null,
-    active: Boolean(d.active),
-    usageLimit: d.usageLimit != null ? Number(d.usageLimit) : null,
-    uses: Number(d.uses ?? 0),
-    sellerId: (d.sellerId as string | null) ?? null,
-    productIds: Array.isArray(d.productIds) ? (d.productIds as string[]) : [],
-    maxDiscount: d.maxDiscount != null ? Number(d.maxDiscount) : null,
-  };
+async function requireIdToken(): Promise<string> {
+  const user = getFirebaseAuth().currentUser;
+  if (!user) throw new Error("Please sign in again.");
+  return user.getIdToken();
 }
 
+/** List every coupon (platform + seller) with usage counts. */
 export async function listCoupons(): Promise<Coupon[]> {
-  const snap = await getDocs(query(collection(getDb(), COL), orderBy("code", "asc")));
-  return snap.docs.map((d) => mapCoupon(d.id, d.data()));
+  if (!firebaseConfigured) return [];
+  const idToken = await requireIdToken();
+  return listCouponsFn({ data: { idToken } });
 }
 
 export interface CouponInput {
@@ -46,31 +46,29 @@ export interface CouponInput {
   usageLimit: number | null;
 }
 
+/**
+ * Create or edit a coupon. Editing is a masked server-side patch —
+ * redemptions (uses), ownership (sellerId) and identity (code,
+ * createdAt) are immutable; only the discount fields change.
+ */
 export async function upsertCoupon(input: CouponInput): Promise<void> {
-  const code = input.code.trim().toUpperCase();
-  if (!code) throw new Error("Coupon code required");
-  const ref = doc(getDb(), COL, code);
-  const existing = await getDoc(ref);
-  await setDoc(ref, {
-    type: input.type,
-    value: input.value,
-    minSubtotal: input.minSubtotal,
-    expiresAt: input.expiresAt,
-    active: input.active,
-    usageLimit: input.usageLimit,
-    uses: existing.exists() ? Number(existing.data().uses ?? 0) : 0,
-    updatedAt: serverTimestamp(),
-    createdAt: existing.exists() ? existing.data().createdAt : serverTimestamp(),
-  });
+  const idToken = await requireIdToken();
+  await upsertCouponFn({ data: { idToken, input } });
 }
 
+/**
+ * Enable/disable a coupon (audited COUPON_ENABLED/COUPON_DISABLED).
+ */
 export async function updateCouponActive(code: string, active: boolean): Promise<void> {
-  await updateDoc(doc(getDb(), COL, code.toUpperCase()), {
-    active,
-    updatedAt: serverTimestamp(),
-  });
+  const idToken = await requireIdToken();
+  await updateCouponActiveFn({ data: { idToken, code, active } });
 }
 
+/**
+ * Delete a never-redeemed coupon — the server refuses coupons with
+ * redemptions (history is immutable; disable instead).
+ */
 export async function deleteCoupon(code: string): Promise<void> {
-  await deleteDoc(doc(getDb(), COL, code.toUpperCase()));
+  const idToken = await requireIdToken();
+  await deleteCouponFn({ data: { idToken, code } });
 }

@@ -259,7 +259,7 @@ export function couponDocFields(
   };
 }
 
-async function readCoupon(
+export async function readCoupon(
   projectId: string,
   code: string,
 ): Promise<{ doc: CouponDoc; updateTime: string } | null> {
