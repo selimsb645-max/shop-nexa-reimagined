@@ -547,7 +547,7 @@ for (const [oid, status, amount] of [
   });
 }
 // ── coupons / promo codes ───────────────────────────────────────────
-await putDoc("coupons/cpn-save100", {
+await putDoc("coupons/SAVE100", {
   code: v.s("SAVE100"),
   type: v.s("fixed"),
   value: v.f(100),
@@ -563,7 +563,7 @@ await putDoc("coupons/cpn-save100", {
   active: v.b(true),
   createdAt: v.n(now - 7 * 864e5),
 });
-await putDoc(`coupons/cpn-seller-${SELLER.slice(0, 6)}`, {
+await putDoc("coupons/GADGET15", {
   code: v.s("GADGET15"),
   type: v.s("percent"),
   value: v.f(15),

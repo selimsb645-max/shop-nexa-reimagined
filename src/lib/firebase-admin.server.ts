@@ -38,6 +38,11 @@ export function getProjectId(): string {
   // In emulator mode, use a test project ID
   const testProject = Deno.env.get("FIRESTORE_TEST_PROJECT");
   if (testProject) return testProject;
+  if (Deno.env.get("FIRESTORE_EMULATOR_HOST")) {
+    throw new Error(
+      "Dev emulator mode is missing FIRESTORE_TEST_PROJECT — set it to the emulated project id.",
+    );
+  }
   return readServiceAccount().project_id;
 }
 

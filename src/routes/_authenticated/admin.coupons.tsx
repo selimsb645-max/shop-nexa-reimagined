@@ -40,6 +40,8 @@ function CouponsAdmin() {
     setLoading(true);
     try {
       setCoupons(await listCoupons());
+    } catch (err) {
+      toast.error(mapFirebaseError(err));
     } finally {
       setLoading(false);
     }
@@ -191,6 +193,7 @@ function CouponsAdmin() {
               type="checkbox"
               checked={form.active}
               onChange={(e) => setForm({ ...form, active: e.target.checked })}
+              className="h-5 w-5 rounded accent-[#f57224]"
             />
             Active
           </label>
@@ -203,15 +206,74 @@ function CouponsAdmin() {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border bg-background">
-        {loading ? (
-          <div className="flex items-center gap-2 p-8 text-sm text-muted-foreground">
-            <Spinner /> Loading coupons…
+      {loading ? (
+        <div className="flex items-center gap-2 p-8 text-sm text-muted-foreground">
+          <Spinner /> Loading coupons…
+        </div>
+      ) : coupons.length === 0 ? (
+        <div className="rounded-lg border bg-background p-8 text-sm text-muted-foreground">
+          No coupons yet.
+        </div>
+      ) : (
+        <>
+          {/* Mobile: card list */}
+          <div className="grid gap-3 lg:hidden">
+            {coupons.map((c) => (
+              <div key={c.code} className="rounded-xl border bg-background p-4 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-2 flex flex-wrap items-center gap-2">
+                      <code className="rounded bg-muted px-2 py-1 font-mono text-sm font-bold">
+                        {c.code}
+                      </code>
+                      <span
+                        className={
+                          "rounded-full px-2 py-0.5 text-xs " +
+                          (c.active
+                            ? "bg-emerald-500/10 text-emerald-600"
+                            : "bg-muted text-muted-foreground")
+                        }
+                      >
+                        {c.active ? "Active" : "Disabled"}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs text-muted-foreground">
+                      <span>
+                        {c.type === "percent" ? `${c.value}% off` : `${formatPrice(c.value)} off`}
+                      </span>
+                      <span>
+                        {t("admin.minSubtotal")}: {formatPrice(c.minSubtotal)}
+                      </span>
+                      <span>
+                        {t("admin.uses")}: {c.uses}
+                        {c.usageLimit ? `/${c.usageLimit}` : ""}
+                      </span>
+                      <span>
+                        {t("admin.expires")}: {c.expiresAt ? formatDate(c.expiresAt) : "—"}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => onDelete(c)}
+                    aria-label={`Delete ${c.code}`}
+                    className="rounded-md border p-2 text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+                <button
+                  onClick={() => onToggle(c)}
+                  className="mt-3 w-full rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted"
+                >
+                  {c.active ? "Disable" : "Enable"}
+                </button>
+              </div>
+            ))}
           </div>
-        ) : coupons.length === 0 ? (
-          <div className="p-8 text-sm text-muted-foreground">No coupons yet.</div>
-        ) : (
-          <table className="w-full text-sm">
+
+          {/* Desktop: table */}
+          <div className="hidden overflow-x-auto rounded-lg border bg-background lg:block">
+            <table className="w-full text-sm">
             <thead className="bg-muted/50 text-left">
               <tr>
                 <th className="px-3 py-2">{t("admin.code")}</th>
@@ -264,9 +326,10 @@ function CouponsAdmin() {
                 </tr>
               ))}
             </tbody>
-          </table>
-        )}
-      </div>
+            </table>
+          </div>
+        </>
+      )}
     </div>
   );
 }

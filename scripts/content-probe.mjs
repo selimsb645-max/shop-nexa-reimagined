@@ -1,5 +1,5 @@
 import { chromium } from "playwright";
-const BASE = "http://localhost:5173";
+const BASE = process.env.AUDIT_BASE || "http://localhost:5173";
 const EXPECT = {
   admin: {
     "/admin/orders": ["ord-audit", "Rahim"],
