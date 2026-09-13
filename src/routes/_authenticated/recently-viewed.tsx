@@ -55,7 +55,11 @@ function RecentlyViewedPage() {
               params={{ slug: p.slug }}
               className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition hover:shadow-md active:scale-[0.99]"
             >
-              <img src={p.images?.[0]} alt={p.title} className="aspect-square w-full object-cover" />
+              <img
+                src={p.images?.[0]}
+                alt={p.title}
+                className="aspect-square w-full object-cover"
+              />
               <div className="p-3">
                 <h2 className="line-clamp-2 text-xs font-semibold text-gray-800">{p.title}</h2>
                 <div className="mt-1 text-sm font-bold text-orange-500">{formatPrice(p.price)}</div>
@@ -77,7 +81,10 @@ function EmptyState() {
       </span>
       <h2 className="mt-4 text-base font-bold text-gray-800">{t("recentlyViewed.nothing")}</h2>
       <p className="mt-1 max-w-xs text-xs text-gray-500">{t("recentlyViewed.nothingHint")}</p>
-      <Link to="/shop" className="mt-4 rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-orange-600 active:scale-95">
+      <Link
+        to="/shop"
+        className="mt-4 rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-orange-600 active:scale-95"
+      >
         Browse Products
       </Link>
     </div>

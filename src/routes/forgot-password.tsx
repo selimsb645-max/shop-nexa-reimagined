@@ -9,7 +9,10 @@ export const Route = createFileRoute("/forgot-password")({
   head: () => ({
     meta: [
       { title: "Reset Password — AVENTA SHOP" },
-      { name: "description", content: "Reset your AVENTA SHOP account password with a secure email link." },
+      {
+        name: "description",
+        content: "Reset your AVENTA SHOP account password with a secure email link.",
+      },
       { property: "og:title", content: "Reset Password — AVENTA SHOP" },
       { property: "og:description", content: "Reset your AVENTA SHOP account password." },
       { property: "og:url", content: `${getSiteUrl()}/forgot-password` },
@@ -18,7 +21,6 @@ export const Route = createFileRoute("/forgot-password")({
     links: [{ rel: "canonical", href: `${getSiteUrl()}/forgot-password` }],
   }),
 });
-
 
 function ForgotPage() {
   return (

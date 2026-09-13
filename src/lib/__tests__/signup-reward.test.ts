@@ -58,7 +58,7 @@ describe("SIGNUP REWARD — Transaction Safety (Concurrency)", () => {
 
   it("reads the user document within the transaction as a concurrency lock", () => {
     expect(rewardsServer).toContain("userDocName");
-    expect(rewardsServer).toContain("docPath(projectId, [\"users\", uid])");
+    expect(rewardsServer).toContain('docPath(projectId, ["users", uid])');
   });
 
   it("writes to the user document within the transaction (lock release)", () => {
@@ -270,7 +270,7 @@ describe("SIGNUP REWARD — Promo System Reuse", () => {
   });
 
   it("uses 6 numeric digits (not 4)", () => {
-    expect(promoServer).toContain('PROMO_NUMERIC_LENGTH = 6');
+    expect(promoServer).toContain("PROMO_NUMERIC_LENGTH = 6");
   });
 
   it("existing idempotency via checkQualification is preserved", () => {
@@ -293,7 +293,7 @@ describe("SIGNUP REWARD — Type Consistency", () => {
   });
 
   it("notification entry uses correct fields (type, title, message, link, read, createdAt)", () => {
-    expect(rewardsServer).toContain("type: \"reward\"");
+    expect(rewardsServer).toContain('type: "reward"');
     expect(rewardsServer).toContain("title:");
     expect(rewardsServer).toContain("message:");
     expect(rewardsServer).toContain("link:");

@@ -15,16 +15,21 @@ export const Route = createFileRoute("/verify-email")({
   head: () => ({
     meta: [
       { title: "Verify Your Email — AVENTA SHOP" },
-      { name: "description", content: "Confirm your email address to activate your AVENTA SHOP account." },
+      {
+        name: "description",
+        content: "Confirm your email address to activate your AVENTA SHOP account.",
+      },
       { property: "og:title", content: "Verify Your Email — AVENTA SHOP" },
-      { property: "og:description", content: "Confirm your email address to activate your AVENTA SHOP account." },
+      {
+        property: "og:description",
+        content: "Confirm your email address to activate your AVENTA SHOP account.",
+      },
       { property: "og:url", content: `${getSiteUrl()}/verify-email` },
       { name: "robots", content: "noindex" },
     ],
     links: [{ rel: "canonical", href: `${getSiteUrl()}/verify-email` }],
   }),
 });
-
 
 function VerifyPage() {
   const { user } = useAuth();
@@ -58,7 +63,11 @@ function VerifyPage() {
   return (
     <AuthLayout
       title="Verify your email"
-      subtitle={user?.email ? `We've sent a link to ${user.email}` : "Check your inbox for a verification link"}
+      subtitle={
+        user?.email
+          ? `We've sent a link to ${user.email}`
+          : "Check your inbox for a verification link"
+      }
       footer={
         <button
           onClick={async () => {

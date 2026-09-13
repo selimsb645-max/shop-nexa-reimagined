@@ -34,7 +34,9 @@ afterAll(async () => {
   delete process.env.FIRESTORE_EMULATOR_HOST;
   delete process.env.FIRESTORE_TEST_PROJECT;
 });
-beforeEach(() => { clearEmulatorStore(); });
+beforeEach(() => {
+  clearEmulatorStore();
+});
 
 async function docExists(path: string): Promise<boolean> {
   const res = await fetch(`${BASE}/${path}`);
@@ -44,18 +46,32 @@ async function docExists(path: string): Promise<boolean> {
 describe("kernel event bus", () => {
   it("emits once — a repeated emit is a no-op (idempotency)", async () => {
     const seen: string[] = [];
-    registerSubscriber({ name: "count", types: "*", handler: async (e) => { seen.push(e.eventId); } });
+    registerSubscriber({
+      name: "count",
+      types: "*",
+      handler: async (e) => {
+        seen.push(e.eventId);
+      },
+    });
 
     const r1 = await emitDomainEvent("test-project", {
-      source: "order", type: "order.created", key: "o1", seq: 1,
-      actor: { id: "user:u1" }, payload: { total: 50000 },
+      source: "order",
+      type: "order.created",
+      key: "o1",
+      seq: 1,
+      actor: { id: "user:u1" },
+      payload: { total: 50000 },
     });
     expect(r1.emitted).toBe(true);
     expect(r1.dispatches).toHaveLength(1);
 
     const r2 = await emitDomainEvent("test-project", {
-      source: "order", type: "order.created", key: "o1", seq: 1,
-      actor: { id: "user:u1" }, payload: { total: 50000 },
+      source: "order",
+      type: "order.created",
+      key: "o1",
+      seq: 1,
+      actor: { id: "user:u1" },
+      payload: { total: 50000 },
     });
     expect(r2.emitted).toBe(false);
     expect(r2.skipped).toBe("already-emitted");
@@ -75,19 +91,44 @@ describe("kernel event bus", () => {
     registerSubscriber({
       name: "finance",
       types: ["order.created", "order.returned", "finance.payout.failed"],
-      handler: async (e) => { financeSaw.push(e.type); },
+      handler: async (e) => {
+        financeSaw.push(e.type);
+      },
     });
     registerSubscriber({
       name: "campaigns",
       types: ["product.listed"],
-      handler: async (e) => { campaignsSaw.push(e.type); },
+      handler: async (e) => {
+        campaignsSaw.push(e.type);
+      },
     });
 
-    await emitDomainEvent("test-project", { source: "order", type: "order.created", key: "o9", seq: 1, actor: { id: "user:u1" }, payload: {} });
-    await emitDomainEvent("test-project", { source: "product", type: "product.listed", key: "p9", seq: 1, actor: { id: "system" }, payload: {} });
+    await emitDomainEvent("test-project", {
+      source: "order",
+      type: "order.created",
+      key: "o9",
+      seq: 1,
+      actor: { id: "user:u1" },
+      payload: {},
+    });
+    await emitDomainEvent("test-project", {
+      source: "product",
+      type: "product.listed",
+      key: "p9",
+      seq: 1,
+      actor: { id: "system" },
+      payload: {},
+    });
 
     // finance got order.created only; campaigns got product.listed only
-    const r1 = await emitDomainEvent("test-project", { source: "order", type: "order.created", key: "o9b", seq: 1, actor: { id: "user:u1" }, payload: {} });
+    const r1 = await emitDomainEvent("test-project", {
+      source: "order",
+      type: "order.created",
+      key: "o9b",
+      seq: 1,
+      actor: { id: "user:u1" },
+      payload: {},
+    });
     // note: re-registering replaces — dispatch count matches types subscribed
     expect(r1.dispatches.some((d) => d.startsWith("finance__"))).toBe(true);
     expect(r1.dispatches.some((d) => d.startsWith("campaigns__"))).toBe(false);
@@ -98,11 +139,18 @@ describe("kernel event bus", () => {
     registerSubscriber({
       name: "flaky",
       types: "*",
-      handler: async () => { calls++; throw new Error("boom"); },
+      handler: async () => {
+        calls++;
+        throw new Error("boom");
+      },
     });
     const r = await emitDomainEvent("test-project", {
-      source: "finance", type: "finance.payout.failed", key: "po1", seq: 1,
-      actor: { id: "system" }, payload: { payoutId: "po1" },
+      source: "finance",
+      type: "finance.payout.failed",
+      key: "po1",
+      seq: 1,
+      actor: { id: "system" },
+      payload: { payoutId: "po1" },
     });
     const dispatchId = r.dispatches.find((d) => d.startsWith("flaky__"))!;
 
@@ -130,10 +178,20 @@ describe("kernel event bus", () => {
 
   it("a DONE dispatch never re-runs its handler", async () => {
     let calls = 0;
-    registerSubscriber({ name: "once", types: "*", handler: async () => { calls++; } });
+    registerSubscriber({
+      name: "once",
+      types: "*",
+      handler: async () => {
+        calls++;
+      },
+    });
     const r = await emitDomainEvent("test-project", {
-      source: "campaign", type: "campaign.started", key: "c1", seq: 1,
-      actor: { id: "system" }, payload: {},
+      source: "campaign",
+      type: "campaign.started",
+      key: "c1",
+      seq: 1,
+      actor: { id: "system" },
+      payload: {},
     });
     const dispatchId = r.dispatches.find((d) => d.startsWith("once__"))!;
     const a = await processDispatch("test-project", dispatchId);
@@ -146,11 +204,19 @@ describe("kernel event bus", () => {
   it("event + dispatch docs land in the expected collections", async () => {
     registerSubscriber({ name: "obs", types: "*", handler: async () => {} });
     const r = await emitDomainEvent("test-project", {
-      source: "product", type: "product.qc.passed", key: "qc_p1_123", seq: 1,
-      actor: { id: "admin:a1", role: "content_admin" }, payload: { productId: "p1" },
+      source: "product",
+      type: "product.qc.passed",
+      key: "qc_p1_123",
+      seq: 1,
+      actor: { id: "admin:a1", role: "content_admin" },
+      payload: { productId: "p1" },
     });
-    expect(await docExists(`${DOMAIN_EVENTS_COLLECTION}/product__product.qc.passed__qc_p1_123`)).toBe(true);
-    expect(await docExists(`${DOMAIN_DISPATCHES_COLLECTION}/obs__product__product.qc.passed__qc_p1_123`)).toBe(true);
+    expect(
+      await docExists(`${DOMAIN_EVENTS_COLLECTION}/product__product.qc.passed__qc_p1_123`),
+    ).toBe(true);
+    expect(
+      await docExists(`${DOMAIN_DISPATCHES_COLLECTION}/obs__product__product.qc.passed__qc_p1_123`),
+    ).toBe(true);
   });
 });
 

@@ -27,20 +27,13 @@ export function defineMachine<S extends string>(
 }
 
 /** Pure transition check — the single authority for "is this legal?" */
-export function canTransition<S extends string>(
-  machine: StateMachine<S>,
-  from: S,
-  to: S,
-): boolean {
+export function canTransition<S extends string>(machine: StateMachine<S>, from: S, to: S): boolean {
   if (from === to) return true; // no-op transitions allowed everywhere
   const legal = machine.transitions[from];
   return Array.isArray(legal) && legal.includes(to);
 }
 
-export function isTerminal<S extends string>(
-  machine: StateMachine<S>,
-  state: S,
-): boolean {
+export function isTerminal<S extends string>(machine: StateMachine<S>, state: S): boolean {
   return machine.terminal.includes(state);
 }
 
@@ -52,8 +45,6 @@ export function assertTransition<S extends string>(
   label: string,
 ): void {
   if (!canTransition(machine, from, to)) {
-    throw new Error(
-      `kernel/machine[${label}]: illegal transition ${from} → ${to}`,
-    );
+    throw new Error(`kernel/machine[${label}]: illegal transition ${from} → ${to}`);
   }
 }

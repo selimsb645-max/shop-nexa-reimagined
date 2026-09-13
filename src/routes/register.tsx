@@ -9,7 +9,10 @@ export const Route = createFileRoute("/register")({
   head: () => ({
     meta: [
       { title: "Create Account — AVENTA SHOP" },
-      { name: "description", content: "Create a free AVENTA SHOP account to shop deals, track orders and earn rewards." },
+      {
+        name: "description",
+        content: "Create a free AVENTA SHOP account to shop deals, track orders and earn rewards.",
+      },
       { property: "og:title", content: "Create Account — AVENTA SHOP" },
       { property: "og:description", content: "Create a free AVENTA SHOP account." },
       { property: "og:url", content: `${getSiteUrl()}/register` },
@@ -18,7 +21,6 @@ export const Route = createFileRoute("/register")({
     links: [{ rel: "canonical", href: `${getSiteUrl()}/register` }],
   }),
 });
-
 
 function RegisterPage() {
   return (

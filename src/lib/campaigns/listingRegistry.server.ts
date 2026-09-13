@@ -18,16 +18,8 @@
  * reacts to typed kernel events (product.listed / product.unlisted).
  */
 
-import {
-  docPath,
-  toFsFields,
-  commitWrites,
-  getProjectId,
-} from "../firebase-admin.server";
-import {
-  registerSubscriber,
-  type Subscriber,
-} from "../kernel/events";
+import { docPath, toFsFields, commitWrites, getProjectId } from "../firebase-admin.server";
+import { registerSubscriber, type Subscriber } from "../kernel/events";
 import { CAMPAIGN_NOTIFICATIONS_COLLECTION } from "./campaigns.server";
 import { newDocId } from "../firebase-admin.server";
 
@@ -51,7 +43,8 @@ const listingSubscriber: Subscriber = {
       const now = Date.now();
       const catalogDoc = docPath(projectId, [CAMPAIGN_PRODUCT_CATALOG_COLLECTION, productId]);
       const sellerNtf = docPath(projectId, [
-        CAMPAIGN_NOTIFICATIONS_COLLECTION, `ntf_${newDocId()}`,
+        CAMPAIGN_NOTIFICATIONS_COLLECTION,
+        `ntf_${newDocId()}`,
       ]);
       await commitWrites(projectId, [
         {
@@ -87,17 +80,19 @@ const listingSubscriber: Subscriber = {
     // product.unlisted → drop out of the promo catalog (keep the doc
     // as a tombstone with eligible:false so history remains queryable)
     const now = Date.now();
-    await commitWrites(projectId, [{
-      update: {
-        name: docPath(projectId, [CAMPAIGN_PRODUCT_CATALOG_COLLECTION, productId]),
-        fields: toFsFields({
-          productId,
-          eligible: false,
-          unlistedAt: now,
-          updatedAt: now,
-        }),
+    await commitWrites(projectId, [
+      {
+        update: {
+          name: docPath(projectId, [CAMPAIGN_PRODUCT_CATALOG_COLLECTION, productId]),
+          fields: toFsFields({
+            productId,
+            eligible: false,
+            unlistedAt: now,
+            updatedAt: now,
+          }),
+        },
       },
-    }]);
+    ]);
   },
 };
 

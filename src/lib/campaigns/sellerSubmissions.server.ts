@@ -19,10 +19,7 @@ import {
   newDocId,
 } from "../firebase-admin.server";
 import { allowsSellerSubmissions } from "./campaignStateMachine";
-import {
-  validateCampaignPricing,
-  type DiscountRules,
-} from "./pricing";
+import { validateCampaignPricing, type DiscountRules } from "./pricing";
 import {
   CAMPAIGNS_COLLECTION,
   appendCampaignEvent,
@@ -65,7 +62,11 @@ export async function listOpenCampaignsForSellers(projectId: string): Promise<Ca
   const rows = (await runFirestoreQuery(projectId, {
     from: [{ collectionId: CAMPAIGNS_COLLECTION }],
     where: {
-      fieldFilter: { field: { fieldPath: "status" }, op: "EQUAL", value: { stringValue: "SUBMITTED" } },
+      fieldFilter: {
+        field: { fieldPath: "status" },
+        op: "EQUAL",
+        value: { stringValue: "SUBMITTED" },
+      },
     },
   })) as Array<{ document?: { fields: Record<string, unknown> } }>;
   const campaigns = rows
@@ -110,7 +111,9 @@ export async function submitCampaignProducts(
       item.sellerApprovedPriceMinor,
     );
     if (!result.ok) {
-      throw new Error(`campaigns/submission: product ${item.productId} — ${result.errors.join("; ")}`);
+      throw new Error(
+        `campaigns/submission: product ${item.productId} — ${result.errors.join("; ")}`,
+      );
     }
     if (price && price.finalPriceMinor < item.sellerApprovedPriceMinor) {
       // computeCampaignPrice clamps to the seller floor; treat a requested
@@ -142,11 +145,17 @@ export async function submitCampaignProducts(
       },
     },
   ]);
-  await appendCampaignEvent(projectId, input.campaignId, "updated", { uid: input.sellerUid, adminRole: null }, {
-    submissionId,
-    action: "seller_submission",
-    items: input.items.length,
-  });
+  await appendCampaignEvent(
+    projectId,
+    input.campaignId,
+    "updated",
+    { uid: input.sellerUid, adminRole: null },
+    {
+      submissionId,
+      action: "seller_submission",
+      items: input.items.length,
+    },
+  );
   return submission;
 }
 
@@ -159,7 +168,11 @@ export async function listSellerSubmissions(
   const rows = (await runFirestoreQuery(projectId, {
     from: [{ collectionId: CAMPAIGN_SUBMISSIONS_COLLECTION }],
     where: {
-      fieldFilter: { field: { fieldPath: "sellerUid" }, op: "EQUAL", value: { stringValue: sellerUid } },
+      fieldFilter: {
+        field: { fieldPath: "sellerUid" },
+        op: "EQUAL",
+        value: { stringValue: sellerUid },
+      },
     },
   })) as Array<{ document?: { fields: Record<string, unknown> } }>;
   return rows
@@ -181,13 +194,14 @@ export async function reviewCampaignSubmission(
   ]);
   const d = docs.get(docPath(projectId, [CAMPAIGN_SUBMISSIONS_COLLECTION, submissionId]));
   if (!d?.exists) throw new Error("campaigns/submission-not-found");
-  const submission = (d.data as Record<string, unknown>) as unknown as CampaignSubmission;
+  const submission = d.data as Record<string, unknown> as unknown as CampaignSubmission;
   if (submission.status !== "PENDING_REVIEW") {
-    throw new Error(
-      `campaigns/submission: already ${submission.status} — cannot re-review`,
-    );
+    throw new Error(`campaigns/submission: already ${submission.status} — cannot re-review`);
   }
-  if (!reviewer.adminRole || !["super_admin", "admin", "platform_admin", "marketing_admin"].includes(reviewer.adminRole)) {
+  if (
+    !reviewer.adminRole ||
+    !["super_admin", "admin", "platform_admin", "marketing_admin"].includes(reviewer.adminRole)
+  ) {
     throw new Error(
       `campaigns/permission: role ${reviewer.adminRole ?? "none"} cannot review submissions`,
     );
@@ -208,13 +222,25 @@ export async function reviewCampaignSubmission(
       },
     },
   ]);
-  await appendCampaignEvent(projectId, submission.campaignId, decision === "APPROVED" ? "approved" : "rejected", reviewer, {
-    submissionId,
-    sellerUid: submission.sellerUid,
-    reviewNote,
-  });
+  await appendCampaignEvent(
+    projectId,
+    submission.campaignId,
+    decision === "APPROVED" ? "approved" : "rejected",
+    reviewer,
+    {
+      submissionId,
+      sellerUid: submission.sellerUid,
+      reviewNote,
+    },
+  );
   if (decision === "APPROVED") {
-    await queueCampaignNotification(projectId, submission.campaignId, "CAMPAIGN_SCHEDULED", { name: `${submission.campaignName} — your products were approved`, endAt: 0 }, "sellers");
+    await queueCampaignNotification(
+      projectId,
+      submission.campaignId,
+      "CAMPAIGN_SCHEDULED",
+      { name: `${submission.campaignName} — your products were approved`, endAt: 0 },
+      "sellers",
+    );
   }
   return { ...submission, ...patch };
 }

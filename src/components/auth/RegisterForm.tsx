@@ -104,7 +104,6 @@ export function RegisterForm() {
     }
   };
 
-
   return (
     <div className="space-y-4">
       <GoogleButton onClick={onGoogle} loading={googleLoading} label="Sign up with Google" />

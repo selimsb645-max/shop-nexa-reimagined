@@ -2,16 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import {
-  Gift,
-  Plus,
-  Loader,
-  Mail,
-  DollarSign,
-  Sparkles,
-  Clock,
-  CheckCircle,
-} from "lucide-react";
+import { Gift, Plus, Loader, Mail, DollarSign, Sparkles, Clock, CheckCircle } from "lucide-react";
 import { ServicePageLayout } from "@/components/common/ServicePageLayout";
 import { useAuth } from "@/context/AuthContext";
 import { useI18n } from "@/i18n/I18nContext";
@@ -54,7 +45,9 @@ function GiftCardsPage() {
       // Normalize amount — guard against NaN, empty, negative, zero
       const normalizedAmount = Math.round(Number(amount));
       if (!Number.isFinite(normalizedAmount) || normalizedAmount < MIN_AMOUNT) {
-        return Promise.reject(new Error(`Please enter an amount of at least \u{09F3}${MIN_AMOUNT}.`));
+        return Promise.reject(
+          new Error(`Please enter an amount of at least \u{09F3}${MIN_AMOUNT}.`),
+        );
       }
       if (!recipientName.trim()) {
         return Promise.reject(new Error("Please enter the recipient's name."));
@@ -89,7 +82,6 @@ function GiftCardsPage() {
 
   return (
     <ServicePageLayout title={t("giftCards.title")} subtitle={t("giftCards.subtitle")}>
-
       {/* Success state after purchase */}
       {purchasedCard && (
         <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm">
@@ -99,8 +91,12 @@ function GiftCardsPage() {
           </div>
           <div className="space-y-1 text-sm text-emerald-700">
             <p>Amount: {formatPrice(purchasedCard.amount)}</p>
-            <p>Code: <span className="font-mono font-bold tracking-wider">{purchasedCard.code}</span></p>
-            <p className="text-xs text-emerald-600">The gift card has been added to your account.</p>
+            <p>
+              Code: <span className="font-mono font-bold tracking-wider">{purchasedCard.code}</span>
+            </p>
+            <p className="text-xs text-emerald-600">
+              The gift card has been added to your account.
+            </p>
           </div>
           <button
             onClick={() => setPurchasedCard(null)}
@@ -128,7 +124,9 @@ function GiftCardsPage() {
           <div className="space-y-4">
             {/* Amount Selection */}
             <div>
-              <label className="mb-2 block text-sm font-medium">{t("giftCards.selectAmount")}</label>
+              <label className="mb-2 block text-sm font-medium">
+                {t("giftCards.selectAmount")}
+              </label>
               <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
                 {PRESET_AMOUNTS.map((amt) => (
                   <button
@@ -158,7 +156,9 @@ function GiftCardsPage() {
 
             {/* Recipient */}
             <div>
-              <label className="mb-1 block text-sm font-medium">{t("giftCards.recipientName")}</label>
+              <label className="mb-1 block text-sm font-medium">
+                {t("giftCards.recipientName")}
+              </label>
               <input
                 type="text"
                 value={recipientName}
@@ -168,7 +168,9 @@ function GiftCardsPage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">{t("giftCards.recipientEmail")}</label>
+              <label className="mb-1 block text-sm font-medium">
+                {t("giftCards.recipientEmail")}
+              </label>
               <input
                 type="email"
                 value={recipientEmail}
@@ -178,7 +180,9 @@ function GiftCardsPage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">{t("giftCards.messageOptional")}</label>
+              <label className="mb-1 block text-sm font-medium">
+                {t("giftCards.messageOptional")}
+              </label>
               <textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
@@ -194,9 +198,14 @@ function GiftCardsPage() {
                 className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground disabled:opacity-50"
               >
                 {purchaseMutation.isPending ? (
-                  <><Loader className="h-4 w-4" />{t("giftCards.processing")}</>
+                  <>
+                    <Loader className="h-4 w-4" />
+                    {t("giftCards.processing")}
+                  </>
                 ) : (
-                  <><DollarSign className="h-4 w-4" /> Buy for {formatPrice(amount)}</>
+                  <>
+                    <DollarSign className="h-4 w-4" /> Buy for {formatPrice(amount)}
+                  </>
                 )}
               </button>
               <button
@@ -240,14 +249,18 @@ function GiftCardsPage() {
               <div className="relative z-10">
                 <div className="mb-4 flex items-center justify-between">
                   <Sparkles className="h-6 w-6" />
-                  <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${
-                    card.status === "active" ? "bg-green-400/30" : "bg-red-400/30"
-                  }`}>
+                  <span
+                    className={`rounded-full px-2.5 py-1 text-xs font-bold ${
+                      card.status === "active" ? "bg-green-400/30" : "bg-red-400/30"
+                    }`}
+                  >
                     {card.status.toUpperCase()}
                   </span>
                 </div>
                 <p className="text-2xl font-bold">{formatPrice(card.balance)}</p>
-                <p className="text-xs opacity-80">Balance: {formatPrice(card.balance)} / {formatPrice(card.amount)}</p>
+                <p className="text-xs opacity-80">
+                  Balance: {formatPrice(card.balance)} / {formatPrice(card.amount)}
+                </p>
                 <div className="mt-3 space-y-1">
                   <p className="text-xs opacity-80">
                     <Mail className="mr-1 inline h-3 w-3" />

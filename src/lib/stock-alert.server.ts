@@ -36,8 +36,7 @@ export async function getStockAlertThreshold(): Promise<number> {
     const sDoc = docs.get(settingsDocPath);
     if (sDoc?.exists) {
       const inventory = (sDoc.data as Record<string, unknown>)["inventory"] as
-        | { alertThreshold?: number }
-        | undefined;
+        { alertThreshold?: number } | undefined;
       if (inventory?.alertThreshold && inventory.alertThreshold > 0) {
         return inventory.alertThreshold;
       }

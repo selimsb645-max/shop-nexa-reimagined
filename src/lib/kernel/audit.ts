@@ -37,24 +37,23 @@ export function auditDocId(target: string, action: string, ts: number, salt: str
 
 /** Append one audit entry. Fire-and-forget safe: never throws upward?  *
  *  NO — audit is a compliance record; a failure must be visible.       */
-export async function appendAuditEntry(
-  projectId: string,
-  entry: AuditEntry,
-): Promise<string> {
+export async function appendAuditEntry(projectId: string, entry: AuditEntry): Promise<string> {
   const ts = Date.now();
   const docId = auditDocId(entry.target, entry.action, ts, Math.random().toString(36).slice(2, 8));
-  await commitWrites(projectId, [{
-    update: {
-      name: docPath(projectId, [KERNEL_AUDIT_COLLECTION, docId]),
-      fields: toFsFields({
-        actorId: entry.actor.id,
-        actorRole: entry.actor.role ?? null,
-        action: entry.action,
-        target: entry.target,
-        meta: JSON.stringify(entry.meta ?? {}),
-        ts,
-      }),
+  await commitWrites(projectId, [
+    {
+      update: {
+        name: docPath(projectId, [KERNEL_AUDIT_COLLECTION, docId]),
+        fields: toFsFields({
+          actorId: entry.actor.id,
+          actorRole: entry.actor.role ?? null,
+          action: entry.action,
+          target: entry.target,
+          meta: JSON.stringify(entry.meta ?? {}),
+          ts,
+        }),
+      },
     },
-  }]);
+  ]);
   return docId;
 }

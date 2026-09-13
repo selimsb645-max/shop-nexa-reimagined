@@ -129,7 +129,9 @@ describe("Announcement Validation", () => {
   it("accepts all valid types", () => {
     const types = ["promo", "info", "system", "event"];
     for (const type of types) {
-      const result = validateAnnouncement(makeValidInput({ type: type as AnnouncementInput["type"] }));
+      const result = validateAnnouncement(
+        makeValidInput({ type: type as AnnouncementInput["type"] }),
+      );
       expect(result.valid).toBe(true);
     }
   });
@@ -143,33 +145,41 @@ describe("Announcement Validation", () => {
   it("accepts all valid priorities", () => {
     const priorities = ["low", "normal", "high", "urgent"];
     for (const priority of priorities) {
-      const result = validateAnnouncement(makeValidInput({ priority: priority as AnnouncementInput["priority"] }));
+      const result = validateAnnouncement(
+        makeValidInput({ priority: priority as AnnouncementInput["priority"] }),
+      );
       expect(result.valid).toBe(true);
     }
   });
 
   it("rejects end time before start time", () => {
-    const result = validateAnnouncement(makeValidInput({
-      startTime: 2000000,
-      endTime: 1000000,
-    }));
+    const result = validateAnnouncement(
+      makeValidInput({
+        startTime: 2000000,
+        endTime: 1000000,
+      }),
+    );
     expect(result.valid).toBe(false);
     expect(result.error).toContain("End time");
   });
 
   it("accepts start time without end time (open-ended start)", () => {
-    const result = validateAnnouncement(makeValidInput({
-      startTime: 1000000,
-      endTime: 0,
-    }));
+    const result = validateAnnouncement(
+      makeValidInput({
+        startTime: 1000000,
+        endTime: 0,
+      }),
+    );
     expect(result.valid).toBe(true);
   });
 
   it("accepts end time without start time (expires at end)", () => {
-    const result = validateAnnouncement(makeValidInput({
-      startTime: 0,
-      endTime: 1000000,
-    }));
+    const result = validateAnnouncement(
+      makeValidInput({
+        startTime: 0,
+        endTime: 1000000,
+      }),
+    );
     expect(result.valid).toBe(true);
   });
 
@@ -179,45 +189,55 @@ describe("Announcement Validation", () => {
   });
 
   it("rejects CTA label without CTA link", () => {
-    const result = validateAnnouncement(makeValidInput({
-      ctaLabel: "Click Here",
-      ctaLink: null,
-    }));
+    const result = validateAnnouncement(
+      makeValidInput({
+        ctaLabel: "Click Here",
+        ctaLink: null,
+      }),
+    );
     expect(result.valid).toBe(false);
     expect(result.error).toContain("CTA link");
   });
 
   it("rejects CTA link without CTA label", () => {
-    const result = validateAnnouncement(makeValidInput({
-      ctaLabel: null,
-      ctaLink: "/shop",
-    }));
+    const result = validateAnnouncement(
+      makeValidInput({
+        ctaLabel: null,
+        ctaLink: "/shop",
+      }),
+    );
     expect(result.valid).toBe(false);
     expect(result.error).toContain("CTA label");
   });
 
   it("accepts both CTA label and link together", () => {
-    const result = validateAnnouncement(makeValidInput({
-      ctaLabel: "Shop Now",
-      ctaLink: "/shop",
-    }));
+    const result = validateAnnouncement(
+      makeValidInput({
+        ctaLabel: "Shop Now",
+        ctaLink: "/shop",
+      }),
+    );
     expect(result.valid).toBe(true);
   });
 
   it("accepts both CTA null (no CTA button)", () => {
-    const result = validateAnnouncement(makeValidInput({
-      ctaLabel: null,
-      ctaLink: null,
-    }));
+    const result = validateAnnouncement(
+      makeValidInput({
+        ctaLabel: null,
+        ctaLink: null,
+      }),
+    );
     expect(result.valid).toBe(true);
   });
 
   it("rejects start time equals end time (zero duration, both non-zero)", () => {
     // endTime < startTime is rejected, but equal is technically fine (instant)
-    const result = validateAnnouncement(makeValidInput({
-      startTime: 1000000,
-      endTime: 1000000,
-    }));
+    const result = validateAnnouncement(
+      makeValidInput({
+        startTime: 1000000,
+        endTime: 1000000,
+      }),
+    );
     // Equal times: endTime is NOT before startTime, so valid
     expect(result.valid).toBe(true);
   });

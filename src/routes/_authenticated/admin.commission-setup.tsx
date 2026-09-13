@@ -38,9 +38,9 @@ function CommissionSetupPage() {
     setResult(null);
     try {
       const idToken = await user.getIdToken();
-      const res = await seedAventaCategories({
+      const res = (await seedAventaCategories({
         data: { idToken },
-      }) as SeedResult;
+      })) as SeedResult;
       setResult(res);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -58,7 +58,8 @@ function CommissionSetupPage() {
           <h2 className="mb-2 text-lg font-semibold">AVENTA Commission Configuration</h2>
           <p className="mb-4 text-sm text-gray-600">
             Seeds all 20 approved categories and 134 subcategories with AVENTA commission rates.
-            Each rate is exactly 50% of the Daraz New Commission Rate (PK Commission Rates - May 2026).
+            Each rate is exactly 50% of the Daraz New Commission Rate (PK Commission Rates - May
+            2026).
           </p>
           <p className="mb-4 text-sm text-gray-600">
             Safe to run multiple times — existing categories are updated, new ones created.
@@ -82,10 +83,18 @@ function CommissionSetupPage() {
           <div className="rounded-lg border border-green-200 bg-green-50 p-4">
             <h2 className="mb-2 text-lg font-semibold text-green-800">Seeding Complete</h2>
             <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>Categories Created: <strong>{result.categoriesCreated}</strong></div>
-              <div>Categories Updated: <strong>{result.categoriesUpdated}</strong></div>
-              <div>Subcategories Created: <strong>{result.subcategoriesCreated}</strong></div>
-              <div>Subcategories Updated: <strong>{result.subcategoriesUpdated}</strong></div>
+              <div>
+                Categories Created: <strong>{result.categoriesCreated}</strong>
+              </div>
+              <div>
+                Categories Updated: <strong>{result.categoriesUpdated}</strong>
+              </div>
+              <div>
+                Subcategories Created: <strong>{result.subcategoriesCreated}</strong>
+              </div>
+              <div>
+                Subcategories Updated: <strong>{result.subcategoriesUpdated}</strong>
+              </div>
             </div>
             {result.errors.length > 0 && (
               <div className="mt-4">

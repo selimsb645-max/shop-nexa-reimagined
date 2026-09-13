@@ -20,7 +20,8 @@ export const Route = createFileRoute("/track-orders-info")({
   head: () => ({
     ...seoHead({
       title: "Track Your Order — AVENTA SHOP Order Tracking",
-      description: "Track your AVENTA SHOP order in real-time. Learn how order tracking works, delivery stages, and how to check your order status anytime.",
+      description:
+        "Track your AVENTA SHOP order in real-time. Learn how order tracking works, delivery stages, and how to check your order status anytime.",
       path: "/track-orders-info",
       type: "website",
     }),
@@ -31,32 +32,38 @@ const DELIVERY_STAGES = [
   {
     icon: <Package className="h-6 w-6" />,
     stage: "Order Placed",
-    description: "Your order has been placed and is awaiting seller confirmation. You'll receive an SMS confirmation.",
+    description:
+      "Your order has been placed and is awaiting seller confirmation. You'll receive an SMS confirmation.",
   },
   {
     icon: <CheckCircle2 className="h-6 w-6" />,
     stage: "Confirmed",
-    description: "The seller has confirmed your order and is preparing it for dispatch. Payment status is verified.",
+    description:
+      "The seller has confirmed your order and is preparing it for dispatch. Payment status is verified.",
   },
   {
     icon: <Package className="h-6 w-6" />,
     stage: "Processing",
-    description: "Your order is being packed and labeled for shipping. You'll be notified once it's dispatched.",
+    description:
+      "Your order is being packed and labeled for shipping. You'll be notified once it's dispatched.",
   },
   {
     icon: <Truck className="h-6 w-6" />,
     stage: "Shipped",
-    description: "Your package has left the seller's warehouse and is on its way to the nearest delivery hub.",
+    description:
+      "Your package has left the seller's warehouse and is on its way to the nearest delivery hub.",
   },
   {
     icon: <Truck className="h-6 w-6" />,
     stage: "Out for Delivery",
-    description: "Your package is with the delivery rider and will arrive today. Keep your phone available for the delivery call.",
+    description:
+      "Your package is with the delivery rider and will arrive today. Keep your phone available for the delivery call.",
   },
   {
     icon: <MapPin className="h-6 w-6" />,
     stage: "Delivered",
-    description: "Your order has been delivered. Please verify the package contents before confirming receipt.",
+    description:
+      "Your order has been delivered. Please verify the package contents before confirming receipt.",
   },
 ];
 
@@ -86,10 +93,13 @@ function TrackOrdersInfoPage() {
               <Search className="h-6 w-6" />
             </span>
             <div>
-              <h3 className="text-base font-semibold text-foreground">Method 1: Use Your Order ID</h3>
+              <h3 className="text-base font-semibold text-foreground">
+                Method 1: Use Your Order ID
+              </h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                Send your Order ID to us via WhatsApp or chat, and we'll provide your order status instantly.
-                Your Order ID is included in the SMS and email confirmation you received after placing your order.
+                Send your Order ID to us via WhatsApp or chat, and we'll provide your order status
+                instantly. Your Order ID is included in the SMS and email confirmation you received
+                after placing your order.
               </p>
             </div>
           </div>
@@ -98,7 +108,9 @@ function TrackOrdersInfoPage() {
               <Package className="h-6 w-6" />
             </span>
             <div>
-              <h3 className="text-base font-semibold text-foreground">Method 2: Check Order History</h3>
+              <h3 className="text-base font-semibold text-foreground">
+                Method 2: Check Order History
+              </h3>
               <p className="mt-1 text-sm text-muted-foreground">
                 Log in to your AVENTA SHOP account and go to "My Orders" or "Track Orders" to see
                 real-time delivery status and tracking updates for all your purchases.
@@ -115,9 +127,7 @@ function TrackOrdersInfoPage() {
               <div className="flex flex-col items-center">
                 <span
                   className={`grid h-12 w-12 place-items-center rounded-xl ${
-                    i === 0
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-primary/10 text-primary"
+                    i === 0 ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary"
                   }`}
                 >
                   {stage.icon}
@@ -145,7 +155,9 @@ function TrackOrdersInfoPage() {
             <li>2. Dhaka suburbs (Savar, Gazipur, Narayanganj): 2-3 business days.</li>
             <li>3. Other districts: 3-7 business days depending on location.</li>
             <li>4. Mart (groceries) same-day delivery in Dhaka for orders before 2 PM.</li>
-            <li>5. Delivery times may vary during sales, holidays, and adverse weather conditions.</li>
+            <li>
+              5. Delivery times may vary during sales, holidays, and adverse weather conditions.
+            </li>
           </ol>
         </div>
 

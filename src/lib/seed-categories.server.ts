@@ -43,23 +43,39 @@ interface SeedCategory {
 // ── APPROVED AVENTA CATEGORY STRUCTURE (20 categories, 134 subcategories) ──
 const SEED_DATA: SeedCategory[] = [
   {
-    name: "Phones & Tablets", slug: "phones-tablets", order: 1, commissionRate: 0.0645,
+    name: "Phones & Tablets",
+    slug: "phones-tablets",
+    order: 1,
+    commissionRate: 0.0645,
     subcategories: [
       { name: "Smartphones", slug: "smartphones", order: 1 },
       { name: "Tablets", slug: "tablets", order: 2, commissionRate: 0.025 },
       { name: "Feature Phones", slug: "feature-phones", order: 3, commissionRate: 0.0175 },
       { name: "Mobile Accessories", slug: "mobile-accessories", order: 4 },
       { name: "Tablet Accessories", slug: "tablet-accessories", order: 5 },
-      { name: "Refurbished Phones & Tablets", slug: "refurbished-phones-tablets", order: 6, commissionRate: 0.0175 },
+      {
+        name: "Refurbished Phones & Tablets",
+        slug: "refurbished-phones-tablets",
+        order: 6,
+        commissionRate: 0.0175,
+      },
     ],
   },
   {
-    name: "Computers & Laptops", slug: "computers-laptops", order: 2, commissionRate: 0.043,
+    name: "Computers & Laptops",
+    slug: "computers-laptops",
+    order: 2,
+    commissionRate: 0.043,
     subcategories: [
       { name: "Laptops", slug: "laptops", order: 1, commissionRate: 0.01 },
       { name: "Desktops", slug: "desktops", order: 2, commissionRate: 0.015 },
       { name: "Monitors", slug: "monitors", order: 3, commissionRate: 0.05 },
-      { name: "Computer Accessories", slug: "computer-accessories", order: 4, commissionRate: 0.0645 },
+      {
+        name: "Computer Accessories",
+        slug: "computer-accessories",
+        order: 4,
+        commissionRate: 0.0645,
+      },
       { name: "Components & Storage", slug: "components-storage", order: 5, commissionRate: 0.03 },
       { name: "Printers & Scanners", slug: "printers-scanners", order: 6, commissionRate: 0.0225 },
       { name: "Networking", slug: "networking", order: 7, commissionRate: 0.043 },
@@ -67,19 +83,40 @@ const SEED_DATA: SeedCategory[] = [
     ],
   },
   {
-    name: "TV, Audio & Gaming", slug: "tv-audio-gaming", order: 3, commissionRate: 0.043,
+    name: "TV, Audio & Gaming",
+    slug: "tv-audio-gaming",
+    order: 3,
+    commissionRate: 0.043,
     subcategories: [
       { name: "Televisions", slug: "televisions", order: 1, commissionRate: 0.02 },
       { name: "Home Audio & Theater", slug: "home-audio-theater", order: 2, commissionRate: 0.05 },
-      { name: "Headphones & Earphones", slug: "headphones-earphones", order: 3, commissionRate: 0.043 },
-      { name: "Gaming Consoles & Games", slug: "gaming-consoles-games", order: 4, commissionRate: 0.03 },
+      {
+        name: "Headphones & Earphones",
+        slug: "headphones-earphones",
+        order: 3,
+        commissionRate: 0.043,
+      },
+      {
+        name: "Gaming Consoles & Games",
+        slug: "gaming-consoles-games",
+        order: 4,
+        commissionRate: 0.03,
+      },
       { name: "Wearable Technology", slug: "wearable-technology", order: 5, commissionRate: 0.025 },
       { name: "Electronic Gadgets", slug: "electronic-gadgets", order: 6, commissionRate: 0.05 },
-      { name: "TV & Video Accessories", slug: "tv-video-accessories", order: 7, commissionRate: 0.05 },
+      {
+        name: "TV & Video Accessories",
+        slug: "tv-video-accessories",
+        order: 7,
+        commissionRate: 0.05,
+      },
     ],
   },
   {
-    name: "Cameras & Drones", slug: "cameras-drones", order: 4, commissionRate: 0.0255,
+    name: "Cameras & Drones",
+    slug: "cameras-drones",
+    order: 4,
+    commissionRate: 0.0255,
     subcategories: [
       { name: "DSLR", slug: "dslr", order: 1, commissionRate: 0.02 },
       { name: "Mirrorless", slug: "mirrorless", order: 2, commissionRate: 0.035 },
@@ -91,21 +128,42 @@ const SEED_DATA: SeedCategory[] = [
     ],
   },
   {
-    name: "Home Appliances", slug: "home-appliances", order: 5, commissionRate: 0.02,
+    name: "Home Appliances",
+    slug: "home-appliances",
+    order: 5,
+    commissionRate: 0.02,
     subcategories: [
       { name: "Refrigerators & Freezers", slug: "refrigerators-freezers", order: 1 },
       { name: "Air Conditioners & Cooling", slug: "air-conditioners-cooling", order: 2 },
-      { name: "Washing Machines & Dryers", slug: "washing-machines-dryers", order: 3, commissionRate: 0.025 },
+      {
+        name: "Washing Machines & Dryers",
+        slug: "washing-machines-dryers",
+        order: 3,
+        commissionRate: 0.025,
+      },
       { name: "Microwave & Ovens", slug: "microwave-ovens", order: 4 },
-      { name: "Small Kitchen Appliances", slug: "small-kitchen-appliances", order: 5, commissionRate: 0.0445 },
-      { name: "Vacuums & Floor Care", slug: "vacuums-floor-care", order: 6, commissionRate: 0.0445 },
+      {
+        name: "Small Kitchen Appliances",
+        slug: "small-kitchen-appliances",
+        order: 5,
+        commissionRate: 0.0445,
+      },
+      {
+        name: "Vacuums & Floor Care",
+        slug: "vacuums-floor-care",
+        order: 6,
+        commissionRate: 0.0445,
+      },
       { name: "Irons & Steamers", slug: "irons-steamers", order: 7, commissionRate: 0.0445 },
       { name: "Sewing Machines", slug: "sewing-machines", order: 8, commissionRate: 0.055 },
       { name: "Generators & Power", slug: "generators-power", order: 9, commissionRate: 0.03 },
     ],
   },
   {
-    name: "Health & Beauty", slug: "health-beauty", order: 6, commissionRate: 0.0722,
+    name: "Health & Beauty",
+    slug: "health-beauty",
+    order: 6,
+    commissionRate: 0.0722,
     subcategories: [
       { name: "Makeup", slug: "makeup", order: 1 },
       { name: "Skin Care", slug: "skin-care", order: 2 },
@@ -118,20 +176,26 @@ const SEED_DATA: SeedCategory[] = [
     ],
   },
   {
-    name: "Fashion", slug: "fashion", order: 7, commissionRate: 0.0925,
+    name: "Fashion",
+    slug: "fashion",
+    order: 7,
+    commissionRate: 0.0925,
     subcategories: [
       { name: "Men's Clothing", slug: "mens-clothing", order: 1 },
       { name: "Women's Clothing", slug: "womens-clothing", order: 2 },
       { name: "Men's Shoes", slug: "mens-shoes", order: 3 },
       { name: "Women's Shoes", slug: "womens-shoes", order: 4 },
       { name: "Kids' & Baby Fashion", slug: "kids-baby-fashion", order: 5, commissionRate: 0.0148 },
-      { name: "Fashion Accessories", slug: "fashion-accessories", order: 6, commissionRate: 0.10 },
+      { name: "Fashion Accessories", slug: "fashion-accessories", order: 6, commissionRate: 0.1 },
       { name: "Muslim Wear", slug: "muslim-wear", order: 7 },
       { name: "Lingerie & Sleepwear", slug: "lingerie-sleepwear", order: 8 },
     ],
   },
   {
-    name: "Bags & Travel", slug: "bags-travel", order: 8, commissionRate: 0.085,
+    name: "Bags & Travel",
+    slug: "bags-travel",
+    order: 8,
+    commissionRate: 0.085,
     subcategories: [
       { name: "Backpacks", slug: "backpacks", order: 1 },
       { name: "Handbags & Wallets", slug: "handbags-wallets", order: 2 },
@@ -141,7 +205,10 @@ const SEED_DATA: SeedCategory[] = [
     ],
   },
   {
-    name: "Watches, Sunglasses & Jewellery", slug: "watches-jewellery", order: 9, commissionRate: 0.10,
+    name: "Watches, Sunglasses & Jewellery",
+    slug: "watches-jewellery",
+    order: 9,
+    commissionRate: 0.1,
     subcategories: [
       { name: "Watches", slug: "watches", order: 1 },
       { name: "Sunglasses & Eyewear", slug: "sunglasses-eyewear", order: 2 },
@@ -149,7 +216,10 @@ const SEED_DATA: SeedCategory[] = [
     ],
   },
   {
-    name: "Home & Living", slug: "home-living", order: 10, commissionRate: 0.074,
+    name: "Home & Living",
+    slug: "home-living",
+    order: 10,
+    commissionRate: 0.074,
     subcategories: [
       { name: "Furniture", slug: "furniture", order: 1 },
       { name: "Bedding", slug: "bedding", order: 2 },
@@ -157,13 +227,21 @@ const SEED_DATA: SeedCategory[] = [
       { name: "Home Decor", slug: "home-decor", order: 4 },
       { name: "Lighting", slug: "lighting", order: 5, commissionRate: 0.0778 },
       { name: "Kitchen & Dining", slug: "kitchen-dining", order: 6 },
-      { name: "Storage & Organization", slug: "storage-organization", order: 7, commissionRate: 0.0778 },
+      {
+        name: "Storage & Organization",
+        slug: "storage-organization",
+        order: 7,
+        commissionRate: 0.0778,
+      },
       { name: "Laundry & Cleaning", slug: "laundry-cleaning", order: 8, commissionRate: 0.0717 },
       { name: "Outdoor & Garden", slug: "outdoor-garden", order: 9, commissionRate: 0.0778 },
     ],
   },
   {
-    name: "Mother & Baby", slug: "mother-baby", order: 11, commissionRate: 0.0507,
+    name: "Mother & Baby",
+    slug: "mother-baby",
+    order: 11,
+    commissionRate: 0.0507,
     subcategories: [
       { name: "Baby Clothing & Accessories", slug: "baby-clothing-accessories", order: 1 },
       { name: "Diapering & Potty", slug: "diapering-potty", order: 2 },
@@ -175,7 +253,10 @@ const SEED_DATA: SeedCategory[] = [
     ],
   },
   {
-    name: "Sports & Outdoors", slug: "sports-outdoors", order: 12, commissionRate: 0.0478,
+    name: "Sports & Outdoors",
+    slug: "sports-outdoors",
+    order: 12,
+    commissionRate: 0.0478,
     subcategories: [
       { name: "Team Sports", slug: "team-sports", order: 1 },
       { name: "Racket Sports", slug: "racket-sports", order: 2 },
@@ -187,7 +268,10 @@ const SEED_DATA: SeedCategory[] = [
     ],
   },
   {
-    name: "Toys & Games", slug: "toys-games", order: 13, commissionRate: 0.0478,
+    name: "Toys & Games",
+    slug: "toys-games",
+    order: 13,
+    commissionRate: 0.0478,
     subcategories: [
       { name: "Action Figures & Collectibles", slug: "action-figures-collectibles", order: 1 },
       { name: "Building Blocks", slug: "building-blocks", order: 2 },
@@ -200,10 +284,18 @@ const SEED_DATA: SeedCategory[] = [
     ],
   },
   {
-    name: "Groceries", slug: "groceries", order: 14, commissionRate: 0.0222,
+    name: "Groceries",
+    slug: "groceries",
+    order: 14,
+    commissionRate: 0.0222,
     subcategories: [
       { name: "Beverages", slug: "beverages", order: 1, commissionRate: 0.0427 },
-      { name: "Snacks & Confectionery", slug: "snacks-confectionery", order: 2, commissionRate: 0.0427 },
+      {
+        name: "Snacks & Confectionery",
+        slug: "snacks-confectionery",
+        order: 2,
+        commissionRate: 0.0427,
+      },
       { name: "Bakery & Breakfast", slug: "bakery-breakfast", order: 3, commissionRate: 0.0427 },
       { name: "Dairy & Chilled", slug: "dairy-chilled", order: 4, commissionRate: 0.0327 },
       { name: "Fresh Produce", slug: "fresh-produce", order: 5 },
@@ -213,10 +305,18 @@ const SEED_DATA: SeedCategory[] = [
     ],
   },
   {
-    name: "Automotive", slug: "automotive", order: 15, commissionRate: 0.0478,
+    name: "Automotive",
+    slug: "automotive",
+    order: 15,
+    commissionRate: 0.0478,
     subcategories: [
       { name: "Car Accessories", slug: "car-accessories", order: 1, commissionRate: 0.0555 },
-      { name: "Motorcycle Accessories", slug: "motorcycle-accessories", order: 2, commissionRate: 0.0555 },
+      {
+        name: "Motorcycle Accessories",
+        slug: "motorcycle-accessories",
+        order: 2,
+        commissionRate: 0.0555,
+      },
       { name: "Auto Parts", slug: "auto-parts", order: 3, commissionRate: 0.0555 },
       { name: "Car Care & Tools", slug: "car-care-tools", order: 4, commissionRate: 0.0555 },
       { name: "Oils & Fluids", slug: "oils-fluids", order: 5, commissionRate: 0.0277 },
@@ -224,7 +324,10 @@ const SEED_DATA: SeedCategory[] = [
     ],
   },
   {
-    name: "Tools & DIY", slug: "tools-diy", order: 16, commissionRate: 0.0717,
+    name: "Tools & DIY",
+    slug: "tools-diy",
+    order: 16,
+    commissionRate: 0.0717,
     subcategories: [
       { name: "Power Tools", slug: "power-tools", order: 1, commissionRate: 0.0478 },
       { name: "Hand Tools", slug: "hand-tools", order: 2 },
@@ -236,18 +339,29 @@ const SEED_DATA: SeedCategory[] = [
     ],
   },
   {
-    name: "Stationery & Craft", slug: "stationery-craft", order: 17, commissionRate: 0.024,
+    name: "Stationery & Craft",
+    slug: "stationery-craft",
+    order: 17,
+    commissionRate: 0.024,
     subcategories: [
       { name: "Office & School Supplies", slug: "office-school-supplies", order: 1 },
       { name: "Art Supplies", slug: "art-supplies", order: 2, commissionRate: 0.0335 },
       { name: "Paper Products", slug: "paper-products", order: 3 },
-      { name: "Writing Instruments", slug: "writing-instruments", order: 4, commissionRate: 0.0335 },
+      {
+        name: "Writing Instruments",
+        slug: "writing-instruments",
+        order: 4,
+        commissionRate: 0.0335,
+      },
       { name: "Craft & Sewing", slug: "craft-sewing", order: 5, commissionRate: 0.0667 },
       { name: "Gift Packaging", slug: "gift-packaging", order: 6, commissionRate: 0.0335 },
     ],
   },
   {
-    name: "Pet Supplies", slug: "pet-supplies", order: 18, commissionRate: 0.0502,
+    name: "Pet Supplies",
+    slug: "pet-supplies",
+    order: 18,
+    commissionRate: 0.0502,
     subcategories: [
       { name: "Dog Supplies", slug: "dog-supplies", order: 1 },
       { name: "Cat Supplies", slug: "cat-supplies", order: 2 },
@@ -257,17 +371,28 @@ const SEED_DATA: SeedCategory[] = [
     ],
   },
   {
-    name: "Books, Media & Hobbies", slug: "books-media-hobbies", order: 19, commissionRate: 0.074,
+    name: "Books, Media & Hobbies",
+    slug: "books-media-hobbies",
+    order: 19,
+    commissionRate: 0.074,
     subcategories: [
       { name: "Books", slug: "books", order: 1, commissionRate: 0.0717 },
       { name: "Music", slug: "music", order: 2, commissionRate: 0.0832 },
       { name: "Movies & TV", slug: "movies-tv", order: 3, commissionRate: 0.089 },
-      { name: "Musical Instruments", slug: "musical-instruments", order: 4, commissionRate: 0.0555 },
+      {
+        name: "Musical Instruments",
+        slug: "musical-instruments",
+        order: 4,
+        commissionRate: 0.0555,
+      },
       { name: "Hobbies & Collectibles", slug: "hobbies-collectibles", order: 5 },
     ],
   },
   {
-    name: "Digital Goods & Services", slug: "digital-goods", order: 20, commissionRate: 0.0475,
+    name: "Digital Goods & Services",
+    slug: "digital-goods",
+    order: 20,
+    commissionRate: 0.0475,
     subcategories: [
       { name: "Mobile Recharge & Top-up", slug: "mobile-recharge-topup", order: 1 },
       { name: "Game Credits & Vouchers", slug: "game-credits-vouchers", order: 2 },
@@ -280,7 +405,7 @@ const SEED_DATA: SeedCategory[] = [
 
 // ── VALIDATION HELPERS ──
 
-const MAX_RATE = 0.20; // 20% absolute cap
+const MAX_RATE = 0.2; // 20% absolute cap
 const MIN_RATE = 0.005; // 0.5% minimum
 
 function validateRate(rate: number, ctx: string): void {
@@ -333,7 +458,9 @@ export function validateSeedData(): {
 
       // Orphan prevention: every sub must have a non-empty parent
       if (!cat.slug || !cat.name) {
-        throw new Error(`Subcategory "${sub.name}" has an invalid parent (slug="${cat.slug}", name="${cat.name}")`);
+        throw new Error(
+          `Subcategory "${sub.name}" has an invalid parent (slug="${cat.slug}", name="${cat.name}")`,
+        );
       }
     }
   }
@@ -492,7 +619,9 @@ export async function seedCategoriesAndCommissions(): Promise<{
           if (res.ok) {
             subcategoriesCreated++;
           } else {
-            errors.push(`Failed to create subcategory ${cat.name} > ${sub.name}: ${await res.text()}`);
+            errors.push(
+              `Failed to create subcategory ${cat.name} > ${sub.name}: ${await res.text()}`,
+            );
           }
         } catch (e) {
           errors.push(`Exception creating subcategory ${cat.name} > ${sub.name}: ${String(e)}`);

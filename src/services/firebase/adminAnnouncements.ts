@@ -21,11 +21,7 @@ import {
   type Unsubscribe,
 } from "firebase/firestore";
 import { getDb } from "./config";
-import type {
-  Announcement,
-  AnnouncementType,
-  AnnouncementPriority,
-} from "@/types/admin";
+import type { Announcement, AnnouncementType, AnnouncementPriority } from "@/types/admin";
 
 const ANNOUNCEMENTS_COL = "announcements";
 
@@ -124,7 +120,7 @@ export function validateAnnouncement(input: AnnouncementInput): {
 
 export async function listAnnouncements(): Promise<Announcement[]> {
   const snap = await getDocs(
-    query(collection(getDb(), ANNOUNCEMENTS_COL), orderBy("order", "asc"))
+    query(collection(getDb(), ANNOUNCEMENTS_COL), orderBy("order", "asc")),
   );
   return snap.docs.map((d) => mapAnnouncement(d.id, d.data()));
 }
@@ -151,9 +147,16 @@ export async function updateAnnouncement(
   patch: Partial<AnnouncementInput>,
 ): Promise<void> {
   // Validate patch fields if present
-  if ("title" in patch || "message" in patch || "type" in patch ||
-      "priority" in patch || "startTime" in patch || "endTime" in patch ||
-      "ctaLabel" in patch || "ctaLink" in patch) {
+  if (
+    "title" in patch ||
+    "message" in patch ||
+    "type" in patch ||
+    "priority" in patch ||
+    "startTime" in patch ||
+    "endTime" in patch ||
+    "ctaLabel" in patch ||
+    "ctaLink" in patch
+  ) {
     // Re-validate by merging patch with existing — but for simplicity,
     // validate the key constraints that are present in the patch
     if ("title" in patch && (!patch.title || !patch.title.trim())) {
@@ -162,8 +165,13 @@ export async function updateAnnouncement(
     if ("message" in patch && (!patch.message || !patch.message.trim())) {
       throw new Error("Message cannot be empty.");
     }
-    if ("startTime" in patch && "endTime" in patch &&
-        patch.startTime! > 0 && patch.endTime! > 0 && patch.endTime! < patch.startTime!) {
+    if (
+      "startTime" in patch &&
+      "endTime" in patch &&
+      patch.startTime! > 0 &&
+      patch.endTime! > 0 &&
+      patch.endTime! < patch.startTime!
+    ) {
       throw new Error("End time cannot be before start time.");
     }
     if ("ctaLabel" in patch && patch.ctaLabel && !patch.ctaLink) {
@@ -184,9 +192,7 @@ export async function deleteAnnouncement(id: string): Promise<void> {
 // REAL-TIME LISTENER (for admin dashboard)
 // ═══════════════════════════════════════════════════════════════
 
-export function subscribeAnnouncements(
-  cb: (announcements: Announcement[]) => void,
-): Unsubscribe {
+export function subscribeAnnouncements(cb: (announcements: Announcement[]) => void): Unsubscribe {
   return onSnapshot(
     query(collection(getDb(), ANNOUNCEMENTS_COL), orderBy("order", "asc")),
     (snap) => {
@@ -210,7 +216,7 @@ export async function getActiveAnnouncements(): Promise<Announcement[]> {
       collection(getDb(), ANNOUNCEMENTS_COL),
       where("published", "==", true),
       orderBy("order", "asc"),
-    )
+    ),
   );
   const now = Date.now();
   return snap.docs

@@ -126,12 +126,7 @@ describe("Seller Conversations — Security Model", () => {
     // Firestore rules: affectedKeys().hasOnly([
     //   'lastMessage', 'lastAt', 'customerUnread', 'sellerUnread'
     // ])
-    const allowedUpdateKeys = [
-      "lastMessage",
-      "lastAt",
-      "customerUnread",
-      "sellerUnread",
-    ];
+    const allowedUpdateKeys = ["lastMessage", "lastAt", "customerUnread", "sellerUnread"];
 
     // These fields should be in the allowed list
     expect(allowedUpdateKeys).toContain("lastMessage");

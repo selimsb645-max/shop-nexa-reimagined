@@ -360,13 +360,20 @@ describe("TEST CASES: All 10 Required Scenarios", () => {
 
   it("4. Two simultaneous where combined > balance — one succeeds, one fails", () => {
     let balance = 1000;
-    const a = 700, b = 700;
+    const a = 700,
+      b = 700;
     let successCount = 0;
 
     // Serialized: A first
-    if (balance >= a) { balance -= a; successCount++; }
+    if (balance >= a) {
+      balance -= a;
+      successCount++;
+    }
     // B after A
-    if (balance >= b) { balance -= b; successCount++; }
+    if (balance >= b) {
+      balance -= b;
+      successCount++;
+    }
 
     expect(successCount).toBe(1);
     expect(balance).toBe(300);
@@ -375,11 +382,18 @@ describe("TEST CASES: All 10 Required Scenarios", () => {
 
   it("5. Two simultaneous where combined = balance — both succeed if serialized", () => {
     let balance = 1000;
-    const a = 500, b = 500;
+    const a = 500,
+      b = 500;
     let successCount = 0;
 
-    if (balance >= a) { balance -= a; successCount++; }
-    if (balance >= b) { balance -= b; successCount++; }
+    if (balance >= a) {
+      balance -= a;
+      successCount++;
+    }
+    if (balance >= b) {
+      balance -= b;
+      successCount++;
+    }
 
     expect(successCount).toBe(2);
     expect(balance).toBe(0);
@@ -394,9 +408,15 @@ describe("TEST CASES: All 10 Required Scenarios", () => {
 
     // Simulate serialized execution
     // Attempt 1: balance 1000, buy 700
-    if (balance >= 700) { balance -= 700; giftCards++; }
+    if (balance >= 700) {
+      balance -= 700;
+      giftCards++;
+    }
     // Attempt 2 (after retry): balance 300, buy 700 → fails
-    if (balance >= 700) { balance -= 700; giftCards++; }
+    if (balance >= 700) {
+      balance -= 700;
+      giftCards++;
+    }
 
     expect(giftCards).toBe(1);
     expect(balance).toBe(300);
@@ -407,11 +427,15 @@ describe("TEST CASES: All 10 Required Scenarios", () => {
     const amount = 700;
 
     // First request succeeds
-    if (balance >= amount) { balance -= amount; }
+    if (balance >= amount) {
+      balance -= amount;
+    }
     expect(balance).toBe(300);
 
     // Retry of same logical request — balance now 300 < 700 → fails
-    if (balance >= amount) { balance -= amount; }
+    if (balance >= amount) {
+      balance -= amount;
+    }
     expect(balance).toBe(300);
   });
 
@@ -450,8 +474,14 @@ describe("FINAL: Production Readiness Checklist", () => {
   it("balance read is inside the transaction", () => {
     // beginTransaction, batchGetDocsWithTx both appear in imports at top.
     // Find their actual usage (second occurrence) and verify order.
-    const txIdx = serverCode.indexOf("beginTransaction", serverCode.indexOf("beginTransaction") + 1);
-    const readIdx = serverCode.indexOf("batchGetDocsWithTx", serverCode.indexOf("batchGetDocsWithTx") + 1);
+    const txIdx = serverCode.indexOf(
+      "beginTransaction",
+      serverCode.indexOf("beginTransaction") + 1,
+    );
+    const readIdx = serverCode.indexOf(
+      "batchGetDocsWithTx",
+      serverCode.indexOf("batchGetDocsWithTx") + 1,
+    );
     const checkIdx = serverCode.indexOf("walletBalance < amount");
     expect(txIdx).toBeGreaterThan(0);
     expect(readIdx).toBeGreaterThan(txIdx);

@@ -76,7 +76,8 @@ function StorePage() {
     // Update meta tags dynamically when store data loads
     if (store) {
       const title = `${store.shopName} Store — AVENTA SHOP`;
-      const description = store.description || `Browse products from ${store.shopName} on AVENTA SHOP.`;
+      const description =
+        store.description || `Browse products from ${store.shopName} on AVENTA SHOP.`;
 
       document.title = title;
       const setMeta = (attr: string, key: string, val: string) => {
@@ -115,7 +116,11 @@ function StorePage() {
       const rated = (products ?? []).filter((p) => p.rating > 0);
       const totalReviews = (products ?? []).reduce((sum, p) => sum + (p.reviewCount ?? 0), 0);
       const storeRating = rated.length
-        ? Math.round((rated.reduce((sum, p) => sum + p.rating * (p.reviewCount || 1), 0) / rated.reduce((sum, p) => sum + (p.reviewCount || 1), 0)) * 10) / 10
+        ? Math.round(
+            (rated.reduce((sum, p) => sum + p.rating * (p.reviewCount || 1), 0) /
+              rated.reduce((sum, p) => sum + (p.reviewCount || 1), 0)) *
+              10,
+          ) / 10
         : undefined;
 
       script.textContent = jsonLdScript(
@@ -220,7 +225,11 @@ function StorePage() {
 
       {/* Back navigation */}
       <div className="max-w-7xl mx-auto px-4 pt-4">
-        <BackButton fallbackTo="/shop" label="Back" className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-200 active:scale-95" />
+        <BackButton
+          fallbackTo="/shop"
+          label="Back"
+          className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-200 active:scale-95"
+        />
       </div>
 
       {/* Store Banner / Header */}
@@ -332,7 +341,7 @@ function StorePage() {
           </>
         )}
       </div>
-<SiteFooter />
+      <SiteFooter />
       <MobileBottomNav />
     </>
   );

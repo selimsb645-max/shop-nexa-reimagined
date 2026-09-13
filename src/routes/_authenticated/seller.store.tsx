@@ -203,7 +203,11 @@ function StorePage({ profile }: { profile: SellerProfile }) {
           {/* Banner area */}
           <div className="h-24 rounded-lg bg-gradient-to-r from-[#0f172a] to-[#1e293b] mb-4 relative overflow-hidden">
             {bannerUrl && (
-              <img src={bannerUrl} alt="Store banner" className="absolute inset-0 h-full w-full object-cover" />
+              <img
+                src={bannerUrl}
+                alt="Store banner"
+                className="absolute inset-0 h-full w-full object-cover"
+              />
             )}
             {logoUrl && (
               <div className="absolute -bottom-6 left-4">
@@ -314,7 +318,9 @@ function StorePage({ profile }: { profile: SellerProfile }) {
               className="hidden"
               onChange={onBanner}
             />
-            <p className="text-xs text-slate-400 mt-1">Max 5MB · PNG, JPG · shown on your public store page</p>
+            <p className="text-xs text-slate-400 mt-1">
+              Max 5MB · PNG, JPG · shown on your public store page
+            </p>
           </div>
         </div>
 

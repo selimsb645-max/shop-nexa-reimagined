@@ -1,7 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { listMyPromoCodes, type PromoCode, formatPromoDiscount, isPromoUsable, formatPromoExpiry } from "@/services/firebase/promoCodes";
+import {
+  listMyPromoCodes,
+  type PromoCode,
+  formatPromoDiscount,
+  isPromoUsable,
+  formatPromoExpiry,
+} from "@/services/firebase/promoCodes";
 import { generatePromoCode } from "@/lib/promo.functions";
 import { useAuth } from "@/context/AuthContext";
 import { Spinner } from "@/components/common/Spinner";
@@ -91,7 +97,8 @@ function PromoCodesPage() {
           <div className="bg-gradient-to-r from-[#f57224] to-[#ff8a4c] rounded-xl p-6 mb-6 text-white">
             <h2 className="text-lg font-semibold mb-2">{t("promoCodes.welcome")}</h2>
             <p className="text-sm text-white/90 mb-4">
-              Your welcome promo code was not generated automatically. Claim it now and get 10% off your next order.
+              Your welcome promo code was not generated automatically. Claim it now and get 10% off
+              your next order.
             </p>
             <button
               onClick={handleGenerate}
@@ -127,9 +134,7 @@ function PromoCodesPage() {
                 <div
                   key={promo.code}
                   className={`bg-white rounded-xl border p-5 ${
-                    usable
-                      ? "border-[#f57224]/30 shadow-sm"
-                      : "border-slate-200 opacity-75"
+                    usable ? "border-[#f57224]/30 shadow-sm" : "border-slate-200 opacity-75"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-4">
@@ -184,9 +189,7 @@ function PromoCodesPage() {
                           </span>
                         ) : null}
 
-                        <span className="text-slate-400">
-                          Expires: {formatPromoExpiry(promo)}
-                        </span>
+                        <span className="text-slate-400">Expires: {formatPromoExpiry(promo)}</span>
 
                         <span className="text-slate-400">
                           Uses: {promo.usedCount}/{promo.usageLimit}
@@ -211,8 +214,8 @@ function PromoCodesPage() {
         {/* Info note */}
         <div className="mt-6 text-center">
           <p className="text-xs text-slate-400">
-            Promo codes are generated securely and linked to your account.
-            Use them at checkout to apply your discount.
+            Promo codes are generated securely and linked to your account. Use them at checkout to
+            apply your discount.
           </p>
         </div>
       </div>

@@ -293,9 +293,8 @@ export const auditShopSlugCollisions = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data }) => {
-    const { verifyIdToken, getAccessToken, getProjectId, fromFsFields } = await import(
-      "./firebase-admin.server"
-    );
+    const { verifyIdToken, getAccessToken, getProjectId, fromFsFields } =
+      await import("./firebase-admin.server");
 
     // 1. Authenticate the admin caller
     const { uid } = await verifyIdToken(data.idToken);
@@ -455,9 +454,7 @@ export const auditShopSlugCollisions = createServerFn({ method: "POST" })
 export const listPublicStores = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => z.object({}).parse(data ?? {}))
   .handler(async () => {
-    const { getAccessToken, getProjectId, fromFsFields } = await import(
-      "./firebase-admin.server"
-    );
+    const { getAccessToken, getProjectId, fromFsFields } = await import("./firebase-admin.server");
 
     const projectId = getProjectId();
     const token = await getAccessToken();

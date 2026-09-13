@@ -58,15 +58,16 @@ import {
   markAllNotificationsRead,
   countUnreadNotifications,
 } from "@/services/firebase/notifications";
-import {
-  listTickets,
-  createTicket,
-  replyToTicket,
-} from "@/services/firebase/support";
+import { listTickets, createTicket, replyToTicket } from "@/services/firebase/support";
 import { listOrders } from "@/services/firebase/orders";
 import { seedInbox } from "@/services/firebase/seedInbox";
 import { formatPrice, formatDate } from "@/utils/format";
-import type { MessageThread, ChatMessage, SellerConversation, ConversationMessage } from "@/types/customer";
+import type {
+  MessageThread,
+  ChatMessage,
+  SellerConversation,
+  ConversationMessage,
+} from "@/types/customer";
 import { getProductById } from "@/services/firebase/products";
 import {
   createSellerConversation,
@@ -89,7 +90,10 @@ export const Route = createFileRoute("/_authenticated/messages")({
   head: () => ({
     meta: [
       { title: "Communication Center — AVENTA SHOP" },
-      { name: "description", content: "Your communication hub for orders, chats, support, and notifications." },
+      {
+        name: "description",
+        content: "Your communication hub for orders, chats, support, and notifications.",
+      },
     ],
   }),
 });
@@ -224,7 +228,11 @@ function CommunicationCenter() {
   useEffect(() => {
     if (!user?.uid || !firebaseConfigured) return;
     const unsub = onSnapshot(
-      query(collection(getDb(), "users", user.uid, "threads"), orderBy("lastAt", "desc"), limit(50)),
+      query(
+        collection(getDb(), "users", user.uid, "threads"),
+        orderBy("lastAt", "desc"),
+        limit(50),
+      ),
       (snap) => {
         const mapped = snap.docs.map((d) => {
           const data = d.data() as Record<string, unknown>;
@@ -234,13 +242,15 @@ function CommunicationCenter() {
             participant: String(data.participant ?? "AVENTA SHOP Support"),
             sellerId: (data.sellerId as string | null) ?? null,
             lastMessage: String(data.lastMessage ?? ""),
-            lastAt: typeof data.lastAt === "number"
-              ? data.lastAt
-              : (data.lastAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? 0,
+            lastAt:
+              typeof data.lastAt === "number"
+                ? data.lastAt
+                : ((data.lastAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? 0),
             unread: Number(data.unread ?? 0),
-            createdAt: typeof data.createdAt === "number"
-              ? data.createdAt
-              : (data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? 0,
+            createdAt:
+              typeof data.createdAt === "number"
+                ? data.createdAt
+                : ((data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? 0),
           } as MessageThread;
         });
         setRealtimeThreads(dedupeThreads(mapped));
@@ -255,7 +265,11 @@ function CommunicationCenter() {
   useEffect(() => {
     if (!user?.uid || !firebaseConfigured) return;
     const unsub = onSnapshot(
-      query(collection(getDb(), "users", user.uid, "notifications"), orderBy("createdAt", "desc"), limit(60)),
+      query(
+        collection(getDb(), "users", user.uid, "notifications"),
+        orderBy("createdAt", "desc"),
+        limit(60),
+      ),
       (snap) => {
         const mapped = snap.docs.map((d) => {
           const data = d.data() as Record<string, unknown>;
@@ -266,9 +280,10 @@ function CommunicationCenter() {
             message: String(data.message ?? ""),
             link: (data.link as string | null) ?? null,
             read: Boolean(data.read),
-            createdAt: typeof data.createdAt === "number"
-              ? data.createdAt
-              : (data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? 0,
+            createdAt:
+              typeof data.createdAt === "number"
+                ? data.createdAt
+                : ((data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? 0),
           } as CustomerNotification;
         });
         setRealtimeNotifs(mapped);
@@ -283,7 +298,11 @@ function CommunicationCenter() {
   useEffect(() => {
     if (!user?.uid || !firebaseConfigured) return;
     const unsub = onSnapshot(
-      query(collection(getDb(), "users", user.uid, "tickets"), orderBy("createdAt", "desc"), limit(100)),
+      query(
+        collection(getDb(), "users", user.uid, "tickets"),
+        orderBy("createdAt", "desc"),
+        limit(100),
+      ),
       (snap) => {
         const mapped = snap.docs.map((d) => {
           const data = d.data() as Record<string, unknown>;
@@ -294,12 +313,14 @@ function CommunicationCenter() {
             orderId: (data.orderId as string | null) ?? null,
             status: (data.status as TicketStatus) ?? "open",
             lastMessage: String(data.lastMessage ?? ""),
-            createdAt: typeof data.createdAt === "number"
-              ? data.createdAt
-              : (data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? 0,
-            updatedAt: typeof data.updatedAt === "number"
-              ? data.updatedAt
-              : (data.updatedAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? 0,
+            createdAt:
+              typeof data.createdAt === "number"
+                ? data.createdAt
+                : ((data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? 0),
+            updatedAt:
+              typeof data.updatedAt === "number"
+                ? data.updatedAt
+                : ((data.updatedAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? 0),
           } as SupportTicket;
         });
         setRealtimeTickets(mapped);
@@ -323,8 +344,11 @@ function CommunicationCenter() {
   // dedupeThreads collapses any conceptual duplicate conversations (e.g.
   // two "AVENTA SHOP Support" welcome threads) so the list, the recent
   // conversations preview, and the unread badge all agree on one entry.
-  const threads = dedupeThreads(realtimeThreads.length > 0 ? realtimeThreads : (threadsQuery.data ?? []));
-  const notifications = realtimeNotifs.length > 0 ? realtimeNotifs : (notificationsQuery.data ?? []);
+  const threads = dedupeThreads(
+    realtimeThreads.length > 0 ? realtimeThreads : (threadsQuery.data ?? []),
+  );
+  const notifications =
+    realtimeNotifs.length > 0 ? realtimeNotifs : (notificationsQuery.data ?? []);
   const tickets = realtimeTickets.length > 0 ? realtimeTickets : (ticketsQuery.data ?? []);
   const orders = ordersQuery.data ?? [];
   // Derived from the already-deduped threads list — avoids double-counting
@@ -335,8 +359,10 @@ function CommunicationCenter() {
   const filteredThreads = useMemo(() => {
     let result = threads;
     if (activeFilter === "unread") result = result.filter((t) => t.unread > 0);
-    if (activeFilter === "orders") result = result.filter((t) => t.subject.toLowerCase().includes("order"));
-    if (activeFilter === "support") result = result.filter((t) => t.participant.includes("Support"));
+    if (activeFilter === "orders")
+      result = result.filter((t) => t.subject.toLowerCase().includes("order"));
+    if (activeFilter === "support")
+      result = result.filter((t) => t.participant.includes("Support"));
     if (activeFilter === "sellers") result = result.filter((t) => t.sellerId !== null);
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
@@ -404,86 +430,95 @@ function CommunicationCenter() {
   }
 
   return (
-    <ServicePageLayout title={t("messages.titleMessages")} subtitle="Your hub for orders, chats, support & notifications">
-        {/* Search bar */}
+    <ServicePageLayout
+      title={t("messages.titleMessages")}
+      subtitle="Your hub for orders, chats, support & notifications"
+    >
+      {/* Search bar */}
 
-        {/* Search bar */}
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search chats, orders, sellers, tickets..."
-            className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-[#f57224]"
+      {/* Search bar */}
+      <div className="relative mb-4">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search chats, orders, sellers, tickets..."
+          className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-[#f57224]"
+        />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+          >
+            <XCircle className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+
+      {/* Tab navigation */}
+      <TabBar
+        activeTab={activeTab}
+        onChange={setActiveTab}
+        unreadNotif={unreadNotifQuery.data ?? 0}
+        unreadMsg={unreadMsg}
+        ticketCount={tickets.length}
+      />
+
+      {/* Content area */}
+      <div className="mt-4">
+        {activeTab === "inbox" && (
+          <InboxDashboard
+            threads={threads}
+            notifications={notifications}
+            tickets={tickets}
+            orders={orders}
+            unreadMsg={unreadMsg}
+            unreadNotif={unreadNotifQuery.data ?? 0}
+            onTabChange={setActiveTab}
+            onThreadClick={setActiveThreadId}
           />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
-            >
-              <XCircle className="h-4 w-4" />
-            </button>
-          )}
-        </div>
+        )}
 
-        {/* Tab navigation */}
-        <TabBar activeTab={activeTab} onChange={setActiveTab} unreadNotif={unreadNotifQuery.data ?? 0} unreadMsg={unreadMsg} ticketCount={tickets.length} />
+        {activeTab === "orders" && (
+          <OrderConversations
+            orders={orders}
+            searchQuery={searchQuery}
+            onOrderClick={(id) => setActiveOrderId(id)}
+          />
+        )}
 
-        {/* Content area */}
-        <div className="mt-4">
-          {activeTab === "inbox" && (
-            <InboxDashboard
-              threads={threads}
-              notifications={notifications}
-              tickets={tickets}
-              orders={orders}
-              unreadMsg={unreadMsg}
-              unreadNotif={unreadNotifQuery.data ?? 0}
-              onTabChange={setActiveTab}
-              onThreadClick={setActiveThreadId}
-            />
-          )}
+        {activeTab === "sellers" && (
+          <SellerChats
+            threads={filteredThreads.filter((t) => t.sellerId !== null)}
+            searchQuery={searchQuery}
+            onThreadClick={setActiveThreadId}
+          />
+        )}
 
-          {activeTab === "orders" && (
-            <OrderConversations
-              orders={orders}
-              searchQuery={searchQuery}
-              onOrderClick={(id) => setActiveOrderId(id)}
-            />
-          )}
+        {activeTab === "support" && (
+          <SupportCenter
+            tickets={tickets}
+            searchQuery={searchQuery}
+            onTicketClick={setActiveTicketId}
+            userId={user!.uid}
+          />
+        )}
 
-          {activeTab === "sellers" && (
-            <SellerChats
-              threads={filteredThreads.filter((t) => t.sellerId !== null)}
-              searchQuery={searchQuery}
-              onThreadClick={setActiveThreadId}
-            />
-          )}
+        {activeTab === "ai" && <AIAssistant />}
 
-          {activeTab === "support" && (
-            <SupportCenter
-              tickets={tickets}
-              searchQuery={searchQuery}
-              onTicketClick={setActiveTicketId}
-              userId={user!.uid}
-            />
-          )}
+        {activeTab === "notifications" && (
+          <NotificationCenter
+            notifications={notifications}
+            searchQuery={searchQuery}
+            onMarkRead={(id) => markNotificationRead(user!.uid, id)}
+            onMarkAllRead={() => markAllNotificationsRead(user!.uid)}
+            userId={user!.uid}
+          />
+        )}
 
-          {activeTab === "ai" && <AIAssistant />}
-
-          {activeTab === "notifications" && (
-            <NotificationCenter
-              notifications={notifications}
-              searchQuery={searchQuery}
-              onMarkRead={(id) => markNotificationRead(user!.uid, id)}
-              onMarkAllRead={() => markAllNotificationsRead(user!.uid)}
-              userId={user!.uid}
-            />
-          )}
-
-          {activeTab === "announcements" && <AnnouncementCenter />}
-        </div>
+        {activeTab === "announcements" && <AnnouncementCenter />}
+      </div>
     </ServicePageLayout>
   );
 }
@@ -509,9 +544,19 @@ function TabBar({
     { id: "inbox", label: "Inbox", icon: <MessageCircle className="h-4 w-4" />, badge: unreadMsg },
     { id: "orders", label: "Orders", icon: <Package className="h-4 w-4" /> },
     { id: "sellers", label: "Sellers", icon: <Store className="h-4 w-4" /> },
-    { id: "support", label: "Support", icon: <Headphones className="h-4 w-4" />, badge: ticketCount },
+    {
+      id: "support",
+      label: "Support",
+      icon: <Headphones className="h-4 w-4" />,
+      badge: ticketCount,
+    },
     { id: "ai", label: "AI", icon: <Bot className="h-4 w-4" /> },
-    { id: "notifications", label: "Alerts", icon: <Bell className="h-4 w-4" />, badge: unreadNotif },
+    {
+      id: "notifications",
+      label: "Alerts",
+      icon: <Bell className="h-4 w-4" />,
+      badge: unreadNotif,
+    },
     { id: "announcements", label: "News", icon: <Megaphone className="h-4 w-4" /> },
   ];
 
@@ -533,9 +578,11 @@ function TabBar({
               {tab.icon}
               <span className="whitespace-nowrap">{tab.label}</span>
               {tab.badge !== undefined && tab.badge > 0 && (
-                <span className={`flex h-5 min-w-[20px] items-center justify-center rounded-full px-1 text-[10px] font-bold ${
-                  isActive ? "bg-white/25 text-white" : "bg-accent text-accent-foreground"
-                }`}>
+                <span
+                  className={`flex h-5 min-w-[20px] items-center justify-center rounded-full px-1 text-[10px] font-bold ${
+                    isActive ? "bg-white/25 text-white" : "bg-accent text-accent-foreground"
+                  }`}
+                >
                   {tab.badge > 99 ? "99+" : tab.badge}
                 </span>
               )}
@@ -582,7 +629,9 @@ function InboxDashboard({
       icon: <Package className="h-5 w-5" />,
       title: "Order Updates",
       count: activeOrders.length,
-      preview: activeOrders[0] ? `Order #${activeOrders[0].id.slice(0, 8)} — ${activeOrders[0].status}` : "No active orders",
+      preview: activeOrders[0]
+        ? `Order #${activeOrders[0].id.slice(0, 8)} — ${activeOrders[0].status}`
+        : "No active orders",
       time: activeOrders[0] ? formatRelativeTime(activeOrders[0].updatedAt) : "",
       color: "bg-blue-50 text-blue-600",
       priority: activeOrders.length > 0 ? "high" : "normal",
@@ -672,7 +721,9 @@ function InboxDashboard({
             )}
 
             <div className="flex items-start gap-3">
-              <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl ${card.color}`}>
+              <span
+                className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl ${card.color}`}
+              >
                 {card.icon}
               </span>
               <div className="min-w-0 flex-1">
@@ -698,7 +749,9 @@ function InboxDashboard({
       {/* Recent threads */}
       {threads.length > 0 && (
         <div>
-          <h3 className="mb-2 text-sm font-semibold text-muted-foreground">{t("messages.recentConversations")}</h3>
+          <h3 className="mb-2 text-sm font-semibold text-muted-foreground">
+            {t("messages.recentConversations")}
+          </h3>
           <div className="space-y-2">
             {threads.slice(0, 5).map((thread) => (
               <button
@@ -706,10 +759,16 @@ function InboxDashboard({
                 onClick={() => onThreadClick(thread.id)}
                 className="flex w-full items-center gap-3 rounded-xl border bg-background p-3 text-left shadow-sm transition hover:shadow-md active:scale-[0.98]"
               >
-                <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-full ${
-                  thread.sellerId ? "bg-purple-100 text-purple-600" : "bg-primary/10 text-primary"
-                }`}>
-                  {thread.sellerId ? <Store className="h-5 w-5" /> : <Headphones className="h-5 w-5" />}
+                <span
+                  className={`grid h-10 w-10 shrink-0 place-items-center rounded-full ${
+                    thread.sellerId ? "bg-purple-100 text-purple-600" : "bg-primary/10 text-primary"
+                  }`}
+                >
+                  {thread.sellerId ? (
+                    <Store className="h-5 w-5" />
+                  ) : (
+                    <Headphones className="h-5 w-5" />
+                  )}
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
@@ -753,13 +812,18 @@ function OrderConversations({
     const q = searchQuery.toLowerCase();
     return orders.filter(
       (o) =>
-        o.id.toLowerCase().includes(q) ||
-        o.items.some((i) => i.title.toLowerCase().includes(q)),
+        o.id.toLowerCase().includes(q) || o.items.some((i) => i.title.toLowerCase().includes(q)),
     );
   }, [orders, searchQuery]);
 
   if (orders.length === 0) {
-    return <EmptyState icon={<Package className="h-12 w-12" />} title={t("messages.titleNoOrders")} subtitle={t("messages.titleOrderConvos")} />;
+    return (
+      <EmptyState
+        icon={<Package className="h-12 w-12" />}
+        title={t("messages.titleNoOrders")}
+        subtitle={t("messages.titleOrderConvos")}
+      />
+    );
   }
 
   return (
@@ -793,15 +857,21 @@ function OrderConversations({
               <OrderStatusBadge status={order.status} />
             </div>
             <p className="mt-0.5 truncate text-xs text-muted-foreground">
-              {order.items.length} item{order.items.length === 1 ? "" : "s"} • {formatPrice(order.total)}
+              {order.items.length} item{order.items.length === 1 ? "" : "s"} •{" "}
+              {formatPrice(order.total)}
             </p>
             <div className="mt-1 flex items-center gap-3">
               <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                <Truck className="h-3 w-3" /> {order.tracking.length > 0 ? order.tracking[order.tracking.length - 1].note : "Awaiting shipment"}
+                <Truck className="h-3 w-3" />{" "}
+                {order.tracking.length > 0
+                  ? order.tracking[order.tracking.length - 1].note
+                  : "Awaiting shipment"}
               </span>
-              <span className={`flex items-center gap-1 text-[10px] ${
-                order.payment.status === "paid" ? "text-green-500" : "text-orange-500"
-              }`}>
+              <span
+                className={`flex items-center gap-1 text-[10px] ${
+                  order.payment.status === "paid" ? "text-green-500" : "text-orange-500"
+                }`}
+              >
                 <Wallet className="h-3 w-3" /> {order.payment.status}
               </span>
             </div>
@@ -855,7 +925,9 @@ function OrderConversationView({
   });
 
   const orderThread = threadsQuery.data?.find(
-    (t) => t.subject.toLowerCase().includes(order.id.toLowerCase()) || t.subject.toLowerCase().includes(order.id.slice(0, 8).toLowerCase()),
+    (t) =>
+      t.subject.toLowerCase().includes(order.id.toLowerCase()) ||
+      t.subject.toLowerCase().includes(order.id.slice(0, 8).toLowerCase()),
   );
 
   const startOrderChat = async () => {
@@ -873,7 +945,9 @@ function OrderConversationView({
         if (product?.sellerId) {
           sellerId = product.sellerId;
         }
-      } catch { /* ignore — product may not be found */ }
+      } catch {
+        /* ignore — product may not be found */
+      }
     }
 
     // Create the personal thread (existing system)
@@ -906,9 +980,12 @@ function OrderConversationView({
   };
 
   return (
-    <ServicePageLayout title={`Order #${order.id.slice(0, 8)}`} subtitle="Order conversation & details" backTo="/messages">
+    <ServicePageLayout
+      title={`Order #${order.id.slice(0, 8)}`}
+      subtitle="Order conversation & details"
+      backTo="/messages"
+    >
       <div className="mx-auto w-full max-w-3xl">
-
         {/* Order header */}
         <div className="mb-4 rounded-2xl border bg-background p-5 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
@@ -922,11 +999,20 @@ function OrderConversationView({
           {/* Items */}
           <div className="space-y-2">
             {order.items.map((item) => (
-              <div key={item.productId} className="flex items-center gap-3 rounded-xl bg-muted/30 p-3">
-                <img src={item.image} alt={item.title} className="h-14 w-14 rounded-lg object-cover" />
+              <div
+                key={item.productId}
+                className="flex items-center gap-3 rounded-xl bg-muted/30 p-3"
+              >
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  className="h-14 w-14 rounded-lg object-cover"
+                />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{item.title}</p>
-                  <p className="text-xs text-muted-foreground">Qty: {item.quantity} • {formatPrice(item.price)}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Qty: {item.quantity} • {formatPrice(item.price)}
+                  </p>
                 </div>
                 <span className="text-sm font-semibold">{formatPrice(item.subtotal)}</span>
               </div>
@@ -975,7 +1061,9 @@ function OrderConversationView({
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{t("messages.paymentStatus")}</span>
-                <span className={`font-medium ${order.payment.status === "paid" ? "text-green-500" : "text-orange-500"}`}>
+                <span
+                  className={`font-medium ${order.payment.status === "paid" ? "text-green-500" : "text-orange-500"}`}
+                >
                   {order.payment.status}
                 </span>
               </div>
@@ -1076,7 +1164,9 @@ function SellerChats({
             </div>
             <div className="flex items-center gap-2">
               <Star className="h-3 w-3 fill-orange-400 text-orange-400" />
-              <span className="text-[10px] text-muted-foreground">4.{Math.floor(Math.random() * 9)} rating • Responds in ~2h</span>
+              <span className="text-[10px] text-muted-foreground">
+                4.{Math.floor(Math.random() * 9)} rating • Responds in ~2h
+              </span>
             </div>
             <p className="mt-1 truncate text-xs text-muted-foreground">{thread.lastMessage}</p>
           </div>
@@ -1115,7 +1205,12 @@ function SupportCenter({
 
   const createMutation = useMutation({
     mutationFn: () =>
-      createTicket(userId, { subject: subject.trim(), category, orderId: null, message: message.trim() }),
+      createTicket(userId, {
+        subject: subject.trim(),
+        category,
+        orderId: null,
+        message: message.trim(),
+      }),
     onSuccess: () => {
       toast.success(t("messages.ticketCreated"));
       queryClient.invalidateQueries({ queryKey: ["tickets"] });
@@ -1129,21 +1224,59 @@ function SupportCenter({
   const filtered = useMemo(() => {
     if (!searchQuery) return tickets;
     const q = searchQuery.toLowerCase();
-    return tickets.filter((t) => t.subject.toLowerCase().includes(q) || t.lastMessage.toLowerCase().includes(q));
+    return tickets.filter(
+      (t) => t.subject.toLowerCase().includes(q) || t.lastMessage.toLowerCase().includes(q),
+    );
   }, [tickets, searchQuery]);
 
   const supportOptions = [
-    { icon: <MessageCircle className="h-5 w-5" />, title: "Live Chat", desc: "Chat with our team", color: "bg-green-50 text-green-600" },
-    { icon: <Plus className="h-5 w-5" />, title: "Create Ticket", desc: "Open a support ticket", color: "bg-blue-50 text-blue-600" },
-    { icon: <Bot className="h-5 w-5" />, title: "AI Assistant", desc: "Get instant answers", color: "bg-indigo-50 text-indigo-600" },
-    { icon: <Megaphone className="h-5 w-5" />, title: "FAQ", desc: "Common questions", color: "bg-orange-50 text-orange-600" },
+    {
+      icon: <MessageCircle className="h-5 w-5" />,
+      title: "Live Chat",
+      desc: "Chat with our team",
+      color: "bg-green-50 text-green-600",
+    },
+    {
+      icon: <Plus className="h-5 w-5" />,
+      title: "Create Ticket",
+      desc: "Open a support ticket",
+      color: "bg-blue-50 text-blue-600",
+    },
+    {
+      icon: <Bot className="h-5 w-5" />,
+      title: "AI Assistant",
+      desc: "Get instant answers",
+      color: "bg-indigo-50 text-indigo-600",
+    },
+    {
+      icon: <Megaphone className="h-5 w-5" />,
+      title: "FAQ",
+      desc: "Common questions",
+      color: "bg-orange-50 text-orange-600",
+    },
   ];
 
   const statusConfig: Record<string, { color: string; label: string; icon: React.ReactNode }> = {
-    open: { color: "bg-green-100 text-green-700", label: "Open", icon: <CheckCircle2 className="h-3 w-3" /> },
-    pending: { color: "bg-orange-100 text-orange-700", label: "Pending", icon: <Clock className="h-3 w-3" /> },
-    resolved: { color: "bg-blue-100 text-blue-700", label: "Resolved", icon: <CheckCircle2 className="h-3 w-3" /> },
-    closed: { color: "bg-gray-100 text-gray-600", label: "Closed", icon: <XCircle className="h-3 w-3" /> },
+    open: {
+      color: "bg-green-100 text-green-700",
+      label: "Open",
+      icon: <CheckCircle2 className="h-3 w-3" />,
+    },
+    pending: {
+      color: "bg-orange-100 text-orange-700",
+      label: "Pending",
+      icon: <Clock className="h-3 w-3" />,
+    },
+    resolved: {
+      color: "bg-blue-100 text-blue-700",
+      label: "Resolved",
+      icon: <CheckCircle2 className="h-3 w-3" />,
+    },
+    closed: {
+      color: "bg-gray-100 text-gray-600",
+      label: "Closed",
+      icon: <XCircle className="h-3 w-3" />,
+    },
   };
 
   return (
@@ -1153,10 +1286,12 @@ function SupportCenter({
         {supportOptions.map((opt) => (
           <button
             key={opt.title}
-            onClick={() => opt.title === "Create Ticket" ? setShowForm(true) : undefined}
+            onClick={() => (opt.title === "Create Ticket" ? setShowForm(true) : undefined)}
             className="flex flex-col items-center gap-2 rounded-2xl border bg-background p-4 text-center shadow-sm transition hover:shadow-md active:scale-[0.98]"
           >
-            <span className={`grid h-12 w-12 place-items-center rounded-xl ${opt.color}`}>{opt.icon}</span>
+            <span className={`grid h-12 w-12 place-items-center rounded-xl ${opt.color}`}>
+              {opt.icon}
+            </span>
             <span className="text-xs font-semibold">{opt.title}</span>
             <span className="text-[10px] text-muted-foreground">{opt.desc}</span>
           </button>
@@ -1201,7 +1336,10 @@ function SupportCenter({
               >
                 {createMutation.isPending && <Loader className="h-4 w-4" />} Submit Ticket
               </button>
-              <button onClick={() => setShowForm(false)} className="rounded-lg border px-4 py-2.5 text-sm font-medium hover:bg-muted">
+              <button
+                onClick={() => setShowForm(false)}
+                className="rounded-lg border px-4 py-2.5 text-sm font-medium hover:bg-muted"
+              >
                 Cancel
               </button>
             </div>
@@ -1211,9 +1349,15 @@ function SupportCenter({
 
       {/* Existing tickets */}
       <div>
-        <h3 className="mb-2 text-sm font-semibold text-muted-foreground">{t("messages.yourTickets")}</h3>
+        <h3 className="mb-2 text-sm font-semibold text-muted-foreground">
+          {t("messages.yourTickets")}
+        </h3>
         {filtered.length === 0 ? (
-          <EmptyState icon={<Headphones className="h-10 w-10" />} title={t("messages.titleNoTickets")} subtitle={t("messages.titleCreateTicket")} />
+          <EmptyState
+            icon={<Headphones className="h-10 w-10" />}
+            title={t("messages.titleNoTickets")}
+            subtitle={t("messages.titleCreateTicket")}
+          />
         ) : (
           <div className="space-y-2">
             {filtered.map((ticket) => {
@@ -1229,10 +1373,16 @@ function SupportCenter({
                   </span>
                   <div className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium">{ticket.subject}</span>
-                    <span className="block truncate text-xs text-muted-foreground">{ticket.lastMessage}</span>
-                    <span className="mt-1 block text-[10px] text-muted-foreground">{formatRelativeTime(ticket.updatedAt)}</span>
+                    <span className="block truncate text-xs text-muted-foreground">
+                      {ticket.lastMessage}
+                    </span>
+                    <span className="mt-1 block text-[10px] text-muted-foreground">
+                      {formatRelativeTime(ticket.updatedAt)}
+                    </span>
                   </div>
-                  <span className={`flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold ${sc.color}`}>
+                  <span
+                    className={`flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold ${sc.color}`}
+                  >
                     {sc.icon} {sc.label}
                   </span>
                   <ChevronRight className="h-4 w-4 text-muted-foreground/30 transition-transform group-hover:translate-x-1" />
@@ -1283,7 +1433,7 @@ function AIAssistant() {
       const history = messages
         .filter((m) => m.text)
         .map((m) => ({
-          role: m.role === "ai" ? "assistant" as const : "user" as const,
+          role: m.role === "ai" ? ("assistant" as const) : ("user" as const),
           content: m.text,
         }));
 
@@ -1291,9 +1441,10 @@ function AIAssistant() {
       const result = await sendAIMessage(idToken, userMsg, history);
       setMessages((prev) => [...prev, { role: "ai", text: result.reply }]);
     } catch (err) {
-      const errMsg = err instanceof Error && err.message
-        ? err.message
-        : "Something went wrong. Please try again.";
+      const errMsg =
+        err instanceof Error && err.message
+          ? err.message
+          : "Something went wrong. Please try again.";
       setMessages((prev) => [...prev, { role: "ai", text: errMsg }]);
     } finally {
       setLoading(false);
@@ -1301,7 +1452,10 @@ function AIAssistant() {
   };
 
   return (
-    <div className="flex flex-col rounded-2xl border bg-background shadow-sm" style={{ minHeight: "60vh" }}>
+    <div
+      className="flex flex-col rounded-2xl border bg-background shadow-sm"
+      style={{ minHeight: "60vh" }}
+    >
       {/* Header */}
       <div className="flex items-center gap-3 border-b p-4">
         <span className="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
@@ -1317,11 +1471,13 @@ function AIAssistant() {
       <div className="flex-1 space-y-3 overflow-y-auto p-4">
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-            <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm ${
-              msg.role === "user"
-                ? "rounded-br-md bg-primary text-primary-foreground"
-                : "rounded-bl-md bg-muted"
-            }`}>
+            <div
+              className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm ${
+                msg.role === "user"
+                  ? "rounded-br-md bg-primary text-primary-foreground"
+                  : "rounded-bl-md bg-muted"
+              }`}
+            >
               {msg.text}
             </div>
           </div>
@@ -1329,9 +1485,18 @@ function AIAssistant() {
         {loading && (
           <div className="flex justify-start">
             <div className="flex gap-1 rounded-2xl rounded-bl-md bg-muted px-4 py-3">
-              <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/50" style={{ animationDelay: "0ms" }} />
-              <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/50" style={{ animationDelay: "150ms" }} />
-              <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/50" style={{ animationDelay: "300ms" }} />
+              <span
+                className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/50"
+                style={{ animationDelay: "0ms" }}
+              />
+              <span
+                className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/50"
+                style={{ animationDelay: "150ms" }}
+              />
+              <span
+                className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/50"
+                style={{ animationDelay: "300ms" }}
+              />
             </div>
           </div>
         )}
@@ -1415,7 +1580,9 @@ function NotificationCenter({
     if (filter !== "all") result = result.filter((n) => n.type === filter);
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      result = result.filter((n) => n.title.toLowerCase().includes(q) || n.message.toLowerCase().includes(q));
+      result = result.filter(
+        (n) => n.title.toLowerCase().includes(q) || n.message.toLowerCase().includes(q),
+      );
     }
     return result;
   }, [notifications, filter, searchQuery]);
@@ -1449,14 +1616,21 @@ function NotificationCenter({
           ))}
         </div>
         {unreadCount > 0 && (
-          <button onClick={handleMarkAll} className="flex shrink-0 items-center gap-1 text-xs font-medium text-primary hover:underline">
+          <button
+            onClick={handleMarkAll}
+            className="flex shrink-0 items-center gap-1 text-xs font-medium text-primary hover:underline"
+          >
             <CheckCheck className="h-3.5 w-3.5" /> Mark all read
           </button>
         )}
       </div>
 
       {filtered.length === 0 ? (
-        <EmptyState icon={<Bell className="h-12 w-12" />} title={t("messages.titleNoNotifs")} subtitle="You're all caught up!" />
+        <EmptyState
+          icon={<Bell className="h-12 w-12" />}
+          title={t("messages.titleNoNotifs")}
+          subtitle="You're all caught up!"
+        />
       ) : (
         <div className="space-y-2">
           {filtered.map((notif) => {
@@ -1469,7 +1643,9 @@ function NotificationCenter({
                   notif.read ? "bg-background" : "bg-primary/5 border-primary/20"
                 }`}
               >
-                <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${config.color}`}>
+                <span
+                  className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${config.color}`}
+                >
                   {config.icon}
                 </span>
                 <div className="min-w-0 flex-1">
@@ -1478,7 +1654,9 @@ function NotificationCenter({
                     {!notif.read && <span className="h-2 w-2 shrink-0 rounded-full bg-accent" />}
                   </div>
                   <p className="mt-0.5 text-xs text-muted-foreground">{notif.message}</p>
-                  <span className="mt-1 block text-[10px] text-muted-foreground/60">{formatRelativeTime(notif.createdAt)}</span>
+                  <span className="mt-1 block text-[10px] text-muted-foreground/60">
+                    {formatRelativeTime(notif.createdAt)}
+                  </span>
                 </div>
                 {notif.link && (
                   <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground/30" />
@@ -1589,7 +1767,15 @@ function AnnouncementCenter() {
 // PREMIUM CHAT VIEW
 // ═══════════════════════════════════════════════════════════════
 
-function ChatView({ threadId, onBack, userId }: { threadId: string; onBack: () => void; userId: string }) {
+function ChatView({
+  threadId,
+  onBack,
+  userId,
+}: {
+  threadId: string;
+  onBack: () => void;
+  userId: string;
+}) {
   const { t } = useI18n();
   const [draft, setDraft] = useState("");
   const [showEmoji, setShowEmoji] = useState(false);
@@ -1622,10 +1808,12 @@ function ChatView({ threadId, onBack, userId }: { threadId: string; onBack: () =
             id: d.id,
             threadId: String(data.threadId ?? ""),
             body: String(data.body ?? ""),
-            from: data.from === "support" ? "support" as const : "customer" as const,
-            createdAt: typeof data.createdAt === "number"
-              ? data.createdAt
-              : (data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? Date.now(),
+            from: data.from === "support" ? ("support" as const) : ("customer" as const),
+            createdAt:
+              typeof data.createdAt === "number"
+                ? data.createdAt
+                : ((data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ??
+                  Date.now()),
           };
         });
         setMessages(mapped);
@@ -1689,10 +1877,16 @@ function ChatView({ threadId, onBack, userId }: { threadId: string; onBack: () =
         <button onClick={onBack} className="rounded-full p-1.5 hover:bg-muted">
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <span className={`grid h-10 w-10 place-items-center rounded-full ${
-          activeThread?.sellerId ? "bg-purple-100 text-purple-600" : "bg-primary/10 text-primary"
-        }`}>
-          {activeThread?.sellerId ? <Store className="h-5 w-5" /> : <Headphones className="h-5 w-5" />}
+        <span
+          className={`grid h-10 w-10 place-items-center rounded-full ${
+            activeThread?.sellerId ? "bg-purple-100 text-purple-600" : "bg-primary/10 text-primary"
+          }`}
+        >
+          {activeThread?.sellerId ? (
+            <Store className="h-5 w-5" />
+          ) : (
+            <Headphones className="h-5 w-5" />
+          )}
         </span>
         <div className="min-w-0 flex-1">
           <h3 className="truncate text-sm font-semibold">{activeThread?.participant ?? "Chat"}</h3>
@@ -1728,15 +1922,21 @@ function ChatView({ threadId, onBack, userId }: { threadId: string; onBack: () =
               const isMe = msg.from === "customer";
               return (
                 <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
-                  <div className={`max-w-[75%] ${isMe ? "items-end" : "items-start"} flex flex-col`}>
-                    <div className={`relative rounded-2xl px-4 py-2.5 text-sm shadow-sm ${
-                      isMe
-                        ? "rounded-br-md bg-primary text-primary-foreground"
-                        : "rounded-bl-md bg-background"
-                    }`}>
+                  <div
+                    className={`max-w-[75%] ${isMe ? "items-end" : "items-start"} flex flex-col`}
+                  >
+                    <div
+                      className={`relative rounded-2xl px-4 py-2.5 text-sm shadow-sm ${
+                        isMe
+                          ? "rounded-br-md bg-primary text-primary-foreground"
+                          : "rounded-bl-md bg-background"
+                      }`}
+                    >
                       {msg.body}
                     </div>
-                    <div className={`mt-0.5 flex items-center gap-1 px-1 text-[10px] text-muted-foreground`}>
+                    <div
+                      className={`mt-0.5 flex items-center gap-1 px-1 text-[10px] text-muted-foreground`}
+                    >
                       {formatRelativeTime(msg.createdAt)}
                       {isMe && <CheckCheck className="h-3 w-3 text-blue-400" />}
                     </div>
@@ -1770,7 +1970,10 @@ function ChatView({ threadId, onBack, userId }: { threadId: string; onBack: () =
           {emojis.map((emoji) => (
             <button
               key={emoji}
-              onClick={() => { setDraft((prev) => prev + emoji); setShowEmoji(false); }}
+              onClick={() => {
+                setDraft((prev) => prev + emoji);
+                setShowEmoji(false);
+              }}
               className="rounded-lg p-1.5 text-lg transition hover:bg-muted"
             >
               {emoji}
@@ -1784,7 +1987,10 @@ function ChatView({ threadId, onBack, userId }: { threadId: string; onBack: () =
         <button className="grid h-9 w-9 shrink-0 place-items-center rounded-full hover:bg-muted">
           <Paperclip className="h-5 w-5 text-muted-foreground" />
         </button>
-        <button onClick={() => setShowEmoji(!showEmoji)} className="grid h-9 w-9 shrink-0 place-items-center rounded-full hover:bg-muted">
+        <button
+          onClick={() => setShowEmoji(!showEmoji)}
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-full hover:bg-muted"
+        >
           <Smile className={`h-5 w-5 ${showEmoji ? "text-primary" : "text-muted-foreground"}`} />
         </button>
         <input
@@ -1814,7 +2020,15 @@ function ChatView({ threadId, onBack, userId }: { threadId: string; onBack: () =
 // TICKET CHAT VIEW
 // ═══════════════════════════════════════════════════════════════
 
-function TicketChatView({ ticketId, onBack, userId }: { ticketId: string; onBack: () => void; userId: string }) {
+function TicketChatView({
+  ticketId,
+  onBack,
+  userId,
+}: {
+  ticketId: string;
+  onBack: () => void;
+  userId: string;
+}) {
   const { t } = useI18n();
   const [draft, setDraft] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
@@ -1844,10 +2058,12 @@ function TicketChatView({ ticketId, onBack, userId }: { ticketId: string; onBack
           return {
             id: d.id,
             body: String(data.body ?? ""),
-            from: data.from === "support" ? "support" as const : "customer" as const,
-            createdAt: typeof data.createdAt === "number"
-              ? data.createdAt
-              : (data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? Date.now(),
+            from: data.from === "support" ? ("support" as const) : ("customer" as const),
+            createdAt:
+              typeof data.createdAt === "number"
+                ? data.createdAt
+                : ((data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ??
+                  Date.now()),
           };
         });
         setMessages(mapped);
@@ -1911,11 +2127,17 @@ function TicketChatView({ ticketId, onBack, userId }: { ticketId: string; onBack
             const isMe = msg.from === "customer";
             return (
               <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-sm shadow-sm ${
-                  isMe ? "rounded-br-md bg-primary text-primary-foreground" : "rounded-bl-md bg-background"
-                }`}>
+                <div
+                  className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-sm shadow-sm ${
+                    isMe
+                      ? "rounded-br-md bg-primary text-primary-foreground"
+                      : "rounded-bl-md bg-background"
+                  }`}
+                >
                   {msg.body}
-                  <div className={`mt-0.5 text-[10px] ${isMe ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
+                  <div
+                    className={`mt-0.5 text-[10px] ${isMe ? "text-primary-foreground/60" : "text-muted-foreground"}`}
+                  >
                     {formatRelativeTime(msg.createdAt)}
                   </div>
                 </div>
@@ -1952,7 +2174,15 @@ function TicketChatView({ ticketId, onBack, userId }: { ticketId: string; onBack
 // SHARED HELPERS
 // ═══════════════════════════════════════════════════════════════
 
-function EmptyState({ icon, title, subtitle }: { icon: React.ReactNode; title: string; subtitle: string }) {
+function EmptyState({
+  icon,
+  title,
+  subtitle,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+}) {
   return (
     <div className="flex flex-col items-center justify-center rounded-2xl border bg-muted/30 py-16 text-center">
       <span className="mb-3 text-muted-foreground/40">{icon}</span>

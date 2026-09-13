@@ -93,7 +93,9 @@ function WalletDetailPage() {
           before: opts.before ?? null,
         });
         setData(detail);
-        setEntries((prev) => (opts.append ? [...prev, ...detail.ledger.entries] : detail.ledger.entries));
+        setEntries((prev) =>
+          opts.append ? [...prev, ...detail.ledger.entries] : detail.ledger.entries,
+        );
         setCursor(detail.ledger.nextBefore);
         setHasMore(detail.ledger.hasMore);
       } catch (err) {
@@ -141,12 +143,18 @@ function WalletDetailPage() {
         direction: adjDirection,
         reason: adjReason.trim(),
       });
-      toast.success(`Adjustment posted — balance is now ${formatPrice((data?.wallet.availableMinor ?? 0) / 100)}`);
+      toast.success(
+        `Adjustment posted — balance is now ${formatPrice((data?.wallet.availableMinor ?? 0) / 100)}`,
+      );
       setAdjAmount("");
       setAdjReason("");
       await load({ type: typeFilter });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Adjustment failed (re-authentication may be required)");
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "Adjustment failed (re-authentication may be required)",
+      );
     } finally {
       setAdjSubmitting(false);
     }
@@ -177,7 +185,9 @@ function WalletDetailPage() {
     try {
       const idToken = await user.getIdToken();
       await submitWithdrawalDecision({ idToken, sellerId, withdrawalId, action });
-      toast.success(action === "approve" ? "Withdrawal completed" : "Withdrawal rejected — funds released");
+      toast.success(
+        action === "approve" ? "Withdrawal completed" : "Withdrawal rejected — funds released",
+      );
       await load({ type: typeFilter });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Action failed");
@@ -232,8 +242,16 @@ function WalletDetailPage() {
         {[
           { label: "Available", value: (wallet?.availableMinor ?? 0) / 100, cls: "text-[#0f172a]" },
           { label: "Pending", value: (wallet?.pendingMinor ?? 0) / 100, cls: "text-amber-600" },
-          { label: "Total Earned", value: (wallet?.totalEarnedMinor ?? 0) / 100, cls: "text-green-600" },
-          { label: "Total Withdrawn", value: (wallet?.totalWithdrawnMinor ?? 0) / 100, cls: "text-indigo-600" },
+          {
+            label: "Total Earned",
+            value: (wallet?.totalEarnedMinor ?? 0) / 100,
+            cls: "text-green-600",
+          },
+          {
+            label: "Total Withdrawn",
+            value: (wallet?.totalWithdrawnMinor ?? 0) / 100,
+            cls: "text-indigo-600",
+          },
         ].map((b) => (
           <div key={b.label} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
             <p className="text-xs font-medium text-slate-500">{b.label}</p>
@@ -299,8 +317,8 @@ function WalletDetailPage() {
       <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <h2 className="text-sm font-bold text-[#0f172a]">Manual Adjustment</h2>
         <p className="mt-0.5 text-xs text-slate-400">
-          Posts an immutable ADJUSTMENT ledger entry. A reason is mandatory and is audit-logged.
-          You may be asked to re-enter your password (fresh re-auth) for money-moving actions.
+          Posts an immutable ADJUSTMENT ledger entry. A reason is mandatory and is audit-logged. You
+          may be asked to re-enter your password (fresh re-auth) for money-moving actions.
         </p>
         <div className="mt-3 grid gap-3 sm:grid-cols-[120px_1fr]">
           <div className="flex gap-2">
@@ -449,12 +467,15 @@ function WalletDetailPage() {
                     </p>
                   </div>
                   <div className="shrink-0 text-right">
-                    <p className={`text-sm font-bold ${isCredit ? "text-green-600" : "text-slate-700"}`}>
+                    <p
+                      className={`text-sm font-bold ${isCredit ? "text-green-600" : "text-slate-700"}`}
+                    >
                       {isCredit ? "+" : "−"}
                       {formatPrice(Math.abs(e.amountMinor) / 100)}
                     </p>
                     <p className="text-xs text-slate-400">
-                      bal {formatPrice(e.balanceAfter / 100)} · held {formatPrice(e.heldAfter / 100)}
+                      bal {formatPrice(e.balanceAfter / 100)} · held{" "}
+                      {formatPrice(e.heldAfter / 100)}
                     </p>
                   </div>
                 </div>

@@ -12,10 +12,7 @@
 
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import {
-  CANONICAL_TRANSITIONS,
-  type CanonicalOrderStatus,
-} from "./orderStateMachine";
+import { CANONICAL_TRANSITIONS, type CanonicalOrderStatus } from "./orderStateMachine";
 
 const canonicalStatuses = Object.keys(CANONICAL_TRANSITIONS) as CanonicalOrderStatus[];
 

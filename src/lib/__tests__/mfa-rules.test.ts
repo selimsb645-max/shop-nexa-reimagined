@@ -58,10 +58,7 @@ describe("firestore.rules — adminMfa / mfaSessions blocks", () => {
       .split("\n")
       .map((l) => l.trim())
       .filter(
-        (l) =>
-          l.startsWith("allow ") &&
-          /adminMfa|mfaSessions/.test(l) &&
-          !/if false/.test(l),
+        (l) => l.startsWith("allow ") && /adminMfa|mfaSessions/.test(l) && !/if false/.test(l),
       );
     expect(grants).toEqual([]);
   });

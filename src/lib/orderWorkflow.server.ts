@@ -92,11 +92,7 @@ export function orderEventDocId(orderId: string, type: OrderEventType): string {
   return `${orderId}__${type}`;
 }
 
-type Handler = (
-  projectId: string,
-  event: OrderEventContext,
-  type: OrderEventType,
-) => Promise<void>;
+type Handler = (projectId: string, event: OrderEventContext, type: OrderEventType) => Promise<void>;
 
 // ───────────────────────────────────────────────────────────────
 // Handlers
@@ -142,14 +138,18 @@ const flashSaleHandler: Handler = async (projectId, event, type) => {
 
 const notifySellerHandler: Handler = async (projectId, event, type) => {
   const now = Date.now();
-  const title = type === "SELLER_NOTIFIED"
-    ? "New order received"
-    : `Order ${ORDER_STATUS_LABELS[normalizeOrderStatus(type)]}`;
+  const title =
+    type === "SELLER_NOTIFIED"
+      ? "New order received"
+      : `Order ${ORDER_STATUS_LABELS[normalizeOrderStatus(type)]}`;
   const writes: FsWrite[] = event.sellerIds.map((sid) => ({
     update: {
       // Deterministic id → duplicate events never double-notify (§7).
       name: docPath(projectId, [
-        "sellers", sid, "notifications", `n_${event.orderId}_${type.toLowerCase()}`,
+        "sellers",
+        sid,
+        "notifications",
+        `n_${event.orderId}_${type.toLowerCase()}`,
       ]),
       fields: toFsFields({
         type: "order",
@@ -170,52 +170,58 @@ const notifySellerHandler: Handler = async (projectId, event, type) => {
 
 const notifyAdminHandler: Handler = async (projectId, event, type) => {
   const now = Date.now();
-  await commitWrites(projectId, [{
-    update: {
-      name: docPath(projectId, [
-        ADMIN_NOTIFICATIONS_COLLECTION, `a_${event.orderId}_${type.toLowerCase()}`,
-      ]),
-      fields: toFsFields({
-        type: "order",
-        title: `Order ${ORDER_STATUS_LABELS[normalizeOrderStatus(type)]}`,
-        message: `Order #${event.orderId.slice(0, 8)} — ${ORDER_STATUS_LABELS[normalizeOrderStatus(type)]}`,
-        orderId: event.orderId,
-        eventType: type,
-        sellerIds: event.sellerIds,
-        total: event.total,
-        read: false,
-        createdAt: now,
-      }),
+  await commitWrites(projectId, [
+    {
+      update: {
+        name: docPath(projectId, [
+          ADMIN_NOTIFICATIONS_COLLECTION,
+          `a_${event.orderId}_${type.toLowerCase()}`,
+        ]),
+        fields: toFsFields({
+          type: "order",
+          title: `Order ${ORDER_STATUS_LABELS[normalizeOrderStatus(type)]}`,
+          message: `Order #${event.orderId.slice(0, 8)} — ${ORDER_STATUS_LABELS[normalizeOrderStatus(type)]}`,
+          orderId: event.orderId,
+          eventType: type,
+          sellerIds: event.sellerIds,
+          total: event.total,
+          read: false,
+          createdAt: now,
+        }),
+      },
     },
-  }]);
+  ]);
 };
 
 const notifyCustomerHandler: Handler = async (projectId, event, type) => {
   const now = Date.now();
-  await commitWrites(projectId, [{
-    update: {
-      name: docPath(projectId, [
-        "users", event.customerId, "notifications", `n_${event.orderId}_${type.toLowerCase()}`,
-      ]),
-      fields: toFsFields({
-        type: "order",
-        title: `Order ${ORDER_STATUS_LABELS[normalizeOrderStatus(type)]}`,
-        message: `Your order #${event.orderId.slice(0, 8)} is now ${ORDER_STATUS_LABELS[normalizeOrderStatus(type)].toLowerCase()}.`,
-        link: `/orders/${event.orderId}`,
-        read: false,
-        createdAt: now,
-        eventOrderId: event.orderId,
-        eventType: type,
-      }),
+  await commitWrites(projectId, [
+    {
+      update: {
+        name: docPath(projectId, [
+          "users",
+          event.customerId,
+          "notifications",
+          `n_${event.orderId}_${type.toLowerCase()}`,
+        ]),
+        fields: toFsFields({
+          type: "order",
+          title: `Order ${ORDER_STATUS_LABELS[normalizeOrderStatus(type)]}`,
+          message: `Your order #${event.orderId.slice(0, 8)} is now ${ORDER_STATUS_LABELS[normalizeOrderStatus(type)].toLowerCase()}.`,
+          link: `/orders/${event.orderId}`,
+          read: false,
+          createdAt: now,
+          eventOrderId: event.orderId,
+          eventType: type,
+        }),
+      },
     },
-  }]);
+  ]);
 };
 
 const shipmentHandler: Handler = async (projectId, event, type) => {
   const provider = new AventaLogisticsProvider(projectId);
-  const shipmentName = docPath(projectId, [
-    SHIPMENTS_COLLECTION, shipmentDocId(event.orderId),
-  ]);
+  const shipmentName = docPath(projectId, [SHIPMENTS_COLLECTION, shipmentDocId(event.orderId)]);
 
   if (type === "READY_TO_SHIP") {
     // Create one shipment for the FIRST seller of the order (multi-
@@ -260,27 +266,42 @@ const shipmentHandler: Handler = async (projectId, event, type) => {
     case "HANDED_OVER":
       await provider.handoverShipment(shipment);
       await provider.trackShipment(shipment, {
-        type: "HANDED_OVER", note: "Handed over to carrier", at: now, by: "system",
+        type: "HANDED_OVER",
+        note: "Handed over to carrier",
+        at: now,
+        by: "system",
       });
       break;
     case "IN_TRANSIT":
       await provider.trackShipment(shipment, {
-        type: "IN_TRANSIT", note: "Shipment in transit", at: now, by: "system",
+        type: "IN_TRANSIT",
+        note: "Shipment in transit",
+        at: now,
+        by: "system",
       });
       break;
     case "OUT_FOR_DELIVERY":
       await provider.trackShipment(shipment, {
-        type: "OUT_FOR_DELIVERY", note: "Out for delivery", at: now, by: "system",
+        type: "OUT_FOR_DELIVERY",
+        note: "Out for delivery",
+        at: now,
+        by: "system",
       });
       break;
     case "DELIVERED":
       await provider.trackShipment(shipment, {
-        type: "DELIVERED", note: "Delivered", at: now, by: "system",
+        type: "DELIVERED",
+        note: "Delivered",
+        at: now,
+        by: "system",
       });
       break;
     case "DELIVERY_FAILED":
       await provider.trackShipment(shipment, {
-        type: "FAILED", note: "Delivery attempt failed", at: now, by: "system",
+        type: "FAILED",
+        note: "Delivery attempt failed",
+        at: now,
+        by: "system",
       });
       break;
     case "CANCELLED":
@@ -300,7 +321,11 @@ const shipmentHandler: Handler = async (projectId, event, type) => {
 
 const financeHandler: Handler = async (projectId, event, type) => {
   const financeRelevant: OrderEventType[] = [
-    "DELIVERED", "CANCELLED", "RETURNED", "REFUND_PENDING", "REFUNDED",
+    "DELIVERED",
+    "CANCELLED",
+    "RETURNED",
+    "REFUND_PENDING",
+    "REFUNDED",
   ];
 
   // ── PROMPT 04 §1: LEDGER-FIRST FINANCE v2 ──────────────────────
@@ -322,8 +347,10 @@ const financeHandler: Handler = async (projectId, event, type) => {
         if (lines.length > 0) {
           const settingsName = docPath(projectId, ["settings", "site"]);
           const settingsDocs = await batchGetDocs(projectId, [settingsName]);
-          const siteSettingsData = (settingsDocs.get(settingsName)?.data ??
-            {}) as Record<string, unknown>;
+          const siteSettingsData = (settingsDocs.get(settingsName)?.data ?? {}) as Record<
+            string,
+            unknown
+          >;
           const breakdown = await computeOrderFinancials(
             projectId,
             siteSettingsData,
@@ -335,77 +362,88 @@ const financeHandler: Handler = async (projectId, event, type) => {
               shippingTaka: i.shippingTaka ?? 0,
             })),
           );
-          await createSettlementsForOrder(
-            projectId, event.orderId, breakdown.lines, config,
-          );
+          await createSettlementsForOrder(projectId, event.orderId, breakdown.lines, config);
         }
       } else if (
-        type === "DELIVERED" || type === "RETURNED" ||
-        type === "REFUND_PENDING" || type === "REFUNDED" || type === "CANCELLED"
+        type === "DELIVERED" ||
+        type === "RETURNED" ||
+        type === "REFUND_PENDING" ||
+        type === "REFUNDED" ||
+        type === "CANCELLED"
       ) {
         await advanceSettlementsForOrderEvent(
-          projectId, event.orderId, type as "DELIVERED", config,
+          projectId,
+          event.orderId,
+          type as "DELIVERED",
+          config,
         );
       }
     } catch (err) {
       // Repairable trail — the finance admin console can re-run this
       // step idempotently (all writes use deterministic keys).
-      await commitWrites(projectId, [{
-        update: {
-          name: docPath(projectId, [
-            "financeRepairQueue", `rep_${event.orderId}_${type.toLowerCase()}`,
-          ]),
-          fields: toFsFields({
-            orderId: event.orderId,
-            eventType: type,
-            error: err instanceof Error ? err.message : String(err),
-            createdAt: Date.now(),
-            resolvedAt: null,
-          }),
+      await commitWrites(projectId, [
+        {
+          update: {
+            name: docPath(projectId, [
+              "financeRepairQueue",
+              `rep_${event.orderId}_${type.toLowerCase()}`,
+            ]),
+            fields: toFsFields({
+              orderId: event.orderId,
+              eventType: type,
+              error: err instanceof Error ? err.message : String(err),
+              createdAt: Date.now(),
+              resolvedAt: null,
+            }),
+          },
         },
-      }]).catch(() => {});
+      ]).catch(() => {});
     }
   }
 
   // ── LEGACY AUDIT TRAIL (unchanged behavior) ─────────────────────
   if (!financeRelevant.includes(type)) return;
-  await commitWrites(projectId, [{
-    update: {
-      name: docPath(projectId, [
-        FINANCE_EVENTS_COLLECTION, `f_${event.orderId}_${type.toLowerCase()}`,
-      ]),
-      fields: toFsFields({
-        orderId: event.orderId,
-        eventType: type,
-        total: event.total,
-        currency: event.currency ?? "BDT",
-        sellerIds: event.sellerIds,
-        at: Date.now(),
-      }),
+  await commitWrites(projectId, [
+    {
+      update: {
+        name: docPath(projectId, [
+          FINANCE_EVENTS_COLLECTION,
+          `f_${event.orderId}_${type.toLowerCase()}`,
+        ]),
+        fields: toFsFields({
+          orderId: event.orderId,
+          eventType: type,
+          total: event.total,
+          currency: event.currency ?? "BDT",
+          sellerIds: event.sellerIds,
+          at: Date.now(),
+        }),
+      },
     },
-  }]);
+  ]);
 };
 
 const auditHandler: Handler = async (projectId, event, type) => {
   // Admin-initiated transitions record the approving human (additive;
   // every system-initiated event keeps writing actorUid "system").
   const actor = event.actor ?? null;
-  await commitWrites(projectId, [{
-    update: {
-      name: docPath(projectId, [
-        "activityLogs", `act_${event.orderId}_${type.toLowerCase()}`,
-      ]),
-      fields: toFsFields({
-        actorUid: actor?.uid ?? "system",
-        actorEmail: actor?.email ?? null,
-        action: `order.${type.toLowerCase()}`,
-        target: event.orderId,
-        details: `Order ${ORDER_STATUS_LABELS[normalizeOrderStatus(type)]}`
-          + (actor ? ` — by ${actor.email ?? actor.uid} (admin)` : ""),
-        createdAt: Date.now(),
-      }),
+  await commitWrites(projectId, [
+    {
+      update: {
+        name: docPath(projectId, ["activityLogs", `act_${event.orderId}_${type.toLowerCase()}`]),
+        fields: toFsFields({
+          actorUid: actor?.uid ?? "system",
+          actorEmail: actor?.email ?? null,
+          action: `order.${type.toLowerCase()}`,
+          target: event.orderId,
+          details:
+            `Order ${ORDER_STATUS_LABELS[normalizeOrderStatus(type)]}` +
+            (actor ? ` — by ${actor.email ?? actor.uid} (admin)` : ""),
+          createdAt: Date.now(),
+        }),
+      },
     },
-  }]);
+  ]);
 };
 
 const HANDLERS: Record<OrderWorkflowHandler, Handler> = {
@@ -454,26 +492,28 @@ export async function dispatchOrderEvent(
   }
 
   const now = Date.now();
-  await commitWrites(projectId, [{
-    update: {
-      name: eventName,
-      fields: toFsFields({
-        orderId,
-        type,
-        payload: JSON.stringify({
-          customerId: event.customerId,
-          sellerIds: event.sellerIds,
-          total: event.total,
-          items: event.items,
-          note: event.note ?? null,
-          actor: event.actor ?? null,
+  await commitWrites(projectId, [
+    {
+      update: {
+        name: eventName,
+        fields: toFsFields({
+          orderId,
+          type,
+          payload: JSON.stringify({
+            customerId: event.customerId,
+            sellerIds: event.sellerIds,
+            total: event.total,
+            items: event.items,
+            note: event.note ?? null,
+            actor: event.actor ?? null,
+          }),
+          state: "processing",
+          createdAt: now,
+          processedAt: null,
         }),
-        state: "processing",
-        createdAt: now,
-        processedAt: null,
-      }),
+      },
     },
-  }]);
+  ]);
 
   // Fan out. One branch failing must not corrupt the order or
   // block the others (§7): run all, collect failures per handler.
@@ -489,20 +529,22 @@ export async function dispatchOrderEvent(
   }
 
   // Record the outcome on the event doc.
-  await commitWrites(projectId, [{
-    update: {
-      name: eventName,
-      fields: toFsFields({
-        state: Object.keys(handlersFailed).length ? "partial" : "processed",
-        handlersRun,
-        handlersFailed,
-        processedAt: Date.now(),
-      }),
+  await commitWrites(projectId, [
+    {
+      update: {
+        name: eventName,
+        fields: toFsFields({
+          state: Object.keys(handlersFailed).length ? "partial" : "processed",
+          handlersRun,
+          handlersFailed,
+          processedAt: Date.now(),
+        }),
+      },
+      updateMask: {
+        fieldPaths: ["state", "handlersRun", "handlersFailed", "processedAt"],
+      },
     },
-    updateMask: {
-      fieldPaths: ["state", "handlersRun", "handlersFailed", "processedAt"],
-    },
-  }]);
+  ]);
 
   return { eventId, ok: Object.keys(handlersFailed).length === 0, handlersRun, handlersFailed };
 }
@@ -528,11 +570,8 @@ export async function advanceOrderStatus(
   note: string,
 ): Promise<{ advanced: boolean; from: string }> {
   const { batchGetDocs } = await import("./firebase-admin.server");
-  const {
-    isValidCanonicalTransition,
-    normalizeOrderStatus,
-    toLegacyStatus,
-  } = await import("./orderStateMachine");
+  const { isValidCanonicalTransition, normalizeOrderStatus, toLegacyStatus } =
+    await import("./orderStateMachine");
 
   // Customer orders live at users/{uid}/orders/{orderId}
   // (see checkout.server.ts and firestore.rules /users/{uid}/orders).
@@ -558,33 +597,33 @@ export async function advanceOrderStatus(
   }
 
   // Merge the legacy tracking array (append the new milestone).
-  const existingTracking = Array.isArray(data["tracking"])
-    ? (data["tracking"] as unknown[])
-    : [];
+  const existingTracking = Array.isArray(data["tracking"]) ? (data["tracking"] as unknown[]) : [];
   const trackingEntry = {
     status: toLegacyStatus(normalizeOrderStatus(to)),
     note,
     at: Date.now(),
   };
 
-  await commitWrites(projectId, [{
-    update: {
-      name: orderName,
-      fields: toFsFields({
-        status: to, // canonical machine value
-        tracking: [...existingTracking, trackingEntry],
-        updatedAt: Date.now(),
-      }),
+  await commitWrites(projectId, [
+    {
+      update: {
+        name: orderName,
+        fields: toFsFields({
+          status: to, // canonical machine value
+          tracking: [...existingTracking, trackingEntry],
+          updatedAt: Date.now(),
+        }),
+      },
+      // CRITICAL FIX (Sep 6, PART 1): without updateMask the Firestore
+      // REST commit REPLACES the entire document — status advancement
+      // would wipe the order's financial fields (items, total, payment,
+      // address, sellerIds). The mask restricts the write to exactly
+      // the three operational fields. Caught by emulator verification.
+      // (updateMask is a sibling of `update` in the Firestore Write
+      // message — NOT inside it.)
+      updateMask: { fieldPaths: ["status", "tracking", "updatedAt"] },
     },
-    // CRITICAL FIX (Sep 6, PART 1): without updateMask the Firestore
-    // REST commit REPLACES the entire document — status advancement
-    // would wipe the order's financial fields (items, total, payment,
-    // address, sellerIds). The mask restricts the write to exactly
-    // the three operational fields. Caught by emulator verification.
-    // (updateMask is a sibling of `update` in the Firestore Write
-    // message — NOT inside it.)
-    updateMask: { fieldPaths: ["status", "tracking", "updatedAt"] },
-  }]);
+  ]);
 
   return { advanced: true, from: current };
 }

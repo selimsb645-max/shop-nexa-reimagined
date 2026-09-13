@@ -22,9 +22,17 @@ import {
 describe("§1 state machine — primary flow", () => {
   it("walks the full happy path ORDER_CREATED → DELIVERED", () => {
     const happy = [
-      "ORDER_CREATED", "PAYMENT_CONFIRMED", "INVENTORY_RESERVED", "SELLER_NOTIFIED",
-      "PROCESSING", "PACKED", "READY_TO_SHIP", "HANDED_OVER", "IN_TRANSIT",
-      "OUT_FOR_DELIVERY", "DELIVERED",
+      "ORDER_CREATED",
+      "PAYMENT_CONFIRMED",
+      "INVENTORY_RESERVED",
+      "SELLER_NOTIFIED",
+      "PROCESSING",
+      "PACKED",
+      "READY_TO_SHIP",
+      "HANDED_OVER",
+      "IN_TRANSIT",
+      "OUT_FOR_DELIVERY",
+      "DELIVERED",
     ];
     for (let i = 0; i < happy.length - 1; i++) {
       expect(isValidCanonicalTransition(happy[i], happy[i + 1])).toBe(true);
@@ -46,8 +54,15 @@ describe("§1 state machine — primary flow", () => {
 
 describe("§1 state machine — exception states", () => {
   it("allows cancellation only before handover", () => {
-    for (const from of ["ORDER_CREATED", "PAYMENT_CONFIRMED", "INVENTORY_RESERVED",
-      "SELLER_NOTIFIED", "PROCESSING", "PACKED", "READY_TO_SHIP"]) {
+    for (const from of [
+      "ORDER_CREATED",
+      "PAYMENT_CONFIRMED",
+      "INVENTORY_RESERVED",
+      "SELLER_NOTIFIED",
+      "PROCESSING",
+      "PACKED",
+      "READY_TO_SHIP",
+    ]) {
       expect(isValidCanonicalTransition(from, "CANCELLED"), from).toBe(true);
     }
     // After handover the parcel is with the courier — no silent cancel.
@@ -181,7 +196,11 @@ describe("§6 tracking event visibility defaults", () => {
 
   it("customer-facing milestones default to customer visibility", () => {
     const customerMilestones = [
-      "PICKED_UP", "HANDED_OVER", "IN_TRANSIT", "OUT_FOR_DELIVERY", "DELIVERED",
+      "PICKED_UP",
+      "HANDED_OVER",
+      "IN_TRANSIT",
+      "OUT_FOR_DELIVERY",
+      "DELIVERED",
     ] as const;
     for (const t of customerMilestones) {
       expect(TRACKING_EVENT_VISIBILITY[t]).toBe("customer");

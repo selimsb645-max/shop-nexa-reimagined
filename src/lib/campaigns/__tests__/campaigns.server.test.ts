@@ -80,7 +80,13 @@ function fsValue(v: unknown): Record<string, unknown> {
   if (v === null || v === undefined) return { nullValue: null };
   if (Array.isArray(v)) return { arrayValue: { values: v.map(fsValue) } };
   if (typeof v === "object") {
-    return { mapValue: { fields: Object.fromEntries(Object.entries(v as Record<string, unknown>).map(([k, x]) => [k, fsValue(x)])) } };
+    return {
+      mapValue: {
+        fields: Object.fromEntries(
+          Object.entries(v as Record<string, unknown>).map(([k, x]) => [k, fsValue(x)]),
+        ),
+      },
+    };
   }
   return { stringValue: String(v) };
 }
@@ -89,7 +95,9 @@ async function seedDoc(path: string, data: Record<string, unknown>) {
   const res = await fetch(`${BASE}/${path}`, {
     method: "PATCH",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ fields: Object.fromEntries(Object.entries(data).map(([k, v]) => [k, fsValue(v)])) }),
+    body: JSON.stringify({
+      fields: Object.fromEntries(Object.entries(data).map(([k, v]) => [k, fsValue(v)])),
+    }),
   });
   if (!res.ok) throw new Error(`seed ${path} failed: ${res.status}`);
 }
@@ -107,13 +115,29 @@ function baseCampaignInput(now: number): CreateCampaignInput {
     description: "The 11.11 mega sale",
     startAt: now + 60_000,
     endAt: now + 120_000,
-    banner: { imageUrl: "https://cdn/1111.jpg", title: "AVENTA 11.11", subtitle: "মেগা সেল", link: "/flash-sales" },
+    banner: {
+      imageUrl: "https://cdn/1111.jpg",
+      title: "AVENTA 11.11",
+      subtitle: "মেগা সেল",
+      link: "/flash-sales",
+    },
     eligibleCategories: ["electronics"],
     eligibleProducts: [],
     eligibleSellers: [],
     discountRules: { type: "PERCENT", valueMinor: 1500, minimumPriceMinor: 1000 },
-    couponRules: { codes: ["AVENTA1111"], minOrderMinor: 50000, maxUses: 1000, perCustomerLimit: 1 },
-    homeModules: { heroBanner: true, campaignBanner: true, featuredProducts: true, flashSaleSection: true, featuredProductIds: ["p1", "p2"] },
+    couponRules: {
+      codes: ["AVENTA1111"],
+      minOrderMinor: 50000,
+      maxUses: 1000,
+      perCustomerLimit: 1,
+    },
+    homeModules: {
+      heroBanner: true,
+      campaignBanner: true,
+      featuredProducts: true,
+      flashSaleSection: true,
+      featuredProductIds: ["p1", "p2"],
+    },
     createdBy: MARKETING.uid,
   };
 }
@@ -127,7 +151,12 @@ async function makeScheduledCampaign(now: number, elevated = false): Promise<Cam
   await transitionCampaign("test-project", c.campaignId, "SUBMITTED", MARKETING);
   await transitionCampaign("test-project", c.campaignId, "REVIEW", MARKETING);
   await transitionCampaign("test-project", c.campaignId, "APPROVED", elevated ? SUPER : MARKETING);
-  return transitionCampaign("test-project", c.campaignId, "SCHEDULED", elevated ? SUPER : MARKETING);
+  return transitionCampaign(
+    "test-project",
+    c.campaignId,
+    "SCHEDULED",
+    elevated ? SUPER : MARKETING,
+  );
 }
 
 describe("§13 campaign lifecycle", () => {
@@ -167,9 +196,9 @@ describe("§13 campaign lifecycle", () => {
     expect(live?.endedAt).not.toBeNull();
 
     // Terminal: no further transitions.
-    await expect(
-      transitionCampaign("test-project", c.campaignId, "ACTIVE", SUPER),
-    ).rejects.toThrow(/illegal transition/);
+    await expect(transitionCampaign("test-project", c.campaignId, "ACTIVE", SUPER)).rejects.toThrow(
+      /illegal transition/,
+    );
   });
 
   it("CAMPAIGN_ENDING fires once within the lead window", async () => {
@@ -208,13 +237,15 @@ describe("§6 invalid discount", () => {
         sellerUid: SELLER.uid,
         shopName: "Seller One",
         note: null,
-        items: [{
-          productId: "p1",
-          originalPriceMinor: 50000,
-          discountRules: { type: "FLAT", valueMinor: 60000 }, // more than original
-          stockQty: 5,
-          sellerApprovedPriceMinor: 40000,
-        }],
+        items: [
+          {
+            productId: "p1",
+            originalPriceMinor: 50000,
+            discountRules: { type: "FLAT", valueMinor: 60000 }, // more than original
+            stockQty: 5,
+            sellerApprovedPriceMinor: 40000,
+          },
+        ],
       }),
     ).rejects.toThrow();
 
@@ -224,13 +255,15 @@ describe("§6 invalid discount", () => {
         sellerUid: SELLER.uid,
         shopName: "Seller One",
         note: null,
-        items: [{
-          productId: "p1",
-          originalPriceMinor: 50000,
-          discountRules: { type: "FLAT", valueMinor: -100 },
-          stockQty: 5,
-          sellerApprovedPriceMinor: 40000,
-        }],
+        items: [
+          {
+            productId: "p1",
+            originalPriceMinor: 50000,
+            discountRules: { type: "FLAT", valueMinor: -100 },
+            stockQty: 5,
+            sellerApprovedPriceMinor: 40000,
+          },
+        ],
       }),
     ).rejects.toThrow();
   });
@@ -248,15 +281,31 @@ describe("§7 flash sale", () => {
       originalPriceMinor: 50000,
       salePriceMinor: 35000,
     });
-    const r1 = await reserveFlashSaleStock("test-project", { campaignId: "fs1", customerId: "c1", quantity: 2 });
+    const r1 = await reserveFlashSaleStock("test-project", {
+      campaignId: "fs1",
+      customerId: "c1",
+      quantity: 2,
+    });
     expect(r1.ok).toBe(true);
-    const r2 = await reserveFlashSaleStock("test-project", { campaignId: "fs1", customerId: "c1", quantity: 1 });
+    const r2 = await reserveFlashSaleStock("test-project", {
+      campaignId: "fs1",
+      customerId: "c1",
+      quantity: 1,
+    });
     expect(r2).toMatchObject({ ok: false, code: "CUSTOMER_LIMIT" });
-    const r3 = await reserveFlashSaleStock("test-project", { campaignId: "fs1", customerId: "c2", quantity: 2 });
+    const r3 = await reserveFlashSaleStock("test-project", {
+      campaignId: "fs1",
+      customerId: "c2",
+      quantity: 2,
+    });
     expect(r3.ok).toBe(true);
     // release returns headroom
     await releaseFlashSaleStock("test-project", "fs1", "c1", 2);
-    const r4 = await reserveFlashSaleStock("test-project", { campaignId: "fs1", customerId: "c1", quantity: 2 });
+    const r4 = await reserveFlashSaleStock("test-project", {
+      campaignId: "fs1",
+      customerId: "c1",
+      quantity: 2,
+    });
     expect(r4.ok).toBe(true);
   });
 
@@ -272,8 +321,16 @@ describe("§7 flash sale", () => {
       salePriceMinor: 5000,
     });
     const [a, b] = await Promise.all([
-      reserveFlashSaleStock("test-project", { campaignId: "fs-race", customerId: "ca", quantity: 1 }),
-      reserveFlashSaleStock("test-project", { campaignId: "fs-race", customerId: "cb", quantity: 1 }),
+      reserveFlashSaleStock("test-project", {
+        campaignId: "fs-race",
+        customerId: "ca",
+        quantity: 1,
+      }),
+      reserveFlashSaleStock("test-project", {
+        campaignId: "fs-race",
+        customerId: "cb",
+        quantity: 1,
+      }),
     ]);
     const oks = [a, b].filter((r) => r.ok).length;
     expect(oks).toBe(1); // never 2 — no oversell possible
@@ -294,7 +351,11 @@ describe("§7 flash sale", () => {
       originalPriceMinor: 10000,
       salePriceMinor: 5000,
     });
-    const r = await reserveFlashSaleStock("test-project", { campaignId: "fs-late", customerId: "c1", quantity: 1 });
+    const r = await reserveFlashSaleStock("test-project", {
+      campaignId: "fs-late",
+      customerId: "c1",
+      quantity: 1,
+    });
     expect(r).toMatchObject({ ok: false, code: "NOT_ACTIVE" });
   });
 });
@@ -342,7 +403,12 @@ describe("§9 rollback", () => {
     await seedDoc("homeConfig/active", {
       campaignId: null,
       campaignName: "Everyday store",
-      heroBanner: { imageUrl: "https://cdn/hero.jpg", title: "AVENTA SHOP", subtitle: null, link: null },
+      heroBanner: {
+        imageUrl: "https://cdn/hero.jpg",
+        title: "AVENTA SHOP",
+        subtitle: null,
+        link: null,
+      },
       campaignBanner: null,
       flashSaleSection: false,
       featuredProductIds: ["daily1"],
@@ -404,7 +470,7 @@ describe("§10 notifications + §11 audit", () => {
 
     // notifications queue (§10)
     const res = await fetch(`${BASE}/${CAMPAIGN_NOTIFICATIONS_COLLECTION}`);
-    const json = (await res.json()) as { documents?: Array<{ fields: Record<string, unknown> }>; };
+    const json = (await res.json()) as { documents?: Array<{ fields: Record<string, unknown> }> };
     const notifs = (json.documents ?? []).map((d) => d.fields);
     expect(notifs.length).toBeGreaterThanOrEqual(3);
   });
@@ -421,18 +487,24 @@ describe("§3 seller submissions", () => {
       sellerUid: "seller-1",
       shopName: "Seller One",
       note: "best stock",
-      items: [{
-        productId: "p1",
-        originalPriceMinor: 50000,
-        discountRules: { type: "PERCENT", valueMinor: 1000 }, // 10%
-        stockQty: 5,
-        sellerApprovedPriceMinor: 40000,
-      }],
+      items: [
+        {
+          productId: "p1",
+          originalPriceMinor: 50000,
+          discountRules: { type: "PERCENT", valueMinor: 1000 }, // 10%
+          stockQty: 5,
+          sellerApprovedPriceMinor: 40000,
+        },
+      ],
     });
     expect(sub.status).toBe("PENDING_REVIEW");
 
     const approved = await reviewCampaignSubmission(
-      "test-project", sub.submissionId, "APPROVED", MARKETING, "looks good",
+      "test-project",
+      sub.submissionId,
+      "APPROVED",
+      MARKETING,
+      "looks good",
     );
     expect(approved.status).toBe("APPROVED");
     expect(approved.reviewedBy).toBe(MARKETING.uid);
@@ -457,13 +529,15 @@ describe("§3 seller submissions", () => {
         sellerUid: "seller-1",
         shopName: "Seller One",
         note: null,
-        items: [{
-          productId: "p1",
-          originalPriceMinor: 50000,
-          discountRules: { type: "PERCENT", valueMinor: 500 },
-          stockQty: 5,
-          sellerApprovedPriceMinor: 40000,
-        }],
+        items: [
+          {
+            productId: "p1",
+            originalPriceMinor: 50000,
+            discountRules: { type: "PERCENT", valueMinor: 500 },
+            stockQty: 5,
+            sellerApprovedPriceMinor: 40000,
+          },
+        ],
       }),
     ).rejects.toThrow(/closed/);
   });

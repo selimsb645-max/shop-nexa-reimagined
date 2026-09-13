@@ -1,7 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { listAdminUsers, setAdminRole, removeAdminRole } from "@/services/firebase/adminPermissions";
+import {
+  listAdminUsers,
+  setAdminRole,
+  removeAdminRole,
+} from "@/services/firebase/adminPermissions";
 import { listUsers } from "@/services/firebase/adminUsers";
 import type { AdminUserRow } from "@/services/firebase/adminUsers";
 import { logActivity } from "@/services/firebase/adminLogs";
@@ -22,9 +26,21 @@ export const Route = createFileRoute("/_authenticated/admin/manage-admins")({
 const ADMIN_ROLE_OPTIONS: { value: AdminRole; label: string; description: string }[] = [
   { value: "super_admin", label: "Super Admin", description: "Full access to everything" },
   { value: "admin", label: "Admin", description: "General admin, no finance/super permissions" },
-  { value: "finance_admin", label: "Finance Admin", description: "Withdrawals, earnings, commissions, payouts" },
-  { value: "support_admin", label: "Support Admin", description: "Orders, customer support, refunds" },
-  { value: "content_admin", label: "Content Admin", description: "Products, categories, coupons, banners" },
+  {
+    value: "finance_admin",
+    label: "Finance Admin",
+    description: "Withdrawals, earnings, commissions, payouts",
+  },
+  {
+    value: "support_admin",
+    label: "Support Admin",
+    description: "Orders, customer support, refunds",
+  },
+  {
+    value: "content_admin",
+    label: "Content Admin",
+    description: "Products, categories, coupons, banners",
+  },
 ];
 
 function ManageAdminsPage() {
@@ -99,7 +115,11 @@ function ManageAdminsPage() {
       toast.error("You cannot remove your own admin role.");
       return;
     }
-    if (!confirm(`Remove admin role from ${email ?? "this user"}? They will become a regular customer.`)) {
+    if (
+      !confirm(
+        `Remove admin role from ${email ?? "this user"}? They will become a regular customer.`,
+      )
+    ) {
       return;
     }
     setProcessing(uid);
@@ -399,8 +419,8 @@ function ManageAdminsPage() {
             </div>
           )}
           <p className="text-xs text-muted-foreground">
-            Promoted users get the "Admin" role by default. You can change their specific role
-            from the admin list above after promotion.
+            Promoted users get the "Admin" role by default. You can change their specific role from
+            the admin list above after promotion.
           </p>
         </div>
       )}

@@ -84,7 +84,7 @@ describe("Product QC — client/server contract", () => {
   it("seller notifications are written atomically with QC transitions", () => {
     expect(qcServer).toMatch(/"sellers",\s*\n\s*input\.sellerUid,\s*\n\s*"notifications",/);
     expect(qcServer).toMatch(/"sellers",\s*\n\s*review\.sellerUid,\s*\n\s*"notifications",/);
-    expect(qcServer).toContain('`${reviewId}_SUBMITTED_${now}`');
+    expect(qcServer).toContain("`${reviewId}_SUBMITTED_${now}`");
     expect(qcServer).toContain('"product_approved"');
     expect(qcServer).toContain('"product_rejected"');
   });

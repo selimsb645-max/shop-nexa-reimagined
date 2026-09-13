@@ -140,13 +140,18 @@ function normalize(value: string): string {
 }
 
 function slugify(value: string): string {
-  return normalize(value).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  return normalize(value)
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
 }
 
 /**
  * Resolve the icon for a category. Deterministic: same input → same icon.
  */
-export function getCategoryIcon(category: { slug?: string | null; name?: string | null }): LucideIcon {
+export function getCategoryIcon(category: {
+  slug?: string | null;
+  name?: string | null;
+}): LucideIcon {
   const slug = category.slug ? slugify(category.slug) : "";
   if (slug && SLUG_ICONS[slug]) return SLUG_ICONS[slug];
 

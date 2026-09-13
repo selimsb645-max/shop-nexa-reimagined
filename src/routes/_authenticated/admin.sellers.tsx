@@ -97,7 +97,9 @@ function SellersAdmin() {
       } else if (report.collisionCount === 0) {
         toast.success("No store URL conflicts found");
       } else {
-        toast.warning(`Found ${report.collisionCount} conflicting store URL${report.collisionCount > 1 ? "s" : ""}`);
+        toast.warning(
+          `Found ${report.collisionCount} conflicting store URL${report.collisionCount > 1 ? "s" : ""}`,
+        );
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : mapFirebaseError(err));
@@ -143,14 +145,17 @@ function SellersAdmin() {
         {auditReport && auditReport.collisionCount > 0 && (
           <div className="mt-4 rounded-md border border-amber-300 bg-amber-50 p-4 text-sm">
             <div className="font-semibold text-amber-900">
-              {auditReport.collisionCount} store URL conflict{auditReport.collisionCount > 1 ? "s" : ""} found
-              {" "}(same /store/ address used by multiple sellers)
+              {auditReport.collisionCount} store URL conflict
+              {auditReport.collisionCount > 1 ? "s" : ""} found (same /store/ address used by
+              multiple sellers)
             </div>
             <ul className="mt-2 space-y-1">
               {auditReport.collisions.map((c) => (
                 <li key={c.slug} className="text-amber-900">
                   <span className="font-mono">/store/{c.slug}</span> —{" "}
-                  {c.sellers.map((s) => `${s.shopName}${s.keepsSlug ? " (keeps URL)" : ""}`).join(", ")}
+                  {c.sellers
+                    .map((s) => `${s.shopName}${s.keepsSlug ? " (keeps URL)" : ""}`)
+                    .join(", ")}
                 </li>
               ))}
             </ul>
@@ -165,7 +170,8 @@ function SellersAdmin() {
               <ul className="mt-2 space-y-1 text-green-700">
                 {auditReport.repaired.map((r) => (
                   <li key={r.uid}>
-                    {r.shopName}: <span className="font-mono">/store/{r.from}</span> → <span className="font-mono">/store/{r.to}</span>
+                    {r.shopName}: <span className="font-mono">/store/{r.from}</span> →{" "}
+                    <span className="font-mono">/store/{r.to}</span>
                   </li>
                 ))}
               </ul>

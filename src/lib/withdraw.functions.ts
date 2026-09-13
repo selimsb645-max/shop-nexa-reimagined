@@ -51,12 +51,8 @@ export const processWithdrawal = createServerFn({ method: "POST" })
     // SECURITY: verify the caller is an admin AND holds a finance-capable
     // sub-role (finance.withdrawals.process). Sub-role checks must happen here,
     // never only in client-side permission maps.
-    const token = await import("./firebase-admin.server").then((m) =>
-      m.getAccessToken(),
-    );
-    const projectId = await import("./firebase-admin.server").then((m) =>
-      m.getProjectId(),
-    );
+    const token = await import("./firebase-admin.server").then((m) => m.getAccessToken());
+    const projectId = await import("./firebase-admin.server").then((m) => m.getProjectId());
     const userRes = await fetch(
       `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${encodeURIComponent(uid)}`,
       { headers: { authorization: `Bearer ${token}` } },

@@ -26,7 +26,8 @@ export const seedAventaCategories = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => seedSchema.parse(data))
   .handler(async ({ data }) => {
     // Step 1: Verify the Firebase ID token
-    const { verifyIdToken, getAccessToken, getProjectId, fromFsFields } = await import("./firebase-admin.server");
+    const { verifyIdToken, getAccessToken, getProjectId, fromFsFields } =
+      await import("./firebase-admin.server");
     const { uid } = await verifyIdToken(data.idToken);
 
     // Step 2: Verify the caller is an admin

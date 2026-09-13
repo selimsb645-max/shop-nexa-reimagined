@@ -34,9 +34,7 @@ async function verifyApprovedSeller(idToken: string): Promise<string> {
 
   // Check seller profile exists and is approved
   const projectId = getProjectId();
-  const sellerDoc = await batchGetDocs(projectId, [
-    docPath(projectId, ["sellers", uid]),
-  ]);
+  const sellerDoc = await batchGetDocs(projectId, [docPath(projectId, ["sellers", uid])]);
   const seller = sellerDoc.get(docPath(projectId, ["sellers", uid]));
   if (!seller || !seller.exists) {
     throw new Error("Seller profile not found. Please register as a seller.");
@@ -128,9 +126,7 @@ export async function sellerReplyServer(
     {
       transform: {
         document: convPath,
-        fieldTransforms: [
-          { fieldPath: "lastAt", setToServerValue: "REQUEST_TIME" },
-        ],
+        fieldTransforms: [{ fieldPath: "lastAt", setToServerValue: "REQUEST_TIME" }],
       },
     },
     // 4. Write message to customer's messages collection (customer sees it)
@@ -160,9 +156,7 @@ export async function sellerReplyServer(
     {
       transform: {
         document: docPath(projectId, ["users", input.customerId, "threads", threadId]),
-        fieldTransforms: [
-          { fieldPath: "lastAt", setToServerValue: "REQUEST_TIME" },
-        ],
+        fieldTransforms: [{ fieldPath: "lastAt", setToServerValue: "REQUEST_TIME" }],
       },
     },
     // 7. Create notification for customer
@@ -242,9 +236,7 @@ export async function createConversationServer(
     {
       transform: {
         document: docPath(projectId, ["conversations", convId]),
-        fieldTransforms: [
-          { fieldPath: "lastAt", setToServerValue: "REQUEST_TIME" },
-        ],
+        fieldTransforms: [{ fieldPath: "lastAt", setToServerValue: "REQUEST_TIME" }],
       },
     },
     // 3. Create first message in conversations collection

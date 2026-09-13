@@ -1,13 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import {
-  Ban,
-  Clock,
-  Lock,
-  FileWarning,
-  Loader,
-  XCircle,
-} from "lucide-react";
+import { Ban, Clock, Lock, FileWarning, Loader, XCircle } from "lucide-react";
 import { SellerShell } from "./SellerShell";
 import { useSellerProfile } from "@/hooks/useSellerProfile";
 import { REGISTRATION_STEPS } from "@/types/seller";
@@ -49,7 +42,8 @@ export function SellerGate({ children }: Props) {
           </div>
           <h2 className="text-lg font-bold text-[#0f172a]">Become a Seller on AVENTA SHOP</h2>
           <p className="mt-2 max-w-sm text-sm text-slate-500">
-            Register your shop to start listing products, managing orders, and growing your business.
+            Register your shop to start listing products, managing orders, and growing your
+            business.
           </p>
           <Link
             to="/seller/register"
@@ -97,7 +91,8 @@ export function SellerGate({ children }: Props) {
           </div>
           <h2 className="text-lg font-bold text-[#0f172a]">Application Under Review</h2>
           <p className="mt-2 max-w-sm text-sm text-slate-500">
-            Our team is reviewing your seller application. You'll be notified as soon as your shop is approved.
+            Our team is reviewing your seller application. You'll be notified as soon as your shop
+            is approved.
           </p>
           <div className="mt-4 px-4 py-2 bg-amber-50 rounded-lg text-xs text-amber-700 font-medium">
             ⏳ Review typically takes 24–48 hours
@@ -117,7 +112,8 @@ export function SellerGate({ children }: Props) {
           </div>
           <h2 className="text-lg font-bold text-[#0f172a]">Additional Documents Required</h2>
           <p className="mt-2 max-w-sm text-sm text-slate-500">
-            {profile.rejectionReason || "Please upload the requested documents to continue the review process."}
+            {profile.rejectionReason ||
+              "Please upload the requested documents to continue the review process."}
           </p>
           <Link
             to="/seller/register"
@@ -140,7 +136,8 @@ export function SellerGate({ children }: Props) {
           </div>
           <h2 className="text-lg font-bold text-[#0f172a]">Application Not Approved</h2>
           <p className="mt-2 max-w-sm text-sm text-slate-500">
-            {profile.rejectionReason || "Unfortunately your seller application wasn't approved. Please contact support for more information."}
+            {profile.rejectionReason ||
+              "Unfortunately your seller application wasn't approved. Please contact support for more information."}
           </p>
           <Link
             to="/seller/register"
@@ -163,7 +160,8 @@ export function SellerGate({ children }: Props) {
           </div>
           <h2 className="text-lg font-bold text-[#0f172a]">Account Suspended</h2>
           <p className="mt-2 max-w-sm text-sm text-slate-500">
-            Your seller account has been suspended. Please contact AVENTA SHOP support to resolve this.
+            Your seller account has been suspended. Please contact AVENTA SHOP support to resolve
+            this.
           </p>
         </div>
       </SellerShell>

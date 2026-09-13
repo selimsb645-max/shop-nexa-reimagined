@@ -19,7 +19,8 @@ export const Route = createFileRoute("/digital-payments")({
   head: () => ({
     ...seoHead({
       title: "Digital Payment Methods — AVENTA SHOP Secure Payments",
-      description: "Pay your way on AVENTA SHOP — Cash on Delivery, bKash, Nagad, Rocket, credit/debit cards, and bank transfers. Secure, fast, and trusted payment options.",
+      description:
+        "Pay your way on AVENTA SHOP — Cash on Delivery, bKash, Nagad, Rocket, credit/debit cards, and bank transfers. Secure, fast, and trusted payment options.",
       path: "/digital-payments",
       type: "website",
     }),
@@ -73,17 +74,20 @@ const SECURITY_FEATURES = [
   {
     icon: <ShieldCheck className="h-5 w-5" />,
     title: "PCI-DSS Compliant",
-    description: "Our payment partners are PCI-DSS Level 1 certified — the highest security standard.",
+    description:
+      "Our payment partners are PCI-DSS Level 1 certified — the highest security standard.",
   },
   {
     icon: <CheckCircle2 className="h-5 w-5" />,
     title: "No Card Storage",
-    description: "We never store your card number, CVV, or PIN on our servers. Payments are processed directly by certified payment gateways.",
+    description:
+      "We never store your card number, CVV, or PIN on our servers. Payments are processed directly by certified payment gateways.",
   },
   {
     icon: <ShieldCheck className="h-5 w-5" />,
     title: "Fraud Protection",
-    description: "Every transaction is monitored by automated fraud detection systems. Suspicious activity is flagged and blocked automatically.",
+    description:
+      "Every transaction is monitored by automated fraud detection systems. Suspicious activity is flagged and blocked automatically.",
   },
 ];
 
@@ -109,10 +113,7 @@ function DigitalPaymentsPage() {
         <h2 className="mb-4 text-xl font-bold text-foreground">Available Payment Methods</h2>
         <div className="mb-8 space-y-4">
           {PAYMENT_METHODS.map((method, i) => (
-            <div
-              key={i}
-              className="flex gap-4 rounded-2xl border bg-background p-5 shadow-sm"
-            >
+            <div key={i} className="flex gap-4 rounded-2xl border bg-background p-5 shadow-sm">
               <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
                 {method.icon}
               </span>
@@ -154,10 +155,20 @@ function DigitalPaymentsPage() {
             <h2 className="text-lg font-semibold text-foreground">Important Notes</h2>
           </div>
           <ol className="space-y-2 text-sm text-muted-foreground">
-            <li>1. For mobile banking, make sure your account has sufficient balance before confirming payment.</li>
-            <li>2. Keep your payment confirmation SMS or transaction reference for your records.</li>
-            <li>3. Refunds for digital payments are processed to the original payment method within 7-10 business days.</li>
-            <li>4. Wallet top-ups are non-refundable but can be used for any purchase on AVENTA SHOP.</li>
+            <li>
+              1. For mobile banking, make sure your account has sufficient balance before confirming
+              payment.
+            </li>
+            <li>
+              2. Keep your payment confirmation SMS or transaction reference for your records.
+            </li>
+            <li>
+              3. Refunds for digital payments are processed to the original payment method within
+              7-10 business days.
+            </li>
+            <li>
+              4. Wallet top-ups are non-refundable but can be used for any purchase on AVENTA SHOP.
+            </li>
             <li>5. COD orders below ৳500 may incur a ৳30 cash handling fee.</li>
           </ol>
         </div>

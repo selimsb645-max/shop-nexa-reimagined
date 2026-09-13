@@ -11,7 +11,8 @@ export const Route = createFileRoute("/blog")({
   head: () => ({
     ...seoHead({
       title: "AVENTA SHOP Blog — Shopping Guides, Deals & Tips",
-      description: "Read the AVENTA SHOP Blog for shopping guides, product reviews, deal alerts, and smart buying tips for online shoppers in Bangladesh. Stay informed and save more.",
+      description:
+        "Read the AVENTA SHOP Blog for shopping guides, product reviews, deal alerts, and smart buying tips for online shoppers in Bangladesh. Stay informed and save more.",
       path: "/blog",
       type: "website",
       image: "/brand/aventa-shop-logo.png",
@@ -95,8 +96,8 @@ function BlogPage() {
         <div className="mb-8 rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 p-8 text-white">
           <h1 className="text-2xl font-bold">AVENTA SHOP Blog</h1>
           <p className="mt-2 text-orange-50">
-            Shopping guides, deal alerts, product reviews, and smart buying tips for online
-            shoppers in Bangladesh. Stay informed and shop smarter.
+            Shopping guides, deal alerts, product reviews, and smart buying tips for online shoppers
+            in Bangladesh. Stay informed and shop smarter.
           </p>
         </div>
 

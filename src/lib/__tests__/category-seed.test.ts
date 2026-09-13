@@ -195,7 +195,7 @@ describe("Commission Validation", () => {
       expect(cat.commissionRate).toBeDefined();
       expect(cat.commissionRate).not.toBeNull();
       expect(Number(cat.commissionRate)).toBeGreaterThan(0);
-      expect(Number(cat.commissionRate)).toBeLessThanOrEqual(0.20);
+      expect(Number(cat.commissionRate)).toBeLessThanOrEqual(0.2);
     }
   });
 
@@ -212,7 +212,7 @@ describe("Commission Validation", () => {
           overrideCount++;
           // Override must be valid
           expect(Number(sub.commissionRate)).toBeGreaterThan(0);
-          expect(Number(sub.commissionRate)).toBeLessThanOrEqual(0.20);
+          expect(Number(sub.commissionRate)).toBeLessThanOrEqual(0.2);
         }
       }
     }
@@ -393,8 +393,6 @@ describe("Unauthorized Seed Rejection", () => {
 
   it("should reject seed with short/invalid idToken", async () => {
     const { seedAventaCategories } = await import("../seed-categories.functions");
-    await expect(
-      seedAventaCategories({ data: { idToken: "short" } } as any),
-    ).rejects.toThrow();
+    await expect(seedAventaCategories({ data: { idToken: "short" } } as any)).rejects.toThrow();
   });
 });

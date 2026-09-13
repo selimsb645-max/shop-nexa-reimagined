@@ -151,7 +151,12 @@ function WalletPage({ profile }: { profile: SellerProfile }) {
     setSubmitting(true);
     try {
       const idToken = await user.getIdToken();
-      await requestWalletWithdrawalV2({ idToken, amountTaka: amount, method: withdrawMethod, destination });
+      await requestWalletWithdrawalV2({
+        idToken,
+        amountTaka: amount,
+        method: withdrawMethod,
+        destination,
+      });
       toast.success(`Withdrawal requested: ${formatPrice(amount)}`);
       setShowWithdraw(false);
       setWithdrawAmount("");
@@ -202,10 +207,16 @@ function WalletPage({ profile }: { profile: SellerProfile }) {
           <ShieldAlert className="mt-0.5 h-5 w-5 text-amber-600" />
           <div>
             <p className="text-sm font-semibold text-amber-900">
-              Wallet {walletStatus === "SUSPENDED" ? "temporarily suspended" : walletStatus === "LOCKED" ? "locked" : "closed"}
+              Wallet{" "}
+              {walletStatus === "SUSPENDED"
+                ? "temporarily suspended"
+                : walletStatus === "LOCKED"
+                  ? "locked"
+                  : "closed"}
             </p>
             <p className="text-xs text-amber-700 mt-0.5">
-              Withdrawals are blocked while your wallet is {walletStatus.toLowerCase()}. Your balance and history remain intact — contact support for details.
+              Withdrawals are blocked while your wallet is {walletStatus.toLowerCase()}. Your
+              balance and history remain intact — contact support for details.
             </p>
           </div>
         </div>
@@ -232,7 +243,9 @@ function WalletPage({ profile }: { profile: SellerProfile }) {
             <span className="text-xs font-medium text-slate-500">Pending Balance</span>
           </div>
           <div className="text-2xl font-bold text-[#0f172a] break-all">{formatPrice(pending)}</div>
-          <p className="text-xs text-slate-400 mt-1">On hold — release cycle or withdrawal in review</p>
+          <p className="text-xs text-slate-400 mt-1">
+            On hold — release cycle or withdrawal in review
+          </p>
         </div>
 
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
@@ -242,7 +255,9 @@ function WalletPage({ profile }: { profile: SellerProfile }) {
             </span>
             <span className="text-xs font-medium text-slate-500">Total Earned</span>
           </div>
-          <div className="text-2xl font-bold text-[#0f172a] break-all">{formatPrice(totalEarned)}</div>
+          <div className="text-2xl font-bold text-[#0f172a] break-all">
+            {formatPrice(totalEarned)}
+          </div>
           <p className="text-xs text-slate-400 mt-1">Lifetime credits</p>
         </div>
 
@@ -253,7 +268,9 @@ function WalletPage({ profile }: { profile: SellerProfile }) {
             </span>
             <span className="text-xs font-medium text-slate-500">Total Withdrawn</span>
           </div>
-          <div className="text-2xl font-bold text-[#0f172a] break-all">{formatPrice(totalWithdrawn)}</div>
+          <div className="text-2xl font-bold text-[#0f172a] break-all">
+            {formatPrice(totalWithdrawn)}
+          </div>
           <p className="text-xs text-slate-400 mt-1">Paid out to date</p>
         </div>
       </div>
@@ -361,9 +378,7 @@ function WalletPage({ profile }: { profile: SellerProfile }) {
           <History className="w-4 h-4 text-slate-400" />
           <h2 className="text-sm font-bold text-[#0f172a]">Transaction History</h2>
           {wallet && (
-            <span className="ml-auto text-xs text-slate-400">
-              {wallet.transactionCount} total
-            </span>
+            <span className="ml-auto text-xs text-slate-400">{wallet.transactionCount} total</span>
           )}
         </div>
 

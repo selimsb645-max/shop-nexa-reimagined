@@ -52,10 +52,7 @@ export interface PurchaseGiftCardServerResult {
  * Read a user's wallet balance from the authoritative ledger.
  * Used outside transactions for display/balance-check purposes.
  */
-async function readWalletBalanceOutsideTx(
-  projectId: string,
-  uid: string,
-): Promise<number> {
+async function readWalletBalanceOutsideTx(projectId: string, uid: string): Promise<number> {
   const token = await getAccessToken();
   const res = await fetch(
     `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${encodeURIComponent(uid)}:runQuery`,
@@ -147,10 +144,7 @@ function generateGiftCardCode(): string {
 }
 
 /** Check code uniqueness against Firestore (outside transaction). */
-async function isCodeUnique(
-  projectId: string,
-  code: string,
-): Promise<boolean> {
+async function isCodeUnique(projectId: string, code: string): Promise<boolean> {
   const token = await getAccessToken();
   const res = await fetch(
     `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${GIFT_CARDS_COLLECTION}:runQuery`,
@@ -274,11 +268,7 @@ export async function purchaseGiftCardServer(
 
       // 5. Calculate balance from transaction-locked reads
       const walletBalance = calculateBalanceFromDocs(
-        new Map(
-          Array.from(docs.entries()).filter(
-            ([name]) => name !== userDocName,
-          ),
-        ),
+        new Map(Array.from(docs.entries()).filter(([name]) => name !== userDocName)),
       );
 
       // 6. Check balance — this is the CRITICAL concurrency-safe check
@@ -321,12 +311,7 @@ export async function purchaseGiftCardServer(
         // Wallet debit (negative entry in the user's wallet ledger)
         {
           update: {
-            name: docPath(projectId, [
-              "users",
-              input.uid,
-              WALLET_TX_SUBCOLLECTION,
-              newDocId(),
-            ]),
+            name: docPath(projectId, ["users", input.uid, WALLET_TX_SUBCOLLECTION, newDocId()]),
             fields: toFsFields({
               type: "gift_card_purchase",
               amount: -amount,
@@ -382,9 +367,7 @@ export async function purchaseGiftCardServer(
       }
 
       // 9. ABORTED — concurrent transaction modified our reads. Retry.
-      lastError = new Error(
-        "Another transaction modified your wallet. Retrying...",
-      );
+      lastError = new Error("Another transaction modified your wallet. Retrying...");
     } catch (err) {
       if (tx) await rollbackTransaction(projectId, tx);
       throw err; // Non-retryable error

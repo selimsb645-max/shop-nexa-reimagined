@@ -63,9 +63,7 @@ function AdminDeliveryZonesPage() {
 
   const saveZone = (zone: DeliveryZoneSetting) => {
     const existing = zones.find((z) => z.id === zone.id);
-    const updated = existing
-      ? zones.map((z) => (z.id === zone.id ? zone : z))
-      : [...zones, zone];
+    const updated = existing ? zones.map((z) => (z.id === zone.id ? zone : z)) : [...zones, zone];
     saveMutation.mutate(updated);
     setEditingZone(null);
     setShowForm(false);
@@ -106,7 +104,10 @@ function AdminDeliveryZonesPage() {
         <div className="flex items-start gap-2">
           <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
           <div>
-            <p className="font-medium text-amber-900">No-Zone Behavior: {noZoneBehavior === "block" ? "Block Checkout" : "Use Fallback Zone"}</p>
+            <p className="font-medium text-amber-900">
+              No-Zone Behavior:{" "}
+              {noZoneBehavior === "block" ? "Block Checkout" : "Use Fallback Zone"}
+            </p>
             <p className="text-amber-700 mt-1">
               When a customer's address doesn't match any active zone:{" "}
               {noZoneBehavior === "block"
@@ -157,7 +158,9 @@ function AdminDeliveryZonesPage() {
                           : "bg-slate-100 text-slate-500"
                       }`}
                     >
-                      <span className={`h-1.5 w-1.5 rounded-full ${zone.active ? "bg-emerald-500" : "bg-slate-400"}`} />
+                      <span
+                        className={`h-1.5 w-1.5 rounded-full ${zone.active ? "bg-emerald-500" : "bg-slate-400"}`}
+                      />
                       {zone.active ? "Active" : "Disabled"}
                     </span>
                   </td>
@@ -262,9 +265,7 @@ function ZoneForm({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="w-full max-w-md rounded-lg border bg-background p-6 shadow-xl">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">
-            {zone ? "Edit Zone" : "Add Delivery Zone"}
-          </h2>
+          <h2 className="text-lg font-semibold">{zone ? "Edit Zone" : "Add Delivery Zone"}</h2>
           <button onClick={onCancel} className="rounded p-1 hover:bg-muted">
             <X className="h-5 w-5" />
           </button>
@@ -275,7 +276,9 @@ function ZoneForm({
             <input
               type="text"
               value={form.id}
-              onChange={(e) => setForm({ ...form, id: e.target.value.toUpperCase().replace(/\s+/g, "_") })}
+              onChange={(e) =>
+                setForm({ ...form, id: e.target.value.toUpperCase().replace(/\s+/g, "_") })
+              }
               disabled={!!zone}
               className="mt-1 w-full rounded-md border px-3 py-2 text-sm disabled:opacity-50"
               placeholder="e.g. INSIDE_DHAKA"
@@ -330,7 +333,9 @@ function ZoneForm({
                 type="number"
                 min="0"
                 value={form.etaDays[0]}
-                onChange={(e) => setForm({ ...form, etaDays: [Number(e.target.value), form.etaDays[1]] })}
+                onChange={(e) =>
+                  setForm({ ...form, etaDays: [Number(e.target.value), form.etaDays[1]] })
+                }
                 className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
               />
             </div>
@@ -340,7 +345,9 @@ function ZoneForm({
                 type="number"
                 min="0"
                 value={form.etaDays[1]}
-                onChange={(e) => setForm({ ...form, etaDays: [form.etaDays[0], Number(e.target.value)] })}
+                onChange={(e) =>
+                  setForm({ ...form, etaDays: [form.etaDays[0], Number(e.target.value)] })
+                }
                 className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
               />
             </div>

@@ -1,11 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { Bell, CheckCheck, Loader, Inbox } from "lucide-react";
 import {
-  Bell, CheckCheck, Loader, Inbox,
-} from "lucide-react";
-import {
-  collection, query, orderBy, limit as fbLimit,
-  getDocs, updateDoc, doc, writeBatch, where,
+  collection,
+  query,
+  orderBy,
+  limit as fbLimit,
+  getDocs,
+  updateDoc,
+  doc,
+  writeBatch,
+  where,
 } from "firebase/firestore";
 import { getDb } from "@/services/firebase/config";
 
@@ -64,17 +69,23 @@ function AdminNotifications() {
                 createdAt:
                   typeof data.createdAt === "number"
                     ? data.createdAt
-                    : data.createdAt && typeof data.createdAt === "object" && "toMillis" in data.createdAt
+                    : data.createdAt &&
+                        typeof data.createdAt === "object" &&
+                        "toMillis" in data.createdAt
                       ? (data.createdAt as { toMillis: () => number }).toMillis()
                       : Date.now(),
               };
             }),
           );
         }
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
       if (!cancelled) setLoading(false);
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const filtered = filter === "all" ? notifs : notifs.filter((n) => n.type === filter);
@@ -85,7 +96,9 @@ function AdminNotifications() {
     try {
       const db = getDb();
       await updateDoc(doc(db, "settings", "site", "notifications", id), { read: true });
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   };
 
   const handleMarkAll = async () => {
@@ -101,7 +114,9 @@ function AdminNotifications() {
         snap.docs.forEach((d) => batch.update(d.ref, { read: true }));
         await batch.commit();
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     setMarkingAll(false);
   };
 
@@ -187,8 +202,10 @@ function AdminNotifications() {
                   !n.read ? "bg-orange-50/30" : ""
                 }`}
               >
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-lg"
-                  style={{ background: `${config.color}15` }}>
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-lg"
+                  style={{ background: `${config.color}15` }}
+                >
                   {config.icon}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -199,8 +216,10 @@ function AdminNotifications() {
                   <p className="text-sm text-slate-500 line-clamp-2">{n.message}</p>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-[11px] text-slate-400">{timeAgo(n.createdAt)}</span>
-                    <span className="text-[11px] px-1.5 py-0.5 rounded font-medium"
-                      style={{ background: `${config.color}15`, color: config.color }}>
+                    <span
+                      className="text-[11px] px-1.5 py-0.5 rounded font-medium"
+                      style={{ background: `${config.color}15`, color: config.color }}
+                    >
                       {config.label}
                     </span>
                     {n.link && (

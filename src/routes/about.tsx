@@ -44,8 +44,6 @@ const VALUES = [
   },
 ];
 
-
-
 function AboutPage() {
   // REAL stats computed from Firestore — no hardcoded marketing numbers
   const { data: stats } = useQuery({

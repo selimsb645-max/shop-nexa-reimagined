@@ -35,10 +35,7 @@ import {
   allowsSellerSubmissions,
   type CampaignState,
 } from "./campaignStateMachine";
-import {
-  validateDiscountRules,
-  type DiscountRules,
-} from "./pricing";
+import { validateDiscountRules, type DiscountRules } from "./pricing";
 
 export const CAMPAIGNS_COLLECTION = "campaigns";
 export const CAMPAIGN_EVENTS_COLLECTION = "campaignEvents";
@@ -48,10 +45,7 @@ export const HOME_CONFIG_ACTIVE_DOC = "active";
 
 /** Campaign events that trigger customer/seller notifications (§10). */
 export type CampaignNotificationEvent =
-  | "CAMPAIGN_SCHEDULED"
-  | "CAMPAIGN_STARTED"
-  | "CAMPAIGN_ENDING"
-  | "CAMPAIGN_ENDED";
+  "CAMPAIGN_SCHEDULED" | "CAMPAIGN_STARTED" | "CAMPAIGN_ENDING" | "CAMPAIGN_ENDED";
 
 /** Audit actions (§11) — append-only, never edited or deleted. */
 export type CampaignAuditAction =
@@ -142,28 +136,30 @@ export function canManageCampaigns(adminRole: string | null | undefined): boolea
   return adminRole != null && CAMPAIGN_MANAGER_ROLES.includes(adminRole);
 }
 
-export function canApproveCampaign(campaign: Pick<Campaign, "elevatedApprovalRequired">, adminRole: string | null | undefined): boolean {
+export function canApproveCampaign(
+  campaign: Pick<Campaign, "elevatedApprovalRequired">,
+  adminRole: string | null | undefined,
+): boolean {
   if (adminRole === "super_admin") return true;
   if (campaign.elevatedApprovalRequired) return false; // elevated → super_admin only
   return canManageCampaigns(adminRole);
 }
 
-export async function requireCampaignManager(projectId: string, actor: CampaignActor): Promise<void> {
+export async function requireCampaignManager(
+  projectId: string,
+  actor: CampaignActor,
+): Promise<void> {
   // The scheduler sweep itself is a trusted engine actor (§4) — its
   // authority is the clock, not a role; only the internal sweep can
   // produce this actor (client calls never pass adminRole "system").
   if (actor.adminRole === "system") return;
-  const docs = await batchGetDocs(projectId, [
-    docPath(projectId, ["users", actor.uid]),
-  ]);
+  const docs = await batchGetDocs(projectId, [docPath(projectId, ["users", actor.uid])]);
   const userDoc = docs.get(docPath(projectId, ["users", actor.uid]));
   const role =
-    (userDoc?.data as Record<string, unknown> | undefined)?.["adminRole"] as string | undefined ??
+    ((userDoc?.data as Record<string, unknown> | undefined)?.["adminRole"] as string | undefined) ??
     actor.adminRole;
   if (!canManageCampaigns(role)) {
-    throw new Error(
-      `campaigns/permission: role ${role ?? "none"} cannot manage campaigns`,
-    );
+    throw new Error(`campaigns/permission: role ${role ?? "none"} cannot manage campaigns`);
   }
 }
 
@@ -268,10 +264,16 @@ export async function createCampaign(
       },
     },
   ]);
-  await appendCampaignEvent(projectId, campaignId, "created", { uid: input.createdBy, adminRole: null }, {
-    name: campaign.name,
-    status: campaign.status,
-  });
+  await appendCampaignEvent(
+    projectId,
+    campaignId,
+    "created",
+    { uid: input.createdBy, adminRole: null },
+    {
+      name: campaign.name,
+      status: campaign.status,
+    },
+  );
   return campaign;
 }
 
@@ -281,7 +283,7 @@ export async function getCampaign(projectId: string, campaignId: string): Promis
   ]);
   const d = docs.get(docPath(projectId, [CAMPAIGNS_COLLECTION, campaignId]));
   if (!d?.exists) return null;
-  return (d.data as Record<string, unknown>) as unknown as Campaign;
+  return d.data as Record<string, unknown> as unknown as Campaign;
 }
 
 /* ──────────────────────────────────────────────────────────────── */
@@ -357,16 +359,26 @@ export async function transitionCampaign(
 function mapAuditAction(from: CampaignState, to: CampaignState): CampaignAuditAction | null {
   if (to === from) return null;
   switch (to) {
-    case "SUBMITTED": return "submitted";
-    case "REVIEW": return "updated";
-    case "APPROVED": return "approved";
-    case "REJECTED": return "rejected";
-    case "SCHEDULED": return "scheduled";
-    case "ACTIVE": return from === "PAUSED" ? "resumed" : "activated";
-    case "PAUSED": return "paused";
-    case "CANCELLED": return "cancelled";
-    case "ENDED": return "ended";
-    default: return "updated";
+    case "SUBMITTED":
+      return "submitted";
+    case "REVIEW":
+      return "updated";
+    case "APPROVED":
+      return "approved";
+    case "REJECTED":
+      return "rejected";
+    case "SCHEDULED":
+      return "scheduled";
+    case "ACTIVE":
+      return from === "PAUSED" ? "resumed" : "activated";
+    case "PAUSED":
+      return "paused";
+    case "CANCELLED":
+      return "cancelled";
+    case "ENDED":
+      return "ended";
+    default:
+      return "updated";
   }
 }
 
@@ -406,7 +418,11 @@ export async function advanceCampaigns(
     const rows = (await runFirestoreQuery(projectId, {
       from: [{ collectionId: CAMPAIGNS_COLLECTION }],
       where: {
-        fieldFilter: { field: { fieldPath: "status" }, op: "EQUAL", value: { stringValue: status } },
+        fieldFilter: {
+          field: { fieldPath: "status" },
+          op: "EQUAL",
+          value: { stringValue: status },
+        },
       },
     })) as Array<{ document?: { fields: Record<string, unknown> } }>;
     return rows
@@ -420,17 +436,19 @@ export async function advanceCampaigns(
 
   for (const c of [...scheduled, ...active]) {
     if (c.status === "SCHEDULED" && now >= c.startAt) {
-      await transitionCampaign(projectId, c.campaignId, "ACTIVE", { uid: "system", adminRole: "system" });
+      await transitionCampaign(projectId, c.campaignId, "ACTIVE", {
+        uid: "system",
+        adminRole: "system",
+      });
       result.activated.push(c.campaignId);
     } else if (c.status === "ACTIVE") {
       if (now >= c.endAt) {
-        await transitionCampaign(projectId, c.campaignId, "ENDED", { uid: "system", adminRole: "system" });
+        await transitionCampaign(projectId, c.campaignId, "ENDED", {
+          uid: "system",
+          adminRole: "system",
+        });
         result.ended.push(c.campaignId);
-      } else if (
-        endingLeadMs > 0 &&
-        c.endingNotifiedAt == null &&
-        c.endAt - now <= endingLeadMs
-      ) {
+      } else if (endingLeadMs > 0 && c.endingNotifiedAt == null && c.endAt - now <= endingLeadMs) {
         await queueCampaignNotification(projectId, c.campaignId, "CAMPAIGN_ENDING", c);
         await commitWrites(projectId, [
           {
@@ -477,14 +495,11 @@ export async function readActiveHomeConfig(projectId: string): Promise<ActiveHom
   ]);
   const d = docs.get(docPath(projectId, [HOME_CONFIG_COLLECTION, HOME_CONFIG_ACTIVE_DOC]));
   if (!d?.exists) return { ...EMPTY_HOME_CONFIG };
-  return (d.data as Record<string, unknown>) as unknown as ActiveHomeConfig;
+  return d.data as Record<string, unknown> as unknown as ActiveHomeConfig;
 }
 
 /** Activate: snapshot the previous config, then switch (§5 + §9). */
-export async function switchHomeConfig(
-  projectId: string,
-  campaign: Campaign,
-): Promise<void> {
+export async function switchHomeConfig(projectId: string, campaign: Campaign): Promise<void> {
   const previous = await readActiveHomeConfig(projectId);
   const writes: FsWrite[] = [];
   // Snapshot previous configuration for rollback (§9) — only if not
@@ -514,9 +529,15 @@ export async function switchHomeConfig(
     },
   });
   await commitWrites(projectId, writes);
-  await appendCampaignEvent(projectId, campaign.campaignId, "home_switched", { uid: "system", adminRole: "system" }, {
-    modules: campaign.homeModules,
-  });
+  await appendCampaignEvent(
+    projectId,
+    campaign.campaignId,
+    "home_switched",
+    { uid: "system", adminRole: "system" },
+    {
+      modules: campaign.homeModules,
+    },
+  );
 }
 
 /** Rollback (§9): restore the snapshotted previous configuration. */
@@ -547,9 +568,15 @@ export async function restoreHomeConfig(projectId: string, campaignId: string): 
       },
     },
   ]);
-  await appendCampaignEvent(projectId, campaignId, "home_restored", { uid: "system", adminRole: "system" }, {
-    restoredFrom: snap?.exists ? `snap_${campaignId}` : "empty-default",
-  });
+  await appendCampaignEvent(
+    projectId,
+    campaignId,
+    "home_restored",
+    { uid: "system", adminRole: "system" },
+    {
+      restoredFrom: snap?.exists ? `snap_${campaignId}` : "empty-default",
+    },
+  );
 }
 
 /* ──────────────────────────────────────────────────────────────── */
@@ -639,7 +666,11 @@ export async function listCampaignEvents(
   const rows = (await runFirestoreQuery(projectId, {
     from: [{ collectionId: CAMPAIGN_EVENTS_COLLECTION }],
     where: {
-      fieldFilter: { field: { fieldPath: "campaignId" }, op: "EQUAL", value: { stringValue: campaignId } },
+      fieldFilter: {
+        field: { fieldPath: "campaignId" },
+        op: "EQUAL",
+        value: { stringValue: campaignId },
+      },
     },
     limit,
   })) as Array<{ document?: { fields: Record<string, unknown> } }>;

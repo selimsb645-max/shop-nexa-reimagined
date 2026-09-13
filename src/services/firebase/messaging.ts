@@ -21,16 +21,19 @@ function getMessagingInstance(): Messaging {
 }
 
 // Firebase vAPID key — this is a public key for web push, safe to ship in client code
-const VAPID_KEY = "BDZGalHpCd0gKKvQ8HB6uYhDaHAQa-5Xg7zvEdksagPdRnsuPdOcSG_r02Q4u5h-bIZdUu12cziENG93FwhLzp8";
+const VAPID_KEY =
+  "BDZGalHpCd0gKKvQ8HB6uYhDaHAQa-5Xg7zvEdksagPdRnsuPdOcSG_r02Q4u5h-bIZdUu12cziENG93FwhLzp8";
 
 export type NotificationPermission = "granted" | "denied" | "default" | "unsupported";
 
 /** Check if the browser supports service workers and push notifications */
 export function isPushSupported(): boolean {
-  return typeof window !== "undefined"
-    && "serviceWorker" in navigator
-    && "PushManager" in window
-    && "Notification" in window;
+  return (
+    typeof window !== "undefined" &&
+    "serviceWorker" in navigator &&
+    "PushManager" in window &&
+    "Notification" in window
+  );
 }
 
 /** Get current notification permission status */
@@ -40,7 +43,9 @@ export function getNotificationPermission(): NotificationPermission {
 }
 
 /** Request permission and get FCM token */
-export async function requestNotificationPermission(userId: string): Promise<{ granted: boolean; token?: string; error?: string }> {
+export async function requestNotificationPermission(
+  userId: string,
+): Promise<{ granted: boolean; token?: string; error?: string }> {
   if (!isPushSupported()) {
     return { granted: false, error: "Push notifications are not supported on this device" };
   }
@@ -100,7 +105,12 @@ export async function revokeNotificationPermission(userId: string): Promise<void
 }
 
 /** Listen for foreground push messages (when app is open) */
-export function onForegroundMessage(callback: (payload: { notification?: { title?: string; body?: string; icon?: string; tag?: string }; data?: Record<string, string> }) => void): () => void {
+export function onForegroundMessage(
+  callback: (payload: {
+    notification?: { title?: string; body?: string; icon?: string; tag?: string };
+    data?: Record<string, string>;
+  }) => void,
+): () => void {
   const messaging = getMessagingInstance();
   return onMessage(messaging, callback);
 }

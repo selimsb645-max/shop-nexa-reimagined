@@ -158,10 +158,12 @@ export async function grantSignupRewardServer(uid: string): Promise<SignupReward
   const userDocName = docPath(projectId, ["users", uid]);
   const rewardTxDocName = docPath(projectId, ["users", uid, "rewardTx", REWARD_TX_DOC_ID]);
   const rewardNotifName = docPath(projectId, ["users", uid, "notifications", REWARD_NOTIF_DOC_ID]);
-  const oldFakeRewardNotifName = docPath(
-    projectId,
-    ["users", uid, "notifications", OLD_FAKE_REWARD_NOTIF_ID],
-  );
+  const oldFakeRewardNotifName = docPath(projectId, [
+    "users",
+    uid,
+    "notifications",
+    OLD_FAKE_REWARD_NOTIF_ID,
+  ]);
 
   let lastError: Error | null = null;
 
@@ -172,11 +174,11 @@ export async function grantSignupRewardServer(uid: string): Promise<SignupReward
       tx = await beginTransaction(projectId);
 
       // 2. Read user doc (lock) + rewardTx (idempotency check) + old fake notif (cleanup)
-      const docs = await batchGetDocsWithTx(projectId, [
-        userDocName,
-        rewardTxDocName,
-        oldFakeRewardNotifName,
-      ], tx);
+      const docs = await batchGetDocsWithTx(
+        projectId,
+        [userDocName, rewardTxDocName, oldFakeRewardNotifName],
+        tx,
+      );
 
       // 3. Check if already rewarded
       const existingReward = docs.get(rewardTxDocName);
@@ -211,7 +213,8 @@ export async function grantSignupRewardServer(uid: string): Promise<SignupReward
             fields: toFsFields({
               type: "reward",
               title: "100 Bonus Points Earned! 🎉",
-              message: "You earned 100 bonus points for joining AVENTA SHOP. Use them on your first purchase!",
+              message:
+                "You earned 100 bonus points for joining AVENTA SHOP. Use them on your first purchase!",
               link: "/rewards",
               read: false,
               createdAt: nowMs,

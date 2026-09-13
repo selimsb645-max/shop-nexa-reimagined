@@ -86,7 +86,12 @@ export async function listThreads(uid: string): Promise<MessageThread[]> {
 
 export async function listMessages(uid: string, threadId: string): Promise<ChatMessage[]> {
   const snap = await getDocs(
-    query(messagesCol(uid), where("threadId", "==", threadId), orderBy("createdAt", "asc"), limit(300)),
+    query(
+      messagesCol(uid),
+      where("threadId", "==", threadId),
+      orderBy("createdAt", "asc"),
+      limit(300),
+    ),
   );
   return snap.docs.map((d) => mapMessage(d.id, d.data() as Record<string, unknown>));
 }

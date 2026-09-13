@@ -218,7 +218,8 @@ export function ProductForm({ sellerId, initial, onSubmit, submitLabel }: Props)
               <input type="checkbox" {...register("freeDelivery")} /> Free Delivery
             </label>
             <p className="text-[11px] text-muted-foreground">
-              Free Delivery ON = you (seller) pay the delivery-zone charge. When OFF, the customer pays it.
+              Free Delivery ON = you (seller) pay the delivery-zone charge. When OFF, the customer
+              pays it.
             </p>
           </div>
           <div className="space-y-3 rounded-lg border bg-background p-5">

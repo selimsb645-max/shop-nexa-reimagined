@@ -9,7 +9,11 @@ export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
       { title: "Sign In — AVENTA SHOP" },
-      { name: "description", content: "Sign in to your AVENTA SHOP account to track orders, save wishlists and checkout faster." },
+      {
+        name: "description",
+        content:
+          "Sign in to your AVENTA SHOP account to track orders, save wishlists and checkout faster.",
+      },
       { property: "og:title", content: "Sign In — AVENTA SHOP" },
       { property: "og:description", content: "Sign in to your AVENTA SHOP account." },
       { property: "og:url", content: `${getSiteUrl()}/login` },
@@ -21,7 +25,6 @@ export const Route = createFileRoute("/login")({
     redirect: typeof s.redirect === "string" ? s.redirect : undefined,
   }),
 });
-
 
 function LoginPage() {
   return (

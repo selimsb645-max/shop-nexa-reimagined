@@ -71,10 +71,7 @@ export function isTerminalCampaignState(s: CampaignState): boolean {
 }
 
 /** States in which sellers may submit products for the campaign (§3). */
-export const SELLER_SUBMISSION_STATES: readonly CampaignState[] = [
-  "SUBMITTED",
-  "REVIEW",
-] as const;
+export const SELLER_SUBMISSION_STATES: readonly CampaignState[] = ["SUBMITTED", "REVIEW"] as const;
 
 export function allowsSellerSubmissions(s: CampaignState): boolean {
   return (SELLER_SUBMISSION_STATES as readonly string[]).includes(s);

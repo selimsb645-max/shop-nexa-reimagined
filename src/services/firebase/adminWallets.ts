@@ -77,7 +77,11 @@ export async function fetchAdminWallets(
   opts: { search?: string; status?: "ACTIVE" | "SUSPENDED" | "LOCKED" | "CLOSED" } = {},
 ): Promise<AdminWalletRow[]> {
   return getAdminWallets({
-    data: { idToken, ...(opts.search ? { search: opts.search } : {}), ...(opts.status ? { status: opts.status } : {}) },
+    data: {
+      idToken,
+      ...(opts.search ? { search: opts.search } : {}),
+      ...(opts.status ? { status: opts.status } : {}),
+    },
   }) as Promise<AdminWalletRow[]>;
 }
 

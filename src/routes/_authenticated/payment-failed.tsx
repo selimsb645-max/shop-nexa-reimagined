@@ -18,7 +18,11 @@ function PaymentFailedPage() {
       <SiteHeader />
       <main className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
         <div className="mb-4">
-          <BackButton fallbackTo="/orders" label="Back" className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-200 active:scale-95" />
+          <BackButton
+            fallbackTo="/orders"
+            label="Back"
+            className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-200 active:scale-95"
+          />
         </div>
         <div className="flex flex-col items-center text-center">
           <div className="mb-4 grid h-20 w-20 place-items-center rounded-full bg-red-100">

@@ -22,8 +22,8 @@ export const Route = createFileRoute("/_authenticated/admin/delivery")({
 });
 
 function AdminDeliveryDashboardPage() {
-
-  const { t } = useI18n();  const { data: orders } = useQuery({
+  const { t } = useI18n();
+  const { data: orders } = useQuery({
     queryKey: ["adminOrders", "all"],
     queryFn: async () => {
       const db = (await import("@/services/firebase/config")).getDb();
@@ -42,10 +42,26 @@ function AdminDeliveryDashboardPage() {
           total: Number(data.total ?? 0),
           couponCode: (data.couponCode as string | null) ?? null,
           status: (data.status as Order["status"]) ?? "pending",
-          payment: (data.payment as Order["payment"]) ?? { method: "cash_on_delivery", status: "unpaid", provider: null, transactionId: null, paidAt: null },
-          shippingAddress: (data.shippingAddress as Order["shippingAddress"]) ?? { fullName: "", phone: "", addressLine: "", city: "", postalCode: "", country: "" },
+          payment: (data.payment as Order["payment"]) ?? {
+            method: "cash_on_delivery",
+            status: "unpaid",
+            provider: null,
+            transactionId: null,
+            paidAt: null,
+          },
+          shippingAddress: (data.shippingAddress as Order["shippingAddress"]) ?? {
+            fullName: "",
+            phone: "",
+            addressLine: "",
+            city: "",
+            postalCode: "",
+            country: "",
+          },
           tracking: Array.isArray(data.tracking) ? data.tracking : [],
-          createdAt: typeof data.createdAt === "number" ? data.createdAt : (data.createdAt as { toMillis?: () => number })?.toMillis?.() ?? Date.now(),
+          createdAt:
+            typeof data.createdAt === "number"
+              ? data.createdAt
+              : ((data.createdAt as { toMillis?: () => number })?.toMillis?.() ?? Date.now()),
           updatedAt: typeof data.updatedAt === "number" ? data.updatedAt : Date.now(),
         } as Order;
       });
@@ -76,11 +92,35 @@ function AdminDeliveryDashboardPage() {
 
         {/* Stats */}
         <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          <StatCard icon={<Clock className="h-5 w-5" />} label="Pending" value={String(pending.length)} color="text-orange-500" />
-          <StatCard icon={<Package className="h-5 w-5" />} label="Processing" value={String(processing.length)} color="text-blue-500" />
-          <StatCard icon={<Truck className="h-5 w-5" />} label="Shipped" value={String(shipped.length)} color="text-purple-500" />
-          <StatCard icon={<CheckCircle2 className="h-5 w-5" />} label="Delivered" value={String(delivered.length)} color="text-green-500" />
-          <StatCard icon={<Truck className="h-5 w-5" />} label="COD Earnings" value={formatPrice(codEarnings)} />
+          <StatCard
+            icon={<Clock className="h-5 w-5" />}
+            label="Pending"
+            value={String(pending.length)}
+            color="text-orange-500"
+          />
+          <StatCard
+            icon={<Package className="h-5 w-5" />}
+            label="Processing"
+            value={String(processing.length)}
+            color="text-blue-500"
+          />
+          <StatCard
+            icon={<Truck className="h-5 w-5" />}
+            label="Shipped"
+            value={String(shipped.length)}
+            color="text-purple-500"
+          />
+          <StatCard
+            icon={<CheckCircle2 className="h-5 w-5" />}
+            label="Delivered"
+            value={String(delivered.length)}
+            color="text-green-500"
+          />
+          <StatCard
+            icon={<Truck className="h-5 w-5" />}
+            label="COD Earnings"
+            value={formatPrice(codEarnings)}
+          />
         </div>
 
         {/* Active deliveries */}
@@ -101,12 +141,22 @@ function AdminDeliveryDashboardPage() {
             <div className="divide-y">
               {[...pending, ...processing, ...shipped].map((order) => (
                 <div key={order.id} className="flex items-center gap-3 p-4">
-                  <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${
-                    order.status === "pending" ? "bg-orange-100 text-orange-600"
-                      : order.status === "shipped" ? "bg-purple-100 text-purple-600"
-                      : "bg-blue-100 text-blue-600"
-                  }`}>
-                    {order.status === "pending" ? <Clock className="h-5 w-5" /> : order.status === "shipped" ? <Truck className="h-5 w-5" /> : <Package className="h-5 w-5" />}
+                  <span
+                    className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${
+                      order.status === "pending"
+                        ? "bg-orange-100 text-orange-600"
+                        : order.status === "shipped"
+                          ? "bg-purple-100 text-purple-600"
+                          : "bg-blue-100 text-blue-600"
+                    }`}
+                  >
+                    {order.status === "pending" ? (
+                      <Clock className="h-5 w-5" />
+                    ) : order.status === "shipped" ? (
+                      <Truck className="h-5 w-5" />
+                    ) : (
+                      <Package className="h-5 w-5" />
+                    )}
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold">Order #{order.id.slice(0, 8)}</p>
@@ -124,7 +174,9 @@ function AdminDeliveryDashboardPage() {
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-semibold">{formatPrice(order.total)}</p>
-                    <p className="text-xs text-muted-foreground">{order.payment?.method === "cash_on_delivery" ? "COD" : "Paid"}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {order.payment?.method === "cash_on_delivery" ? "COD" : "Paid"}
+                    </p>
                   </div>
                   <Link
                     to="/admin/orders"
@@ -142,7 +194,17 @@ function AdminDeliveryDashboardPage() {
   );
 }
 
-function StatCard({ icon, label, value, color = "text-primary" }: { icon: React.ReactNode; label: string; value: string; color?: string }) {
+function StatCard({
+  icon,
+  label,
+  value,
+  color = "text-primary",
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  color?: string;
+}) {
   return (
     <div className="rounded-2xl border bg-background p-4 shadow-sm">
       <div className={`mb-1 ${color}`}>{icon}</div>

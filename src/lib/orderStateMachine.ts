@@ -72,79 +72,95 @@ export type LegacyOrderStatus =
   | "delivery_failed";
 
 export const CANONICAL_ORDER_STATUSES: readonly CanonicalOrderStatus[] = [
-  "ORDER_CREATED", "PAYMENT_CONFIRMED", "INVENTORY_RESERVED", "SELLER_NOTIFIED",
-  "PROCESSING", "PACKED", "READY_TO_SHIP", "HANDED_OVER", "IN_TRANSIT",
-  "OUT_FOR_DELIVERY", "DELIVERED", "CANCELLED", "RETURN_REQUESTED",
-  "RETURNED", "REFUND_PENDING", "REFUNDED", "DELIVERY_FAILED",
+  "ORDER_CREATED",
+  "PAYMENT_CONFIRMED",
+  "INVENTORY_RESERVED",
+  "SELLER_NOTIFIED",
+  "PROCESSING",
+  "PACKED",
+  "READY_TO_SHIP",
+  "HANDED_OVER",
+  "IN_TRANSIT",
+  "OUT_FOR_DELIVERY",
+  "DELIVERED",
+  "CANCELLED",
+  "RETURN_REQUESTED",
+  "RETURNED",
+  "REFUND_PENDING",
+  "REFUNDED",
+  "DELIVERY_FAILED",
 ];
 
 /** Terminal statuses — no outgoing transitions (except return chain). */
 export const TERMINAL_STATUSES: ReadonlySet<CanonicalOrderStatus> = new Set([
-  "DELIVERED", "CANCELLED", "REFUNDED",
+  "DELIVERED",
+  "CANCELLED",
+  "REFUNDED",
 ]);
 
 /** Exception statuses (§1 exception states). */
 export const EXCEPTION_STATUSES: ReadonlySet<CanonicalOrderStatus> = new Set([
-  "CANCELLED", "RETURN_REQUESTED", "RETURNED", "REFUND_PENDING",
-  "REFUNDED", "DELIVERY_FAILED",
+  "CANCELLED",
+  "RETURN_REQUESTED",
+  "RETURNED",
+  "REFUND_PENDING",
+  "REFUNDED",
+  "DELIVERY_FAILED",
 ]);
 
 /**
  * Canonical transition table (§1 + exception flows).
  * Every allowed transition, keyed by source status.
  */
-export const CANONICAL_TRANSITIONS: Readonly<
-  Record<CanonicalOrderStatus, CanonicalOrderStatus[]>
-> = {
-  ORDER_CREATED:      ["PAYMENT_CONFIRMED", "CANCELLED"],
-  PAYMENT_CONFIRMED:  ["INVENTORY_RESERVED", "CANCELLED"],
-  INVENTORY_RESERVED: ["SELLER_NOTIFIED", "CANCELLED"],
-  SELLER_NOTIFIED:    ["PROCESSING", "CANCELLED"],
-  // PROCESSING→IN_TRANSIT is the LEGACY fast path ("shipped" jump):
-  // pre-upgrade callers advance processing→shipped directly. Keep the
-  // edge so the migration never bricks live traffic; the new canonical
-  // flow still walks PACKED→READY_TO_SHIP→HANDED_OVER.
-  PROCESSING:         ["PACKED", "CANCELLED", "IN_TRANSIT"],
-  PACKED:             ["READY_TO_SHIP", "CANCELLED"],
-  READY_TO_SHIP:      ["HANDED_OVER", "CANCELLED"],
-  HANDED_OVER:        ["IN_TRANSIT", "DELIVERY_FAILED"],
-  // IN_TRANSIT→DELIVERED is the LEGACY fast path ("delivered" jump
-  // from "shipped") — same migration-safety rationale as above.
-  IN_TRANSIT:         ["OUT_FOR_DELIVERY", "DELIVERY_FAILED", "DELIVERED"],
-  OUT_FOR_DELIVERY:   ["DELIVERED", "DELIVERY_FAILED"],
-  DELIVERED:          ["RETURN_REQUESTED"],
-  DELIVERY_FAILED:    ["OUT_FOR_DELIVERY", "RETURNED", "REFUND_PENDING"],
-  RETURN_REQUESTED:   ["RETURNED", "DELIVERED"], // rejected → back to delivered
-  RETURNED:           ["REFUND_PENDING"],
-  REFUND_PENDING:      ["REFUNDED"],
-  REFUNDED:           [],
-  CANCELLED:          [],
-};
+export const CANONICAL_TRANSITIONS: Readonly<Record<CanonicalOrderStatus, CanonicalOrderStatus[]>> =
+  {
+    ORDER_CREATED: ["PAYMENT_CONFIRMED", "CANCELLED"],
+    PAYMENT_CONFIRMED: ["INVENTORY_RESERVED", "CANCELLED"],
+    INVENTORY_RESERVED: ["SELLER_NOTIFIED", "CANCELLED"],
+    SELLER_NOTIFIED: ["PROCESSING", "CANCELLED"],
+    // PROCESSING→IN_TRANSIT is the LEGACY fast path ("shipped" jump):
+    // pre-upgrade callers advance processing→shipped directly. Keep the
+    // edge so the migration never bricks live traffic; the new canonical
+    // flow still walks PACKED→READY_TO_SHIP→HANDED_OVER.
+    PROCESSING: ["PACKED", "CANCELLED", "IN_TRANSIT"],
+    PACKED: ["READY_TO_SHIP", "CANCELLED"],
+    READY_TO_SHIP: ["HANDED_OVER", "CANCELLED"],
+    HANDED_OVER: ["IN_TRANSIT", "DELIVERY_FAILED"],
+    // IN_TRANSIT→DELIVERED is the LEGACY fast path ("delivered" jump
+    // from "shipped") — same migration-safety rationale as above.
+    IN_TRANSIT: ["OUT_FOR_DELIVERY", "DELIVERY_FAILED", "DELIVERED"],
+    OUT_FOR_DELIVERY: ["DELIVERED", "DELIVERY_FAILED"],
+    DELIVERED: ["RETURN_REQUESTED"],
+    DELIVERY_FAILED: ["OUT_FOR_DELIVERY", "RETURNED", "REFUND_PENDING"],
+    RETURN_REQUESTED: ["RETURNED", "DELIVERED"], // rejected → back to delivered
+    RETURNED: ["REFUND_PENDING"],
+    REFUND_PENDING: ["REFUNDED"],
+    REFUNDED: [],
+    CANCELLED: [],
+  };
 
 /**
  * LEGACY → CANONICAL migration map (§1: "existing statuses থাকলে
  * migration map তৈরি করবে"). Used by `normalizeOrderStatus` so
  * pre-upgrade orders keep flowing through the new machine.
  */
-export const LEGACY_TO_CANONICAL: Readonly<
-  Record<LegacyOrderStatus, CanonicalOrderStatus>
-> = {
-  pending:          "ORDER_CREATED",
-  confirmed:        "PAYMENT_CONFIRMED",
-  processing:       "PROCESSING",
-  packed:           "PACKED",
-  ready_to_ship:    "READY_TO_SHIP",
-  handed_over:      "HANDED_OVER",
-  shipped:          "IN_TRANSIT",
-  in_transit:       "IN_TRANSIT",
+export const LEGACY_TO_CANONICAL: Readonly<Record<LegacyOrderStatus, CanonicalOrderStatus>> = {
+  pending: "ORDER_CREATED",
+  confirmed: "PAYMENT_CONFIRMED",
+  processing: "PROCESSING",
+  packed: "PACKED",
+  ready_to_ship: "READY_TO_SHIP",
+  handed_over: "HANDED_OVER",
+  shipped: "IN_TRANSIT",
+  in_transit: "IN_TRANSIT",
   out_for_delivery: "OUT_FOR_DELIVERY",
-  delivered:        "DELIVERED",
-  cancelled:        "CANCELLED",
+  delivered: "DELIVERED",
+  cancelled: "CANCELLED",
   return_requested: "RETURN_REQUESTED",
-  returned:         "RETURNED",
-  refund_pending:   "REFUND_PENDING",
-  refunded:         "REFUNDED",
-  delivery_failed:  "DELIVERY_FAILED",
+  returned: "RETURNED",
+  refund_pending: "REFUND_PENDING",
+  refunded: "REFUNDED",
+  delivery_failed: "DELIVERY_FAILED",
 };
 
 /**
@@ -152,26 +168,24 @@ export const LEGACY_TO_CANONICAL: Readonly<
  * tracking arrays) understands legacy values — `toLegacyStatus`
  * keeps every one of those code paths working without modification.
  */
-export const CANONICAL_TO_LEGACY: Readonly<
-  Record<CanonicalOrderStatus, LegacyOrderStatus>
-> = {
-  ORDER_CREATED:      "pending",
-  PAYMENT_CONFIRMED:  "confirmed",
+export const CANONICAL_TO_LEGACY: Readonly<Record<CanonicalOrderStatus, LegacyOrderStatus>> = {
+  ORDER_CREATED: "pending",
+  PAYMENT_CONFIRMED: "confirmed",
   INVENTORY_RESERVED: "confirmed",
-  SELLER_NOTIFIED:    "confirmed",
-  PROCESSING:         "processing",
-  PACKED:             "packed",
-  READY_TO_SHIP:      "ready_to_ship",
-  HANDED_OVER:         "handed_over",
-  IN_TRANSIT:         "shipped",
-  OUT_FOR_DELIVERY:   "out_for_delivery",
-  DELIVERED:          "delivered",
-  CANCELLED:          "cancelled",
-  RETURN_REQUESTED:   "return_requested",
-  RETURNED:           "returned",
-  REFUND_PENDING:     "refund_pending",
-  REFUNDED:           "refunded",
-  DELIVERY_FAILED:    "delivery_failed",
+  SELLER_NOTIFIED: "confirmed",
+  PROCESSING: "processing",
+  PACKED: "packed",
+  READY_TO_SHIP: "ready_to_ship",
+  HANDED_OVER: "handed_over",
+  IN_TRANSIT: "shipped",
+  OUT_FOR_DELIVERY: "out_for_delivery",
+  DELIVERED: "delivered",
+  CANCELLED: "cancelled",
+  RETURN_REQUESTED: "return_requested",
+  RETURNED: "returned",
+  REFUND_PENDING: "refund_pending",
+  REFUNDED: "refunded",
+  DELIVERY_FAILED: "delivery_failed",
 };
 
 /**
@@ -209,10 +223,7 @@ export function isExceptionStatus(status: CanonicalOrderStatus): boolean {
  * A no-op (same status) is allowed: idempotent event replay must
  * never be rejected by the validator (§7 idempotency requirement).
  */
-export function isValidCanonicalTransition(
-  fromRaw: string,
-  toRaw: string,
-): boolean {
+export function isValidCanonicalTransition(fromRaw: string, toRaw: string): boolean {
   const from = normalizeOrderStatus(fromRaw);
   const to = normalizeOrderStatus(toRaw);
   if (from === to) return true; // idempotent no-op
@@ -220,10 +231,7 @@ export function isValidCanonicalTransition(
 }
 
 /** Human-readable reason a transition is invalid (for logs/UI). */
-export function invalidTransitionReason(
-  fromRaw: string,
-  toRaw: string,
-): string | null {
+export function invalidTransitionReason(fromRaw: string, toRaw: string): string | null {
   if (isValidCanonicalTransition(fromRaw, toRaw)) return null;
   const from = normalizeOrderStatus(fromRaw);
   const to = normalizeOrderStatus(toRaw);
@@ -237,26 +245,24 @@ export function invalidTransitionReason(
 /**
  * Human-readable labels for UI display.
  */
-export const ORDER_STATUS_LABELS: Readonly<
-  Record<CanonicalOrderStatus, string>
-> = {
-  ORDER_CREATED:      "Order Placed",
-  PAYMENT_CONFIRMED:  "Payment Confirmed",
+export const ORDER_STATUS_LABELS: Readonly<Record<CanonicalOrderStatus, string>> = {
+  ORDER_CREATED: "Order Placed",
+  PAYMENT_CONFIRMED: "Payment Confirmed",
   INVENTORY_RESERVED: "Stock Reserved",
-  SELLER_NOTIFIED:    "Seller Notified",
-  PROCESSING:         "Processing",
-  PACKED:             "Packed",
-  READY_TO_SHIP:      "Ready to Ship",
-  HANDED_OVER:         "Handed to Courier",
-  IN_TRANSIT:         "In Transit",
-  OUT_FOR_DELIVERY:   "Out for Delivery",
-  DELIVERED:          "Delivered",
-  CANCELLED:          "Cancelled",
-  RETURN_REQUESTED:   "Return Requested",
-  RETURNED:           "Returned",
-  REFUND_PENDING:     "Refund Pending",
-  REFUNDED:           "Refunded",
-  DELIVERY_FAILED:    "Delivery Failed",
+  SELLER_NOTIFIED: "Seller Notified",
+  PROCESSING: "Processing",
+  PACKED: "Packed",
+  READY_TO_SHIP: "Ready to Ship",
+  HANDED_OVER: "Handed to Courier",
+  IN_TRANSIT: "In Transit",
+  OUT_FOR_DELIVERY: "Out for Delivery",
+  DELIVERED: "Delivered",
+  CANCELLED: "Cancelled",
+  RETURN_REQUESTED: "Return Requested",
+  RETURNED: "Returned",
+  REFUND_PENDING: "Refund Pending",
+  REFUNDED: "Refunded",
+  DELIVERY_FAILED: "Delivery Failed",
 };
 
 /** Display label for any stored status (legacy or canonical). */
@@ -288,9 +294,7 @@ export type OrderEventType =
   | "REFUNDED"
   | "DELIVERY_FAILED";
 
-export const ORDER_EVENT_TYPES: readonly OrderEventType[] = [
-  ...CANONICAL_ORDER_STATUSES,
-];
+export const ORDER_EVENT_TYPES: readonly OrderEventType[] = [...CANONICAL_ORDER_STATUSES];
 
 /** Workflow handler ids (§7 fan-out). */
 export const ORDER_WORKFLOW_HANDLERS = [
@@ -306,27 +310,26 @@ export const ORDER_WORKFLOW_HANDLERS = [
 export type OrderWorkflowHandler = (typeof ORDER_WORKFLOW_HANDLERS)[number];
 
 /** Which handlers each event fans out to (§7). */
-export const EVENT_HANDLER_MAP: Readonly<
-  Record<OrderEventType, readonly OrderWorkflowHandler[]>
-> = {
-  ORDER_CREATED:      ["finance", "audit"], // Prompt 04: ledger-first settlement creation
-  PAYMENT_CONFIRMED:  ["notifyCustomer", "audit"],
-  INVENTORY_RESERVED: ["audit"],
-  SELLER_NOTIFIED:    ["notifySeller", "notifyAdmin", "audit"],
-  PROCESSING:         ["audit"],
-  PACKED:             ["audit"],
-  READY_TO_SHIP:      ["shipment", "notifyCustomer", "audit"],
-  HANDED_OVER:         ["shipment", "audit"],
-  IN_TRANSIT:         ["shipment", "notifyCustomer", "audit"],
-  OUT_FOR_DELIVERY:   ["shipment", "notifyCustomer", "audit"],
-  DELIVERED:          ["shipment", "inventory", "finance", "notifyCustomer", "audit"],
-  CANCELLED:          ["inventory", "flashSale", "finance", "notifySeller", "notifyCustomer", "audit"],
-  RETURN_REQUESTED:   ["notifySeller", "notifyAdmin", "audit"],
-  RETURNED:           ["inventory", "finance", "audit"],
-  REFUND_PENDING:     ["finance", "notifyCustomer", "audit"],
-  REFUNDED:           ["finance", "notifyCustomer", "audit"], // Prompt 04: refund reversal
-  DELIVERY_FAILED:    ["shipment", "inventory", "flashSale", "notifySeller", "notifyAdmin", "audit"],
-};
+export const EVENT_HANDLER_MAP: Readonly<Record<OrderEventType, readonly OrderWorkflowHandler[]>> =
+  {
+    ORDER_CREATED: ["finance", "audit"], // Prompt 04: ledger-first settlement creation
+    PAYMENT_CONFIRMED: ["notifyCustomer", "audit"],
+    INVENTORY_RESERVED: ["audit"],
+    SELLER_NOTIFIED: ["notifySeller", "notifyAdmin", "audit"],
+    PROCESSING: ["audit"],
+    PACKED: ["audit"],
+    READY_TO_SHIP: ["shipment", "notifyCustomer", "audit"],
+    HANDED_OVER: ["shipment", "audit"],
+    IN_TRANSIT: ["shipment", "notifyCustomer", "audit"],
+    OUT_FOR_DELIVERY: ["shipment", "notifyCustomer", "audit"],
+    DELIVERED: ["shipment", "inventory", "finance", "notifyCustomer", "audit"],
+    CANCELLED: ["inventory", "flashSale", "finance", "notifySeller", "notifyCustomer", "audit"],
+    RETURN_REQUESTED: ["notifySeller", "notifyAdmin", "audit"],
+    RETURNED: ["inventory", "finance", "audit"],
+    REFUND_PENDING: ["finance", "notifyCustomer", "audit"],
+    REFUNDED: ["finance", "notifyCustomer", "audit"], // Prompt 04: refund reversal
+    DELIVERY_FAILED: ["shipment", "inventory", "flashSale", "notifySeller", "notifyAdmin", "audit"],
+  };
 
 // ═══════════════════════════════════════════════════════════════
 // Tracking events (§6 — logistics milestones)
@@ -343,8 +346,14 @@ export type TrackingEventType =
   | "RETURNED";
 
 export const TRACKING_EVENT_TYPES: readonly TrackingEventType[] = [
-  "PICKED_UP", "HANDED_OVER", "IN_TRANSIT", "ARRIVED_AT_HUB",
-  "OUT_FOR_DELIVERY", "DELIVERED", "FAILED", "RETURNED",
+  "PICKED_UP",
+  "HANDED_OVER",
+  "IN_TRANSIT",
+  "ARRIVED_AT_HUB",
+  "OUT_FOR_DELIVERY",
+  "DELIVERED",
+  "FAILED",
+  "RETURNED",
 ];
 
 /**
@@ -357,9 +366,7 @@ export const TRACKING_EVENT_TYPES: readonly TrackingEventType[] = [
 export type TrackingVisibility = "customer" | "seller" | "internal";
 
 /** Default visibility per tracking event type. */
-export const TRACKING_EVENT_VISIBILITY: Readonly<
-  Record<TrackingEventType, TrackingVisibility>
-> = {
+export const TRACKING_EVENT_VISIBILITY: Readonly<Record<TrackingEventType, TrackingVisibility>> = {
   PICKED_UP: "customer",
   HANDED_OVER: "customer",
   IN_TRANSIT: "customer",

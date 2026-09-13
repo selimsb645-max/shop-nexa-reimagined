@@ -39,7 +39,11 @@ export interface PriceValidationResult {
 export function validateDiscountRules(rules: DiscountRules): PriceValidationResult {
   const errors: string[] = [];
   if (rules.type === "PERCENT") {
-    if (!Number.isSafeInteger(rules.valueMinor) || rules.valueMinor < 1 || rules.valueMinor > 9900) {
+    if (
+      !Number.isSafeInteger(rules.valueMinor) ||
+      rules.valueMinor < 1 ||
+      rules.valueMinor > 9900
+    ) {
       errors.push("PERCENT discount must be 1..9900 basis points (0.01%–99%)");
     }
   } else {
@@ -79,8 +83,7 @@ export function computeCampaignPrice(
   if (!Number.isSafeInteger(originalPriceMinor) || originalPriceMinor <= 0) {
     throw new Error(`campaigns/price: invalid originalPrice ${originalPriceInput}`);
   }
-  const sellerFloorMinor =
-    sellerApprovedPriceInput == null ? null : sellerApprovedPriceInput;
+  const sellerFloorMinor = sellerApprovedPriceInput == null ? null : sellerApprovedPriceInput;
 
   let discountMinor: number;
   switch (rules.type) {
@@ -102,9 +105,7 @@ export function computeCampaignPrice(
     case "PRICE_OVERRIDE": {
       if (rules.valueMinor <= 0) throw new Error("campaigns/price: PRICE_OVERRIDE must be > 0");
       if (rules.valueMinor >= originalPriceMinor) {
-        throw new Error(
-          "campaigns/price: override price must be lower than the original price",
-        );
+        throw new Error("campaigns/price: override price must be lower than the original price");
       }
       discountMinor = originalPriceMinor - rules.valueMinor;
       break;

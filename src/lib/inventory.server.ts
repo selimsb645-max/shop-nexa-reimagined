@@ -49,10 +49,7 @@ export interface ReservationItem {
   shippingTaka?: number;
 }
 
-export type ReservationState =
-  | "reserved"
-  | "released"
-  | "sold";
+export type ReservationState = "reserved" | "released" | "sold";
 
 export interface ReservationResult {
   ok: boolean;
@@ -118,15 +115,15 @@ export async function reserveInventoryForOrder(
       //      all INSIDE the transaction (optimistic locks).
       const names = [
         docPath(projectId, [RESERVATIONS_COLLECTION, reservationDocId(orderId)]),
-        ...filtered.map((i) =>
-          docPath(projectId, ["products", i.productId]),
-        ),
+        ...filtered.map((i) => docPath(projectId, ["products", i.productId])),
       ];
       const docs = await batchGetDocsWithTx(projectId, names, tx);
 
       const resName = names[0];
       const existing = docs.get(resName);
-      const existingState = String(((existing?.data ?? {}) as Record<string, unknown>)["state"] ?? "");
+      const existingState = String(
+        ((existing?.data ?? {}) as Record<string, unknown>)["state"] ?? "",
+      );
 
       // Idempotent: already reserved by a previous (duplicated) event.
       if (existingState === "reserved") {
@@ -148,10 +145,7 @@ export async function reserveInventoryForOrder(
       const writes: FsWrite[] = [];
       const perProduct = new Map<string, number>();
       for (const item of filtered) {
-        perProduct.set(
-          item.productId,
-          (perProduct.get(item.productId) ?? 0) + item.quantity,
-        );
+        perProduct.set(item.productId, (perProduct.get(item.productId) ?? 0) + item.quantity);
       }
       for (const [productId, qty] of perProduct) {
         const pName = docPath(projectId, ["products", productId]);
@@ -211,7 +205,11 @@ export async function reserveInventoryForOrder(
     } catch (err) {
       lastReason = err instanceof Error ? err.message : String(err);
       if (tx) {
-        try { await rollbackTransaction(projectId, tx); } catch { /* already closed */ }
+        try {
+          await rollbackTransaction(projectId, tx);
+        } catch {
+          /* already closed */
+        }
       }
     }
   }
@@ -259,9 +257,7 @@ async function transitionReservation(
     try {
       tx = await beginTransaction(projectId);
 
-      const resName = docPath(
-        projectId, [RESERVATIONS_COLLECTION, reservationDocId(orderId)],
-      );
+      const resName = docPath(projectId, [RESERVATIONS_COLLECTION, reservationDocId(orderId)]);
       const docs = await batchGetDocsWithTx(projectId, [resName], tx);
       const existing = docs.get(resName);
       const state = String(((existing?.data ?? {}) as Record<string, unknown>)["state"] ?? "");
@@ -269,7 +265,11 @@ async function transitionReservation(
       // No reservation (legacy order or already moved on) → no-op.
       if (state !== expectedFrom) {
         await rollbackTransaction(projectId, tx);
-        return { ok: true, state: (state || "none") as ReservationState | "none", attempts: attempt };
+        return {
+          ok: true,
+          state: (state || "none") as ReservationState | "none",
+          attempts: attempt,
+        };
       }
 
       // Parse reserved items to apply per-product deltas.
@@ -330,7 +330,11 @@ async function transitionReservation(
     } catch (err) {
       lastReason = err instanceof Error ? err.message : String(err);
       if (tx) {
-        try { await rollbackTransaction(projectId, tx); } catch { /* already closed */ }
+        try {
+          await rollbackTransaction(projectId, tx);
+        } catch {
+          /* already closed */
+        }
       }
     }
   }

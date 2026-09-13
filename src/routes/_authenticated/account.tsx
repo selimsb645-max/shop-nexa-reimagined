@@ -138,11 +138,9 @@ function AccountPage() {
     ...live,
   });
 
-
   if (!user) return null;
 
   const counts = bucketOrders(orders ?? []);
-
 
   const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -253,7 +251,13 @@ function AccountPage() {
               >
                 {uploading ? <Spinner /> : <Upload className="h-3.5 w-3.5" strokeWidth={2.5} />}
               </button>
-              <input ref={fileRef} type="file" accept="image/*" onChange={onFile} className="hidden" />
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                onChange={onFile}
+                className="hidden"
+              />
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
@@ -276,17 +280,26 @@ function AccountPage() {
 
           {/* Wallet + Rewards + Vouchers strip */}
           <div className="mt-4 grid grid-cols-3 gap-2 rounded-2xl bg-white/15 p-3 backdrop-blur">
-            <Link to="/wallet" className="flex flex-col items-center gap-0.5 rounded-xl py-1.5 transition hover:bg-white/10">
+            <Link
+              to="/wallet"
+              className="flex flex-col items-center gap-0.5 rounded-xl py-1.5 transition hover:bg-white/10"
+            >
               <Wallet className="h-5 w-5" strokeWidth={2} />
               <span className="text-sm font-bold">{formatPrice(balance ?? 0)}</span>
               <span className="text-[10px] text-white/80">{t("account.wallet")}</span>
             </Link>
-            <Link to="/rewards" className="flex flex-col items-center gap-0.5 rounded-xl py-1.5 transition hover:bg-white/10">
+            <Link
+              to="/rewards"
+              className="flex flex-col items-center gap-0.5 rounded-xl py-1.5 transition hover:bg-white/10"
+            >
               <Sparkles className="h-5 w-5" strokeWidth={2} />
               <span className="text-sm font-bold">{points ?? 0}</span>
               <span className="text-[10px] text-white/80">{t("account.rewardPoints")}</span>
             </Link>
-            <Link to="/coupons" className="flex flex-col items-center gap-0.5 rounded-xl py-1.5 transition hover:bg-white/10">
+            <Link
+              to="/coupons"
+              className="flex flex-col items-center gap-0.5 rounded-xl py-1.5 transition hover:bg-white/10"
+            >
               <TicketPercent className="h-5 w-5" strokeWidth={2} />
               <span className="text-sm font-bold">{voucherCount}</span>
               <span className="text-[10px] text-white/80">{t("account.vouchers")}</span>
@@ -301,22 +314,65 @@ function AccountPage() {
           <DarazCardHeader
             title={t("account.myOrders")}
             action={
-              <Link to="/orders" className="inline-flex items-center gap-1 text-xs font-semibold text-orange-500 hover:underline">
+              <Link
+                to="/orders"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-orange-500 hover:underline"
+              >
                 View All <ChevronRight className="h-3.5 w-3.5" strokeWidth={2.5} />
               </Link>
             }
           />
           <div className="grid grid-cols-5 gap-1 px-2 py-3">
-            <DarazOrderIcon status="packed" icon={<CheckCircle2 className="h-6 w-6" />} label={t("account.confirmed")} count={counts.packed} />
-            <DarazOrderIcon status="processing" icon={<Loader className="h-6 w-6" />} label={t("account.processing")} count={counts.processing} />
-            <DarazOrderIcon status="shipped" icon={<Truck className="h-6 w-6" />} label={t("account.shipped")} count={counts.shipped} />
-            <DarazOrderIcon status="delivery" icon={<Bike className="h-6 w-6" />} label={t("account.delivery")} count={counts.outForDelivery} />
-            <DarazOrderIcon status="delivered" icon={<PackageCheck className="h-6 w-6" />} label={t("account.delivered")} count={counts.delivered} />
+            <DarazOrderIcon
+              status="packed"
+              icon={<CheckCircle2 className="h-6 w-6" />}
+              label={t("account.confirmed")}
+              count={counts.packed}
+            />
+            <DarazOrderIcon
+              status="processing"
+              icon={<Loader className="h-6 w-6" />}
+              label={t("account.processing")}
+              count={counts.processing}
+            />
+            <DarazOrderIcon
+              status="shipped"
+              icon={<Truck className="h-6 w-6" />}
+              label={t("account.shipped")}
+              count={counts.shipped}
+            />
+            <DarazOrderIcon
+              status="delivery"
+              icon={<Bike className="h-6 w-6" />}
+              label={t("account.delivery")}
+              count={counts.outForDelivery}
+            />
+            <DarazOrderIcon
+              status="delivered"
+              icon={<PackageCheck className="h-6 w-6" />}
+              label={t("account.delivered")}
+              count={counts.delivered}
+            />
           </div>
           <div className="grid grid-cols-5 gap-1 px-2 pb-3">
-            <DarazOrderIcon status="returns" icon={<Undo2 className="h-6 w-6" />} label={t("account.returns")} count={counts.returns} />
-            <DarazOrderIcon status="refunds" icon={<BadgeDollarSign className="h-6 w-6" />} label={t("account.refunds")} count={counts.refunds} />
-            <DarazOrderIcon status="packed" icon={<Box className="h-6 w-6" />} label={t("account.packed")} count={counts.packed} />
+            <DarazOrderIcon
+              status="returns"
+              icon={<Undo2 className="h-6 w-6" />}
+              label={t("account.returns")}
+              count={counts.returns}
+            />
+            <DarazOrderIcon
+              status="refunds"
+              icon={<BadgeDollarSign className="h-6 w-6" />}
+              label={t("account.refunds")}
+              count={counts.refunds}
+            />
+            <DarazOrderIcon
+              status="packed"
+              icon={<Box className="h-6 w-6" />}
+              label={t("account.packed")}
+              count={counts.packed}
+            />
           </div>
         </DarazCard>
 
@@ -324,16 +380,63 @@ function AccountPage() {
         <DarazCard>
           <DarazCardHeader title={t("account.myServices")} />
           <div className="grid grid-cols-4 gap-1 px-2 py-3 sm:grid-cols-5">
-            <DarazServiceIcon to="/wishlist" icon={<Heart className="h-6 w-6" />} label={t("account.wishlist")} badge={wishlistCount} />
-            <DarazServiceIcon to="/coupons" icon={<TicketPercent className="h-6 w-6" />} label={t("account.vouchers")} badge={voucherCount} />
-            <DarazServiceIcon to="/rewards" icon={<Gift className="h-6 w-6" />} label={t("account.rewards")} />
-            <DarazServiceIcon to="/referral" icon={<UserPlus className="h-6 w-6" />} label={t("account.referEarn")} />
-            <DarazServiceIcon to="/wallet" icon={<Wallet className="h-6 w-6" />} label={t("account.wallet")} />
-            <DarazServiceIcon to="/messages" icon={<MessageCircle className="h-6 w-6" />} label={t("account.messages")} badge={unreadMsgs || 0} />
-            <DarazServiceIcon to="/addresses" icon={<MapPin className="h-6 w-6" />} label={t("account.addresses")} badge={addresses?.length ?? 0} />
-            <DarazServiceIcon to="/notifications" icon={<Bell className="h-6 w-6" />} label={t("account.notifs")} badge={unreadNotifs || 0} />
-            <DarazServiceIcon to="/recently-viewed" icon={<History className="h-6 w-6" />} label={t("account.recentlyViewed")} badge={recentIds.length} />
-            <DarazServiceIcon to="/seller/register" icon={<Store className="h-6 w-6" />} label={t("account.beSeller")} highlight />
+            <DarazServiceIcon
+              to="/wishlist"
+              icon={<Heart className="h-6 w-6" />}
+              label={t("account.wishlist")}
+              badge={wishlistCount}
+            />
+            <DarazServiceIcon
+              to="/coupons"
+              icon={<TicketPercent className="h-6 w-6" />}
+              label={t("account.vouchers")}
+              badge={voucherCount}
+            />
+            <DarazServiceIcon
+              to="/rewards"
+              icon={<Gift className="h-6 w-6" />}
+              label={t("account.rewards")}
+            />
+            <DarazServiceIcon
+              to="/referral"
+              icon={<UserPlus className="h-6 w-6" />}
+              label={t("account.referEarn")}
+            />
+            <DarazServiceIcon
+              to="/wallet"
+              icon={<Wallet className="h-6 w-6" />}
+              label={t("account.wallet")}
+            />
+            <DarazServiceIcon
+              to="/messages"
+              icon={<MessageCircle className="h-6 w-6" />}
+              label={t("account.messages")}
+              badge={unreadMsgs || 0}
+            />
+            <DarazServiceIcon
+              to="/addresses"
+              icon={<MapPin className="h-6 w-6" />}
+              label={t("account.addresses")}
+              badge={addresses?.length ?? 0}
+            />
+            <DarazServiceIcon
+              to="/notifications"
+              icon={<Bell className="h-6 w-6" />}
+              label={t("account.notifs")}
+              badge={unreadNotifs || 0}
+            />
+            <DarazServiceIcon
+              to="/recently-viewed"
+              icon={<History className="h-6 w-6" />}
+              label={t("account.recentlyViewed")}
+              badge={recentIds.length}
+            />
+            <DarazServiceIcon
+              to="/seller/register"
+              icon={<Store className="h-6 w-6" />}
+              label={t("account.beSeller")}
+              highlight
+            />
           </div>
         </DarazCard>
 
@@ -358,12 +461,49 @@ function AccountPage() {
         <DarazCard>
           <DarazCardHeader title={t("account.accountSettings")} />
           <div className="divide-y divide-gray-100">
-            <DarazListRow to="/settings" icon={<Settings className="h-5 w-5" />} label={t("account.accountPrefs")} hint={t("account.accountPrefsHint")} />
-            <DarazListRow to="/addresses" icon={<MapPin className="h-5 w-5" />} label={t("account.addressBook")} hint={t("account.addressBookHint", { count: addresses?.length ?? 0, suffix: (addresses?.length ?? 0) === 1 ? "" : "es" })} />
-            <DarazListRow to="/wallet" icon={<CreditCard className="h-5 w-5" />} label={t("account.paymentWallet")} hint={balance ? formatPrice(balance) : t("account.managePayment")} />
-            <DarazListRow to="/coupons" icon={<TicketPercent className="h-5 w-5" />} label={t("account.myVouchers")} hint={voucherCount ? t("account.available", { count: voucherCount }) : t("account.noVouchers")} />
-            <DarazListRow to="/referral" icon={<UserPlus className="h-5 w-5" />} label={t("account.referEarn")} hint={t("account.referEarnHint")} />
-            <DarazListRow to="/rewards" icon={<Sparkles className="h-5 w-5" />} label={t("account.rewardPoints")} hint={points ? `${points} ${t("account.points")}` : t("account.earnEveryOrder")} />
+            <DarazListRow
+              to="/settings"
+              icon={<Settings className="h-5 w-5" />}
+              label={t("account.accountPrefs")}
+              hint={t("account.accountPrefsHint")}
+            />
+            <DarazListRow
+              to="/addresses"
+              icon={<MapPin className="h-5 w-5" />}
+              label={t("account.addressBook")}
+              hint={t("account.addressBookHint", {
+                count: addresses?.length ?? 0,
+                suffix: (addresses?.length ?? 0) === 1 ? "" : "es",
+              })}
+            />
+            <DarazListRow
+              to="/wallet"
+              icon={<CreditCard className="h-5 w-5" />}
+              label={t("account.paymentWallet")}
+              hint={balance ? formatPrice(balance) : t("account.managePayment")}
+            />
+            <DarazListRow
+              to="/coupons"
+              icon={<TicketPercent className="h-5 w-5" />}
+              label={t("account.myVouchers")}
+              hint={
+                voucherCount
+                  ? t("account.available", { count: voucherCount })
+                  : t("account.noVouchers")
+              }
+            />
+            <DarazListRow
+              to="/referral"
+              icon={<UserPlus className="h-5 w-5" />}
+              label={t("account.referEarn")}
+              hint={t("account.referEarnHint")}
+            />
+            <DarazListRow
+              to="/rewards"
+              icon={<Sparkles className="h-5 w-5" />}
+              label={t("account.rewardPoints")}
+              hint={points ? `${points} ${t("account.points")}` : t("account.earnEveryOrder")}
+            />
           </div>
         </DarazCard>
 
@@ -371,12 +511,46 @@ function AccountPage() {
         <DarazCard>
           <DarazCardHeader title={t("account.myShopping")} />
           <div className="divide-y divide-gray-100">
-            <DarazListRow to="/wishlist" icon={<Heart className="h-5 w-5" />} label={t("account.myWishlist")} hint={`${wishlistCount} ${t(wishlistCount === 1 ? "account.savedItem" : "account.savedItems")}`} badge={wishlistCount} />
-            <DarazListRow to="/recently-viewed" icon={<Eye className="h-5 w-5" />} label={t("account.recentlyViewed")} hint={`${recentIds.length} ${t(recentIds.length === 1 ? "account.product" : "account.products")}`} />
-            <DarazListRow to="/orders" icon={<Package className="h-5 w-5" />} label={t("account.orderHistory")} hint={t("account.orderHistoryHint", { count: totalOrders, suffix: totalOrders === 1 ? "" : "s" })} />
-            <DarazListRow to="/track-orders" icon={<Truck className="h-5 w-5" />} label={t("account.trackOrders")} hint={t("account.trackOrdersHint")} />
-            <DarazListRow to="/my-reviews" icon={<Star className="h-5 w-5" />} label={t("account.myReviews")} hint={t("account.myReviewsHint")} />
-            <DarazListRow to="/returns" icon={<Undo2 className="h-5 w-5" />} label={t("account.returnsRefunds")} hint={t("account.returnsRefundsHint")} />
+            <DarazListRow
+              to="/wishlist"
+              icon={<Heart className="h-5 w-5" />}
+              label={t("account.myWishlist")}
+              hint={`${wishlistCount} ${t(wishlistCount === 1 ? "account.savedItem" : "account.savedItems")}`}
+              badge={wishlistCount}
+            />
+            <DarazListRow
+              to="/recently-viewed"
+              icon={<Eye className="h-5 w-5" />}
+              label={t("account.recentlyViewed")}
+              hint={`${recentIds.length} ${t(recentIds.length === 1 ? "account.product" : "account.products")}`}
+            />
+            <DarazListRow
+              to="/orders"
+              icon={<Package className="h-5 w-5" />}
+              label={t("account.orderHistory")}
+              hint={t("account.orderHistoryHint", {
+                count: totalOrders,
+                suffix: totalOrders === 1 ? "" : "s",
+              })}
+            />
+            <DarazListRow
+              to="/track-orders"
+              icon={<Truck className="h-5 w-5" />}
+              label={t("account.trackOrders")}
+              hint={t("account.trackOrdersHint")}
+            />
+            <DarazListRow
+              to="/my-reviews"
+              icon={<Star className="h-5 w-5" />}
+              label={t("account.myReviews")}
+              hint={t("account.myReviewsHint")}
+            />
+            <DarazListRow
+              to="/returns"
+              icon={<Undo2 className="h-5 w-5" />}
+              label={t("account.returnsRefunds")}
+              hint={t("account.returnsRefundsHint")}
+            />
           </div>
         </DarazCard>
 
@@ -384,8 +558,18 @@ function AccountPage() {
         <DarazCard>
           <DarazCardHeader title={t("account.membershipGifts")} />
           <div className="divide-y divide-gray-100">
-            <DarazListRow to="/membership" icon={<Crown className="h-5 w-5" />} label={t("account.nexaPrime")} hint={t("account.nexaPrimeHint")} />
-            <DarazListRow to="/gift-cards" icon={<GiftCardIcon className="h-5 w-5" />} label={t("account.giftCards")} hint={t("account.giftCardsHint")} />
+            <DarazListRow
+              to="/membership"
+              icon={<Crown className="h-5 w-5" />}
+              label={t("account.nexaPrime")}
+              hint={t("account.nexaPrimeHint")}
+            />
+            <DarazListRow
+              to="/gift-cards"
+              icon={<GiftCardIcon className="h-5 w-5" />}
+              label={t("account.giftCards")}
+              hint={t("account.giftCardsHint")}
+            />
           </div>
         </DarazCard>
 
@@ -393,8 +577,26 @@ function AccountPage() {
         <DarazCard>
           <DarazCardHeader title={t("account.communication")} />
           <div className="divide-y divide-gray-100">
-            <DarazListRow to="/messages" icon={<MessageCircle className="h-5 w-5" />} label={t("account.messages")} hint={unreadMsgs ? t("account.unread", { count: unreadMsgs }) : t("account.allCaughtUp")} badge={unreadMsgs || 0} />
-            <DarazListRow to="/notifications" icon={<Bell className="h-5 w-5" />} label={t("notifications.title")} hint={unreadNotifs ? t("account.unread", { count: unreadNotifs }) : t("account.allCaughtUp")} badge={unreadNotifs || 0} />
+            <DarazListRow
+              to="/messages"
+              icon={<MessageCircle className="h-5 w-5" />}
+              label={t("account.messages")}
+              hint={
+                unreadMsgs ? t("account.unread", { count: unreadMsgs }) : t("account.allCaughtUp")
+              }
+              badge={unreadMsgs || 0}
+            />
+            <DarazListRow
+              to="/notifications"
+              icon={<Bell className="h-5 w-5" />}
+              label={t("notifications.title")}
+              hint={
+                unreadNotifs
+                  ? t("account.unread", { count: unreadNotifs })
+                  : t("account.allCaughtUp")
+              }
+              badge={unreadNotifs || 0}
+            />
           </div>
         </DarazCard>
 
@@ -402,9 +604,24 @@ function AccountPage() {
         <DarazCard>
           <DarazCardHeader title={t("account.helpSupport")} />
           <div className="divide-y divide-gray-100">
-            <DarazListRow to="/support" icon={<Headphones className="h-5 w-5" />} label={t("account.customerService")} hint={t("account.customerServiceHint")} />
-            <DarazListRow to="/support" icon={<BookOpen className="h-5 w-5" />} label={t("account.helpCenter")} hint={t("account.helpCenterHint")} />
-            <DarazExternalRow href="mailto:help.aventashop@gmail.com" icon={<Mail className="h-5 w-5" />} label={t("account.contactUs")} hint="help.aventashop@gmail.com" />
+            <DarazListRow
+              to="/support"
+              icon={<Headphones className="h-5 w-5" />}
+              label={t("account.customerService")}
+              hint={t("account.customerServiceHint")}
+            />
+            <DarazListRow
+              to="/support"
+              icon={<BookOpen className="h-5 w-5" />}
+              label={t("account.helpCenter")}
+              hint={t("account.helpCenterHint")}
+            />
+            <DarazExternalRow
+              href="mailto:help.aventashop@gmail.com"
+              icon={<Mail className="h-5 w-5" />}
+              label={t("account.contactUs")}
+              hint="help.aventashop@gmail.com"
+            />
           </div>
         </DarazCard>
 
@@ -412,7 +629,12 @@ function AccountPage() {
         <DarazCard>
           <DarazCardHeader title={t("account.about")} />
           <div className="divide-y divide-gray-100">
-            <DarazListRow to="/support" icon={<Info className="h-5 w-5" />} label={t("settings.aboutShopNexa")} hint={t("settings.aboutHint")} />
+            <DarazListRow
+              to="/support"
+              icon={<Info className="h-5 w-5" />}
+              label={t("settings.aboutShopNexa")}
+              hint={t("settings.aboutHint")}
+            />
             <div className="flex items-center gap-3 p-4">
               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gray-100 text-gray-600">
                 {user.emailVerified ? (
@@ -541,7 +763,9 @@ function DarazServiceIcon({
           </span>
         )}
       </span>
-      <span className="text-center text-[11px] font-medium leading-tight text-gray-600">{label}</span>
+      <span className="text-center text-[11px] font-medium leading-tight text-gray-600">
+        {label}
+      </span>
     </Link>
   );
 }

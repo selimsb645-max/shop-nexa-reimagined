@@ -240,7 +240,11 @@ describe("QC lifecycle", () => {
     const snap1 = doc.fields?.["productSnapshot"] as Record<string, unknown> | undefined;
     expect(typeof (snap1 as { stringValue?: string } | undefined)?.stringValue).toBe("string");
 
-    await completeQcReview("test-project", { reviewId: review.reviewId, checklist: fullChecklist(true) }, REVIEWER);
+    await completeQcReview(
+      "test-project",
+      { reviewId: review.reviewId, checklist: fullChecklist(true) },
+      REVIEWER,
+    );
     await listQcPassedProduct("test-project", review.reviewId, REVIEWER);
     res = await fetch(`${BASE}/${QC_REVIEWS_COLLECTION}/${review.reviewId}`);
     doc = (await res.json()) as { fields?: Record<string, unknown> };

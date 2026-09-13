@@ -37,22 +37,30 @@ vi.mock("../firebase-admin.server", () => ({
     }
     committedWrites.push(...(writes as unknown[]));
     // Apply the writes to the fake store (products + reservations)
-    for (const w of writes as Array<{ update?: { name: string; fields: Record<string, { integerValue?: string; stringValue?: string }> } }>) {
+    for (const w of writes as Array<{
+      update?: {
+        name: string;
+        fields: Record<string, { integerValue?: string; stringValue?: string }>;
+      };
+    }>) {
       if (!w?.update?.name) continue;
       const name = w.update.name;
       const id = name.split("/").pop()!;
       const parent = name.split("/").slice(-2, -1)[0];
       const fields: Record<string, unknown> = {};
       for (const [k, v] of Object.entries(w.update.fields)) {
-        fields[k] = v.integerValue ? Number(v.integerValue) : v.stringValue ?? null;
+        fields[k] = v.integerValue ? Number(v.integerValue) : (v.stringValue ?? null);
       }
       if (parent === "products") products[id] = { ...products[id], ...fields } as never;
-      if (parent === "inventoryReservations") reservations[id] = { ...reservations[id], ...fields } as never;
+      if (parent === "inventoryReservations")
+        reservations[id] = { ...reservations[id], ...fields } as never;
     }
     return true;
   }),
   rollbackTransaction: vi.fn(async () => {}),
-  commitWrites: vi.fn(async (_p: string, writes: unknown[]) => { committedWrites.push(...(writes as unknown[])); }),
+  commitWrites: vi.fn(async (_p: string, writes: unknown[]) => {
+    committedWrites.push(...(writes as unknown[]));
+  }),
   docPath: (projectId: string, segments: string[]) =>
     `projects/${projectId}/databases/(default)/documents/${segments.join("/")}`,
   toFsFields: (obj: Record<string, unknown>) => {
@@ -61,7 +69,8 @@ vi.mock("../firebase-admin.server", () => ({
       if (typeof v === "number") out[k] = { integerValue: String(v) };
       else if (typeof v === "boolean") out[k] = { booleanValue: v };
       else if (v === null) out[k] = { nullValue: null };
-      else if (Array.isArray(v)) out[k] = { arrayValue: { values: v.map((x) => ({ stringValue: String(x) })) } };
+      else if (Array.isArray(v))
+        out[k] = { arrayValue: { values: v.map((x) => ({ stringValue: String(x) })) } };
       else out[k] = { stringValue: String(v) };
     }
     return out;

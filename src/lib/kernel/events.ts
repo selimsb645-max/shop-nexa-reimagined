@@ -21,12 +21,7 @@
  */
 
 import type { FsWrite } from "../firebase-admin.server";
-import {
-  docPath,
-  toFsFields,
-  batchGetDocs,
-  commitWrites,
-} from "../firebase-admin.server";
+import { docPath, toFsFields, batchGetDocs, commitWrites } from "../firebase-admin.server";
 
 // ───────────────────────────────────────────────────────────────
 // Envelope
@@ -229,7 +224,10 @@ export interface DispatchOutcome {
  * The payload is read from the dispatch doc itself, so a restart
  * after a crash replays exactly the same input.
  */
-export async function processDispatch(projectId: string, dispatchId: string): Promise<DispatchOutcome> {
+export async function processDispatch(
+  projectId: string,
+  dispatchId: string,
+): Promise<DispatchOutcome> {
   const name = docPath(projectId, [DOMAIN_DISPATCHES_COLLECTION, dispatchId]);
   const doc = (await batchGetDocs(projectId, [name])).get(name);
   if (!doc?.exists) throw new Error(`kernel/dispatch: ${dispatchId} not found`);
@@ -238,7 +236,12 @@ export async function processDispatch(projectId: string, dispatchId: string): Pr
   const status = String(d.status ?? "PENDING");
   const attempts = Number(d.attempts ?? 0);
   if (status === "DONE" || status === "DEAD") {
-    return { dispatchId, subscriber: String(d.subscriber ?? ""), status: status as "DONE" | "DEAD", attempts };
+    return {
+      dispatchId,
+      subscriber: String(d.subscriber ?? ""),
+      status: status as "DONE" | "DEAD",
+      attempts,
+    };
   }
 
   const subscriberName = String(d.subscriber ?? "");
@@ -262,31 +265,36 @@ export async function processDispatch(projectId: string, dispatchId: string): Pr
   } catch (err) {
     const nextAttempts = attempts + 1;
     const dead = nextAttempts >= MAX_DISPATCH_ATTEMPTS;
-    await commitWrites(projectId, [{
-      update: {
-        name,
-        fields: toFsFields({
-          status: dead ? "DEAD" : "PENDING",
-          attempts: nextAttempts,
-          lastError: err instanceof Error ? err.message : String(err),
-          updatedAt: Date.now(),
-        }),
+    await commitWrites(projectId, [
+      {
+        update: {
+          name,
+          fields: toFsFields({
+            status: dead ? "DEAD" : "PENDING",
+            attempts: nextAttempts,
+            lastError: err instanceof Error ? err.message : String(err),
+            updatedAt: Date.now(),
+          }),
+        },
       },
-    }]);
+    ]);
     return {
-      dispatchId, subscriber: subscriberName,
+      dispatchId,
+      subscriber: subscriberName,
       status: dead ? "DEAD" : "PENDING",
       attempts: nextAttempts,
       error: err instanceof Error ? err.message : String(err),
     };
   }
 
-  await commitWrites(projectId, [{
-    update: {
-      name,
-      fields: toFsFields({ status: "DONE", attempts, updatedAt: Date.now() }),
+  await commitWrites(projectId, [
+    {
+      update: {
+        name,
+        fields: toFsFields({ status: "DONE", attempts, updatedAt: Date.now() }),
+      },
     },
-  }]);
+  ]);
   return { dispatchId, subscriber: subscriberName, status: "DONE", attempts };
 }
 
@@ -308,7 +316,13 @@ export async function listDueDispatches(
 ): Promise<Array<{ dispatchId: string; status: string; attempts: number; eventType: string }>> {
   const statusFilter = includeDead
     ? undefined
-    : { fieldFilter: { field: { fieldPath: "status" }, op: "EQUAL", value: { stringValue: "PENDING" } } };
+    : {
+        fieldFilter: {
+          field: { fieldPath: "status" },
+          op: "EQUAL",
+          value: { stringValue: "PENDING" },
+        },
+      };
   const rows = await runFirestoreQuery(projectId, {
     from: [{ collectionId: DOMAIN_DISPATCHES_COLLECTION }],
     ...(statusFilter ? { where: statusFilter } : {}),
@@ -318,8 +332,7 @@ export async function listDueDispatches(
   return rows
     .map((row) => {
       const doc = (row as Record<string, unknown>).document as
-        | { name?: string; fields?: Record<string, FsValue> }
-        | undefined;
+        { name?: string; fields?: Record<string, FsValue> } | undefined;
       if (!doc?.name || !doc.fields) return null;
       const dispatchId = doc.name.split("/").pop() ?? "";
       const f = doc.fields;
@@ -360,8 +373,13 @@ export async function processDueDispatches(
       const outcome = await processDispatch(projectId, d.dispatchId);
       result.processed++;
       if (outcome.status === "DONE") result.done++;
-      else if (outcome.status === "DEAD") { result.dead++; result.errors.push(`${d.dispatchId}: ${outcome.error ?? "dead"}`); }
-      else { result.retried++; if (outcome.error) result.errors.push(`${d.dispatchId}: ${outcome.error}`); }
+      else if (outcome.status === "DEAD") {
+        result.dead++;
+        result.errors.push(`${d.dispatchId}: ${outcome.error ?? "dead"}`);
+      } else {
+        result.retried++;
+        if (outcome.error) result.errors.push(`${d.dispatchId}: ${outcome.error}`);
+      }
     } catch (err) {
       result.errors.push(`${d.dispatchId}: ${err instanceof Error ? err.message : String(err)}`);
     }

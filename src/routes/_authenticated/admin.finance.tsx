@@ -1,6 +1,6 @@
 /**
  * AVENTA SHOP — Admin Finance Panel Route
- * 
+ *
  * Route: /admin/finance
  * Shows the complete financial overview for AVENTA SHOP:
  * - Total Customer Payments
@@ -43,11 +43,11 @@ export const Route = createFileRoute("/_authenticated/admin/finance")({
   ssr: false,
   component: AdminFinancePage,
   head: () => ({ meta: [{ title: "Finance — AVENTA SHOP Admin" }] }),
-})
+});
 
 function AdminFinancePage() {
-
-  const { t } = useI18n();  const { user } = useAuth();
+  const { t } = useI18n();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [overview, setOverview] = useState<AdminFinanceData | null>(null);
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
@@ -243,7 +243,9 @@ function AdminFinancePage() {
                         </button>
                       </div>
                     ) : (
-                      <span className={`text-xs font-medium ${w.status === "completed" ? "text-green-600" : "text-red-600"}`}>
+                      <span
+                        className={`text-xs font-medium ${w.status === "completed" ? "text-green-600" : "text-red-600"}`}
+                      >
                         {w.status}
                       </span>
                     )}
@@ -258,7 +260,17 @@ function AdminFinancePage() {
   );
 }
 
-function FinanceCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string; color: string }) {
+function FinanceCard({
+  icon,
+  label,
+  value,
+  color,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  color: string;
+}) {
   return (
     <div className="rounded-xl border bg-card p-4">
       <div className="flex items-center gap-2 mb-2">
@@ -271,11 +283,7 @@ function FinanceCard({ icon, label, value, color }: { icon: React.ReactNode; lab
 }
 
 function FlowBox({ label, color }: { label: string; color: string }) {
-  return (
-    <span className={`rounded-lg px-3 py-1.5 text-xs font-medium ${color}`}>
-      {label}
-    </span>
-  );
+  return <span className={`rounded-lg px-3 py-1.5 text-xs font-medium ${color}`}>{label}</span>;
 }
 
 function FlowArrow() {

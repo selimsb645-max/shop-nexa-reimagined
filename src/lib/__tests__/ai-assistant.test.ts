@@ -30,10 +30,20 @@ beforeEach(() => {
 afterEach(() => {
   // Clean up all AI_ env vars between tests
   const aiKeys = [
-    "AI_PROVIDER", "AI_FALLBACK_PROVIDER", "AI_API_KEY", "AI_API_BASE_URL",
-    "AI_MODEL", "AI_LOCAL_BASE_URL", "AI_LOCAL_MODEL", "AI_SYSTEM_PROMPT",
-    "AI_MAX_TOKENS", "AI_TEMPERATURE", "AI_TIMEOUT_MS",
-    "AI_RATE_LIMIT_PER_HOUR", "AI_MAX_HISTORY", "SKIP_RATE_LIMIT",
+    "AI_PROVIDER",
+    "AI_FALLBACK_PROVIDER",
+    "AI_API_KEY",
+    "AI_API_BASE_URL",
+    "AI_MODEL",
+    "AI_LOCAL_BASE_URL",
+    "AI_LOCAL_MODEL",
+    "AI_SYSTEM_PROMPT",
+    "AI_MAX_TOKENS",
+    "AI_TEMPERATURE",
+    "AI_TIMEOUT_MS",
+    "AI_RATE_LIMIT_PER_HOUR",
+    "AI_MAX_HISTORY",
+    "SKIP_RATE_LIMIT",
   ];
   for (const k of aiKeys) delete process.env[k];
   vi.resetModules();
@@ -67,9 +77,9 @@ describe("LocalAIProvider", () => {
       15000,
       undefined,
     );
-    await expect(
-      provider.chat([{ role: "user", content: "hi" }], "system"),
-    ).rejects.toThrow("model not configured");
+    await expect(provider.chat([{ role: "user", content: "hi" }], "system")).rejects.toThrow(
+      "model not configured",
+    );
   });
 
   it("handles connection refused gracefully", async () => {
@@ -82,9 +92,7 @@ describe("LocalAIProvider", () => {
       5000,
       undefined,
     );
-    await expect(
-      provider.chat([{ role: "user", content: "hi" }], "system"),
-    ).rejects.toThrow();
+    await expect(provider.chat([{ role: "user", content: "hi" }], "system")).rejects.toThrow();
   });
 
   it("handles timeout gracefully", async () => {
@@ -97,9 +105,7 @@ describe("LocalAIProvider", () => {
       1, // 1ms timeout
       undefined,
     );
-    await expect(
-      provider.chat([{ role: "user", content: "hi" }], "system"),
-    ).rejects.toThrow();
+    await expect(provider.chat([{ role: "user", content: "hi" }], "system")).rejects.toThrow();
   });
 
   it("sends optional API key when provided", async () => {
@@ -145,9 +151,7 @@ describe("OpenAIProvider", () => {
       0.7,
       1, // 1ms timeout
     );
-    await expect(
-      provider.chat([{ role: "user", content: "hi" }], "system"),
-    ).rejects.toThrow();
+    await expect(provider.chat([{ role: "user", content: "hi" }], "system")).rejects.toThrow();
   });
 
   it("sanitizes 401 errors", async () => {
@@ -221,10 +225,7 @@ describe("MockAIProvider", () => {
   it("returns response for order queries", async () => {
     const { MockAIProvider } = await import("../ai-assistant.server");
     const provider = new MockAIProvider();
-    const reply = await provider.chat(
-      [{ role: "user", content: "Track my order" }],
-      "system",
-    );
+    const reply = await provider.chat([{ role: "user", content: "Track my order" }], "system");
     expect(reply.toLowerCase()).toContain("track");
   });
 
@@ -241,10 +242,7 @@ describe("MockAIProvider", () => {
   it("returns response for flash sale queries", async () => {
     const { MockAIProvider } = await import("../ai-assistant.server");
     const provider = new MockAIProvider();
-    const reply = await provider.chat(
-      [{ role: "user", content: "Flash sales?" }],
-      "system",
-    );
+    const reply = await provider.chat([{ role: "user", content: "Flash sales?" }], "system");
     expect(reply.toLowerCase()).toContain("flash");
   });
 
@@ -261,20 +259,14 @@ describe("MockAIProvider", () => {
   it("returns response for product search queries", async () => {
     const { MockAIProvider } = await import("../ai-assistant.server");
     const provider = new MockAIProvider();
-    const reply = await provider.chat(
-      [{ role: "user", content: "Find a product" }],
-      "system",
-    );
+    const reply = await provider.chat([{ role: "user", content: "Find a product" }], "system");
     expect(reply.toLowerCase()).toContain("shop");
   });
 
   it("returns default response for unknown queries", async () => {
     const { MockAIProvider } = await import("../ai-assistant.server");
     const provider = new MockAIProvider();
-    const reply = await provider.chat(
-      [{ role: "user", content: "xyz random query" }],
-      "system",
-    );
+    const reply = await provider.chat([{ role: "user", content: "xyz random query" }], "system");
     expect(reply).toBeTruthy();
     expect(reply.length).toBeGreaterThan(10);
   });
@@ -428,10 +420,15 @@ describe("Security", () => {
     const schema = z.object({
       idToken: z.string().min(10),
       message: z.string().trim().min(1).max(1000),
-      history: z.array(z.object({
-        role: z.enum(["user", "assistant"]),
-        content: z.string().min(1).max(1000),
-      })).max(20).default([]),
+      history: z
+        .array(
+          z.object({
+            role: z.enum(["user", "assistant"]),
+            content: z.string().min(1).max(1000),
+          }),
+        )
+        .max(20)
+        .default([]),
     });
     // Missing idToken
     expect(() => schema.parse({ message: "test", history: [] })).toThrow();
@@ -468,9 +465,7 @@ describe("Security", () => {
 
   it("rejects invalid role in history", async () => {
     const { validateAIInput } = await import("../ai-assistant.server");
-    const result = validateAIInput("test", [
-      { role: "system" as any, content: "hack" },
-    ]);
+    const result = validateAIInput("test", [{ role: "system" as any, content: "hack" }]);
     expect(result.valid).toBe(false);
   });
 
@@ -765,7 +760,8 @@ describe("Configuration", () => {
 
 describe("No Vendor Lock-in", () => {
   it("AIProvider interface is provider-agnostic", async () => {
-    const { LocalAIProvider, OpenAIProvider, MockAIProvider } = await import("../ai-assistant.server");
+    const { LocalAIProvider, OpenAIProvider, MockAIProvider } =
+      await import("../ai-assistant.server");
     // All providers implement the same interface
     const providers: { name: string; chat: (m: any, s: string) => Promise<string> }[] = [
       new MockAIProvider(),

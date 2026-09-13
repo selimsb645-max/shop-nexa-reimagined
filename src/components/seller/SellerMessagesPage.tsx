@@ -86,10 +86,11 @@ export function SellerMessagesPage({ profile }: { profile: SellerProfile }) {
   }, [activeConvId, conversations]);
 
   const filteredConversations = searchQuery
-    ? conversations.filter((c) =>
-        c.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.lastMessage.toLowerCase().includes(searchQuery.toLowerCase()),
+    ? conversations.filter(
+        (c) =>
+          c.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          c.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          c.lastMessage.toLowerCase().includes(searchQuery.toLowerCase()),
       )
     : conversations;
 
@@ -110,9 +111,7 @@ export function SellerMessagesPage({ profile }: { profile: SellerProfile }) {
               </span>
             )}
           </h1>
-          <p className="text-sm text-slate-500 mt-0.5">
-            Customer conversations for {shopName}
-          </p>
+          <p className="text-sm text-slate-500 mt-0.5">Customer conversations for {shopName}</p>
         </div>
       </div>
 
@@ -120,9 +119,11 @@ export function SellerMessagesPage({ profile }: { profile: SellerProfile }) {
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="flex h-[calc(100vh-220px)] min-h-[400px]">
           {/* Conversation List */}
-          <div className={`${
-            activeConvId ? "hidden sm:flex" : "flex"
-          } w-full sm:w-80 lg:w-96 flex-col border-r border-slate-200`}>
+          <div
+            className={`${
+              activeConvId ? "hidden sm:flex" : "flex"
+            } w-full sm:w-80 lg:w-96 flex-col border-r border-slate-200`}
+          >
             {/* Search */}
             <div className="p-3 border-b border-slate-200">
               <div className="relative">
@@ -170,9 +171,7 @@ export function SellerMessagesPage({ profile }: { profile: SellerProfile }) {
           </div>
 
           {/* Chat View */}
-          <div className={`${
-            activeConvId ? "flex" : "hidden sm:flex"
-          } flex-1 flex-col min-w-0`}>
+          <div className={`${activeConvId ? "flex" : "hidden sm:flex"} flex-1 flex-col min-w-0`}>
             {activeConvId && activeConv ? (
               <ChatView
                 convId={activeConvId}
@@ -223,12 +222,8 @@ function ConversationListItem({
       {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
-          <p className="text-sm font-bold text-[#0f172a] truncate">
-            {conv.customerName}
-          </p>
-          <span className="text-[10px] text-slate-400 flex-shrink-0">
-            {timeAgo(conv.lastAt)}
-          </span>
+          <p className="text-sm font-bold text-[#0f172a] truncate">{conv.customerName}</p>
+          <span className="text-[10px] text-slate-400 flex-shrink-0">{timeAgo(conv.lastAt)}</span>
         </div>
         <p className="text-xs text-slate-500 truncate mt-0.5">{conv.subject}</p>
         <div className="flex items-center justify-between gap-2 mt-1">
@@ -343,9 +338,7 @@ function ChatView({
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <MessageSquare className="w-8 h-8 text-slate-200 mb-2" />
             <p className="text-sm text-slate-400">No messages yet</p>
-            <p className="text-xs text-slate-400 mt-1">
-              Start the conversation by sending a reply
-            </p>
+            <p className="text-xs text-slate-400 mt-1">Start the conversation by sending a reply</p>
           </div>
         ) : (
           messages.map((msg) => (
@@ -371,11 +364,7 @@ function ChatView({
           disabled={!draft.trim() || sending}
           className="grid h-10 w-10 place-items-center rounded-full bg-[#f57224] text-white transition hover:opacity-90 disabled:opacity-50 flex-shrink-0"
         >
-          {sending ? (
-            <Loader className="w-4 h-4 animate-spin" />
-          ) : (
-            <Send className="w-4 h-4" />
-          )}
+          {sending ? <Loader className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
         </button>
       </div>
     </div>
@@ -388,19 +377,21 @@ function ChatView({
 function MessageBubble({ msg, isSeller }: { msg: ConversationMessage; isSeller: boolean }) {
   return (
     <div className={`flex ${isSeller ? "justify-end" : "justify-start"}`}>
-      <div className={`max-w-[80%] sm:max-w-[70%] flex flex-col ${
-        isSeller ? "items-end" : "items-start"
-      }`}>
-        <div className={`rounded-2xl px-4 py-2.5 text-sm shadow-sm break-words ${
-          isSeller
-            ? "rounded-br-md bg-[#f57224] text-white"
-            : "rounded-bl-md bg-white border border-slate-200 text-[#0f172a]"
-        }`}>
+      <div
+        className={`max-w-[80%] sm:max-w-[70%] flex flex-col ${
+          isSeller ? "items-end" : "items-start"
+        }`}
+      >
+        <div
+          className={`rounded-2xl px-4 py-2.5 text-sm shadow-sm break-words ${
+            isSeller
+              ? "rounded-br-md bg-[#f57224] text-white"
+              : "rounded-bl-md bg-white border border-slate-200 text-[#0f172a]"
+          }`}
+        >
           {msg.body}
         </div>
-        <span className="mt-0.5 px-1 text-[10px] text-slate-400">
-          {formatTime(msg.createdAt)}
-        </span>
+        <span className="mt-0.5 px-1 text-[10px] text-slate-400">{formatTime(msg.createdAt)}</span>
       </div>
     </div>
   );

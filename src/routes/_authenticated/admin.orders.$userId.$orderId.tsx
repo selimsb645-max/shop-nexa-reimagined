@@ -225,7 +225,9 @@ function OrderDetailAdmin() {
             </div>
             {order.deliverySnapshot && (
               <div className="mt-2 rounded-md bg-muted/30 p-3 text-xs space-y-1">
-                <div className="font-semibold text-muted-foreground mb-1">Delivery Zone Breakdown</div>
+                <div className="font-semibold text-muted-foreground mb-1">
+                  Delivery Zone Breakdown
+                </div>
                 <div className="flex justify-between">
                   <span>Zone</span>
                   <span>{order.deliverySnapshot.zoneName}</span>
@@ -236,39 +238,52 @@ function OrderDetailAdmin() {
                 </div>
                 <div className="flex justify-between">
                   <span>Customer Paid</span>
-                  <span className="font-medium">{formatPrice(order.deliverySnapshot.customerDeliveryCharge)}</span>
+                  <span className="font-medium">
+                    {formatPrice(order.deliverySnapshot.customerDeliveryCharge)}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span>Seller Absorbed</span>
-                  <span className="font-medium text-orange-600">{formatPrice(order.deliverySnapshot.sellerDeliveryCharge)}</span>
+                  <span className="font-medium text-orange-600">
+                    {formatPrice(order.deliverySnapshot.sellerDeliveryCharge)}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span>ETA</span>
-                  <span>{order.deliverySnapshot.etaDays[0]}–{order.deliverySnapshot.etaDays[1]} days</span>
+                  <span>
+                    {order.deliverySnapshot.etaDays[0]}–{order.deliverySnapshot.etaDays[1]} days
+                  </span>
                 </div>
-                {order.deliverySnapshot.deliveryLines && order.deliverySnapshot.deliveryLines.length > 0 && (
-                  <div className="mt-2 pt-2 border-t border-border/40 space-y-1">
-                    <div className="font-semibold text-muted-foreground mb-1">Per-Product Delivery</div>
-                    {order.deliverySnapshot.deliveryLines.map((dl) => {
-                      const item = order.items?.find((i) => i.productId === dl.productId);
-                      return (
-                        <div key={dl.productId} className="flex justify-between">
-                          <span className="truncate max-w-[60%]">{item?.title ?? dl.productId}</span>
-                          <span className={dl.freeDelivery ? "text-green-600" : "text-muted-foreground"}>
-                            {dl.freeDelivery ? "FREE" : formatPrice(dl.customerDeliveryCharge)}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
+                {order.deliverySnapshot.deliveryLines &&
+                  order.deliverySnapshot.deliveryLines.length > 0 && (
+                    <div className="mt-2 pt-2 border-t border-border/40 space-y-1">
+                      <div className="font-semibold text-muted-foreground mb-1">
+                        Per-Product Delivery
+                      </div>
+                      {order.deliverySnapshot.deliveryLines.map((dl) => {
+                        const item = order.items?.find((i) => i.productId === dl.productId);
+                        return (
+                          <div key={dl.productId} className="flex justify-between">
+                            <span className="truncate max-w-[60%]">
+                              {item?.title ?? dl.productId}
+                            </span>
+                            <span
+                              className={
+                                dl.freeDelivery ? "text-green-600" : "text-muted-foreground"
+                              }
+                            >
+                              {dl.freeDelivery ? "FREE" : formatPrice(dl.customerDeliveryCharge)}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
               </div>
             )}
             {!!order.tax && order.tax > 0 && (
               <div className="flex justify-between">
-                <span className="text-muted-foreground">
-                  {order.taxLabel || "Tax"}
-                </span>
+                <span className="text-muted-foreground">{order.taxLabel || "Tax"}</span>
                 <span>+{formatPrice(order.tax)}</span>
               </div>
             )}

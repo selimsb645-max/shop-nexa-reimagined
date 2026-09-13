@@ -51,11 +51,7 @@ const DEFAULT_EXPIRY_DAYS = 30;
 // ====================================================================
 
 export type PromoDiscountType = "percent" | "fixed";
-export type PromoCampaignType =
-  | "first_order"
-  | "welcome"
-  | "campaign"
-  | "admin_issued";
+export type PromoCampaignType = "first_order" | "welcome" | "campaign" | "admin_issued";
 
 export type PromoStatus = "active" | "used" | "expired" | "disabled";
 
@@ -129,13 +125,8 @@ export function generateCandidateCode(
  * Checks whether a code already exists in the promoCodes collection.
  * Uses a document get (by doc ID = code) for O(1) lookup.
  */
-async function codeExists(
-  projectId: string,
-  code: string,
-): Promise<boolean> {
-  const result = await batchGetDocs(projectId, [
-    docPath(projectId, [COLLECTION, code]),
-  ]);
+async function codeExists(projectId: string, code: string): Promise<boolean> {
+  const result = await batchGetDocs(projectId, [docPath(projectId, [COLLECTION, code])]);
   const doc = result.get(docPath(projectId, [COLLECTION, code]));
   return doc?.exists === true;
 }
@@ -196,43 +187,40 @@ export async function checkQualification(
   const token = await getAccessToken();
 
   // Check if user already has a promo code of this campaign type
-  const existingRes = await fetch(
-    `${baseUrl(projectId)}:runQuery`,
-    {
-      method: "POST",
-      headers: {
-        authorization: `Bearer ${token}`,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        structuredQuery: {
-          from: [{ collectionId: COLLECTION }],
-          where: {
-            compositeFilter: {
-              op: "AND",
-              filters: [
-                {
-                  fieldFilter: {
-                    field: { fieldPath: "userId" },
-                    op: "EQUAL",
-                    value: { stringValue: uid },
-                  },
-                },
-                {
-                  fieldFilter: {
-                    field: { fieldPath: "campaignType" },
-                    op: "EQUAL",
-                    value: { stringValue: campaignType },
-                  },
-                },
-              ],
-            },
-          },
-          limit: 1,
-        },
-      }),
+  const existingRes = await fetch(`${baseUrl(projectId)}:runQuery`, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${token}`,
+      "content-type": "application/json",
     },
-  );
+    body: JSON.stringify({
+      structuredQuery: {
+        from: [{ collectionId: COLLECTION }],
+        where: {
+          compositeFilter: {
+            op: "AND",
+            filters: [
+              {
+                fieldFilter: {
+                  field: { fieldPath: "userId" },
+                  op: "EQUAL",
+                  value: { stringValue: uid },
+                },
+              },
+              {
+                fieldFilter: {
+                  field: { fieldPath: "campaignType" },
+                  op: "EQUAL",
+                  value: { stringValue: campaignType },
+                },
+              },
+            ],
+          },
+        },
+        limit: 1,
+      },
+    }),
+  });
 
   if (!existingRes.ok) {
     throw new Error("Could not verify promo eligibility. Please try again.");
@@ -295,18 +283,12 @@ export interface CreatePromoInput {
  * Uses currentDocument: { exists: false } as a create guard — if two
  * requests generate the same code simultaneously, only one succeeds.
  */
-export async function createPromoCodeServer(
-  input: CreatePromoInput,
-): Promise<PromoCode> {
+export async function createPromoCodeServer(input: CreatePromoInput): Promise<PromoCode> {
   const projectId = getProjectId();
   const token = await getAccessToken();
 
   // Check qualification
-  const qualification = await checkQualification(
-    projectId,
-    input.uid,
-    input.campaignType,
-  );
+  const qualification = await checkQualification(projectId, input.uid, input.campaignType);
   if (!qualification.qualified) {
     throw new Error(qualification.reason ?? "Not eligible for this promo code.");
   }
@@ -360,9 +342,7 @@ export interface AdminCreatePromoInput extends Omit<CreatePromoInput, "uid"> {
   adminUid: string; // admin creating the code
 }
 
-export async function adminCreatePromoCodeServer(
-  input: AdminCreatePromoInput,
-): Promise<PromoCode> {
+export async function adminCreatePromoCodeServer(input: AdminCreatePromoInput): Promise<PromoCode> {
   const projectId = getProjectId();
 
   // Generate unique code (skip qualification check for admin-issued)
@@ -431,9 +411,7 @@ export async function validatePromoCodeServer(
   const normalized = code.trim().toUpperCase();
 
   // Fetch the promo doc by code (doc ID)
-  const docs = await batchGetDocs(projectId, [
-    docPath(projectId, [COLLECTION, normalized]),
-  ]);
+  const docs = await batchGetDocs(projectId, [docPath(projectId, [COLLECTION, normalized])]);
   const doc = docs.get(docPath(projectId, [COLLECTION, normalized]));
 
   if (!doc?.exists) {
@@ -540,35 +518,30 @@ export function buildPromoStatusUpdateWrite(
 // List User's Promo Codes (Server-Side Read)
 // ====================================================================
 
-export async function listUserPromoCodesServer(
-  uid: string,
-): Promise<PromoCode[]> {
+export async function listUserPromoCodesServer(uid: string): Promise<PromoCode[]> {
   const projectId = getProjectId();
   const token = await getAccessToken();
 
-  const res = await fetch(
-    `${baseUrl(projectId)}:runQuery`,
-    {
-      method: "POST",
-      headers: {
-        authorization: `Bearer ${token}`,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        structuredQuery: {
-          from: [{ collectionId: COLLECTION }],
-          where: {
-            fieldFilter: {
-              field: { fieldPath: "userId" },
-              op: "EQUAL",
-              value: { stringValue: uid },
-            },
-          },
-          orderBy: [{ field: { fieldPath: "createdAt" }, direction: "DESCENDING" }],
-        },
-      }),
+  const res = await fetch(`${baseUrl(projectId)}:runQuery`, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${token}`,
+      "content-type": "application/json",
     },
-  );
+    body: JSON.stringify({
+      structuredQuery: {
+        from: [{ collectionId: COLLECTION }],
+        where: {
+          fieldFilter: {
+            field: { fieldPath: "userId" },
+            op: "EQUAL",
+            value: { stringValue: uid },
+          },
+        },
+        orderBy: [{ field: { fieldPath: "createdAt" }, direction: "DESCENDING" }],
+      },
+    }),
+  });
 
   if (!res.ok) {
     throw new Error("Could not load your promo codes. Please try again.");
@@ -593,9 +566,7 @@ export async function listUserPromoCodesServer(
 // Admin: List All Promo Codes
 // ====================================================================
 
-export async function listAllPromoCodesServer(
-  limit: number = 100,
-): Promise<PromoCode[]> {
+export async function listAllPromoCodesServer(limit: number = 100): Promise<PromoCode[]> {
   const projectId = getProjectId();
   const token = await getAccessToken();
 
@@ -651,43 +622,40 @@ export async function expireOldPromoCodesServer(): Promise<number> {
   let expired = 0;
 
   // Query active promo codes where expiresAt < now
-  const res = await fetch(
-    `${baseUrl(projectId)}:runQuery`,
-    {
-      method: "POST",
-      headers: {
-        authorization: `Bearer ${token}`,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        structuredQuery: {
-          from: [{ collectionId: COLLECTION }],
-          where: {
-            compositeFilter: {
-              op: "AND",
-              filters: [
-                {
-                  fieldFilter: {
-                    field: { fieldPath: "status" },
-                    op: "EQUAL",
-                    value: { stringValue: "active" },
-                  },
-                },
-                {
-                  fieldFilter: {
-                    field: { fieldPath: "expiresAt" },
-                    op: "LESS_THAN",
-                    value: { integerValue: String(nowMs) },
-                  },
-                },
-              ],
-            },
-          },
-          limit: 500,
-        },
-      }),
+  const res = await fetch(`${baseUrl(projectId)}:runQuery`, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${token}`,
+      "content-type": "application/json",
     },
-  );
+    body: JSON.stringify({
+      structuredQuery: {
+        from: [{ collectionId: COLLECTION }],
+        where: {
+          compositeFilter: {
+            op: "AND",
+            filters: [
+              {
+                fieldFilter: {
+                  field: { fieldPath: "status" },
+                  op: "EQUAL",
+                  value: { stringValue: "active" },
+                },
+              },
+              {
+                fieldFilter: {
+                  field: { fieldPath: "expiresAt" },
+                  op: "LESS_THAN",
+                  value: { integerValue: String(nowMs) },
+                },
+              },
+            ],
+          },
+        },
+        limit: 500,
+      },
+    }),
+  });
 
   if (!res.ok) return 0;
 

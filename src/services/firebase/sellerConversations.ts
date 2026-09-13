@@ -83,22 +83,30 @@ function mapMessage(id: string, d: Record<string, unknown>): ConversationMessage
 
 export async function listSellerConversations(sellerId: string): Promise<SellerConversation[]> {
   const snap = await getDocs(
-    query(conversationsCol(), where("sellerId", "==", sellerId), orderBy("lastAt", "desc"), limit(100)),
+    query(
+      conversationsCol(),
+      where("sellerId", "==", sellerId),
+      orderBy("lastAt", "desc"),
+      limit(100),
+    ),
   );
   return snap.docs.map((d) => mapConversation(d.id, d.data() as Record<string, unknown>));
 }
 
 export async function listCustomerConversations(customerId: string): Promise<SellerConversation[]> {
   const snap = await getDocs(
-    query(conversationsCol(), where("customerId", "==", customerId), orderBy("lastAt", "desc"), limit(100)),
+    query(
+      conversationsCol(),
+      where("customerId", "==", customerId),
+      orderBy("lastAt", "desc"),
+      limit(100),
+    ),
   );
   return snap.docs.map((d) => mapConversation(d.id, d.data() as Record<string, unknown>));
 }
 
 export async function listConversationMessages(convId: string): Promise<ConversationMessage[]> {
-  const snap = await getDocs(
-    query(convMsgCol(convId), orderBy("createdAt", "asc"), limit(500)),
-  );
+  const snap = await getDocs(query(convMsgCol(convId), orderBy("createdAt", "asc"), limit(500)));
   return snap.docs.map((d) => mapMessage(d.id, d.data() as Record<string, unknown>));
 }
 
@@ -112,7 +120,12 @@ export function subscribeSellerConversations(
   onError?: (err: Error) => void,
 ): Unsubscribe {
   return onSnapshot(
-    query(conversationsCol(), where("sellerId", "==", sellerId), orderBy("lastAt", "desc"), limit(100)),
+    query(
+      conversationsCol(),
+      where("sellerId", "==", sellerId),
+      orderBy("lastAt", "desc"),
+      limit(100),
+    ),
     (snap) => {
       onResult(snap.docs.map((d) => mapConversation(d.id, d.data() as Record<string, unknown>)));
     },
@@ -126,7 +139,12 @@ export function subscribeCustomerConversations(
   onError?: (err: Error) => void,
 ): Unsubscribe {
   return onSnapshot(
-    query(conversationsCol(), where("customerId", "==", customerId), orderBy("lastAt", "desc"), limit(100)),
+    query(
+      conversationsCol(),
+      where("customerId", "==", customerId),
+      orderBy("lastAt", "desc"),
+      limit(100),
+    ),
     (snap) => {
       onResult(snap.docs.map((d) => mapConversation(d.id, d.data() as Record<string, unknown>)));
     },
@@ -263,19 +281,31 @@ export async function markCustomerConversationRead(convId: string): Promise<void
  */
 export async function countSellerUnread(sellerId: string): Promise<number> {
   const snap = await getDocs(
-    query(conversationsCol(), where("sellerId", "==", sellerId), where("sellerUnread", ">", 0), limit(50)),
+    query(
+      conversationsCol(),
+      where("sellerId", "==", sellerId),
+      where("sellerUnread", ">", 0),
+      limit(50),
+    ),
   );
   return snap.size;
 }
-
 
 /**
  * Find a conversation by the customer's threadId.
  * Used by the customer ChatView to sync messages to the shared conversation.
  */
-export async function findConversationByThreadId(customerId: string, threadId: string): Promise<SellerConversation | null> {
+export async function findConversationByThreadId(
+  customerId: string,
+  threadId: string,
+): Promise<SellerConversation | null> {
   const snap = await getDocs(
-    query(conversationsCol(), where("customerId", "==", customerId), where("threadId", "==", threadId), limit(1)),
+    query(
+      conversationsCol(),
+      where("customerId", "==", customerId),
+      where("threadId", "==", threadId),
+      limit(1),
+    ),
   );
   if (snap.empty) return null;
   const d = snap.docs[0];

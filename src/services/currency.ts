@@ -104,15 +104,17 @@ export async function initExchangeRate(): Promise<void> {
     await fetchPromise;
     return;
   }
-  fetchPromise = fetchExchangeRate().then((rate) => {
-    cachedUsdToBdt = rate;
-    fetchPromise = null;
-    return rate;
-  }).catch(() => {
-    cachedUsdToBdt = FALLBACK_RATE_USD_TO_BDT;
-    fetchPromise = null;
-    return FALLBACK_RATE_USD_TO_BDT;
-  });
+  fetchPromise = fetchExchangeRate()
+    .then((rate) => {
+      cachedUsdToBdt = rate;
+      fetchPromise = null;
+      return rate;
+    })
+    .catch(() => {
+      cachedUsdToBdt = FALLBACK_RATE_USD_TO_BDT;
+      fetchPromise = null;
+      return FALLBACK_RATE_USD_TO_BDT;
+    });
   await fetchPromise;
 }
 

@@ -348,7 +348,8 @@ function FlashSalesPage() {
                     Flash Sales
                   </h1>
                   <p className="text-xs sm:text-sm text-orange-100 font-medium mt-0.5">
-                    Live AVENTA SHOP Deals{maxDiscountPct > 0 ? ` • Up to ${maxDiscountPct}% OFF` : ""}
+                    Live AVENTA SHOP Deals
+                    {maxDiscountPct > 0 ? ` • Up to ${maxDiscountPct}% OFF` : ""}
                   </p>
                 </div>
               </div>
@@ -357,13 +358,21 @@ function FlashSalesPage() {
             {/* Banner Right: REAL deal stats (computed from live products) */}
             <div className="w-full md:w-auto bg-[#0f172a]/95 backdrop-blur-md rounded-xl p-4 sm:p-5 border border-white/10 shadow-2xl flex items-center gap-4 md:gap-6">
               <div className="flex flex-col items-center">
-                <span className="text-2xl sm:text-3xl font-black text-white font-mono">{flashProducts.length}</span>
-                <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mt-1">Live Deals</span>
+                <span className="text-2xl sm:text-3xl font-black text-white font-mono">
+                  {flashProducts.length}
+                </span>
+                <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mt-1">
+                  Live Deals
+                </span>
               </div>
               <span className="text-xl font-bold text-orange-400">|</span>
               <div className="flex flex-col items-center">
-                <span className="text-2xl sm:text-3xl font-black text-amber-400 font-mono">{maxDiscountPct}%</span>
-                <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mt-1">Top Discount</span>
+                <span className="text-2xl sm:text-3xl font-black text-amber-400 font-mono">
+                  {maxDiscountPct}%
+                </span>
+                <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mt-1">
+                  Top Discount
+                </span>
               </div>
             </div>
           </div>

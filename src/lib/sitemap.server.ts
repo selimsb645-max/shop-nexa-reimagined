@@ -378,12 +378,7 @@ export async function generateSitemap(): Promise<{ xml: string; count: number }>
     for (const fields of sellerRows) {
       const slug = String(fields.shopSlug ?? "").trim();
       if (!slug) continue;
-      addUrl(
-        `${getSiteUrl()}/store/${encodeURIComponent(slug)}`,
-        undefined,
-        "weekly",
-        "0.6",
-      );
+      addUrl(`${getSiteUrl()}/store/${encodeURIComponent(slug)}`, undefined, "weekly", "0.6");
     }
   } catch (err) {
     console.error("[sitemap] Failed to fetch stores:", err);

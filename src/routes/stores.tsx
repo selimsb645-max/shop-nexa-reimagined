@@ -89,13 +89,16 @@ function StoresDirectory() {
         <div className="bg-[#1a1f3a] text-white">
           <div className="max-w-7xl mx-auto px-4 py-10 sm:py-14">
             <div className="flex items-center gap-2 text-xs text-slate-300 mb-3">
-              <Link to="/" className="hover:text-white transition-colors">Home</Link>
+              <Link to="/" className="hover:text-white transition-colors">
+                Home
+              </Link>
               <ChevronRight className="w-3 h-3" />
               <span className="text-white font-medium">Stores</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold">All Stores</h1>
             <p className="mt-2 text-sm text-slate-300 max-w-xl">
-              Discover verified sellers on AVENTA SHOP — browse their storefronts and shop with confidence.
+              Discover verified sellers on AVENTA SHOP — browse their storefronts and shop with
+              confidence.
             </p>
 
             {/* Search */}
@@ -130,7 +133,9 @@ function StoresDirectory() {
                 {q ? "No stores match your search" : "No stores yet"}
               </h2>
               <p className="mt-2 text-sm text-slate-500">
-                {q ? "Try a different name or location." : "Verified seller stores will appear here soon."}
+                {q
+                  ? "Try a different name or location."
+                  : "Verified seller stores will appear here soon."}
               </p>
               <Link
                 to="/shop"
@@ -156,7 +161,11 @@ function StoresDirectory() {
                     <div className="flex items-start gap-3">
                       <div className="w-14 h-14 rounded-xl bg-[#1a1f3a] flex items-center justify-center text-white font-extrabold text-lg shrink-0 overflow-hidden">
                         {s.logoUrl ? (
-                          <img src={s.logoUrl} alt={s.shopName} className="w-full h-full object-cover" />
+                          <img
+                            src={s.logoUrl}
+                            alt={s.shopName}
+                            className="w-full h-full object-cover"
+                          />
                         ) : (
                           s.shopName.charAt(0).toUpperCase()
                         )}
@@ -179,7 +188,8 @@ function StoresDirectory() {
                       <p className="mt-3 text-xs text-slate-500 line-clamp-2">{s.description}</p>
                     )}
                     <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#f57224]">
-                      Visit Store <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                      Visit Store{" "}
+                      <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                     </span>
                   </Link>
                 ))}

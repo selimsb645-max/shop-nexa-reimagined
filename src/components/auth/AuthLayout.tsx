@@ -17,7 +17,11 @@ export function AuthLayout({
       <header className="border-b bg-background">
         <div className="mx-auto flex max-w-7xl items-center px-4 py-4">
           <Link to="/" className="flex items-center gap-2">
-            <img src="/brand/aventa-shop-logo.png" alt="AVENTA SHOP" className="h-11 w-auto object-contain" />
+            <img
+              src="/brand/aventa-shop-logo.png"
+              alt="AVENTA SHOP"
+              className="h-11 w-auto object-contain"
+            />
           </Link>
         </div>
       </header>

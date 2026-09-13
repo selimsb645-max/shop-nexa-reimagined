@@ -27,17 +27,9 @@
 //    written; financial fields are untouchable.
 // ═══════════════════════════════════════════════════════════════
 
-import {
-  commitWrites,
-  docPath,
-  batchGetDocs,
-  toFsFields,
-} from "./firebase-admin.server";
+import { commitWrites, docPath, batchGetDocs, toFsFields } from "./firebase-admin.server";
 import { advanceOrderStatus, dispatchOrderEvent } from "./orderWorkflow.server";
-import {
-  CANONICAL_TRANSITIONS,
-  type CanonicalOrderStatus,
-} from "./orderStateMachine";
+import { CANONICAL_TRANSITIONS, type CanonicalOrderStatus } from "./orderStateMachine";
 
 /** Order-operations roles (mirrors roleIn([...]) in firestore.rules). */
 export const ORDER_ADMIN_ROLES = ["super_admin", "admin", "order_manager"] as const;
@@ -85,7 +77,11 @@ export async function verifyOrderAdmin(
   const role = String(userDoc.data["role"] ?? "customer");
   const adminRole = String(userDoc.data["adminRole"] ?? "");
   const blocked = userDoc.data["blocked"] === true;
-  if (role !== "admin" || blocked || !(ORDER_ADMIN_ROLES as readonly string[]).includes(adminRole)) {
+  if (
+    role !== "admin" ||
+    blocked ||
+    !(ORDER_ADMIN_ROLES as readonly string[]).includes(adminRole)
+  ) {
     throw new Error(
       "Authorization failed — order status updates require an order-operations admin role.",
     );
@@ -122,21 +118,22 @@ export async function adminAdvanceOrder(
   }
   const orderData = orderDoc.data as Record<string, unknown>;
   const sellerIds = (orderData["sellerIds"] as string[] | undefined) ?? [];
-  const items = ((orderData["items"] as Array<Record<string, unknown>>) ?? []).map(
-    (i) => ({
-      productId: String(i["productId"] ?? ""),
-      quantity: Number(i["quantity"] ?? 0),
-      sellerId: i["sellerId"] != null ? String(i["sellerId"]) : undefined,
-      categoryId: i["categoryId"] != null ? String(i["categoryId"]) : null,
-      subcategoryId: i["subcategoryId"] != null ? String(i["subcategoryId"]) : null,
-      lineTotalTaka: i["subtotal"] != null ? Number(i["subtotal"]) : undefined,
-    }),
-  );
+  const items = ((orderData["items"] as Array<Record<string, unknown>>) ?? []).map((i) => ({
+    productId: String(i["productId"] ?? ""),
+    quantity: Number(i["quantity"] ?? 0),
+    sellerId: i["sellerId"] != null ? String(i["sellerId"]) : undefined,
+    categoryId: i["categoryId"] != null ? String(i["categoryId"]) : null,
+    subcategoryId: i["subcategoryId"] != null ? String(i["subcategoryId"]) : null,
+    lineTotalTaka: i["subtotal"] != null ? Number(i["subtotal"]) : undefined,
+  }));
   const total = Number(orderData["total"] ?? 0);
 
   // 3. Advance (engine: validates the machine + idempotent replay)
   const advance = await advanceOrderStatus(
-    projectId, customerId, orderId, to,
+    projectId,
+    customerId,
+    orderId,
+    to,
     note || "Updated by admin",
   );
 
@@ -158,10 +155,11 @@ export async function adminAdvanceOrder(
     eventId: dispatch.eventId,
     handlersRun: dispatch.handlersRun,
     handlersFailed: dispatch.handlersFailed,
-    skipped: dispatch.skipped === "already-processed"
-      ? "already-processed"
-      : advance.advanced
-        ? undefined
-        : "already-at-status",
+    skipped:
+      dispatch.skipped === "already-processed"
+        ? "already-processed"
+        : advance.advanced
+          ? undefined
+          : "already-at-status",
   };
 }

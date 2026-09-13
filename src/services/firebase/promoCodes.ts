@@ -10,24 +10,14 @@
  * (where userId == request.auth.uid). All writes are blocked.
  */
 
-import {
-  collection,
-  getDocs,
-  orderBy,
-  query,
-  where,
-} from "firebase/firestore";
+import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
 import { getDb } from "./config";
 
 const COLLECTION = "promoCodes";
 
 export type PromoStatus = "active" | "used" | "expired" | "disabled";
 export type PromoDiscountType = "percent" | "fixed";
-export type PromoCampaignType =
-  | "first_order"
-  | "welcome"
-  | "campaign"
-  | "admin_issued";
+export type PromoCampaignType = "first_order" | "welcome" | "campaign" | "admin_issued";
 
 export interface PromoCode {
   code: string;
@@ -61,18 +51,16 @@ function mapPromo(docId: string, data: Record<string, unknown>): PromoCode {
     createdAt:
       typeof data.createdAt === "number"
         ? data.createdAt
-        : (data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ??
-          Date.now(),
+        : ((data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? Date.now()),
     updatedAt:
       typeof data.updatedAt === "number"
         ? data.updatedAt
-        : (data.updatedAt as { toMillis?: () => number } | undefined)?.toMillis?.() ??
-          Date.now(),
+        : ((data.updatedAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? Date.now()),
     usedAt:
       data.usedAt != null
         ? typeof data.usedAt === "number"
           ? data.usedAt
-          : (data.usedAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? null
+          : ((data.usedAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? null)
         : null,
     usedOrderId: data.usedOrderId != null ? String(data.usedOrderId) : null,
   };

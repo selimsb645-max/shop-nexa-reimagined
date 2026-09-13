@@ -603,34 +603,40 @@ function AddProductPage({ sellerId }: { sellerId: string }) {
           </Section>
         </div>
 
-          {/* Section 4: Delivery Charge Responsibility */}
-          <Section title="Delivery Charge Responsibility" icon={<Truck className="w-4 h-4 text-[#f57224]" />}>
-            <div className="space-y-3">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="deliveryCharge"
-                  checked={!form.freeDelivery}
-                  onChange={() => setForm((f) => ({ ...f, freeDelivery: false }))}
-                  className="w-4 h-4 accent-[#f57224]"
-                />
-                <span className="text-sm text-slate-700">Customer Pays Delivery Charge</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="deliveryCharge"
-                  checked={form.freeDelivery}
-                  onChange={() => setForm((f) => ({ ...f, freeDelivery: true }))}
-                  className="w-4 h-4 accent-[#f57224]"
-                />
-                <span className="text-sm text-slate-700">Seller Pays Delivery Charge (Free Delivery)</span>
-              </label>
-              <p className="text-xs text-slate-400">
-                Free Delivery ON = you (seller) pay the delivery-zone charge. When OFF, the customer pays it.
-              </p>
-            </div>
-          </Section>
+        {/* Section 4: Delivery Charge Responsibility */}
+        <Section
+          title="Delivery Charge Responsibility"
+          icon={<Truck className="w-4 h-4 text-[#f57224]" />}
+        >
+          <div className="space-y-3">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="deliveryCharge"
+                checked={!form.freeDelivery}
+                onChange={() => setForm((f) => ({ ...f, freeDelivery: false }))}
+                className="w-4 h-4 accent-[#f57224]"
+              />
+              <span className="text-sm text-slate-700">Customer Pays Delivery Charge</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="deliveryCharge"
+                checked={form.freeDelivery}
+                onChange={() => setForm((f) => ({ ...f, freeDelivery: true }))}
+                className="w-4 h-4 accent-[#f57224]"
+              />
+              <span className="text-sm text-slate-700">
+                Seller Pays Delivery Charge (Free Delivery)
+              </span>
+            </label>
+            <p className="text-xs text-slate-400">
+              Free Delivery ON = you (seller) pay the delivery-zone charge. When OFF, the customer
+              pays it.
+            </p>
+          </div>
+        </Section>
 
         {/* Right: Images + Preview (1/3) */}
         <div className="space-y-5">

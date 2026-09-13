@@ -197,7 +197,8 @@ export const Route = createFileRoute("/blog/$slug")({
   head: ({ params }) => {
     const post = BLOG_POSTS.find((p) => p.slug === params.slug);
     const title = post?.title ?? "Blog Post — AVENTA SHOP";
-    const description = post?.excerpt ?? "Read the latest shopping guides, deals, and tips on the AVENTA SHOP blog.";
+    const description =
+      post?.excerpt ?? "Read the latest shopping guides, deals, and tips on the AVENTA SHOP blog.";
 
     return {
       ...seoHead({
@@ -246,7 +247,10 @@ function BlogPostPage() {
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-800">Blog Post Not Found</h1>
             <p className="mt-2 text-gray-500">The article you're looking for doesn't exist.</p>
-            <Link to="/blog" className="mt-4 inline-flex items-center gap-2 text-[#f57224] font-medium">
+            <Link
+              to="/blog"
+              className="mt-4 inline-flex items-center gap-2 text-[#f57224] font-medium"
+            >
               <ArrowLeft className="h-4 w-4" /> Back to Blog
             </Link>
           </div>
@@ -261,13 +265,25 @@ function BlogPostPage() {
   const renderContent = (content: string) => {
     return content.split("\n").map((line, i) => {
       if (line.startsWith("## ")) {
-        return <h2 key={i} className="mt-6 mb-3 text-xl font-bold text-gray-800">{line.replace("## ", "")}</h2>;
+        return (
+          <h2 key={i} className="mt-6 mb-3 text-xl font-bold text-gray-800">
+            {line.replace("## ", "")}
+          </h2>
+        );
       }
       if (line.match(/^\d+\.\s/)) {
-        return <p key={i} className="mb-2 text-gray-600 leading-relaxed">{line}</p>;
+        return (
+          <p key={i} className="mb-2 text-gray-600 leading-relaxed">
+            {line}
+          </p>
+        );
       }
       if (line.trim() === "") return null;
-      return <p key={i} className="mb-3 text-gray-600 leading-relaxed">{line}</p>;
+      return (
+        <p key={i} className="mb-3 text-gray-600 leading-relaxed">
+          {line}
+        </p>
+      );
     });
   };
 
@@ -299,9 +315,7 @@ function BlogPostPage() {
 
           <p className="mt-6 text-lg leading-relaxed text-gray-700">{post.excerpt}</p>
 
-          <article className="mt-8">
-            {renderContent(post.content)}
-          </article>
+          <article className="mt-8">{renderContent(post.content)}</article>
 
           <div className="mt-10 border-t border-gray-100 pt-6">
             <Link to="/blog" className="inline-flex items-center gap-2 text-[#f57224] font-medium">

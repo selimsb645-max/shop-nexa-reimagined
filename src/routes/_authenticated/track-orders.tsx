@@ -68,21 +68,18 @@ function TrackableOrderCard({ order }: { order: Order }) {
 
   useEffect(() => {
     if (!firebaseConfigured) return;
-    const unsub = onSnapshot(
-      doc(getDb(), "orders", order.id, "tracking", "live"),
-      (snap) => {
-        if (snap.exists()) {
-          const data = snap.data() as Record<string, unknown>;
-          setTracking({
-            orderId: order.id,
-            deliveryPartnerName: (data.deliveryPartnerName as string) || null,
-            estimatedDeliveryTime: (data.estimatedDeliveryTime as number) || null,
-            currentLocation: (data.currentLocation as { lat: number; lng: number }) || null,
-            notes: (data.notes as string[]) || [],
-          } as DeliveryTracking);
-        }
-      },
-    );
+    const unsub = onSnapshot(doc(getDb(), "orders", order.id, "tracking", "live"), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data() as Record<string, unknown>;
+        setTracking({
+          orderId: order.id,
+          deliveryPartnerName: (data.deliveryPartnerName as string) || null,
+          estimatedDeliveryTime: (data.estimatedDeliveryTime as number) || null,
+          currentLocation: (data.currentLocation as { lat: number; lng: number }) || null,
+          notes: (data.notes as string[]) || [],
+        } as DeliveryTracking);
+      }
+    });
     return () => unsub();
   }, [order.id]);
 
@@ -93,25 +90,28 @@ function TrackableOrderCard({ order }: { order: Order }) {
     { status: "delivered", icon: <CheckCircle2 className="h-5 w-5" />, label: "Delivered" },
   ];
 
-  const currentStatusIndex = steps.findIndex(
-    (s) => s.status === order.status,
-  );
+  const currentStatusIndex = steps.findIndex((s) => s.status === order.status);
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-4">
       {/* Order header */}
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <span className="text-sm font-bold text-[#0f172a]">Order #{order.id.slice(0, 8).toUpperCase()}</span>
+          <span className="text-sm font-bold text-[#0f172a]">
+            Order #{order.id.slice(0, 8).toUpperCase()}
+          </span>
           <p className="text-xs text-slate-500">
-            {order.items.length} item{order.items.length === 1 ? "" : "s"} • {formatPrice(order.total)}
+            {order.items.length} item{order.items.length === 1 ? "" : "s"} •{" "}
+            {formatPrice(order.total)}
           </p>
         </div>
-        <span className={`rounded-full px-3 py-1 text-[10px] font-bold ${
-          order.status === "delivered"
-            ? "bg-emerald-100 text-emerald-700"
-            : "bg-blue-100 text-blue-700"
-        }`}>
+        <span
+          className={`rounded-full px-3 py-1 text-[10px] font-bold ${
+            order.status === "delivered"
+              ? "bg-emerald-100 text-emerald-700"
+              : "bg-blue-100 text-blue-700"
+          }`}
+        >
           {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
         </span>
       </div>
@@ -137,9 +137,7 @@ function TrackableOrderCard({ order }: { order: Order }) {
             <div key={step.status} className="flex flex-1 flex-col items-center">
               <div
                 className={`relative z-10 grid h-10 w-10 place-items-center rounded-full transition ${
-                  isCompleted
-                    ? "bg-[#f57224] text-white"
-                    : "bg-slate-100 text-slate-400"
+                  isCompleted ? "bg-[#f57224] text-white" : "bg-slate-100 text-slate-400"
                 } ${isCurrent ? "ring-4 ring-orange-200" : ""}`}
               >
                 {step.icon}
@@ -168,28 +166,31 @@ function TrackableOrderCard({ order }: { order: Order }) {
         <div className="mt-4 space-y-2 rounded-xl bg-slate-50 border border-slate-100 p-3">
           <div className="flex items-center gap-2 text-sm">
             <Truck className="h-4 w-4 text-[#f57224]" />
-            <span className="font-semibold text-slate-700">{tracking.deliveryPartnerName || "Delivery partner assigned"}</span>
+            <span className="font-semibold text-slate-700">
+              {tracking.deliveryPartnerName || "Delivery partner assigned"}
+            </span>
           </div>
           {tracking.estimatedDeliveryTime && (
             <div className="flex items-center gap-2 text-sm text-slate-500">
               <Clock className="h-4 w-4" />
-              <span>
-                ETA: {new Date(tracking.estimatedDeliveryTime).toLocaleString()}
-              </span>
+              <span>ETA: {new Date(tracking.estimatedDeliveryTime).toLocaleString()}</span>
             </div>
           )}
           {tracking.currentLocation && (
             <div className="flex items-center gap-2 text-sm text-slate-500">
               <MapPin className="h-4 w-4" />
               <span>
-                Location: {tracking.currentLocation.lat.toFixed(4)}, {tracking.currentLocation.lng.toFixed(4)}
+                Location: {tracking.currentLocation.lat.toFixed(4)},{" "}
+                {tracking.currentLocation.lng.toFixed(4)}
               </span>
             </div>
           )}
           {tracking.notes.length > 0 && (
             <div className="border-t border-slate-200 pt-2">
               {tracking.notes.slice(-3).map((note, i) => (
-                <p key={i} className="text-xs text-slate-500">{note}</p>
+                <p key={i} className="text-xs text-slate-500">
+                  {note}
+                </p>
               ))}
             </div>
           )}
@@ -203,9 +204,7 @@ function TrackableOrderCard({ order }: { order: Order }) {
             <div key={i} className="flex items-center gap-2 text-xs text-slate-500">
               <span className="h-1.5 w-1.5 rounded-full bg-[#f57224]" />
               <span>{event.note}</span>
-              <span className="ml-auto">
-                {new Date(event.at).toLocaleDateString()}
-              </span>
+              <span className="ml-auto">{new Date(event.at).toLocaleDateString()}</span>
             </div>
           ))}
         </div>

@@ -12,21 +12,16 @@ import {
   allowsSellerSubmissions,
   type CampaignState,
 } from "../campaignStateMachine";
-import {
-  validateDiscountRules,
-  computeCampaignPrice,
-  validateCampaignPricing,
-} from "../pricing";
-import {
-  canManageCampaigns,
-  canApproveCampaign,
-} from "../campaigns.server";
+import { validateDiscountRules, computeCampaignPrice, validateCampaignPricing } from "../pricing";
+import { canManageCampaigns, canApproveCampaign } from "../campaigns.server";
 
 describe("campaign state machine (§2)", () => {
   const happy = ["DRAFT", "SUBMITTED", "REVIEW", "APPROVED", "SCHEDULED", "ACTIVE", "ENDED"];
   it("allows the canonical happy path in order", () => {
     for (let i = 0; i < happy.length - 1; i++) {
-      expect(isValidCampaignTransition(happy[i] as CampaignState, happy[i + 1] as CampaignState)).toBe(true);
+      expect(
+        isValidCampaignTransition(happy[i] as CampaignState, happy[i + 1] as CampaignState),
+      ).toBe(true);
     }
   });
   it("allows the documented exception paths", () => {
@@ -45,7 +40,8 @@ describe("campaign state machine (§2)", () => {
     expect(isValidCampaignTransition("CANCELLED", "DRAFT")).toBe(false);
   });
   it("treats self-transitions as no-ops", () => {
-    for (const s of happy) expect(isValidCampaignTransition(s as CampaignState, s as CampaignState)).toBe(true);
+    for (const s of happy)
+      expect(isValidCampaignTransition(s as CampaignState, s as CampaignState)).toBe(true);
   });
   it("marks terminals", () => {
     expect(isTerminalCampaignState("ENDED")).toBe(true);
@@ -64,10 +60,18 @@ describe("campaign state machine (§2)", () => {
 
 describe("price safety (§6)", () => {
   it("PERCENT: computes truncating bps math, clamps to max + minimum guard", () => {
-    const r = computeCampaignPrice(100000, { type: "PERCENT", valueMinor: 1500, maxDiscountMinor: 10000 });
+    const r = computeCampaignPrice(100000, {
+      type: "PERCENT",
+      valueMinor: 1500,
+      maxDiscountMinor: 10000,
+    });
     expect(r.discountMinor).toBe(10000); // capped
     expect(r.finalPriceMinor).toBe(90000);
-    const g = computeCampaignPrice(100000, { type: "PERCENT", valueMinor: 9500, minimumPriceMinor: 20000 });
+    const g = computeCampaignPrice(100000, {
+      type: "PERCENT",
+      valueMinor: 9500,
+      minimumPriceMinor: 20000,
+    });
     expect(g.finalPriceMinor).toBe(20000); // clamped up to the guard
   });
   it("negative/zero price is impossible", () => {
@@ -76,8 +80,12 @@ describe("price safety (§6)", () => {
     expect(r.finalPriceMinor).toBeGreaterThan(0);
   });
   it("PRICE_OVERRIDE must be below original, else rejected", () => {
-    expect(() => computeCampaignPrice(1000, { type: "PRICE_OVERRIDE", valueMinor: 1000 })).toThrow();
-    expect(() => computeCampaignPrice(1000, { type: "PRICE_OVERRIDE", valueMinor: 2000 })).toThrow();
+    expect(() =>
+      computeCampaignPrice(1000, { type: "PRICE_OVERRIDE", valueMinor: 1000 }),
+    ).toThrow();
+    expect(() =>
+      computeCampaignPrice(1000, { type: "PRICE_OVERRIDE", valueMinor: 2000 }),
+    ).toThrow();
     const ok = computeCampaignPrice(1000, { type: "PRICE_OVERRIDE", valueMinor: 800 });
     expect(ok.finalPriceMinor).toBe(800);
   });
@@ -89,8 +97,12 @@ describe("price safety (§6)", () => {
     expect(validateDiscountRules({ type: "PERCENT", valueMinor: 20000 }).ok).toBe(false); // >99%
     expect(validateDiscountRules({ type: "PERCENT", valueMinor: 0 }).ok).toBe(false);
     expect(validateDiscountRules({ type: "FLAT", valueMinor: -5 }).ok).toBe(false);
-    expect(validateDiscountRules({ type: "FLAT", valueMinor: 500, minimumPriceMinor: 0 }).ok).toBe(false);
-    expect(validateDiscountRules({ type: "PERCENT", valueMinor: 1000, maxDiscountMinor: -1 }).ok).toBe(false);
+    expect(validateDiscountRules({ type: "FLAT", valueMinor: 500, minimumPriceMinor: 0 }).ok).toBe(
+      false,
+    );
+    expect(
+      validateDiscountRules({ type: "PERCENT", valueMinor: 1000, maxDiscountMinor: -1 }).ok,
+    ).toBe(false);
   });
   it("full pricing validation works on paisa integers end-to-end", () => {
     const { result, price } = validateCampaignPricing(23450, { type: "FLAT", valueMinor: 345 });

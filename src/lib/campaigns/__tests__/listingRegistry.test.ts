@@ -10,9 +10,20 @@ import {
   clearEmulatorStore,
   closeFirestoreEmulator,
 } from "../../__tests__/firestore-emulator";
-import { submitProductForQc, startQcReview, completeQcReview, listQcPassedProduct, unlistProduct, QC_CHECKLIST, type QcChecklistResult } from "../../products-qc/qc.server";
+import {
+  submitProductForQc,
+  startQcReview,
+  completeQcReview,
+  listQcPassedProduct,
+  unlistProduct,
+  QC_CHECKLIST,
+  type QcChecklistResult,
+} from "../../products-qc/qc.server";
 import { processDueDispatches, listDueDispatches } from "../../kernel/events";
-import { ensureCampaignListingSubscriber, CAMPAIGN_PRODUCT_CATALOG_COLLECTION } from "../listingRegistry.server";
+import {
+  ensureCampaignListingSubscriber,
+  CAMPAIGN_PRODUCT_CATALOG_COLLECTION,
+} from "../listingRegistry.server";
 
 let emulatorServer: Server;
 const EMULATOR_PORT = 8091;
@@ -31,7 +42,9 @@ afterAll(async () => {
   await closeFirestoreEmulator(emulatorServer);
   delete process.env.FIRESTORE_EMULATOR_HOST;
 });
-beforeEach(() => { clearEmulatorStore(); });
+beforeEach(() => {
+  clearEmulatorStore();
+});
 
 function fullChecklist(pass: boolean): QcChecklistResult[] {
   return QC_CHECKLIST.map((key) => ({ key, passed: pass }));
@@ -66,7 +79,9 @@ async function getDoc(collection: string, id: string): Promise<Record<string, un
 async function listDocs(collection: string): Promise<Array<Record<string, unknown>>> {
   const res = await fetch(`${BASE}/${collection}?pageSize=100`);
   if (!res.ok) return [];
-  const json = (await res.json()) as { documents?: Array<{ fields: Record<string, Record<string, Record<string, unknown>>> }> };
+  const json = (await res.json()) as {
+    documents?: Array<{ fields: Record<string, Record<string, Record<string, unknown>>> }>;
+  };
   return (json.documents ?? []).map((d) => {
     const out: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(d.fields)) {
@@ -80,7 +95,11 @@ describe("QC → campaign backbone arrow", () => {
   it("a QC-passed LISTED product becomes campaign-eligible automatically", async () => {
     const review = await submitProductForQc("test-project", await submitInput());
     await startQcReview("test-project", review.reviewId, REVIEWER);
-    await completeQcReview("test-project", { reviewId: review.reviewId, checklist: fullChecklist(true) }, REVIEWER);
+    await completeQcReview(
+      "test-project",
+      { reviewId: review.reviewId, checklist: fullChecklist(true) },
+      REVIEWER,
+    );
     await listQcPassedProduct("test-project", review.reviewId, REVIEWER);
 
     // the kernel emitted product.listed; drain the queue
@@ -102,7 +121,11 @@ describe("QC → campaign backbone arrow", () => {
   it("unlisting drops the product from the promo catalog", async () => {
     const review = await submitProductForQc("test-project", await submitInput());
     await startQcReview("test-project", review.reviewId, REVIEWER);
-    await completeQcReview("test-project", { reviewId: review.reviewId, checklist: fullChecklist(true) }, REVIEWER);
+    await completeQcReview(
+      "test-project",
+      { reviewId: review.reviewId, checklist: fullChecklist(true) },
+      REVIEWER,
+    );
     await listQcPassedProduct("test-project", review.reviewId, REVIEWER);
     await processDueDispatches("test-project");
 
@@ -117,7 +140,11 @@ describe("QC → campaign backbone arrow", () => {
   it("repeated sweeps never duplicate catalog docs or notifications", async () => {
     const review = await submitProductForQc("test-project", await submitInput());
     await startQcReview("test-project", review.reviewId, REVIEWER);
-    await completeQcReview("test-project", { reviewId: review.reviewId, checklist: fullChecklist(true) }, REVIEWER);
+    await completeQcReview(
+      "test-project",
+      { reviewId: review.reviewId, checklist: fullChecklist(true) },
+      REVIEWER,
+    );
     await listQcPassedProduct("test-project", review.reviewId, REVIEWER);
 
     // drain twice — second sweep must be a pure no-op
@@ -134,7 +161,11 @@ describe("QC → campaign backbone arrow", () => {
   it("QC-failed products never enter the campaign catalog", async () => {
     const review = await submitProductForQc("test-project", await submitInput());
     await startQcReview("test-project", review.reviewId, REVIEWER);
-    await completeQcReview("test-project", { reviewId: review.reviewId, checklist: fullChecklist(false) }, REVIEWER);
+    await completeQcReview(
+      "test-project",
+      { reviewId: review.reviewId, checklist: fullChecklist(false) },
+      REVIEWER,
+    );
     await processDueDispatches("test-project");
 
     const catalog = await getDoc(CAMPAIGN_PRODUCT_CATALOG_COLLECTION, "p_bridge_1");
@@ -144,7 +175,11 @@ describe("QC → campaign backbone arrow", () => {
   it("listDueDispatches only surfaces PENDING work", async () => {
     const review = await submitProductForQc("test-project", await submitInput());
     await startQcReview("test-project", review.reviewId, REVIEWER);
-    await completeQcReview("test-project", { reviewId: review.reviewId, checklist: fullChecklist(true) }, REVIEWER);
+    await completeQcReview(
+      "test-project",
+      { reviewId: review.reviewId, checklist: fullChecklist(true) },
+      REVIEWER,
+    );
     await listQcPassedProduct("test-project", review.reviewId, REVIEWER);
 
     const pending = await listDueDispatches("test-project");

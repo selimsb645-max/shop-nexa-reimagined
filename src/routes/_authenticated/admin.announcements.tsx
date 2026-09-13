@@ -27,11 +27,7 @@ import { logActivity } from "@/services/firebase/adminLogs";
 import { useAuth } from "@/context/AuthContext";
 import { Spinner } from "@/components/common/Spinner";
 import { mapFirebaseError } from "@/utils/errors";
-import type {
-  Announcement,
-  AnnouncementType,
-  AnnouncementPriority,
-} from "@/types/admin";
+import type { Announcement, AnnouncementType, AnnouncementPriority } from "@/types/admin";
 import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/admin/announcements")({
@@ -172,12 +168,7 @@ function AnnouncementsAdmin() {
     if (!confirm(`Delete announcement "${a.title}"?`)) return;
     try {
       await deleteAnnouncement(a.id);
-      await logActivity(
-        { uid: user.uid, email: user.email },
-        "announcement.delete",
-        a.id,
-        a.title,
-      );
+      await logActivity({ uid: user.uid, email: user.email }, "announcement.delete", a.id, a.title);
       toast.success("Announcement deleted");
     } catch (err) {
       toast.error(mapFirebaseError(err));
@@ -205,7 +196,11 @@ function AnnouncementsAdmin() {
         </div>
         {!showForm && (
           <button
-            onClick={() => { setForm(emptyForm); setEditing(null); setShowForm(true); }}
+            onClick={() => {
+              setForm(emptyForm);
+              setEditing(null);
+              setShowForm(true);
+            }}
             className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
           >
             <Plus className="h-4 w-4" /> New Announcement
@@ -237,14 +232,24 @@ function AnnouncementsAdmin() {
               onChange={(e) => setForm({ ...form, type: e.target.value as AnnouncementType })}
               className="rounded-md border bg-background px-3 py-2 text-sm"
             >
-              {TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+              {TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
             </select>
             <select
               value={form.priority}
-              onChange={(e) => setForm({ ...form, priority: e.target.value as AnnouncementPriority })}
+              onChange={(e) =>
+                setForm({ ...form, priority: e.target.value as AnnouncementPriority })
+              }
               className="rounded-md border bg-background px-3 py-2 text-sm"
             >
-              {PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}
+              {PRIORITIES.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
             </select>
             <input
               type="number"
@@ -266,13 +271,19 @@ function AnnouncementsAdmin() {
 
           <div className="mt-3 grid gap-3 md:grid-cols-2">
             <div>
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">Gradient style</label>
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                Gradient style
+              </label>
               <select
                 value={form.gradient}
                 onChange={(e) => setForm({ ...form, gradient: e.target.value })}
                 className="w-full rounded-md border bg-background px-3 py-2 text-sm"
               >
-                {GRADIENTS.map((g) => <option key={g} value={g}>{g}</option>)}
+                {GRADIENTS.map((g) => (
+                  <option key={g} value={g}>
+                    {g}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
@@ -282,7 +293,11 @@ function AnnouncementsAdmin() {
                 onChange={(e) => setForm({ ...form, icon: e.target.value })}
                 className="w-full rounded-md border bg-background px-3 py-2 text-sm"
               >
-                {ICONS.map((i) => <option key={i} value={i}>{i}</option>)}
+                {ICONS.map((i) => (
+                  <option key={i} value={i}>
+                    {i}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -304,20 +319,34 @@ function AnnouncementsAdmin() {
 
           <div className="mt-3 grid gap-3 md:grid-cols-2">
             <div>
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">Start time (leave empty = immediate)</label>
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                Start time (leave empty = immediate)
+              </label>
               <input
                 type="datetime-local"
                 value={form.startTime ? new Date(form.startTime).toISOString().slice(0, 16) : ""}
-                onChange={(e) => setForm({ ...form, startTime: e.target.value ? new Date(e.target.value).getTime() : 0 })}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    startTime: e.target.value ? new Date(e.target.value).getTime() : 0,
+                  })
+                }
                 className="w-full rounded-md border bg-background px-3 py-2 text-sm"
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">End time (leave empty = never expires)</label>
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                End time (leave empty = never expires)
+              </label>
               <input
                 type="datetime-local"
                 value={form.endTime ? new Date(form.endTime).toISOString().slice(0, 16) : ""}
-                onChange={(e) => setForm({ ...form, endTime: e.target.value ? new Date(e.target.value).getTime() : 0 })}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    endTime: e.target.value ? new Date(e.target.value).getTime() : 0,
+                  })
+                }
                 className="w-full rounded-md border bg-background px-3 py-2 text-sm"
               />
             </div>
@@ -370,15 +399,23 @@ function AnnouncementsAdmin() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <h3 className="font-semibold">{a.title}</h3>
-                      <span className={`rounded-full px-2 py-0.5 text-xs ${
-                        a.published
-                          ? (active ? "bg-emerald-500/10 text-emerald-600" : "bg-amber-500/10 text-amber-600")
-                          : "bg-muted text-muted-foreground"
-                      }`}>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs ${
+                          a.published
+                            ? active
+                              ? "bg-emerald-500/10 text-emerald-600"
+                              : "bg-amber-500/10 text-amber-600"
+                            : "bg-muted text-muted-foreground"
+                        }`}
+                      >
                         {a.published ? (active ? "Active" : "Scheduled/Expired") : "Draft"}
                       </span>
-                      <span className="rounded-full bg-muted px-2 py-0.5 text-xs capitalize">{a.type}</span>
-                      <span className="rounded-full bg-muted px-2 py-0.5 text-xs capitalize">{a.priority}</span>
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-xs capitalize">
+                        {a.type}
+                      </span>
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-xs capitalize">
+                        {a.priority}
+                      </span>
                     </div>
                     <p className="mt-1 text-sm text-muted-foreground">{a.message}</p>
                     <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
@@ -386,14 +423,22 @@ function AnnouncementsAdmin() {
                         <Calendar className="h-3 w-3" /> {formatSchedule(a)}
                       </span>
                       <span>Order: {a.order}</span>
-                      {a.ctaLabel && <span>CTA: {a.ctaLabel} → {a.ctaLink}</span>}
+                      {a.ctaLabel && (
+                        <span>
+                          CTA: {a.ctaLabel} → {a.ctaLink}
+                        </span>
+                      )}
                     </div>
                     <div className="mt-3 flex gap-2">
                       <button
                         onClick={() => onTogglePublish(a)}
                         className="flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs hover:bg-muted"
                       >
-                        {a.published ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                        {a.published ? (
+                          <EyeOff className="h-3.5 w-3.5" />
+                        ) : (
+                          <Eye className="h-3.5 w-3.5" />
+                        )}
                         {a.published ? "Unpublish" : "Publish"}
                       </button>
                       <button

@@ -8,15 +8,23 @@ let writes: Array<{ update?: { name: string; fields: Record<string, unknown> } }
 let docs: Record<string, Record<string, unknown>> = {};
 
 vi.mock("../firebase-admin.server", () => ({
-  commitWrites: vi.fn(async (_p: string, w: unknown[]) => { writes.push(...(w as never[])); }),
+  commitWrites: vi.fn(async (_p: string, w: unknown[]) => {
+    writes.push(...(w as never[]));
+  }),
   batchGetDocs: vi.fn(async (_p: string, names: string[]) => {
-    const out = new Map<string, { exists: boolean; data: Record<string, unknown>; updateTime: string | null }>();
+    const out = new Map<
+      string,
+      { exists: boolean; data: Record<string, unknown>; updateTime: string | null }
+    >();
     for (const name of names) {
       const id = name.split("/").slice(-2).join("/");
       const d = docs[id];
-      out.set(name, d
-        ? { exists: true, data: { ...d }, updateTime: "u1" }
-        : { exists: false, data: {}, updateTime: null });
+      out.set(
+        name,
+        d
+          ? { exists: true, data: { ...d }, updateTime: "u1" }
+          : { exists: false, data: {}, updateTime: null },
+      );
     }
     return out;
   }),
@@ -27,19 +35,15 @@ vi.mock("../firebase-admin.server", () => ({
   rollbackTransaction: vi.fn(async () => {}),
 }));
 
-import { AventaLogisticsProvider, SHIPMENTS_COLLECTION, shipmentDocId } from "../logistics/aventaLogistics.server";
+import {
+  AventaLogisticsProvider,
+  SHIPMENTS_COLLECTION,
+  shipmentDocId,
+} from "../logistics/aventaLogistics.server";
 import { LogisticsError } from "../logistics/types";
 import { registerProvider, getProvider, listProviderKeys } from "../logistics/registry";
-import {
-  secureBarcode,
-  secureShipmentId,
-  secureTrackingNumber,
-} from "../logistics/secureIds";
-import {
-  advanceOrderStatus,
-  dispatchOrderEvent,
-  orderEventDocId,
-} from "../orderWorkflow.server";
+import { secureBarcode, secureShipmentId, secureTrackingNumber } from "../logistics/secureIds";
+import { advanceOrderStatus, dispatchOrderEvent, orderEventDocId } from "../orderWorkflow.server";
 
 const PID = "test-project";
 const baseShipment = {
@@ -122,7 +126,10 @@ describe("§4 provider — shipment lifecycle", () => {
 
   it("cancelShipment is idempotent for already-cancelled shipments", async () => {
     const provider = new AventaLogisticsProvider(PID);
-    const out = await provider.cancelShipment({ ...baseShipment, shippingStatus: "CANCELLED" as never });
+    const out = await provider.cancelShipment({
+      ...baseShipment,
+      shippingStatus: "CANCELLED" as never,
+    });
     expect(out.shippingStatus).toBe("CANCELLED");
     expect(writes.length).toBe(0);
   });
@@ -130,18 +137,29 @@ describe("§4 provider — shipment lifecycle", () => {
   it("trackShipment applies §6 visibility defaults (hub events stay internal)", async () => {
     const provider = new AventaLogisticsProvider(PID);
     const evt = await provider.trackShipment(baseShipment, {
-      type: "ARRIVED_AT_HUB", note: "Hub Dhaka", at: 1, by: "system",
+      type: "ARRIVED_AT_HUB",
+      note: "Hub Dhaka",
+      at: 1,
+      by: "system",
     });
     expect(evt.visibility).toBe("internal");
     const evt2 = await provider.trackShipment(baseShipment, {
-      type: "OUT_FOR_DELIVERY", note: "Rider assigned", at: 2, by: "system",
+      type: "OUT_FOR_DELIVERY",
+      note: "Rider assigned",
+      at: 2,
+      by: "system",
     });
     expect(evt2.visibility).toBe("customer");
   });
 });
 
 describe("§7 workflow dispatch — idempotent, isolated", () => {
-  const ctx = { customerId: "cu1", sellerIds: ["se1"], items: [{ productId: "p1", quantity: 1 }], total: 100 };
+  const ctx = {
+    customerId: "cu1",
+    sellerIds: ["se1"],
+    items: [{ productId: "p1", quantity: 1 }],
+    total: 100,
+  };
 
   it("deterministic event doc id (the idempotency key)", () => {
     expect(orderEventDocId("o1", "ORDER_CREATED")).toBe("o1__ORDER_CREATED");
@@ -164,7 +182,9 @@ describe("§7 workflow dispatch — idempotent, isolated", () => {
     expect(r.handlersRun).toContain("audit");
     const names = writes.map((w) => w.update?.name ?? "").filter(Boolean);
     // seller notification id is deterministic:
-    expect(names.some((n) => n.endsWith("sellers/se1/notifications/n_o2_seller_notified"))).toBe(true);
+    expect(names.some((n) => n.endsWith("sellers/se1/notifications/n_o2_seller_notified"))).toBe(
+      true,
+    );
     // audit row is deterministic:
     expect(names.some((n) => n.endsWith("activityLogs/act_o2_seller_notified"))).toBe(true);
   });
@@ -176,7 +196,7 @@ describe("§7 workflow dispatch — idempotent, isolated", () => {
     // when the shipment doc is missing (shipment handler no-ops, not throws).
     const r = await dispatchOrderEvent(PID, "o3", "READY_TO_SHIP", ctx);
     expect(r.ok).toBe(true);
-    expect(r.handlersRun).toContain("audit");   // ran
+    expect(r.handlersRun).toContain("audit"); // ran
     expect(r.handlersRun).toContain("shipment"); // ran as no-op
     expect(Object.keys(r.handlersFailed).length).toBe(0);
   });
@@ -193,7 +213,10 @@ describe("§7 workflow dispatch — idempotent, isolated", () => {
 
 describe("§1 advanceOrderStatus — validated, legacy-compatible", () => {
   it("valid transition writes canonical status + legacy tracking entry", async () => {
-    docs["orders/o5"] = { status: "PROCESSING", tracking: [{ status: "processing", note: "n", at: 1 }] };
+    docs["orders/o5"] = {
+      status: "PROCESSING",
+      tracking: [{ status: "processing", note: "n", at: 1 }],
+    };
     const r = await advanceOrderStatus(PID, "cu1", "o5", "PACKED", "Packed by seller");
     expect(r.advanced).toBe(true);
     const w = writes.find((x) => x.update?.name?.includes("users/cu1/orders/o5"));
@@ -206,9 +229,9 @@ describe("§1 advanceOrderStatus — validated, legacy-compatible", () => {
 
   it("invalid transition is rejected — order state never corrupted", async () => {
     docs["orders/o6"] = { status: "REFUNDED", tracking: [] };
-    await expect(
-      advanceOrderStatus(PID, "cu1", "o6", "PROCESSING", "hack"),
-    ).rejects.toThrow(/Invalid transition/);
+    await expect(advanceOrderStatus(PID, "cu1", "o6", "PROCESSING", "hack")).rejects.toThrow(
+      /Invalid transition/,
+    );
     expect(writes.length).toBe(0);
   });
 
@@ -220,6 +243,8 @@ describe("§1 advanceOrderStatus — validated, legacy-compatible", () => {
   });
 
   it("missing order is an explicit error", async () => {
-    await expect(advanceOrderStatus(PID, "cu1", "ghost", "PACKED", "x")).rejects.toThrow(/not found/);
+    await expect(advanceOrderStatus(PID, "cu1", "ghost", "PACKED", "x")).rejects.toThrow(
+      /not found/,
+    );
   });
 });

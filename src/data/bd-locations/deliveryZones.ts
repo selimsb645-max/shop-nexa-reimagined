@@ -66,26 +66,49 @@ export const DELIVERY_ZONES: Record<DeliveryZoneId, DeliveryZoneConfig> = {
 // ── Area Mappings ──
 
 export const DHAKA_CITY_THANAS = new Set([
-  "Demra", "Dhaka", "Dhanmondi", "Gulshan", "Jatrabari", "Khilgaon",
-  "Khilkhet", "Lalbag", "Mirpur", "Mohammadpur", "Motijheel", "New Market",
-  "Palton", "Ramna", "Sabujbag", "Sutrapur", "Tejgaon", "Tejgaon Industrial Area",
+  "Demra",
+  "Dhaka",
+  "Dhanmondi",
+  "Gulshan",
+  "Jatrabari",
+  "Khilgaon",
+  "Khilkhet",
+  "Lalbag",
+  "Mirpur",
+  "Mohammadpur",
+  "Motijheel",
+  "New Market",
+  "Palton",
+  "Ramna",
+  "Sabujbag",
+  "Sutrapur",
+  "Tejgaon",
+  "Tejgaon Industrial Area",
   "Uttara",
 ]);
 
 export const DHAKA_SUBURB_UPAZILAS = new Set([
-  "Savar", "Dhamrai", "Keraniganj", "Nawabganj", "Dohar",
-  "Gazipur Sadar", "Kaliakair", "Kaliganj", "Kapasia", "Sreepur",
-  "Narayanganj Sadar", "Bandar", "Araihazar", "Rupganj", "Sonargaon",
+  "Savar",
+  "Dhamrai",
+  "Keraniganj",
+  "Nawabganj",
+  "Dohar",
+  "Gazipur Sadar",
+  "Kaliakair",
+  "Kaliganj",
+  "Kapasia",
+  "Sreepur",
+  "Narayanganj Sadar",
+  "Bandar",
+  "Araihazar",
+  "Rupganj",
+  "Sonargaon",
   "Tongibari",
 ]);
 
-export const DHAKA_SUBURB_DISTRICTS = new Set([
-  "Gazipur", "Narayanganj",
-]);
+export const DHAKA_SUBURB_DISTRICTS = new Set(["Gazipur", "Narayanganj"]);
 
-export const DHAKA_DISTRICT_NAMES = new Set([
-  "Dhaka",
-]);
+export const DHAKA_DISTRICT_NAMES = new Set(["Dhaka"]);
 
 // ── Zone Detection Logic ──
 
@@ -102,9 +125,7 @@ export interface DeliveryLocationInput {
  * Detect which zone a location belongs to (zone ID only — does NOT read charge).
  * Charge must come from admin-configured Firestore settings, not hardcoded here.
  */
-export function detectDeliveryZoneId(
-  location: DeliveryLocationInput,
-): DeliveryZoneId {
+export function detectDeliveryZoneId(location: DeliveryLocationInput): DeliveryZoneId {
   const district = (location.districtEn ?? "").trim();
   const upazila = (location.upazilaEn ?? "").trim();
   const thana = (location.thanaEn ?? "").trim();
@@ -131,9 +152,11 @@ export function detectDeliveryZoneId(
  * For server-side use where admin-configured charges are needed, use
  * resolveZoneWithSettings() instead.
  */
-export function detectDeliveryZone(
-  location: DeliveryLocationInput,
-): { zone: DeliveryZoneId; charge: number; config: DeliveryZoneConfig } {
+export function detectDeliveryZone(location: DeliveryLocationInput): {
+  zone: DeliveryZoneId;
+  charge: number;
+  config: DeliveryZoneConfig;
+} {
   const zone = detectDeliveryZoneId(location);
   const config = DELIVERY_ZONES[zone];
   return { zone, charge: config.charge, config };

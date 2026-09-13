@@ -8,7 +8,11 @@ import {
   clearEmulatorStore,
   closeFirestoreEmulator,
 } from "../../__tests__/firestore-emulator";
-import { createFlashSale, getPublicActiveFlashSale, FLASH_SALES_COLLECTION } from "../flashSale.server";
+import {
+  createFlashSale,
+  getPublicActiveFlashSale,
+  FLASH_SALES_COLLECTION,
+} from "../flashSale.server";
 
 let emulatorServer: Server;
 const EMULATOR_PORT = 8092;
@@ -25,7 +29,9 @@ afterAll(async () => {
   delete process.env.FIRESTORE_EMULATOR_HOST;
   delete process.env.FIRESTORE_TEST_PROJECT;
 });
-beforeEach(() => { clearEmulatorStore(); });
+beforeEach(() => {
+  clearEmulatorStore();
+});
 
 function input(overrides: Record<string, unknown> = {}) {
   const now = Date.now();
@@ -56,19 +62,36 @@ describe("public flash-sale view", () => {
   });
 
   it("hides future sales, past sales and sold-out sales", async () => {
-    await createFlashSale("test-project", input({ campaignId: "c_future", startAt: Date.now() + 3_600_000, endAt: Date.now() + 7_200_000 }));
+    await createFlashSale(
+      "test-project",
+      input({
+        campaignId: "c_future",
+        startAt: Date.now() + 3_600_000,
+        endAt: Date.now() + 7_200_000,
+      }),
+    );
     expect(await getPublicActiveFlashSale("test-project", "c_future")).toBeNull();
 
-    await createFlashSale("test-project", input({ campaignId: "c_past", startAt: Date.now() - 7_200_000, endAt: Date.now() - 3_600_000 }));
+    await createFlashSale(
+      "test-project",
+      input({
+        campaignId: "c_past",
+        startAt: Date.now() - 7_200_000,
+        endAt: Date.now() - 3_600_000,
+      }),
+    );
     expect(await getPublicActiveFlashSale("test-project", "c_past")).toBeNull();
 
     // sold out: reserve the entire stock directly in the store
     await createFlashSale("test-project", input({ campaignId: "c_sold", stockLimit: 5 }));
-    const res = await fetch(`${BASE}/${FLASH_SALES_COLLECTION}/c_sold?updateMask.fieldPaths=stockReserved`, {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ fields: { stockReserved: { integerValue: 5 } } }),
-    });
+    const res = await fetch(
+      `${BASE}/${FLASH_SALES_COLLECTION}/c_sold?updateMask.fieldPaths=stockReserved`,
+      {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ fields: { stockReserved: { integerValue: 5 } } }),
+      },
+    );
     expect(res.ok).toBe(true);
     expect(await getPublicActiveFlashSale("test-project", "c_sold")).toBeNull();
   });

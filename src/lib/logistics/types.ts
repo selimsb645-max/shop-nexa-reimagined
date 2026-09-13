@@ -78,7 +78,10 @@ export interface LogisticsProvider {
 /** Providers must never reject an unknown-shipment call silently —
  *  these errors are surfaced to the workflow processor. */
 export class LogisticsError extends Error {
-  constructor(message: string, readonly code: string) {
+  constructor(
+    message: string,
+    readonly code: string,
+  ) {
     super(message);
     this.name = "LogisticsError";
   }

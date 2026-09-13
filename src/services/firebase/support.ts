@@ -40,11 +40,7 @@ export async function listTickets(uid: string): Promise<SupportTicket[]> {
 
 export async function listTicketMessages(uid: string, ticketId: string): Promise<TicketMessage[]> {
   const snap = await getDocs(
-    query(
-      ticketMsgCol(uid, ticketId),
-      orderBy("createdAt", "asc"),
-      limit(200),
-    ),
+    query(ticketMsgCol(uid, ticketId), orderBy("createdAt", "asc"), limit(200)),
   );
   return snap.docs.map((d) => {
     const data = d.data() as Record<string, unknown>;

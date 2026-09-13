@@ -95,7 +95,9 @@ function WalletsPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-[#0f172a] tracking-tight">Seller Wallets</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-[#0f172a] tracking-tight">
+            Seller Wallets
+          </h1>
           <p className="text-sm text-slate-500 mt-0.5">
             Server-authoritative balances from the immutable finance ledger
           </p>
@@ -126,8 +128,8 @@ function WalletsPage() {
               <ShieldAlert className="h-5 w-5 text-red-600" />
             )}
             <p className="text-sm font-semibold text-slate-800">
-              Reconciliation: {recon.sellersChecked} wallet(s) checked ·{" "}
-              {recon.mismatches.length} mismatch(es)
+              Reconciliation: {recon.sellersChecked} wallet(s) checked · {recon.mismatches.length}{" "}
+              mismatch(es)
             </p>
           </div>
           {recon.mismatches.length > 0 && (
@@ -159,9 +161,7 @@ function WalletsPage() {
               key={s}
               onClick={() => setStatusFilter(s)}
               className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
-                statusFilter === s
-                  ? "bg-[#0f172a] text-white"
-                  : "text-slate-500 hover:bg-slate-50"
+                statusFilter === s ? "bg-[#0f172a] text-white" : "text-slate-500 hover:bg-slate-50"
               }`}
             >
               {s}

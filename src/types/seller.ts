@@ -179,12 +179,7 @@ export interface SellerProfile {
 // ----------------------------------------------------------------------
 // Seller Wallet Transactions
 // ----------------------------------------------------------------------
-export type SellerWalletTxType =
-  | "earning"
-  | "withdrawal"
-  | "adjustment"
-  | "refund"
-  | "bonus";
+export type SellerWalletTxType = "earning" | "withdrawal" | "adjustment" | "refund" | "bonus";
 
 export type SellerWalletTxStatus = "completed" | "pending" | "failed";
 
@@ -202,11 +197,7 @@ export interface SellerWalletTx {
 // Withdrawal Requests
 // ----------------------------------------------------------------------
 export type WithdrawalMethod = "bank" | "bkash" | "nagad" | "rocket";
-export type WithdrawalStatus =
-  | "pending"
-  | "processing"
-  | "completed"
-  | "rejected";
+export type WithdrawalStatus = "pending" | "processing" | "completed" | "rejected";
 
 export interface WithdrawalRequest {
   id: string;
@@ -225,13 +216,7 @@ export interface WithdrawalRequest {
 // Shipping / Courier (Future Multi-Courier Ready)
 // ----------------------------------------------------------------------
 export type CourierProvider =
-  | "pathao"
-  | "steadfast"
-  | "redx"
-  | "paperfly"
-  | "sundarban"
-  | "shopnexa_logistics"
-  | "other";
+  "pathao" | "steadfast" | "redx" | "paperfly" | "sundarban" | "shopnexa_logistics" | "other";
 
 export type ShippingStatus =
   | "pending"
@@ -299,13 +284,7 @@ export interface SellerOrderItem {
 }
 
 export type SellerOrderStatus =
-  | "pending"
-  | "confirmed"
-  | "processing"
-  | "shipped"
-  | "delivered"
-  | "cancelled"
-  | "returned";
+  "pending" | "confirmed" | "processing" | "shipped" | "delivered" | "cancelled" | "returned";
 
 export interface SellerOrderTracking {
   status: SellerOrderStatus;

@@ -1,12 +1,4 @@
-import {
-  collection,
-  doc,
-  getDocs,
-  query,
-  where,
-  orderBy,
-  updateDoc,
-} from "firebase/firestore";
+import { collection, doc, getDocs, query, where, orderBy, updateDoc } from "firebase/firestore";
 import { getDb } from "./config";
 import { getFirebaseAuth } from "./config";
 import { purchaseGiftCardFn } from "@/lib/giftcards.functions";
@@ -69,11 +61,7 @@ export async function purchaseGiftCard(
 export async function listUserGiftCards(uid: string): Promise<GiftCard[]> {
   const db = getDb();
   const snap = await getDocs(
-    query(
-      collection(db, "giftCards"),
-      where("uid", "==", uid),
-      orderBy("createdAt", "desc"),
-    ),
+    query(collection(db, "giftCards"), where("uid", "==", uid), orderBy("createdAt", "desc")),
   );
   return snap.docs.map((d) => {
     const data = d.data() as Record<string, unknown>;
@@ -92,19 +80,15 @@ export async function listUserGiftCards(uid: string): Promise<GiftCard[]> {
       createdAt:
         typeof data.createdAt === "number"
           ? data.createdAt
-          : (data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? Date.now(),
+          : ((data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ??
+            Date.now()),
     };
   });
 }
 
-export async function redeemGiftCard(
-  uid: string,
-  code: string,
-): Promise<number> {
+export async function redeemGiftCard(uid: string, code: string): Promise<number> {
   const db = getDb();
-  const snap = await getDocs(
-    query(collection(db, "giftCards"), where("code", "==", code)),
-  );
+  const snap = await getDocs(query(collection(db, "giftCards"), where("code", "==", code)));
   if (snap.empty) throw new Error("Gift card not found");
   const cardDoc = snap.docs[0];
   const data = cardDoc.data() as Record<string, unknown>;

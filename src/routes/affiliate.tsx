@@ -19,7 +19,8 @@ export const Route = createFileRoute("/affiliate")({
   head: () => ({
     ...seoHead({
       title: "Affiliate Program — Earn Money with AVENTA SHOP",
-      description: "Join the AVENTA SHOP Affiliate Program and earn commission by sharing products you love. Get your unique referral link, track clicks, and withdraw earnings via bKash or bank transfer.",
+      description:
+        "Join the AVENTA SHOP Affiliate Program and earn commission by sharing products you love. Get your unique referral link, track clicks, and withdraw earnings via bKash or bank transfer.",
       path: "/affiliate",
       type: "website",
     }),
@@ -54,10 +55,29 @@ const HOW_IT_WORKS = [
 ];
 
 const BENEFITS = [
-  { icon: <TrendingUp className="h-5 w-5" />, title: "Competitive Commissions", description: "Earn up to 10% commission on qualifying purchases, depending on the product category." },
-  { icon: <Gift className="h-5 w-5" />, title: "Bonus Rewards", description: "Top-performing affiliates get exclusive bonus payouts and early access to promotions." },
-  { icon: <CheckCircle2 className="h-5 w-5" />, title: "30-Day Cookie", description: "You get credit for any purchase made within 30 days of someone clicking your link." },
-  { icon: <Wallet className="h-5 w-5" />, title: "Easy Withdrawals", description: "Cash out earnings via bKash, Nagad, or bank transfer once you reach ৳500." },
+  {
+    icon: <TrendingUp className="h-5 w-5" />,
+    title: "Competitive Commissions",
+    description:
+      "Earn up to 10% commission on qualifying purchases, depending on the product category.",
+  },
+  {
+    icon: <Gift className="h-5 w-5" />,
+    title: "Bonus Rewards",
+    description:
+      "Top-performing affiliates get exclusive bonus payouts and early access to promotions.",
+  },
+  {
+    icon: <CheckCircle2 className="h-5 w-5" />,
+    title: "30-Day Cookie",
+    description:
+      "You get credit for any purchase made within 30 days of someone clicking your link.",
+  },
+  {
+    icon: <Wallet className="h-5 w-5" />,
+    title: "Easy Withdrawals",
+    description: "Cash out earnings via bKash, Nagad, or bank transfer once you reach ৳500.",
+  },
 ];
 
 const COMMISSION_RATES = [
@@ -91,10 +111,7 @@ function AffiliatePage() {
         <h2 className="mb-4 text-xl font-bold text-foreground">How It Works</h2>
         <div className="mb-8 space-y-4">
           {HOW_IT_WORKS.map((step, i) => (
-            <div
-              key={i}
-              className="flex gap-4 rounded-2xl border bg-background p-5 shadow-sm"
-            >
+            <div key={i} className="flex gap-4 rounded-2xl border bg-background p-5 shadow-sm">
               <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
                 {step.icon}
               </span>
@@ -112,8 +129,12 @@ function AffiliatePage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/30">
-                <th className="px-5 py-3 text-left font-semibold text-foreground">Product Category</th>
-                <th className="px-5 py-3 text-right font-semibold text-foreground">Commission Rate</th>
+                <th className="px-5 py-3 text-left font-semibold text-foreground">
+                  Product Category
+                </th>
+                <th className="px-5 py-3 text-right font-semibold text-foreground">
+                  Commission Rate
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -148,11 +169,21 @@ function AffiliatePage() {
           <h2 className="mb-3 text-lg font-semibold text-foreground">Program Rules</h2>
           <ol className="space-y-2 text-sm text-muted-foreground">
             <li>1. Commissions apply only to completed (delivered and not returned) orders.</li>
-            <li>2. Self-referrals are not allowed — you cannot earn commission on your own purchases.</li>
-            <li>3. Minimum withdrawal amount is ৳500. Payments processed within 3-5 business days.</li>
+            <li>
+              2. Self-referrals are not allowed — you cannot earn commission on your own purchases.
+            </li>
+            <li>
+              3. Minimum withdrawal amount is ৳500. Payments processed within 3-5 business days.
+            </li>
             <li>4. Cookie duration is 30 days from the first click.</li>
-            <li>5. AVENTA SHOP reserves the right to suspend accounts engaging in fraudulent or spammy referral practices.</li>
-            <li>6. Commission rates may change — current rates are always visible in your affiliate dashboard.</li>
+            <li>
+              5. AVENTA SHOP reserves the right to suspend accounts engaging in fraudulent or spammy
+              referral practices.
+            </li>
+            <li>
+              6. Commission rates may change — current rates are always visible in your affiliate
+              dashboard.
+            </li>
           </ol>
         </div>
 

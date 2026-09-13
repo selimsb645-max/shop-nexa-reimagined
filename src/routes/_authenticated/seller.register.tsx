@@ -1,17 +1,38 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
-  Store, Briefcase, IdCard, Wallet, FileText, CheckCircle2,
-  ChevronRight, ChevronLeft, Loader, AlertCircle,
+  Store,
+  Briefcase,
+  IdCard,
+  Wallet,
+  FileText,
+  CheckCircle2,
+  ChevronRight,
+  ChevronLeft,
+  Loader,
+  AlertCircle,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useSellerProfile } from "@/hooks/useSellerProfile";
 import {
-  initSellerDraft, saveStoreInfo, saveBusinessInfo,
-  saveIdentityInfo, saveBankingInfo, acceptTerms, submitForReview,
-  type StoreInfoInput, type BusinessInfoInput, type IdentityInput, type BankingInput,
+  initSellerDraft,
+  saveStoreInfo,
+  saveBusinessInfo,
+  saveIdentityInfo,
+  saveBankingInfo,
+  acceptTerms,
+  submitForReview,
+  type StoreInfoInput,
+  type BusinessInfoInput,
+  type IdentityInput,
+  type BankingInput,
 } from "@/services/firebase/sellers";
-import type { SellerProfile, SellerBusinessInfo, SellerBankInfo, SellerIdentityInfo } from "@/types/seller";
+import type {
+  SellerProfile,
+  SellerBusinessInfo,
+  SellerBankInfo,
+  SellerIdentityInfo,
+} from "@/types/seller";
 import { firebaseConfigured } from "@/services/firebase/config";
 import { REGISTRATION_STEPS, type RegistrationStep } from "@/types/seller";
 import { toast } from "sonner";
@@ -35,7 +56,10 @@ function SellerRegisterPage() {
   useEffect(() => {
     (async () => {
       if (!user) return;
-      if (!firebaseConfigured) { setInitLoading(false); return; }
+      if (!firebaseConfigured) {
+        setInitLoading(false);
+        return;
+      }
       if (!profile) {
         try {
           await initSellerDraft({ uid: user.uid, email: user.email });
@@ -78,7 +102,10 @@ function SellerRegisterPage() {
       {/* Header */}
       <header className="bg-[#0f172a] text-white sticky top-0 z-40">
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center gap-3">
-          <button onClick={() => navigate({ to: "/seller" })} className="p-1.5 hover:bg-white/10 rounded-lg">
+          <button
+            onClick={() => navigate({ to: "/seller" })}
+            className="p-1.5 hover:bg-white/10 rounded-lg"
+          >
             <ChevronLeft className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2">
@@ -94,25 +121,33 @@ function SellerRegisterPage() {
       <div className="bg-white border-b border-slate-200 sticky top-14 z-30">
         <div className="max-w-2xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between gap-1">
-            {REGISTRATION_STEPS.filter((s) => s.key !== "account" && s.key !== "submitted").map((step, i) => {
-              const stepIndex = REGISTRATION_STEPS.findIndex((s) => s.key === step.key);
-              const isActive = step.key === currentStep;
-              const isDone = stepIdx > stepIndex;
-              return (
-                <div key={step.key} className="flex items-center flex-1 last:flex-none">
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
-                    isDone ? "bg-[#059669] text-white"
-                    : isActive ? "bg-[#f57224] text-white"
-                    : "bg-slate-200 text-slate-400"
-                  }`}>
-                    {isDone ? <CheckCircle2 className="w-4 h-4" /> : i + 1}
+            {REGISTRATION_STEPS.filter((s) => s.key !== "account" && s.key !== "submitted").map(
+              (step, i) => {
+                const stepIndex = REGISTRATION_STEPS.findIndex((s) => s.key === step.key);
+                const isActive = step.key === currentStep;
+                const isDone = stepIdx > stepIndex;
+                return (
+                  <div key={step.key} className="flex items-center flex-1 last:flex-none">
+                    <div
+                      className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
+                        isDone
+                          ? "bg-[#059669] text-white"
+                          : isActive
+                            ? "bg-[#f57224] text-white"
+                            : "bg-slate-200 text-slate-400"
+                      }`}
+                    >
+                      {isDone ? <CheckCircle2 className="w-4 h-4" /> : i + 1}
+                    </div>
+                    {i < 4 && (
+                      <div
+                        className={`flex-1 h-0.5 mx-1 ${isDone ? "bg-[#059669]" : "bg-slate-200"}`}
+                      />
+                    )}
                   </div>
-                  {i < 4 && (
-                    <div className={`flex-1 h-0.5 mx-1 ${isDone ? "bg-[#059669]" : "bg-slate-200"}`} />
-                  )}
-                </div>
-              );
-            })}
+                );
+              },
+            )}
           </div>
           <p className="mt-2 text-xs font-medium text-slate-500 text-center">
             Step {stepIdx} of {REGISTRATION_STEPS.length - 2}: {REGISTRATION_STEPS[stepIdx]?.label}
@@ -132,7 +167,9 @@ function SellerRegisterPage() {
                 await refresh();
                 setCurrentStep("business_info");
                 toast.success(t("seller.storeInfoSaved"));
-              } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
+              } catch (e) {
+                toast.error(e instanceof Error ? e.message : "Failed");
+              }
               setLoading(false);
             }}
             loading={loading}
@@ -150,7 +187,9 @@ function SellerRegisterPage() {
                 await refresh();
                 setCurrentStep("identity_verification");
                 toast.success(t("seller.businessInfoSaved"));
-              } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
+              } catch (e) {
+                toast.error(e instanceof Error ? e.message : "Failed");
+              }
               setLoading(false);
             }}
             loading={loading}
@@ -168,7 +207,9 @@ function SellerRegisterPage() {
                 await refresh();
                 setCurrentStep("banking");
                 toast.success(t("seller.identityInfoSaved"));
-              } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
+              } catch (e) {
+                toast.error(e instanceof Error ? e.message : "Failed");
+              }
               setLoading(false);
             }}
             loading={loading}
@@ -186,7 +227,9 @@ function SellerRegisterPage() {
                 await refresh();
                 setCurrentStep("terms");
                 toast.success(t("seller.bankingInfoSaved"));
-              } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
+              } catch (e) {
+                toast.error(e instanceof Error ? e.message : "Failed");
+              }
               setLoading(false);
             }}
             loading={loading}
@@ -204,7 +247,9 @@ function SellerRegisterPage() {
                 await refresh();
                 setCurrentStep("submitted");
                 toast.success("Application submitted for review!");
-              } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
+              } catch (e) {
+                toast.error(e instanceof Error ? e.message : "Failed");
+              }
               setLoading(false);
             }}
             loading={loading}
@@ -231,7 +276,8 @@ function ReviewPending() {
         </div>
         <h2 className="text-xl font-bold text-[#0f172a]">{t("seller.applicationSubmitted")}</h2>
         <p className="mt-3 text-sm text-slate-500">
-          Your seller application is now under review. Our team will verify your information and documents. You'll be notified within 24–48 hours.
+          Your seller application is now under review. Our team will verify your information and
+          documents. You'll be notified within 24–48 hours.
         </p>
         <div className="mt-6 flex items-center gap-2 text-xs text-slate-400 justify-center">
           <AlertCircle className="w-4 h-4" />
@@ -251,7 +297,11 @@ function ReviewPending() {
 // ====================================================================
 // Step 1: Store Info Form
 // ====================================================================
-function StoreInfoForm({ initial, onSubmit, loading }: {
+function StoreInfoForm({
+  initial,
+  onSubmit,
+  loading,
+}: {
   initial?: SellerProfile;
   onSubmit: (data: StoreInfoInput) => void;
   loading: boolean;
@@ -268,41 +318,86 @@ function StoreInfoForm({ initial, onSubmit, loading }: {
 
   return (
     <div className="space-y-4">
-      <FormHeader icon={<Store className="w-5 h-5 text-[#f57224]" />} title="Store Information" subtitle="Tell us about your shop" />
+      <FormHeader
+        icon={<Store className="w-5 h-5 text-[#f57224]" />}
+        title="Store Information"
+        subtitle="Tell us about your shop"
+      />
 
       <Field label="Shop Name" required>
-        <input value={shopName} onChange={(e) => setShopName(e.target.value)} placeholder="My Awesome Store"
-          className="input-field" />
+        <input
+          value={shopName}
+          onChange={(e) => setShopName(e.target.value)}
+          placeholder="My Awesome Store"
+          className="input-field"
+        />
       </Field>
 
       <Field label="Description">
-        <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Brief description of your shop"
-          rows={3} className="input-field resize-none" />
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Brief description of your shop"
+          rows={3}
+          className="input-field resize-none"
+        />
       </Field>
 
       <div className="grid grid-cols-2 gap-3">
         <Field label="Phone" required>
-          <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="01XXXXXXXXX" className="input-field" />
+          <input
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="01XXXXXXXXX"
+            className="input-field"
+          />
         </Field>
         <Field label="City" required>
-          <input value={city} onChange={(e) => setCity(e.target.value)} placeholder="Dhaka" className="input-field" />
+          <input
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            placeholder="Dhaka"
+            className="input-field"
+          />
         </Field>
       </div>
 
       <Field label="Address" required>
-        <input value={addressLine} onChange={(e) => setAddressLine(e.target.value)} placeholder="House, Road, Area" className="input-field" />
+        <input
+          value={addressLine}
+          onChange={(e) => setAddressLine(e.target.value)}
+          placeholder="House, Road, Area"
+          className="input-field"
+        />
       </Field>
 
       <div className="grid grid-cols-2 gap-3">
         <Field label="Area">
-          <input value={area} onChange={(e) => setArea(e.target.value)} placeholder="Mirpur" className="input-field" />
+          <input
+            value={area}
+            onChange={(e) => setArea(e.target.value)}
+            placeholder="Mirpur"
+            className="input-field"
+          />
         </Field>
         <Field label="Postal Code">
-          <input value={postalCode} onChange={(e) => setPostalCode(e.target.value)} placeholder="1216" className="input-field" />
+          <input
+            value={postalCode}
+            onChange={(e) => setPostalCode(e.target.value)}
+            placeholder="1216"
+            className="input-field"
+          />
         </Field>
       </div>
 
-      <SubmitButton onClick={() => onSubmit({ shopName, description, phone, addressLine, city, area, postalCode })} disabled={!valid} loading={loading} label="Continue" />
+      <SubmitButton
+        onClick={() =>
+          onSubmit({ shopName, description, phone, addressLine, city, area, postalCode })
+        }
+        disabled={!valid}
+        loading={loading}
+        label="Continue"
+      />
     </div>
   );
 }
@@ -310,10 +405,20 @@ function StoreInfoForm({ initial, onSubmit, loading }: {
 // ====================================================================
 // Step 2: Business Info Form
 // ====================================================================
-function BusinessInfoForm({ initial, onBack, onSubmit, loading }: {
-  initial?: SellerBusinessInfo | null; onBack: () => void; onSubmit: (data: BusinessInfoInput) => void; loading: boolean;
+function BusinessInfoForm({
+  initial,
+  onBack,
+  onSubmit,
+  loading,
+}: {
+  initial?: SellerBusinessInfo | null;
+  onBack: () => void;
+  onSubmit: (data: BusinessInfoInput) => void;
+  loading: boolean;
 }) {
-  const [businessType, setBusinessType] = useState<"individual" | "company" | "partnership">(initial?.businessType ?? "individual");
+  const [businessType, setBusinessType] = useState<"individual" | "company" | "partnership">(
+    initial?.businessType ?? "individual",
+  );
   const [businessName, setBusinessName] = useState(initial?.businessName ?? "");
   const [taxId, setTaxId] = useState(initial?.taxId ?? "");
   const [website, setWebsite] = useState(initial?.website ?? "");
@@ -322,15 +427,23 @@ function BusinessInfoForm({ initial, onBack, onSubmit, loading }: {
 
   return (
     <div className="space-y-4">
-      <FormHeader icon={<Briefcase className="w-5 h-5 text-[#f57224]" />} title="Business Information" subtitle="Tell us about your business" />
+      <FormHeader
+        icon={<Briefcase className="w-5 h-5 text-[#f57224]" />}
+        title="Business Information"
+        subtitle="Tell us about your business"
+      />
 
       <Field label="Business Type" required>
         <div className="grid grid-cols-3 gap-2">
           {(["individual", "company", "partnership"] as const).map((t) => (
-            <button key={t} type="button" onClick={() => setBusinessType(t)}
+            <button
+              key={t}
+              type="button"
+              onClick={() => setBusinessType(t)}
               className={`py-2.5 rounded-xl text-sm font-medium capitalize transition-colors ${
                 businessType === t ? "bg-[#0f172a] text-white" : "bg-slate-100 text-slate-500"
-              }`}>
+              }`}
+            >
               {t}
             </button>
           ))}
@@ -338,21 +451,43 @@ function BusinessInfoForm({ initial, onBack, onSubmit, loading }: {
       </Field>
 
       <Field label="Business Name" required>
-        <input value={businessName} onChange={(e) => setBusinessName(e.target.value)} placeholder="ABC Trading Ltd." className="input-field" />
+        <input
+          value={businessName}
+          onChange={(e) => setBusinessName(e.target.value)}
+          placeholder="ABC Trading Ltd."
+          className="input-field"
+        />
       </Field>
 
       <div className="grid grid-cols-2 gap-3">
         <Field label="Tax ID / BIN">
-          <input value={taxId} onChange={(e) => setTaxId(e.target.value)} placeholder="000000000" className="input-field" />
+          <input
+            value={taxId}
+            onChange={(e) => setTaxId(e.target.value)}
+            placeholder="000000000"
+            className="input-field"
+          />
         </Field>
         <Field label="Website">
-          <input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://..." className="input-field" />
+          <input
+            value={website}
+            onChange={(e) => setWebsite(e.target.value)}
+            placeholder="https://..."
+            className="input-field"
+          />
         </Field>
       </div>
 
       <div className="flex gap-3">
         <BackButton onClick={onBack} />
-        <SubmitButton onClick={() => onSubmit({ businessType, businessName, taxId, website, socialMediaLinks: [] })} disabled={!valid} loading={loading} label="Continue" />
+        <SubmitButton
+          onClick={() =>
+            onSubmit({ businessType, businessName, taxId, website, socialMediaLinks: [] })
+          }
+          disabled={!valid}
+          loading={loading}
+          label="Continue"
+        />
       </div>
     </div>
   );
@@ -361,8 +496,16 @@ function BusinessInfoForm({ initial, onBack, onSubmit, loading }: {
 // ====================================================================
 // Step 3: Identity Verification Form
 // ====================================================================
-function IdentityForm({ initial, onBack, onSubmit, loading }: {
-  initial?: SellerIdentityInfo | null; onBack: () => void; onSubmit: (data: IdentityInput) => void; loading: boolean;
+function IdentityForm({
+  initial,
+  onBack,
+  onSubmit,
+  loading,
+}: {
+  initial?: SellerIdentityInfo | null;
+  onBack: () => void;
+  onSubmit: (data: IdentityInput) => void;
+  loading: boolean;
 }) {
   const [fullName, setFullName] = useState(initial?.fullName ?? "");
   const [nidNumber, setNidNumber] = useState(initial?.nidNumber ?? "");
@@ -372,27 +515,52 @@ function IdentityForm({ initial, onBack, onSubmit, loading }: {
 
   return (
     <div className="space-y-4">
-      <FormHeader icon={<IdCard className="w-5 h-5 text-[#f57224]" />} title="Identity Verification" subtitle="Verify your identity for trust & safety" />
+      <FormHeader
+        icon={<IdCard className="w-5 h-5 text-[#f57224]" />}
+        title="Identity Verification"
+        subtitle="Verify your identity for trust & safety"
+      />
 
       <Field label="Full Name (as per NID)" required>
-        <input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="John Doe" className="input-field" />
+        <input
+          value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
+          placeholder="John Doe"
+          className="input-field"
+        />
       </Field>
 
       <Field label="National ID Number" required>
-        <input value={nidNumber} onChange={(e) => setNidNumber(e.target.value)} placeholder="199XXXXXXXX" className="input-field" />
+        <input
+          value={nidNumber}
+          onChange={(e) => setNidNumber(e.target.value)}
+          placeholder="199XXXXXXXX"
+          className="input-field"
+        />
       </Field>
 
       <Field label="Trade License Number (optional for companies)">
-        <input value={tradeLicenseNumber} onChange={(e) => setTradeLicenseNumber(e.target.value)} placeholder="0000000" className="input-field" />
+        <input
+          value={tradeLicenseNumber}
+          onChange={(e) => setTradeLicenseNumber(e.target.value)}
+          placeholder="0000000"
+          className="input-field"
+        />
       </Field>
 
       <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs text-blue-700">
-        📄 Document upload (NID front/back, trade license) will be available after admin review. You may be asked to provide additional documents.
+        📄 Document upload (NID front/back, trade license) will be available after admin review. You
+        may be asked to provide additional documents.
       </div>
 
       <div className="flex gap-3">
         <BackButton onClick={onBack} />
-        <SubmitButton onClick={() => onSubmit({ fullName, nidNumber, tradeLicenseNumber })} disabled={!valid} loading={loading} label="Continue" />
+        <SubmitButton
+          onClick={() => onSubmit({ fullName, nidNumber, tradeLicenseNumber })}
+          disabled={!valid}
+          loading={loading}
+          label="Continue"
+        />
       </div>
     </div>
   );
@@ -401,33 +569,58 @@ function IdentityForm({ initial, onBack, onSubmit, loading }: {
 // ====================================================================
 // Step 4: Banking Form
 // ====================================================================
-function BankingForm({ initial, onBack, onSubmit, loading }: {
-  initial?: SellerBankInfo | null; onBack: () => void; onSubmit: (data: BankingInput) => void; loading: boolean;
+function BankingForm({
+  initial,
+  onBack,
+  onSubmit,
+  loading,
+}: {
+  initial?: SellerBankInfo | null;
+  onBack: () => void;
+  onSubmit: (data: BankingInput) => void;
+  loading: boolean;
 }) {
-  const [payoutMethod, setPayoutMethod] = useState<"bank" | "mobile">(initial?.mobileBankingType ? "mobile" : "bank");
+  const [payoutMethod, setPayoutMethod] = useState<"bank" | "mobile">(
+    initial?.mobileBankingType ? "mobile" : "bank",
+  );
   const [bankName, setBankName] = useState(initial?.bankName ?? "");
   const [accountName, setAccountName] = useState(initial?.accountName ?? "");
   const [accountNumber, setAccountNumber] = useState(initial?.accountNumber ?? "");
   const [branchName, setBranchName] = useState(initial?.branchName ?? "");
-  const [mobileBankingType, setMobileBankingType] = useState<"bkash" | "nagad" | "rocket">(initial?.mobileBankingType ?? "bkash");
-  const [mobileBankingNumber, setMobileBankingNumber] = useState(initial?.mobileBankingNumber ?? "");
+  const [mobileBankingType, setMobileBankingType] = useState<"bkash" | "nagad" | "rocket">(
+    initial?.mobileBankingType ?? "bkash",
+  );
+  const [mobileBankingNumber, setMobileBankingNumber] = useState(
+    initial?.mobileBankingNumber ?? "",
+  );
 
-  const valid = payoutMethod === "bank"
-    ? bankName.trim() && accountName.trim() && accountNumber.trim()
-    : mobileBankingNumber.trim();
+  const valid =
+    payoutMethod === "bank"
+      ? bankName.trim() && accountName.trim() && accountNumber.trim()
+      : mobileBankingNumber.trim();
 
   return (
     <div className="space-y-4">
-      <FormHeader icon={<Wallet className="w-5 h-5 text-[#f57224]" />} title="Banking & Payout" subtitle="Where should we send your earnings?" />
+      <FormHeader
+        icon={<Wallet className="w-5 h-5 text-[#f57224]" />}
+        title="Banking & Payout"
+        subtitle="Where should we send your earnings?"
+      />
 
       <Field label="Payout Method" required>
         <div className="grid grid-cols-2 gap-2">
-          <button type="button" onClick={() => setPayoutMethod("bank")}
-            className={`py-2.5 rounded-xl text-sm font-medium transition-colors ${payoutMethod === "bank" ? "bg-[#0f172a] text-white" : "bg-slate-100 text-slate-500"}`}>
+          <button
+            type="button"
+            onClick={() => setPayoutMethod("bank")}
+            className={`py-2.5 rounded-xl text-sm font-medium transition-colors ${payoutMethod === "bank" ? "bg-[#0f172a] text-white" : "bg-slate-100 text-slate-500"}`}
+          >
             Bank Transfer
           </button>
-          <button type="button" onClick={() => setPayoutMethod("mobile")}
-            className={`py-2.5 rounded-xl text-sm font-medium transition-colors ${payoutMethod === "mobile" ? "bg-[#0f172a] text-white" : "bg-slate-100 text-slate-500"}`}>
+          <button
+            type="button"
+            onClick={() => setPayoutMethod("mobile")}
+            className={`py-2.5 rounded-xl text-sm font-medium transition-colors ${payoutMethod === "mobile" ? "bg-[#0f172a] text-white" : "bg-slate-100 text-slate-500"}`}
+          >
             Mobile Banking
           </button>
         </div>
@@ -437,17 +630,37 @@ function BankingForm({ initial, onBack, onSubmit, loading }: {
         <>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Bank Name" required>
-              <input value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="Dutch-Bangla Bank" className="input-field" />
+              <input
+                value={bankName}
+                onChange={(e) => setBankName(e.target.value)}
+                placeholder="Dutch-Bangla Bank"
+                className="input-field"
+              />
             </Field>
             <Field label="Account Name" required>
-              <input value={accountName} onChange={(e) => setAccountName(e.target.value)} placeholder="John Doe" className="input-field" />
+              <input
+                value={accountName}
+                onChange={(e) => setAccountName(e.target.value)}
+                placeholder="John Doe"
+                className="input-field"
+              />
             </Field>
           </div>
           <Field label="Account Number" required>
-            <input value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} placeholder="000XXXXXXXXX" className="input-field" />
+            <input
+              value={accountNumber}
+              onChange={(e) => setAccountNumber(e.target.value)}
+              placeholder="000XXXXXXXXX"
+              className="input-field"
+            />
           </Field>
           <Field label="Branch Name">
-            <input value={branchName} onChange={(e) => setBranchName(e.target.value)} placeholder="Gulshan Branch" className="input-field" />
+            <input
+              value={branchName}
+              onChange={(e) => setBranchName(e.target.value)}
+              placeholder="Gulshan Branch"
+              className="input-field"
+            />
           </Field>
         </>
       ) : (
@@ -455,26 +668,42 @@ function BankingForm({ initial, onBack, onSubmit, loading }: {
           <Field label="Mobile Banking" required>
             <div className="grid grid-cols-3 gap-2">
               {(["bkash", "nagad", "rocket"] as const).map((t) => (
-                <button key={t} type="button" onClick={() => setMobileBankingType(t)}
-                  className={`py-2.5 rounded-xl text-sm font-bold capitalize transition-colors ${mobileBankingType === t ? "bg-[#0f172a] text-white" : "bg-slate-100 text-slate-500"}`}>
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setMobileBankingType(t)}
+                  className={`py-2.5 rounded-xl text-sm font-bold capitalize transition-colors ${mobileBankingType === t ? "bg-[#0f172a] text-white" : "bg-slate-100 text-slate-500"}`}
+                >
                   {t}
                 </button>
               ))}
             </div>
           </Field>
           <Field label="Mobile Number" required>
-            <input value={mobileBankingNumber} onChange={(e) => setMobileBankingNumber(e.target.value)} placeholder="01XXXXXXXXX" className="input-field" />
+            <input
+              value={mobileBankingNumber}
+              onChange={(e) => setMobileBankingNumber(e.target.value)}
+              placeholder="01XXXXXXXXX"
+              className="input-field"
+            />
           </Field>
         </>
       )}
 
       <div className="flex gap-3">
         <BackButton onClick={onBack} />
-        <SubmitButton onClick={() => onSubmit(
-          payoutMethod === "bank"
-            ? { bankName, accountName, accountNumber, branchName }
-            : { mobileBankingType, mobileBankingNumber }
-        )} disabled={!valid} loading={loading} label="Continue" />
+        <SubmitButton
+          onClick={() =>
+            onSubmit(
+              payoutMethod === "bank"
+                ? { bankName, accountName, accountNumber, branchName }
+                : { mobileBankingType, mobileBankingNumber },
+            )
+          }
+          disabled={!valid}
+          loading={loading}
+          label="Continue"
+        />
       </div>
     </div>
   );
@@ -483,15 +712,25 @@ function BankingForm({ initial, onBack, onSubmit, loading }: {
 // ====================================================================
 // Step 5: Terms Form
 // ====================================================================
-function TermsForm({ onBack, onSubmit, loading }: {
-  onBack: () => void; onSubmit: () => void; loading: boolean;
+function TermsForm({
+  onBack,
+  onSubmit,
+  loading,
+}: {
+  onBack: () => void;
+  onSubmit: () => void;
+  loading: boolean;
 }) {
   const { t } = useI18n();
   const [agreed, setAgreed] = useState(false);
 
   return (
     <div className="space-y-4">
-      <FormHeader icon={<FileText className="w-5 h-5 text-[#f57224]" />} title="Terms & Conditions" subtitle="Review and accept to submit" />
+      <FormHeader
+        icon={<FileText className="w-5 h-5 text-[#f57224]" />}
+        title="Terms & Conditions"
+        subtitle="Review and accept to submit"
+      />
 
       <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3 text-sm text-slate-600 max-h-64 overflow-y-auto">
         <p className="font-bold text-[#0f172a]">{t("seller.sellerAgreement")}</p>
@@ -508,16 +747,26 @@ function TermsForm({ onBack, onSubmit, loading }: {
       </div>
 
       <label className="flex items-start gap-3 cursor-pointer">
-        <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)}
-          className="mt-0.5 w-5 h-5 rounded accent-[#f57224]" />
+        <input
+          type="checkbox"
+          checked={agreed}
+          onChange={(e) => setAgreed(e.target.checked)}
+          className="mt-0.5 w-5 h-5 rounded accent-[#f57224]"
+        />
         <span className="text-sm text-slate-600">
-          I have read and agree to the AVENTA SHOP Seller Terms & Conditions, Privacy Policy, and Commission Structure.
+          I have read and agree to the AVENTA SHOP Seller Terms & Conditions, Privacy Policy, and
+          Commission Structure.
         </span>
       </label>
 
       <div className="flex gap-3">
         <BackButton onClick={onBack} />
-        <SubmitButton onClick={onSubmit} disabled={!agreed} loading={loading} label="Submit Application" />
+        <SubmitButton
+          onClick={onSubmit}
+          disabled={!agreed}
+          loading={loading}
+          label="Submit Application"
+        />
       </div>
     </div>
   );
@@ -526,10 +775,20 @@ function TermsForm({ onBack, onSubmit, loading }: {
 // ====================================================================
 // Shared Form Components
 // ====================================================================
-function FormHeader({ icon, title, subtitle }: { icon: React.ReactNode; title: string; subtitle: string }) {
+function FormHeader({
+  icon,
+  title,
+  subtitle,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+}) {
   return (
     <div className="flex items-center gap-3 mb-2">
-      <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center">{icon}</div>
+      <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center">
+        {icon}
+      </div>
       <div>
         <h2 className="text-lg font-bold text-[#0f172a]">{title}</h2>
         <p className="text-xs text-slate-500">{subtitle}</p>
@@ -538,29 +797,60 @@ function FormHeader({ icon, title, subtitle }: { icon: React.ReactNode; title: s
   );
 }
 
-function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+function Field({
+  label,
+  required,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <div>
       <label className="block text-sm font-medium text-slate-700 mb-1.5">
-        {label}{required && <span className="text-[#f57224] ml-0.5">*</span>}
+        {label}
+        {required && <span className="text-[#f57224] ml-0.5">*</span>}
       </label>
       {children}
     </div>
   );
 }
 
-function SubmitButton({ onClick, disabled, loading, label }: { onClick: () => void; disabled: boolean; loading: boolean; label: string }) {
+function SubmitButton({
+  onClick,
+  disabled,
+  loading,
+  label,
+}: {
+  onClick: () => void;
+  disabled: boolean;
+  loading: boolean;
+  label: string;
+}) {
   return (
-    <button onClick={onClick} disabled={disabled || loading}
-      className="flex-1 bg-[#f57224] hover:bg-orange-600 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold py-3.5 rounded-xl text-sm transition-colors flex items-center justify-center gap-2">
-      {loading ? <Loader className="w-4 h-4 animate-spin" /> : <>{label} <ChevronRight className="w-4 h-4" /></>}
+    <button
+      onClick={onClick}
+      disabled={disabled || loading}
+      className="flex-1 bg-[#f57224] hover:bg-orange-600 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold py-3.5 rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
+    >
+      {loading ? (
+        <Loader className="w-4 h-4 animate-spin" />
+      ) : (
+        <>
+          {label} <ChevronRight className="w-4 h-4" />
+        </>
+      )}
     </button>
   );
 }
 
 function BackButton({ onClick }: { onClick: () => void }) {
   return (
-    <button onClick={onClick} className="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3.5 px-5 rounded-xl text-sm transition-colors flex items-center gap-1">
+    <button
+      onClick={onClick}
+      className="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3.5 px-5 rounded-xl text-sm transition-colors flex items-center gap-1"
+    >
       <ChevronLeft className="w-4 h-4" />
     </button>
   );

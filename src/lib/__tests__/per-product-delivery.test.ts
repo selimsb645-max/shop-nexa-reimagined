@@ -94,7 +94,9 @@ function computePerProductDelivery(
       deliveryLines: [] as typeof deliveryLines,
     };
     existing.sellerDeliveryCharge = round2(existing.sellerDeliveryCharge + dl.sellerAbsorbedCharge);
-    existing.customerDeliveryCharge = round2(existing.customerDeliveryCharge + dl.customerDeliveryCharge);
+    existing.customerDeliveryCharge = round2(
+      existing.customerDeliveryCharge + dl.customerDeliveryCharge,
+    );
     existing.deliveryLines.push(dl);
     sellerDeliveryMap.set(dl.sellerId, existing);
     totalCustomerDelivery = round2(totalCustomerDelivery + dl.customerDeliveryCharge);
@@ -277,9 +279,7 @@ describe("Per-Product Delivery Charge Logic", () => {
 
   // Test 10: Historical order protection
   it("10. Historical order delivery values are snapshots, not recomputed", () => {
-    const linesAtOrderTime = [
-      { productId: "p1", sellerId: SELLER_A, freeDelivery: false },
-    ];
+    const linesAtOrderTime = [{ productId: "p1", sellerId: SELLER_A, freeDelivery: false }];
     const snapshot = computePerProductDelivery(linesAtOrderTime, ZONE_DHAKA);
 
     const newZoneCharge = 200;
@@ -308,9 +308,7 @@ describe("Per-Product Delivery Charge Logic", () => {
   // Test 12: Client cannot manipulate delivery charges
   it("12. Delivery charge always comes from zone config, never client input", () => {
     const serverReadFreeDelivery = false;
-    const lines = [
-      { productId: "p1", sellerId: SELLER_A, freeDelivery: serverReadFreeDelivery },
-    ];
+    const lines = [{ productId: "p1", sellerId: SELLER_A, freeDelivery: serverReadFreeDelivery }];
     const result = computePerProductDelivery(lines, ZONE_DHAKA);
 
     expect(result.deliveryLines[0].freeDelivery).toBe(false);
@@ -349,7 +347,8 @@ describe("Per-Product Delivery Charge Logic", () => {
 
     // Verify customer-paid delivery is NOT deducted from seller
     const customerPaidDelivery = ZONE_DHAKA;
-    const wrongEarnings = sellerSubtotal - commissionAmount - sellerDeliveryCharge - customerPaidDelivery;
+    const wrongEarnings =
+      sellerSubtotal - commissionAmount - sellerDeliveryCharge - customerPaidDelivery;
     expect(sellerNetEarnings).not.toBe(wrongEarnings);
   });
 
@@ -422,8 +421,22 @@ describe("computeSellerSettlement - per-product delivery", () => {
     const { computeSellerSettlement } = await import("../settlement.server");
 
     const deliveryLines = [
-      { productId: "p1", sellerId: SELLER_A, freeDelivery: true, zoneCharge: ZONE_DHAKA, customerDeliveryCharge: 0, sellerAbsorbedCharge: ZONE_DHAKA },
-      { productId: "p2", sellerId: SELLER_A, freeDelivery: true, zoneCharge: ZONE_DHAKA, customerDeliveryCharge: 0, sellerAbsorbedCharge: ZONE_DHAKA },
+      {
+        productId: "p1",
+        sellerId: SELLER_A,
+        freeDelivery: true,
+        zoneCharge: ZONE_DHAKA,
+        customerDeliveryCharge: 0,
+        sellerAbsorbedCharge: ZONE_DHAKA,
+      },
+      {
+        productId: "p2",
+        sellerId: SELLER_A,
+        freeDelivery: true,
+        zoneCharge: ZONE_DHAKA,
+        customerDeliveryCharge: 0,
+        sellerAbsorbedCharge: ZONE_DHAKA,
+      },
     ];
 
     const settlement = computeSellerSettlement({

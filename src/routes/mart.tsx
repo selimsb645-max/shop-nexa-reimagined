@@ -21,7 +21,8 @@ export const Route = createFileRoute("/mart")({
   head: () => ({
     ...seoHead({
       title: "AVENTA SHOP Mart — Daily Groceries & Essentials Delivery",
-      description: "AVENTA SHOP Mart delivers fresh groceries, daily essentials, and household items to your doorstep. Same-day delivery in Dhaka, fast nationwide shipping across Bangladesh.",
+      description:
+        "AVENTA SHOP Mart delivers fresh groceries, daily essentials, and household items to your doorstep. Same-day delivery in Dhaka, fast nationwide shipping across Bangladesh.",
       path: "/mart",
       type: "website",
     }),
@@ -29,23 +30,72 @@ export const Route = createFileRoute("/mart")({
 });
 
 const MART_CATEGORIES = [
-  { icon: <Apple className="h-6 w-6" />, title: "Fresh Produce", description: "Fruits, vegetables, and farm-fresh items delivered daily from local markets." },
-  { icon: <Leaf className="h-6 w-6" />, title: "Groceries & Staples", description: "Rice, dal, oil, spices, and all your kitchen essentials at competitive prices." },
-  { icon: <Package className="h-6 w-6" />, title: "Household Items", description: "Cleaning supplies, toiletries, and everyday household products you need." },
-  { icon: <ShoppingCart className="h-6 w-6" />, title: "Snacks & Beverages", description: "Chips, biscuits, tea, coffee, juices, and your favorite snacks stocked fresh." },
+  {
+    icon: <Apple className="h-6 w-6" />,
+    title: "Fresh Produce",
+    description: "Fruits, vegetables, and farm-fresh items delivered daily from local markets.",
+  },
+  {
+    icon: <Leaf className="h-6 w-6" />,
+    title: "Groceries & Staples",
+    description: "Rice, dal, oil, spices, and all your kitchen essentials at competitive prices.",
+  },
+  {
+    icon: <Package className="h-6 w-6" />,
+    title: "Household Items",
+    description: "Cleaning supplies, toiletries, and everyday household products you need.",
+  },
+  {
+    icon: <ShoppingCart className="h-6 w-6" />,
+    title: "Snacks & Beverages",
+    description: "Chips, biscuits, tea, coffee, juices, and your favorite snacks stocked fresh.",
+  },
 ];
 
 const MART_FEATURES = [
-  { icon: <Clock className="h-5 w-5" />, title: "Same-Day Delivery", description: "Order before 2 PM and get your groceries delivered the same day within Dhaka city limits." },
-  { icon: <Truck className="h-5 w-5" />, title: "Fast Nationwide Shipping", description: "Outside Dhaka? Get your non-perishable groceries delivered within 2-3 business days." },
-  { icon: <ShieldCheck className="h-5 w-5" />, title: "Freshness Guarantee", description: "Not happy with the freshness of your produce? Return it for a full refund — no questions asked." },
-  { icon: <CheckCircle2 className="h-5 w-5" />, title: "Quality Checked", description: "Every item is checked for quality and expiry date before packing and shipping." },
+  {
+    icon: <Clock className="h-5 w-5" />,
+    title: "Same-Day Delivery",
+    description:
+      "Order before 2 PM and get your groceries delivered the same day within Dhaka city limits.",
+  },
+  {
+    icon: <Truck className="h-5 w-5" />,
+    title: "Fast Nationwide Shipping",
+    description:
+      "Outside Dhaka? Get your non-perishable groceries delivered within 2-3 business days.",
+  },
+  {
+    icon: <ShieldCheck className="h-5 w-5" />,
+    title: "Freshness Guarantee",
+    description:
+      "Not happy with the freshness of your produce? Return it for a full refund — no questions asked.",
+  },
+  {
+    icon: <CheckCircle2 className="h-5 w-5" />,
+    title: "Quality Checked",
+    description: "Every item is checked for quality and expiry date before packing and shipping.",
+  },
 ];
 
 const HOW_MART_WORKS = [
-  { step: "1", title: "Browse & Select", description: "Shop from thousands of grocery and daily essential products on AVENTA SHOP Mart." },
-  { step: "2", title: "Choose Delivery Slot", description: "Pick a convenient delivery slot during checkout. Same-day slots available for Dhaka." },
-  { step: "3", title: "Get It Delivered", description: "Your order is carefully packed and delivered to your doorstep at your chosen time." },
+  {
+    step: "1",
+    title: "Browse & Select",
+    description: "Shop from thousands of grocery and daily essential products on AVENTA SHOP Mart.",
+  },
+  {
+    step: "2",
+    title: "Choose Delivery Slot",
+    description:
+      "Pick a convenient delivery slot during checkout. Same-day slots available for Dhaka.",
+  },
+  {
+    step: "3",
+    title: "Get It Delivered",
+    description:
+      "Your order is carefully packed and delivered to your doorstep at your chosen time.",
+  },
 ];
 
 function MartPage() {

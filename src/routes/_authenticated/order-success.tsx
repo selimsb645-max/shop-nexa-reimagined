@@ -48,20 +48,20 @@ function OrderSuccessPage() {
   const navigate = useNavigate();
   const search = Route.useSearch();
   const orderId = search.orderId || "";
-interface OrderData {
-  status?: string;
-  subtotal?: number;
-  discount?: number;
-  shipping?: number;
-  tax?: number;
-  taxRate?: number;
-  taxLabel?: string;
-  promoDiscount?: number;
-  rewardDiscount?: number;
-  walletUsed?: number;
-  total?: number;
-  payment?: { method?: string };
-}
+  interface OrderData {
+    status?: string;
+    subtotal?: number;
+    discount?: number;
+    shipping?: number;
+    tax?: number;
+    taxRate?: number;
+    taxLabel?: string;
+    promoDiscount?: number;
+    rewardDiscount?: number;
+    walletUsed?: number;
+    total?: number;
+    payment?: { method?: string };
+  }
 
   const [order, setOrder] = useState<OrderData | null>(null);
   const [_loading, setLoading] = useState(true);
@@ -102,9 +102,7 @@ interface OrderData {
   })();
 
   // Current timeline step
-  const currentStepIndex = order
-    ? TIMELINE_STEPS.findIndex((s) => s.status === order.status)
-    : 0;
+  const currentStepIndex = order ? TIMELINE_STEPS.findIndex((s) => s.status === order.status) : 0;
   const activeStep = currentStepIndex >= 0 ? currentStepIndex : 0;
 
   return (
@@ -113,7 +111,11 @@ interface OrderData {
 
       <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-6 sm:py-10 pb-32 lg:pb-10">
         <div className="mb-4">
-          <BackButton fallbackTo="/orders" label="Back" className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-200 active:scale-95" />
+          <BackButton
+            fallbackTo="/orders"
+            label="Back"
+            className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-200 active:scale-95"
+          />
         </div>
         {/* Success Hero */}
         <div className="flex flex-col items-center text-center mb-8">
@@ -129,8 +131,8 @@ interface OrderData {
             Order Placed Successfully!
           </h1>
           <p className="mt-2 text-sm text-slate-500 max-w-md">
-            Thank you for shopping with AVENTA SHOP. Your order is being processed
-            and will be delivered soon.
+            Thank you for shopping with AVENTA SHOP. Your order is being processed and will be
+            delivered soon.
           </p>
         </div>
 
@@ -143,9 +145,7 @@ interface OrderData {
                 <p className="text-[10px] uppercase text-slate-300 font-medium tracking-wide">
                   Order ID
                 </p>
-                <p className="text-lg font-bold tracking-wide">
-                  #{orderId || "N/A"}
-                </p>
+                <p className="text-lg font-bold tracking-wide">#{orderId || "N/A"}</p>
               </div>
               <button
                 onClick={handleCopyId}
@@ -174,9 +174,7 @@ interface OrderData {
               </div>
               <div>
                 <p className="text-xs text-slate-500">{t("orderSuccess.estimatedDelivery")}</p>
-                <p className="text-lg font-bold text-[#0f172a]">
-                  {estimatedDelivery}
-                </p>
+                <p className="text-lg font-bold text-[#0f172a]">{estimatedDelivery}</p>
                 <p className="text-xs text-slate-400">
                   You'll get tracking updates via notification
                 </p>
@@ -189,37 +187,49 @@ interface OrderData {
                 {order.subtotal != null && order.subtotal > 0 && (
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-slate-500">Subtotal</span>
-                    <span className="text-sm font-medium text-slate-700">{formatPrice(order.subtotal)}</span>
+                    <span className="text-sm font-medium text-slate-700">
+                      {formatPrice(order.subtotal)}
+                    </span>
                   </div>
                 )}
                 {order.discount != null && order.discount > 0 && (
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-slate-500">Discount</span>
-                    <span className="text-sm font-medium text-emerald-600">-{formatPrice(order.discount)}</span>
+                    <span className="text-sm font-medium text-emerald-600">
+                      -{formatPrice(order.discount)}
+                    </span>
                   </div>
                 )}
                 {order.promoDiscount != null && order.promoDiscount > 0 && (
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-slate-500">Promo Discount</span>
-                    <span className="text-sm font-medium text-emerald-600">-{formatPrice(order.promoDiscount)}</span>
+                    <span className="text-sm font-medium text-emerald-600">
+                      -{formatPrice(order.promoDiscount)}
+                    </span>
                   </div>
                 )}
                 {order.rewardDiscount != null && order.rewardDiscount > 0 && (
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-slate-500">Reward Points</span>
-                    <span className="text-sm font-medium text-emerald-600">-{formatPrice(order.rewardDiscount)}</span>
+                    <span className="text-sm font-medium text-emerald-600">
+                      -{formatPrice(order.rewardDiscount)}
+                    </span>
                   </div>
                 )}
                 {order.walletUsed != null && order.walletUsed > 0 && (
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-slate-500">Wallet</span>
-                    <span className="text-sm font-medium text-emerald-600">-{formatPrice(order.walletUsed)}</span>
+                    <span className="text-sm font-medium text-emerald-600">
+                      -{formatPrice(order.walletUsed)}
+                    </span>
                   </div>
                 )}
                 {order.shipping != null && order.shipping > 0 && (
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-slate-500">Delivery Fee</span>
-                    <span className="text-sm font-medium text-slate-700">{formatPrice(order.shipping)}</span>
+                    <span className="text-sm font-medium text-slate-700">
+                      {formatPrice(order.shipping)}
+                    </span>
                   </div>
                 )}
                 {order.tax != null && order.tax > 0 && (
@@ -227,11 +237,15 @@ interface OrderData {
                     <span className="text-sm text-slate-500">
                       {order.taxLabel || `VAT (${(order.taxRate ?? 0).toFixed(1)}%)`}
                     </span>
-                    <span className="text-sm font-medium text-slate-700">{formatPrice(order.tax)}</span>
+                    <span className="text-sm font-medium text-slate-700">
+                      {formatPrice(order.tax)}
+                    </span>
                   </div>
                 )}
                 <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                  <span className="text-sm font-semibold text-slate-600">{t("orderSuccess.orderTotal")}</span>
+                  <span className="text-sm font-semibold text-slate-600">
+                    {t("orderSuccess.orderTotal")}
+                  </span>
                   <span className="text-lg font-black text-[#f57224]">
                     {formatPrice(order.total ?? 0)}
                   </span>
@@ -247,10 +261,10 @@ interface OrderData {
                   {order.payment?.method === "cash_on_delivery"
                     ? "Cash on Delivery"
                     : order.payment?.method === "card"
-                    ? "Card"
-                    : order.payment?.method === "mobile_banking"
-                    ? "Mobile Banking"
-                    : order.payment?.method || "COD"}
+                      ? "Card"
+                      : order.payment?.method === "mobile_banking"
+                        ? "Mobile Banking"
+                        : order.payment?.method || "COD"}
                 </span>
               </div>
             )}
@@ -262,7 +276,7 @@ interface OrderData {
                 <p className="text-xs text-slate-600">
                   You'll earn{" "}
                   <span className="font-bold text-[#f57224]">
-                    +{Math.floor((order.total || 0))} reward points
+                    +{Math.floor(order.total || 0)} reward points
                   </span>{" "}
                   and{" "}
                   <span className="font-bold text-[#f57224]">
@@ -293,9 +307,7 @@ interface OrderData {
                 <div key={step.status} className="relative flex items-center gap-3 mb-5 last:mb-0">
                   <div
                     className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 z-10 transition-all ${
-                      isDone
-                        ? "bg-[#f57224] text-white"
-                        : "bg-slate-100 text-slate-300"
+                      isDone ? "bg-[#f57224] text-white" : "bg-slate-100 text-slate-300"
                     } ${isActive ? "ring-4 ring-orange-100" : ""}`}
                   >
                     <Icon className="w-4 h-4" />
@@ -309,9 +321,7 @@ interface OrderData {
                       {step.label}
                     </p>
                     {isActive && (
-                      <p className="text-xs text-[#f57224] font-medium">
-                        Current status
-                      </p>
+                      <p className="text-xs text-[#f57224] font-medium">Current status</p>
                     )}
                   </div>
                 </div>
@@ -323,9 +333,7 @@ interface OrderData {
         {/* Action buttons */}
         <div className="flex flex-col sm:flex-row gap-3">
           <button
-            onClick={() =>
-              navigate({ to: "/track-orders" })
-            }
+            onClick={() => navigate({ to: "/track-orders" })}
             className="flex-1 flex items-center justify-center gap-2 bg-[#0f172a] hover:bg-slate-800 text-white font-bold py-3.5 px-6 rounded-xl transition-all shadow-md text-sm"
           >
             <Truck className="w-4 h-4" />
@@ -345,15 +353,14 @@ interface OrderData {
         <div className="mt-5 flex items-start gap-2 text-xs text-slate-400 bg-slate-50 rounded-lg p-3">
           <MapPin className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
           <p>
-            Your order will be delivered to your registered address. For any
-            changes, contact AVENTA SHOP Support within 1 hour of placing the
-            order.
+            Your order will be delivered to your registered address. For any changes, contact AVENTA
+            SHOP Support within 1 hour of placing the order.
           </p>
         </div>
       </main>
 
       <SiteFooter />
-<MobileBottomNav />
+      <MobileBottomNav />
     </div>
   );
 }

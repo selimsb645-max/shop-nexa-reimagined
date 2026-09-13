@@ -11,12 +11,17 @@
 // ═══════════════════════════════════════════════════════════════
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-let writes: Array<{ update?: { name: string; fields: Record<string, unknown> }; updateMask?: { fieldPaths: string[] } }> = [];
+let writes: Array<{
+  update?: { name: string; fields: Record<string, unknown> };
+  updateMask?: { fieldPaths: string[] };
+}> = [];
 let docs: Record<string, Record<string, unknown>> = {};
 
 vi.mock("../firebase-admin.server", () => ({
   commitWrites: vi.fn(async (_p: string, w: unknown[]) => {
-    for (const write of w as Array<{ update?: { name: string; fields: Record<string, unknown> } }>) {
+    for (const write of w as Array<{
+      update?: { name: string; fields: Record<string, unknown> };
+    }>) {
       writes.push(write);
       if (write.update) {
         const id = write.update.name.split("/").slice(-2).join("/");
@@ -25,13 +30,19 @@ vi.mock("../firebase-admin.server", () => ({
     }
   }),
   batchGetDocs: vi.fn(async (_p: string, names: string[]) => {
-    const out = new Map<string, { exists: boolean; data: Record<string, unknown>; updateTime: string | null }>();
+    const out = new Map<
+      string,
+      { exists: boolean; data: Record<string, unknown>; updateTime: string | null }
+    >();
     for (const name of names) {
       const id = name.split("/").slice(-2).join("/");
       const d = docs[id];
-      out.set(name, d
-        ? { exists: true, data: JSON.parse(JSON.stringify(d)), updateTime: "u1" }
-        : { exists: false, data: {}, updateTime: null });
+      out.set(
+        name,
+        d
+          ? { exists: true, data: JSON.parse(JSON.stringify(d)), updateTime: "u1" }
+          : { exists: false, data: {}, updateTime: null },
+      );
     }
     return out;
   }),
@@ -40,11 +51,7 @@ vi.mock("../firebase-admin.server", () => ({
   toFsFields: (obj: Record<string, unknown>) => obj as never,
 }));
 
-import {
-  adminAdvanceOrder,
-  verifyOrderAdmin,
-  ORDER_ADMIN_ROLES,
-} from "../orders-admin.server";
+import { adminAdvanceOrder, verifyOrderAdmin, ORDER_ADMIN_ROLES } from "../orders-admin.server";
 
 const PID = "test-project";
 
@@ -74,8 +81,12 @@ beforeEach(() => {
 describe("PART 1 — adminAdvanceOrder (canonical engine entry)", () => {
   it("advances a valid transition through the engine", async () => {
     const r = await adminAdvanceOrder(PID, {
-      callerUid: "om1", callerEmail: "om1@test.dev",
-      customerId: "cu1", orderId: "o1", to: "PACKED", note: "Boxed",
+      callerUid: "om1",
+      callerEmail: "om1@test.dev",
+      customerId: "cu1",
+      orderId: "o1",
+      to: "PACKED",
+      note: "Boxed",
     });
     expect(r.advanced).toBe(true);
     expect(r.from).toBe("PROCESSING");
@@ -91,11 +102,14 @@ describe("PART 1 — adminAdvanceOrder (canonical engine entry)", () => {
 
   it("records the HUMAN actor on the audit trail (not 'system')", async () => {
     await adminAdvanceOrder(PID, {
-      callerUid: "om1", callerEmail: "om1@test.dev",
-      customerId: "cu1", orderId: "o1", to: "PACKED", note: "",
+      callerUid: "om1",
+      callerEmail: "om1@test.dev",
+      customerId: "cu1",
+      orderId: "o1",
+      to: "PACKED",
+      note: "",
     });
-    const audit = writes.find((w) =>
-      w.update?.name.includes("activityLogs/act_o1_packed"));
+    const audit = writes.find((w) => w.update?.name.includes("activityLogs/act_o1_packed"));
     expect(audit).toBeTruthy();
     expect(audit!.update!.fields["actorUid"]).toBe("om1");
     expect(audit!.update!.fields["actorEmail"]).toBe("om1@test.dev");
@@ -104,8 +118,12 @@ describe("PART 1 — adminAdvanceOrder (canonical engine entry)", () => {
 
   it("writes ONLY operational fields — financial lock holds", async () => {
     await adminAdvanceOrder(PID, {
-      callerUid: "sa1", callerEmail: "sa1@test.dev",
-      customerId: "cu1", orderId: "o1", to: "PACKED", note: "",
+      callerUid: "sa1",
+      callerEmail: "sa1@test.dev",
+      customerId: "cu1",
+      orderId: "o1",
+      to: "PACKED",
+      note: "",
     });
     const orderWrites = writes.filter((w) => w.update?.name === orderPath("o1"));
     expect(orderWrites).toHaveLength(1);
@@ -122,39 +140,65 @@ describe("PART 1 — adminAdvanceOrder (canonical engine entry)", () => {
 
   it("rejects unauthorized roles (server-side authorization)", async () => {
     const base = { customerId: "cu1", orderId: "o1", to: "PACKED", note: "" } as const;
-    await expect(adminAdvanceOrder(PID, { ...base, callerUid: "cu2" })).rejects.toThrow(/Authorization failed/);
-    await expect(adminAdvanceOrder(PID, { ...base, callerUid: "su1" })).rejects.toThrow(/Authorization failed/);
-    await expect(adminAdvanceOrder(PID, { ...base, callerUid: "ba1" })).rejects.toThrow(/Authorization failed/);
-    await expect(adminAdvanceOrder(PID, { ...base, callerUid: "ghost" })).rejects.toThrow(/Authorization failed/);
+    await expect(adminAdvanceOrder(PID, { ...base, callerUid: "cu2" })).rejects.toThrow(
+      /Authorization failed/,
+    );
+    await expect(adminAdvanceOrder(PID, { ...base, callerUid: "su1" })).rejects.toThrow(
+      /Authorization failed/,
+    );
+    await expect(adminAdvanceOrder(PID, { ...base, callerUid: "ba1" })).rejects.toThrow(
+      /Authorization failed/,
+    );
+    await expect(adminAdvanceOrder(PID, { ...base, callerUid: "ghost" })).rejects.toThrow(
+      /Authorization failed/,
+    );
     // Nothing was written — the gate fires before any mutation
     expect(writes).toHaveLength(0);
   });
 
   it("rejects an unknown target status", async () => {
-    await expect(adminAdvanceOrder(PID, {
-      callerUid: "om1", customerId: "cu1", orderId: "o1",
-      to: "NOT_A_STATUS" as never, note: "",
-    })).rejects.toThrow(/Unknown order status/);
+    await expect(
+      adminAdvanceOrder(PID, {
+        callerUid: "om1",
+        customerId: "cu1",
+        orderId: "o1",
+        to: "NOT_A_STATUS" as never,
+        note: "",
+      }),
+    ).rejects.toThrow(/Unknown order status/);
     expect(writes).toHaveLength(0);
   });
 
   it("rejects an invalid machine transition and writes nothing", async () => {
-    await expect(adminAdvanceOrder(PID, {
-      callerUid: "om1", customerId: "cu1", orderId: "o1",
-      to: "DELIVERED", note: "",
-    })).rejects.toThrow(/Invalid transition/);
+    await expect(
+      adminAdvanceOrder(PID, {
+        callerUid: "om1",
+        customerId: "cu1",
+        orderId: "o1",
+        to: "DELIVERED",
+        note: "",
+      }),
+    ).rejects.toThrow(/Invalid transition/);
     expect(writes).toHaveLength(0);
   });
 
   it("is idempotent on same-status replay (no duplicate event)", async () => {
     const r1 = await adminAdvanceOrder(PID, {
-      callerUid: "om1", customerId: "cu1", orderId: "o1", to: "PACKED", note: "x",
+      callerUid: "om1",
+      customerId: "cu1",
+      orderId: "o1",
+      to: "PACKED",
+      note: "x",
     });
     expect(r1.advanced).toBe(true);
 
     const before = writes.length;
     const r2 = await adminAdvanceOrder(PID, {
-      callerUid: "om1", customerId: "cu1", orderId: "o1", to: "PACKED", note: "x retry",
+      callerUid: "om1",
+      customerId: "cu1",
+      orderId: "o1",
+      to: "PACKED",
+      note: "x retry",
     });
     expect(r2.advanced).toBe(false);
     expect(r2.skipped).toBe("already-processed");
@@ -165,41 +209,58 @@ describe("PART 1 — adminAdvanceOrder (canonical engine entry)", () => {
   it("skips fan-out when the canonical event already exists (cross-path duplicate prevention)", async () => {
     // A checkout-path dispatch already processed this event type
     docs["orderEvents/o1__PACKED"] = {
-      orderId: "o1", type: "PACKED", state: "processed", processedAt: 1,
+      orderId: "o1",
+      type: "PACKED",
+      state: "processed",
+      processedAt: 1,
     };
     const r = await adminAdvanceOrder(PID, {
-      callerUid: "om1", customerId: "cu1", orderId: "o1", to: "PACKED", note: "",
+      callerUid: "om1",
+      customerId: "cu1",
+      orderId: "o1",
+      to: "PACKED",
+      note: "",
     });
-    expect(r.advanced).toBe(true);           // status write is safe to repeat
+    expect(r.advanced).toBe(true); // status write is safe to repeat
     expect(r.skipped).toBe("already-processed");
-    expect(r.handlersRun).toEqual([]);       // NO handlers ran
+    expect(r.handlersRun).toEqual([]); // NO handlers ran
     // No event-doc rewrite, no notifications, no audit duplicate
-    const eventRewrites = writes.filter((w) =>
-      w.update?.name.includes("orderEvents/o1__PACKED"));
+    const eventRewrites = writes.filter((w) => w.update?.name.includes("orderEvents/o1__PACKED"));
     expect(eventRewrites).toHaveLength(0);
   });
 
   it("fans out notifications for handler-mapped types", async () => {
     docs["orders/o1"].status = "IN_TRANSIT";
     const r = await adminAdvanceOrder(PID, {
-      callerUid: "om1", callerEmail: "om1@test.dev",
-      customerId: "cu1", orderId: "o1", to: "OUT_FOR_DELIVERY", note: "",
+      callerUid: "om1",
+      callerEmail: "om1@test.dev",
+      customerId: "cu1",
+      orderId: "o1",
+      to: "OUT_FOR_DELIVERY",
+      note: "",
     });
     expect(r.advanced).toBe(true);
     // OUT_FOR_DELIVERY → shipment (no shipment doc → no-op) + notifyCustomer + audit
     expect(r.handlersRun).toContain("notifyCustomer");
     expect(r.handlersRun).toContain("audit");
     const customerNotif = writes.find((w) =>
-      w.update?.name.includes("users/cu1/notifications/n_o1_out_for_delivery"));
+      w.update?.name.includes("users/cu1/notifications/n_o1_out_for_delivery"),
+    );
     expect(customerNotif).toBeTruthy();
     expect(customerNotif!.update!.fields["eventType"]).toBe("OUT_FOR_DELIVERY");
     expect(customerNotif!.update!.fields["eventOrderId"]).toBe("o1");
   });
 
   it("throws when the order does not exist", async () => {
-    await expect(adminAdvanceOrder(PID, {
-      callerUid: "om1", customerId: "cu1", orderId: "missing", to: "PACKED", note: "",
-    })).rejects.toThrow(/not found/i);
+    await expect(
+      adminAdvanceOrder(PID, {
+        callerUid: "om1",
+        customerId: "cu1",
+        orderId: "missing",
+        to: "PACKED",
+        note: "",
+      }),
+    ).rejects.toThrow(/not found/i);
   });
 });
 
@@ -209,8 +270,14 @@ describe("PART 1 — verifyOrderAdmin (role gate)", () => {
   });
 
   it("approves order_manager and super_admin, rejects the rest", async () => {
-    await expect(verifyOrderAdmin(PID, "om1")).resolves.toEqual({ role: "admin", adminRole: "order_manager" });
-    await expect(verifyOrderAdmin(PID, "sa1")).resolves.toEqual({ role: "admin", adminRole: "super_admin" });
+    await expect(verifyOrderAdmin(PID, "om1")).resolves.toEqual({
+      role: "admin",
+      adminRole: "order_manager",
+    });
+    await expect(verifyOrderAdmin(PID, "sa1")).resolves.toEqual({
+      role: "admin",
+      adminRole: "super_admin",
+    });
     await expect(verifyOrderAdmin(PID, "su1")).rejects.toThrow();
     await expect(verifyOrderAdmin(PID, "cu2")).rejects.toThrow();
   });

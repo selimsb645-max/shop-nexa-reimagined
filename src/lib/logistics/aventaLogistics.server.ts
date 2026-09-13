@@ -10,10 +10,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 import { commitWrites, docPath, toFsFields, type FsWrite } from "../firebase-admin.server";
-import {
-  TRACKING_EVENT_VISIBILITY,
-  type TrackingVisibility,
-} from "../orderStateMachine";
+import { TRACKING_EVENT_VISIBILITY, type TrackingVisibility } from "../orderStateMachine";
 import type {
   CreateShipmentInput,
   LogisticsProvider,
@@ -22,11 +19,7 @@ import type {
   TrackingEventRecord,
 } from "./types";
 import { LogisticsError } from "./types";
-import {
-  secureBarcode,
-  secureShipmentId,
-  secureTrackingNumber,
-} from "./secureIds";
+import { secureBarcode, secureShipmentId, secureTrackingNumber } from "./secureIds";
 
 export const SHIPMENTS_COLLECTION = "shipments";
 export const TRACKING_EVENTS_COLLECTION = "events";
@@ -151,10 +144,7 @@ export class AventaLogisticsProvider implements LogisticsProvider {
   private async writeShipment(shipment: ShipmentRecord): Promise<void> {
     const write: FsWrite = {
       update: {
-        name: docPath(this.projectId, [
-          SHIPMENTS_COLLECTION,
-          shipmentDocId(shipment.orderId),
-        ]),
+        name: docPath(this.projectId, [SHIPMENTS_COLLECTION, shipmentDocId(shipment.orderId)]),
         fields: toFsFields({ ...shipment }),
       },
     };

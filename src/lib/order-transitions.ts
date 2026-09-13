@@ -56,9 +56,7 @@ export function isValidSellerOrderStatusTransition(
  */
 export function isTerminalOrderStatus(status: string): boolean {
   const canonical = normalizeOrderStatus(status);
-  return canonical === "DELIVERED"
-    || canonical === "CANCELLED"
-    || canonical === "REFUNDED";
+  return canonical === "DELIVERED" || canonical === "CANCELLED" || canonical === "REFUNDED";
 }
 
 /**

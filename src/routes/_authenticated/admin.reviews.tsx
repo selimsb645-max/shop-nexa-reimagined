@@ -36,83 +36,88 @@ function AdminReviewsPage() {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);
 
-  const loadReviews = useCallback(async (filter: FilterTab) => {
-    if (!user) return;
-    setLoading(true);
-    try {
-      const db = getDb();
-      // Get all products, then scan their reviews subcollections
-      // For efficiency, use a different approach: query a small set of products
-      const productsSnap = await getDocs(query(collection(db, "products"), fbLimit(200)));
-      const allReviews: AdminReview[] = [];
+  const loadReviews = useCallback(
+    async (filter: FilterTab) => {
+      if (!user) return;
+      setLoading(true);
+      try {
+        const db = getDb();
+        // Get all products, then scan their reviews subcollections
+        // For efficiency, use a different approach: query a small set of products
+        const productsSnap = await getDocs(query(collection(db, "products"), fbLimit(200)));
+        const allReviews: AdminReview[] = [];
 
-      for (const prodDoc of productsSnap.docs) {
-        const prodData = prodDoc.data() as Record<string, unknown>;
-        const productTitle = String(prodData.title ?? "Untitled");
-        const productImage = Array.isArray(prodData.images) && prodData.images.length > 0
-          ? String(prodData.images[0])
-          : (prodData.image as string) ?? "";
+        for (const prodDoc of productsSnap.docs) {
+          const prodData = prodDoc.data() as Record<string, unknown>;
+          const productTitle = String(prodData.title ?? "Untitled");
+          const productImage =
+            Array.isArray(prodData.images) && prodData.images.length > 0
+              ? String(prodData.images[0])
+              : ((prodData.image as string) ?? "");
 
-        let reviewsQuery;
-        if (filter === "pending") {
-          // For pending, we can't easily do where + orderBy on different fields without composite index
-          // So we fetch all and filter client-side (products typically have few reviews each)
-          reviewsQuery = query(
-            collection(db, "products", prodDoc.id, "reviews"),
-            orderBy("createdAt", "desc"),
-            fbLimit(50),
-          );
-        } else if (filter === "approved") {
-          reviewsQuery = query(
-            collection(db, "products", prodDoc.id, "reviews"),
-            orderBy("createdAt", "desc"),
-            fbLimit(50),
-          );
-        } else {
-          reviewsQuery = query(
-            collection(db, "products", prodDoc.id, "reviews"),
-            orderBy("createdAt", "desc"),
-            fbLimit(50),
-          );
+          let reviewsQuery;
+          if (filter === "pending") {
+            // For pending, we can't easily do where + orderBy on different fields without composite index
+            // So we fetch all and filter client-side (products typically have few reviews each)
+            reviewsQuery = query(
+              collection(db, "products", prodDoc.id, "reviews"),
+              orderBy("createdAt", "desc"),
+              fbLimit(50),
+            );
+          } else if (filter === "approved") {
+            reviewsQuery = query(
+              collection(db, "products", prodDoc.id, "reviews"),
+              orderBy("createdAt", "desc"),
+              fbLimit(50),
+            );
+          } else {
+            reviewsQuery = query(
+              collection(db, "products", prodDoc.id, "reviews"),
+              orderBy("createdAt", "desc"),
+              fbLimit(50),
+            );
+          }
+
+          const reviewsSnap = await getDocs(reviewsQuery);
+          for (const revDoc of reviewsSnap.docs) {
+            const data = revDoc.data() as Record<string, unknown>;
+            const isApproved = data.isApproved !== false;
+            if (filter === "pending" && isApproved) continue;
+            if (filter === "approved" && !isApproved) continue;
+
+            allReviews.push({
+              id: revDoc.id,
+              productId: prodDoc.id,
+              userId: String(data.userId ?? ""),
+              userName: String(data.userName ?? "Customer"),
+              userPhoto: (data.userPhoto as string | null) ?? null,
+              rating: Number(data.rating ?? 0),
+              title: String(data.title ?? ""),
+              comment: String(data.comment ?? ""),
+              createdAt:
+                typeof data.createdAt === "number"
+                  ? data.createdAt
+                  : ((data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ??
+                    Date.now()),
+              isApproved,
+              productTitle,
+              productImage,
+            });
+          }
         }
 
-        const reviewsSnap = await getDocs(reviewsQuery);
-        for (const revDoc of reviewsSnap.docs) {
-          const data = revDoc.data() as Record<string, unknown>;
-          const isApproved = data.isApproved !== false;
-          if (filter === "pending" && isApproved) continue;
-          if (filter === "approved" && !isApproved) continue;
-
-          allReviews.push({
-            id: revDoc.id,
-            productId: prodDoc.id,
-            userId: String(data.userId ?? ""),
-            userName: String(data.userName ?? "Customer"),
-            userPhoto: (data.userPhoto as string | null) ?? null,
-            rating: Number(data.rating ?? 0),
-            title: String(data.title ?? ""),
-            comment: String(data.comment ?? ""),
-            createdAt:
-              typeof data.createdAt === "number"
-                ? data.createdAt
-                : (data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? Date.now(),
-            isApproved,
-            productTitle,
-            productImage,
-          });
-        }
+        // Sort by createdAt desc
+        allReviews.sort((a, b) => b.createdAt - a.createdAt);
+        setReviews(allReviews);
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to load reviews");
+      } finally {
+        setLoading(false);
       }
-
-      // Sort by createdAt desc
-      allReviews.sort((a, b) => b.createdAt - a.createdAt);
-      setReviews(allReviews);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to load reviews");
-    } finally {
-      setLoading(false);
-    }
-  }, [user]);
+    },
+    [user],
+  );
 
   useEffect(() => {
     loadReviews(tab);
@@ -174,11 +179,11 @@ function AdminReviewsPage() {
 
         {/* Tab filters */}
         <div className="flex gap-2 border-b border-slate-200">
-          {([
+          {[
             { id: "pending" as const, label: "Pending", icon: Clock },
             { id: "approved" as const, label: "Approved", icon: Check },
             { id: "all" as const, label: "All Reviews", icon: MessageSquare },
-          ]).map((t) => (
+          ].map((t) => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
@@ -206,7 +211,9 @@ function AdminReviewsPage() {
               {tab === "pending" ? "No pending reviews" : "No reviews found"}
             </p>
             <p className="text-xs text-slate-300 mt-1">
-              {tab === "pending" ? "All caught up! New reviews will appear here for approval." : "Reviews will appear here once customers start leaving them."}
+              {tab === "pending"
+                ? "All caught up! New reviews will appear here for approval."
+                : "Reviews will appear here once customers start leaving them."}
             </p>
           </div>
         ) : (
@@ -278,26 +285,24 @@ function ReviewCard({
                 <h3 className="text-sm font-semibold text-[#0f172a] truncate">
                   {review.title || "No title"}
                 </h3>
-                <span className={`flex-shrink-0 px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                  review.isApproved
-                    ? "bg-emerald-100 text-emerald-700"
-                    : "bg-amber-100 text-amber-700"
-                }`}>
+                <span
+                  className={`flex-shrink-0 px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                    review.isApproved
+                      ? "bg-emerald-100 text-emerald-700"
+                      : "bg-amber-100 text-amber-700"
+                  }`}
+                >
                   {review.isApproved ? "Approved" : "Pending"}
                 </span>
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">
-                on {review.productTitle}
-              </p>
+              <p className="text-xs text-slate-500 mt-0.5">on {review.productTitle}</p>
             </div>
             <div className="flex items-center gap-0.5 flex-shrink-0">
               {[1, 2, 3, 4, 5].map((star) => (
                 <Star
                   key={star}
                   className={`h-3.5 w-3.5 ${
-                    star <= review.rating
-                      ? "fill-amber-400 text-amber-400"
-                      : "text-slate-200"
+                    star <= review.rating ? "fill-amber-400 text-amber-400" : "text-slate-200"
                   }`}
                 />
               ))}
@@ -307,11 +312,7 @@ function ReviewCard({
           {/* User info */}
           <div className="flex items-center gap-2 mt-2">
             {review.userPhoto ? (
-              <img
-                src={review.userPhoto}
-                alt={review.userName}
-                className="w-5 h-5 rounded-full"
-              />
+              <img src={review.userPhoto} alt={review.userName} className="w-5 h-5 rounded-full" />
             ) : (
               <div className="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-medium text-slate-500">
                 {review.userName.charAt(0).toUpperCase()}
@@ -324,9 +325,7 @@ function ReviewCard({
 
           {/* Comment */}
           {review.comment && (
-            <p className="text-sm text-slate-600 mt-2 leading-relaxed">
-              {review.comment}
-            </p>
+            <p className="text-sm text-slate-600 mt-2 leading-relaxed">{review.comment}</p>
           )}
 
           {/* Actions */}

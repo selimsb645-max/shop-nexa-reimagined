@@ -28,10 +28,22 @@ const STATUS_CONFIG: Record<
   { labelKey: keyof TranslationKeys; color: string; icon: typeof Package }
 > = {
   pending: { labelKey: "orders.pending", color: "bg-amber-100 text-amber-700", icon: Clock },
-  confirmed: { labelKey: "account.confirmed", color: "bg-blue-100 text-blue-700", icon: CheckCircle2 },
-  processing: { labelKey: "account.processing", color: "bg-indigo-100 text-indigo-700", icon: Package },
+  confirmed: {
+    labelKey: "account.confirmed",
+    color: "bg-blue-100 text-blue-700",
+    icon: CheckCircle2,
+  },
+  processing: {
+    labelKey: "account.processing",
+    color: "bg-indigo-100 text-indigo-700",
+    icon: Package,
+  },
   shipped: { labelKey: "account.shipped", color: "bg-purple-100 text-purple-700", icon: Truck },
-  delivered: { labelKey: "account.delivered", color: "bg-emerald-100 text-emerald-700", icon: CheckCircle2 },
+  delivered: {
+    labelKey: "account.delivered",
+    color: "bg-emerald-100 text-emerald-700",
+    icon: CheckCircle2,
+  },
   cancelled: { labelKey: "orders.cancelled", color: "bg-rose-100 text-rose-700", icon: Package },
 };
 
@@ -58,12 +70,8 @@ function OrdersPage() {
           <div className="w-20 h-20 rounded-full bg-orange-50 border-2 border-orange-100 flex items-center justify-center mb-4 text-[#f57224]">
             <Package className="w-10 h-10 stroke-[1.5]" />
           </div>
-          <h2 className="text-lg font-bold text-[#0f172a] mb-2">
-            {t("orders.noOrders")}
-          </h2>
-          <p className="text-sm text-slate-500 mb-6 max-w-sm">
-            {t("orders.noOrdersHint")}
-          </p>
+          <h2 className="text-lg font-bold text-[#0f172a] mb-2">{t("orders.noOrders")}</h2>
+          <p className="text-sm text-slate-500 mb-6 max-w-sm">{t("orders.noOrdersHint")}</p>
           <Link
             to="/shop"
             className="inline-flex items-center gap-2 bg-[#0f172a] hover:bg-slate-800 text-white font-bold py-3.5 px-8 rounded-xl transition-all shadow-md text-sm"
@@ -76,8 +84,7 @@ function OrdersPage() {
         /* Orders List */
         <div className="space-y-3">
           {orders.map((o) => {
-            const statusCfg =
-              STATUS_CONFIG[o.status] ?? STATUS_CONFIG.pending;
+            const statusCfg = STATUS_CONFIG[o.status] ?? STATUS_CONFIG.pending;
             const StatusIcon = statusCfg.icon;
 
             return (

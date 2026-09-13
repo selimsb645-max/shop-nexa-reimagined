@@ -18,7 +18,13 @@ import { Link } from "@tanstack/react-router";
 import { Megaphone, Timer } from "lucide-react";
 import { getPublicCampaignHome } from "@/lib/campaigns/campaigns.functions";
 
-function useCountdown(endsAt: number): { d: number; h: number; m: number; s: number; over: boolean } {
+function useCountdown(endsAt: number): {
+  d: number;
+  h: number;
+  m: number;
+  s: number;
+  over: boolean;
+} {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -40,9 +46,13 @@ function CountdownChip({ endsAt }: { endsAt: number }) {
   const { d, h, m, s } = useCountdown(endsAt);
   const pad = (n: number) => String(n).padStart(2, "0");
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-red-600 px-3 py-1 text-xs font-bold tracking-wide text-white shadow-sm sm:text-sm" suppressHydrationWarning>
+    <span
+      className="inline-flex items-center gap-1.5 rounded-full bg-red-600 px-3 py-1 text-xs font-bold tracking-wide text-white shadow-sm sm:text-sm"
+      suppressHydrationWarning
+    >
       <Timer className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-      {d > 0 ? `${d}d ` : ""}{pad(h)}:{pad(m)}:{pad(s)}
+      {d > 0 ? `${d}d ` : ""}
+      {pad(h)}:{pad(m)}:{pad(s)}
     </span>
   );
 }
@@ -79,9 +89,7 @@ export function CampaignHomeSection() {
             <p className="text-sm font-bold uppercase tracking-wider text-red-300 sm:text-base">
               {banner?.title ?? "Live Campaign"}
             </p>
-            <h2 className="text-lg font-extrabold leading-tight sm:text-2xl">
-              {campaign.name}
-            </h2>
+            <h2 className="text-lg font-extrabold leading-tight sm:text-2xl">{campaign.name}</h2>
             {campaign.description ? (
               <p className="mt-0.5 line-clamp-2 max-w-xl text-xs text-slate-200 sm:text-sm">
                 {campaign.description}
@@ -103,7 +111,11 @@ export function CampaignHomeSection() {
   );
 
   const wrap = banner?.link ? (
-    <a href={banner.link} className="block focus:outline-none">{body}</a>
-  ) : body;
+    <a href={banner.link} className="block focus:outline-none">
+      {body}
+    </a>
+  ) : (
+    body
+  );
   return <div className="mt-3 sm:mt-4">{wrap}</div>;
 }

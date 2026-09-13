@@ -482,11 +482,11 @@ async function writeTransition(
   // productSnapshot string, so every reviewer transition silently
   // WIPED the seller's submitted product snapshot (the reviewer's
   // source of truth for the checklist). Carry it through untouched.
-  const rawDoc = (await batchGetDocs(projectId, [
-    docPath(projectId, [QC_REVIEWS_COLLECTION, review.reviewId]),
-  ])).get(docPath(projectId, [QC_REVIEWS_COLLECTION, review.reviewId]));
+  const rawDoc = (
+    await batchGetDocs(projectId, [docPath(projectId, [QC_REVIEWS_COLLECTION, review.reviewId])])
+  ).get(docPath(projectId, [QC_REVIEWS_COLLECTION, review.reviewId]));
   const rawSnapshot = rawDoc?.exists
-    ? (rawDoc.data as Record<string, unknown>)["productSnapshot"] ?? null
+    ? ((rawDoc.data as Record<string, unknown>)["productSnapshot"] ?? null)
     : null;
   const writes: FsWrite[] = [
     {

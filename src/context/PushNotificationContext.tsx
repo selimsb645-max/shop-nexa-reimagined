@@ -36,7 +36,9 @@ const PushNotificationContext = createContext<PushNotificationContextValue>({
 export function PushNotificationProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [supported] = useState(() => isPushSupported());
-  const [permission, setPermission] = useState<NotificationPermission>(() => getNotificationPermission());
+  const [permission, setPermission] = useState<NotificationPermission>(() =>
+    getNotificationPermission(),
+  );
   const [enabled, setEnabled] = useState(false);
 
   // Register service worker on mount
@@ -110,9 +112,7 @@ export function PushNotificationProvider({ children }: { children: ReactNode }) 
   }
 
   return (
-    <PushNotificationContext.Provider
-      value={{ supported, permission, enabled, enable, disable }}
-    >
+    <PushNotificationContext.Provider value={{ supported, permission, enabled, enable, disable }}>
       {children}
     </PushNotificationContext.Provider>
   );

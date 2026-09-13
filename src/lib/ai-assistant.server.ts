@@ -340,9 +340,7 @@ function createProvider(config: AIConfig): AIProvider {
   switch (config.provider) {
     case "local": {
       if (!config.localModel) {
-        throw new Error(
-          "AI_PROVIDER=local requires AI_LOCAL_MODEL to be set.",
-        );
+        throw new Error("AI_PROVIDER=local requires AI_LOCAL_MODEL to be set.");
       }
       return new LocalAIProvider(
         config.localBaseUrl,
@@ -355,9 +353,7 @@ function createProvider(config: AIConfig): AIProvider {
     }
     case "openai": {
       if (!config.apiKey) {
-        throw new Error(
-          "AI_PROVIDER=openai requires AI_API_KEY to be set.",
-        );
+        throw new Error("AI_PROVIDER=openai requires AI_API_KEY to be set.");
       }
       return new OpenAIProvider(
         config.apiKey,
@@ -373,7 +369,7 @@ function createProvider(config: AIConfig): AIProvider {
     default:
       throw new Error(
         `Unknown AI_PROVIDER: "${config.provider}". ` +
-        `Valid options: ${VALID_PROVIDERS.join(", ")}.`,
+          `Valid options: ${VALID_PROVIDERS.join(", ")}.`,
       );
   }
 }
@@ -422,9 +418,7 @@ interface RateLimitResult {
   remaining: number;
 }
 
-export async function checkAIRateLimit(
-  uid: string,
-): Promise<RateLimitResult> {
+export async function checkAIRateLimit(uid: string): Promise<RateLimitResult> {
   const config = getConfig();
   if (env("FIRESTORE_EMULATOR_HOST") || env("SKIP_RATE_LIMIT")) {
     return { allowed: true, remaining: config.rateLimitPerHour };
@@ -570,10 +564,7 @@ export async function chatWithAI(
   const trimmedHistory = history.slice(-config.maxHistory);
 
   // 4. Build messages
-  const messages: ChatMessage[] = [
-    ...trimmedHistory,
-    { role: "user", content: message },
-  ];
+  const messages: ChatMessage[] = [...trimmedHistory, { role: "user", content: message }];
 
   // 5. Get provider (throws on misconfiguration — no silent fallback)
   const provider = getProvider();

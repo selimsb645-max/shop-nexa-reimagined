@@ -187,7 +187,9 @@ function SettingsAdmin() {
           <input
             type="checkbox"
             checked={s.tax.perProductOverride}
-            onChange={(e) => setS({ ...s, tax: { ...s.tax, perProductOverride: e.target.checked } })}
+            onChange={(e) =>
+              setS({ ...s, tax: { ...s.tax, perProductOverride: e.target.checked } })
+            }
           />
           Allow per-product tax rate override (uses product tax field when set)
         </label>
@@ -203,24 +205,33 @@ function SettingsAdmin() {
       <section className="rounded-lg border bg-background p-4 space-y-3">
         <h2 className="text-sm font-semibold">Commission / Platform Fee</h2>
         <p className="text-xs text-muted-foreground">
-          Configure the default platform commission rate applied to new sellers.
-          Individual seller rates can be overridden from the seller management page.
+          Configure the default platform commission rate applied to new sellers. Individual seller
+          rates can be overridden from the seller management page.
         </p>
         <div className="grid gap-3 md:grid-cols-3">
           <Num
             label="Default commission rate (%)"
             value={s.commission.defaultRate}
-            onChange={(v) => setS({ ...s, commission: { ...s.commission, defaultRate: Math.min(Math.max(v, 0), 100) } })}
+            onChange={(v) =>
+              setS({
+                ...s,
+                commission: { ...s.commission, defaultRate: Math.min(Math.max(v, 0), 100) },
+              })
+            }
           />
           <Num
             label="Min withdrawal amount"
             value={s.commission.minWithdrawalAmount}
-            onChange={(v) => setS({ ...s, commission: { ...s.commission, minWithdrawalAmount: Math.max(v, 0) } })}
+            onChange={(v) =>
+              setS({ ...s, commission: { ...s.commission, minWithdrawalAmount: Math.max(v, 0) } })
+            }
           />
           <Num
             label="Settlement hold period (days)"
             value={s.commission.holdPeriodDays}
-            onChange={(v) => setS({ ...s, commission: { ...s.commission, holdPeriodDays: Math.max(v, 0) } })}
+            onChange={(v) =>
+              setS({ ...s, commission: { ...s.commission, holdPeriodDays: Math.max(v, 0) } })
+            }
           />
         </div>
         <button
@@ -235,14 +246,19 @@ function SettingsAdmin() {
       <section className="rounded-lg border bg-background p-4 space-y-3">
         <h2 className="text-sm font-semibold">Inventory / Stock Alerts</h2>
         <p className="text-xs text-muted-foreground">
-          Set the stock threshold below which low-stock notifications are sent
-          to sellers and admins automatically (after order placement or manual stock updates).
+          Set the stock threshold below which low-stock notifications are sent to sellers and admins
+          automatically (after order placement or manual stock updates).
         </p>
         <div className="grid gap-3 md:grid-cols-2">
           <Num
             label="Low stock alert threshold"
             value={s.inventory.alertThreshold}
-            onChange={(v) => setS({ ...s, inventory: { ...s.inventory, alertThreshold: Math.max(1, Math.floor(v)) } })}
+            onChange={(v) =>
+              setS({
+                ...s,
+                inventory: { ...s.inventory, alertThreshold: Math.max(1, Math.floor(v)) },
+              })
+            }
           />
         </div>
         <button

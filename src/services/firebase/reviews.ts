@@ -16,7 +16,10 @@ import { getDb } from "./config";
 import type { Review } from "@/types/commerce";
 
 /** Map a Firestore review doc to our Review type */
-function mapReviewDoc(d: { id: string; data: () => Record<string, unknown> }, productId: string): Review {
+function mapReviewDoc(
+  d: { id: string; data: () => Record<string, unknown> },
+  productId: string,
+): Review {
   const data = d.data();
   return {
     id: d.id,
@@ -30,7 +33,7 @@ function mapReviewDoc(d: { id: string; data: () => Record<string, unknown> }, pr
     createdAt:
       typeof data.createdAt === "number"
         ? data.createdAt
-        : (data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? Date.now(),
+        : ((data.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? Date.now()),
     isApproved: data.isApproved !== false, // default true for backward compat
   };
 }
@@ -50,10 +53,7 @@ export async function listReviews(productId: string): Promise<Review[]> {
 /** List ALL reviews for a product (approved + pending). Admin only. */
 export async function listAllReviews(productId: string): Promise<Review[]> {
   const snap = await getDocs(
-    query(
-      collection(getDb(), "products", productId, "reviews"),
-      orderBy("createdAt", "desc"),
-    ),
+    query(collection(getDb(), "products", productId, "reviews"), orderBy("createdAt", "desc")),
   );
   return snap.docs.map((d) => mapReviewDoc(d, productId));
 }
@@ -76,12 +76,12 @@ export async function upsertReview(input: {
     const productSnap = await tx.get(productRef);
     if (!productSnap.exists()) throw new Error("Product not found");
     const existingSnap = await tx.get(reviewRef);
-    const existingData = existingSnap.exists() ? existingSnap.data() as Record<string, unknown> : null;
+    const existingData = existingSnap.exists()
+      ? (existingSnap.data() as Record<string, unknown>)
+      : null;
 
     // Preserve isApproved on update, default false on create (pending moderation)
-    const isApproved = existingData?.isApproved !== undefined
-      ? existingData.isApproved
-      : false;
+    const isApproved = existingData?.isApproved !== undefined ? existingData.isApproved : false;
 
     tx.set(reviewRef, {
       userId: input.userId,

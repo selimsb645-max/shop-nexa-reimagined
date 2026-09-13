@@ -178,14 +178,12 @@ export const placeOrder = createServerFn({ method: "POST" })
         customerName: data.shippingAddress.fullName,
         orderDate: new Date().toISOString(),
         status: "confirmed",
-        items: result.items.map(
-          (item) => ({
-            name: item.title,
-            quantity: item.quantity,
-            price: item.price,
-            image: item.image,
-          }),
-        ),
+        items: result.items.map((item) => ({
+          name: item.title,
+          quantity: item.quantity,
+          price: item.price,
+          image: item.image,
+        })),
         subtotal: result.subtotal,
         discount: result.discount,
         tax: result.tax,

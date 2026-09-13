@@ -1,11 +1,11 @@
-import React, { useState, useCallback } from 'react';
-import { Link } from '@tanstack/react-router';
-import { Heart, Star, ShoppingCart } from 'lucide-react';
-import type { Product } from '@/types/commerce';
-import { Truck } from 'lucide-react';
+import React, { useState, useCallback } from "react";
+import { Link } from "@tanstack/react-router";
+import { Heart, Star, ShoppingCart } from "lucide-react";
+import type { Product } from "@/types/commerce";
+import { Truck } from "lucide-react";
 import { getOptimizedImageUrl, getResponsiveSrcSet } from "@/services/cloudinary";
-import { formatPrice } from '@/utils/format';
-import { useWishlist } from '@/context/WishlistContext';
+import { formatPrice } from "@/utils/format";
+import { useWishlist } from "@/context/WishlistContext";
 
 type ProductCardProduct = Partial<Product> & {
   images?: Array<string | { url?: string; src?: string }>;
@@ -22,7 +22,6 @@ type ProductCardProduct = Partial<Product> & {
   seller?: { location?: string };
   name?: string;
 };
-
 
 export interface ProductCardProps {
   product: Product;
@@ -48,29 +47,30 @@ export interface ProductCardSkeletonProps {
  */
 function getProductImage(product: Partial<Product>): string {
   const p = product as ProductCardProduct;
-  if (typeof product.images?.[0] === 'string' && product.images?.[0]) return product.images?.[0];
+  if (typeof product.images?.[0] === "string" && product.images?.[0]) return product.images?.[0];
   if (Array.isArray(p.images) && p.images.length > 0) {
     const firstImg = p.images[0];
-    if (typeof firstImg === 'string') return firstImg;
-    if (firstImg && typeof (firstImg as { url?: string }).url === 'string') return (firstImg as { url?: string }).url ?? "";
+    if (typeof firstImg === "string") return firstImg;
+    if (firstImg && typeof (firstImg as { url?: string }).url === "string")
+      return (firstImg as { url?: string }).url ?? "";
   }
-  if (typeof p.imageUrl === 'string' && p.imageUrl) {
+  if (typeof p.imageUrl === "string" && p.imageUrl) {
     return p.imageUrl;
   }
-  if (typeof p.thumbnail === 'string' && p.thumbnail) {
+  if (typeof p.thumbnail === "string" && p.thumbnail) {
     return p.thumbnail;
   }
-  return 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMzAwIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YzZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzljYTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';
+  return "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMzAwIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YzZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzljYTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==";
 }
 
 /**
  * Helper to compute discount percentage format "-XX%"
  */
 function getDiscountPercentage(price: number, originalPrice?: number, discount?: number): number {
-  if (typeof discount === 'number' && discount > 0) {
+  if (typeof discount === "number" && discount > 0) {
     return Math.round(discount);
   }
-  if (typeof originalPrice === 'number' && originalPrice > price) {
+  if (typeof originalPrice === "number" && originalPrice > price) {
     return Math.round(((originalPrice - price) / originalPrice) * 100);
   }
   return 0;
@@ -82,7 +82,7 @@ function getDiscountPercentage(price: number, originalPrice?: number, discount?:
 export const ProductCard: React.FC<ProductCardProps> = ({
   product,
   onAddToCart,
-  className = '',
+  className = "",
   showLocation = true,
 }) => {
   const [imageError, setImageError] = useState(false);
@@ -93,10 +93,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   const p = product as ProductCardProduct;
   const originalPrice = product.compareAtPrice ?? p.oldPrice;
   const discountPct = getDiscountPercentage(product.price, originalPrice, p.discount);
-  const imageUrl = imageError ? 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMzAwIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YzZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzljYTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==' : getProductImage(product);
+  const imageUrl = imageError
+    ? "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMzAwIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YzZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzljYTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg=="
+    : getProductImage(product);
   const rating = product.rating ?? p.ratings ?? 0;
   const reviewCount = p.reviewCount ?? p.reviewsCount ?? p.ratingsCount ?? 0;
-  const location = p.location ?? p.sellerLocation ?? p.seller?.location ?? 'Dhaka';
+  const location = p.location ?? p.sellerLocation ?? p.seller?.location ?? "Dhaka";
 
   const handleWishlistClick = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -106,7 +108,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         toggleWishlist(product);
       }
     },
-    [toggleWishlist, product]
+    [toggleWishlist, product],
   );
 
   const handleAddToCartClick = useCallback(
@@ -117,7 +119,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         onAddToCart(product, e);
       }
     },
-    [onAddToCart, product]
+    [onAddToCart, product],
   );
 
   const productIdStr = String(product.id);
@@ -137,7 +139,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             src={imageUrl}
             srcSet={getResponsiveSrcSet(getProductImage(product), [200, 300, 400, 600])}
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            alt={product.title || p.name || 'Product image'}
+            alt={product.title || p.name || "Product image"}
             onError={() => setImageError(true)}
             loading="lazy"
             className="w-full h-full object-cover rounded-t-lg group-hover:scale-105 transition-transform duration-300 ease-in-out"
@@ -160,14 +162,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <button
             type="button"
             onClick={handleWishlistClick}
-            aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+            aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
             className={`absolute top-2 right-2 z-10 p-1.5 rounded-full bg-white/80 hover:bg-white backdrop-blur-sm shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-rose-400 ${
-              isWishlisted ? 'text-rose-500 hover:text-rose-600' : 'text-slate-500 hover:text-rose-500'
+              isWishlisted
+                ? "text-rose-500 hover:text-rose-600"
+                : "text-slate-500 hover:text-rose-500"
             }`}
           >
             <Heart
               className={`w-4 h-4 transition-transform active:scale-125 ${
-                isWishlisted ? 'fill-rose-500 text-rose-500' : 'fill-none'
+                isWishlisted ? "fill-rose-500 text-rose-500" : "fill-none"
               }`}
             />
           </button>
@@ -178,7 +182,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <div>
             {/* Title */}
             <h3 className="text-sm font-medium text-slate-800 group-hover:text-[#f57224] transition-colors line-clamp-2 leading-snug h-10 mb-1.5 overflow-hidden">
-              {product.title || p.name || 'Untitled Product'}
+              {product.title || p.name || "Untitled Product"}
             </h3>
 
             {/* Price Row */}
@@ -198,7 +202,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               <div className="flex items-center text-amber-400">
                 <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                 <span className="ml-1 text-xs font-semibold text-slate-700">
-                  {rating > 0 ? rating.toFixed(1) : '4.5'}
+                  {rating > 0 ? rating.toFixed(1) : "4.5"}
                 </span>
               </div>
               <span className="text-xs text-slate-400">({reviewCount})</span>
@@ -206,11 +210,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </div>
 
           {/* Location / Seller */}
-          {showLocation && (
-            <div className="mt-2 text-xs text-slate-400 truncate">
-              {location}
-            </div>
-          )}
+          {showLocation && <div className="mt-2 text-xs text-slate-400 truncate">{location}</div>}
         </div>
       </Link>
 
@@ -235,7 +235,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 export const ProductCardCompact: React.FC<ProductCardCompactProps> = ({
   product,
   onAddToCart,
-  className = '',
+  className = "",
   soldCount,
   totalStock,
 }) => {
@@ -247,7 +247,9 @@ export const ProductCardCompact: React.FC<ProductCardCompactProps> = ({
   const p = product as ProductCardProduct;
   const originalPrice = product.compareAtPrice ?? p.oldPrice;
   const discountPct = getDiscountPercentage(product.price, originalPrice, p.discount);
-  const imageUrl = imageError ? 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMzAwIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YzZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzljYTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==' : getProductImage(product);
+  const imageUrl = imageError
+    ? "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMzAwIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YzZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzljYTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg=="
+    : getProductImage(product);
 
   const handleWishlistClick = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -257,7 +259,7 @@ export const ProductCardCompact: React.FC<ProductCardCompactProps> = ({
         toggleWishlist(product);
       }
     },
-    [toggleWishlist, product]
+    [toggleWishlist, product],
   );
 
   const handleAddToCartClick = useCallback(
@@ -268,7 +270,7 @@ export const ProductCardCompact: React.FC<ProductCardCompactProps> = ({
         onAddToCart(product, e);
       }
     },
-    [onAddToCart, product]
+    [onAddToCart, product],
   );
 
   const productIdStr = String(product.id);
@@ -292,7 +294,7 @@ export const ProductCardCompact: React.FC<ProductCardCompactProps> = ({
             src={imageUrl}
             srcSet={getResponsiveSrcSet(getProductImage(product), [160, 200, 320])}
             sizes="160px"
-            alt={product.title || p.name || 'Product image'}
+            alt={product.title || p.name || "Product image"}
             onError={() => setImageError(true)}
             loading="lazy"
             className="w-full h-full object-cover rounded-t-lg group-hover:scale-105 transition-transform duration-300"
@@ -309,14 +311,14 @@ export const ProductCardCompact: React.FC<ProductCardCompactProps> = ({
           <button
             type="button"
             onClick={handleWishlistClick}
-            aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+            aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
             className={`absolute top-1.5 right-1.5 z-10 p-1 rounded-full bg-white/80 hover:bg-white backdrop-blur-sm shadow-sm transition-all duration-200 ${
-              isWishlisted ? 'text-rose-500' : 'text-slate-500 hover:text-rose-500'
+              isWishlisted ? "text-rose-500" : "text-slate-500 hover:text-rose-500"
             }`}
           >
             <Heart
               className={`w-3.5 h-3.5 ${
-                isWishlisted ? 'fill-rose-500 text-rose-500' : 'fill-none'
+                isWishlisted ? "fill-rose-500 text-rose-500" : "fill-none"
               }`}
             />
           </button>
@@ -326,7 +328,7 @@ export const ProductCardCompact: React.FC<ProductCardCompactProps> = ({
         <div className="p-2 flex flex-col justify-between flex-1 bg-white">
           <div>
             <h4 className="text-xs font-medium text-slate-800 group-hover:text-[#f57224] transition-colors line-clamp-2 h-8 leading-tight mb-1">
-              {product.title || p.name || 'Untitled Product'}
+              {product.title || p.name || "Untitled Product"}
             </h4>
 
             <div className="flex flex-col">
@@ -376,9 +378,7 @@ export const ProductCardCompact: React.FC<ProductCardCompactProps> = ({
 /**
  * Skeleton Loading Component with Pulse Animation
  */
-export const ProductCardSkeleton: React.FC<ProductCardSkeletonProps> = ({
-  className = '',
-}) => {
+export const ProductCardSkeleton: React.FC<ProductCardSkeletonProps> = ({ className = "" }) => {
   return (
     <div
       className={`bg-white rounded-lg shadow-sm border border-slate-100 flex flex-col h-full overflow-hidden animate-pulse ${className}`}

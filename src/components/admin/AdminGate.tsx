@@ -65,7 +65,15 @@ export function AdminGate({ children, permissions, superAdminOnly }: Props) {
   return <>{children}</>;
 }
 
-function AccessDenied({ icon, title, message }: { icon: ReactNode; title: string; message: string }) {
+function AccessDenied({
+  icon,
+  title,
+  message,
+}: {
+  icon: ReactNode;
+  title: string;
+  message: string;
+}) {
   return (
     <div className="flex flex-col items-center justify-center rounded-lg border bg-background py-16 text-center">
       <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted text-muted-foreground">
@@ -73,7 +81,10 @@ function AccessDenied({ icon, title, message }: { icon: ReactNode; title: string
       </div>
       <h2 className="mt-4 text-lg font-semibold">{title}</h2>
       <p className="mt-1 max-w-md text-sm text-muted-foreground">{message}</p>
-      <Link to="/admin" className="mt-6 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">
+      <Link
+        to="/admin"
+        className="mt-6 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+      >
         Back to Dashboard
       </Link>
     </div>

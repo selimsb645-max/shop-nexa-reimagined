@@ -196,8 +196,26 @@ describe("Duplicate 'AVENTA SHOP Support' Conversations — dedupeThreads()", ()
   it("does NOT sum unread counts across duplicates — takes max instead", async () => {
     const { dedupeThreads } = await import("@/services/firebase/messages");
     const dup = [
-      { id: "a", subject: "s", participant: "AVENTA SHOP Support", sellerId: null, lastMessage: "m", lastAt: 1000, unread: 1, createdAt: 1000 },
-      { id: "b", subject: "s", participant: "AVENTA SHOP Support", sellerId: null, lastMessage: "m", lastAt: 2000, unread: 1, createdAt: 2000 },
+      {
+        id: "a",
+        subject: "s",
+        participant: "AVENTA SHOP Support",
+        sellerId: null,
+        lastMessage: "m",
+        lastAt: 1000,
+        unread: 1,
+        createdAt: 1000,
+      },
+      {
+        id: "b",
+        subject: "s",
+        participant: "AVENTA SHOP Support",
+        sellerId: null,
+        lastMessage: "m",
+        lastAt: 2000,
+        unread: 1,
+        createdAt: 2000,
+      },
     ];
     const result = dedupeThreads(dup);
     expect(result[0].unread).toBe(1); // NOT 2
@@ -206,8 +224,26 @@ describe("Duplicate 'AVENTA SHOP Support' Conversations — dedupeThreads()", ()
   it("keeps the most recently active thread's content when collapsing", async () => {
     const { dedupeThreads } = await import("@/services/firebase/messages");
     const dup = [
-      { id: "old", subject: "s", participant: "AVENTA SHOP Support", sellerId: null, lastMessage: "old msg", lastAt: 1000, unread: 0, createdAt: 1000 },
-      { id: "new", subject: "s", participant: "AVENTA SHOP Support", sellerId: null, lastMessage: "new msg", lastAt: 5000, unread: 1, createdAt: 5000 },
+      {
+        id: "old",
+        subject: "s",
+        participant: "AVENTA SHOP Support",
+        sellerId: null,
+        lastMessage: "old msg",
+        lastAt: 1000,
+        unread: 0,
+        createdAt: 1000,
+      },
+      {
+        id: "new",
+        subject: "s",
+        participant: "AVENTA SHOP Support",
+        sellerId: null,
+        lastMessage: "new msg",
+        lastAt: 5000,
+        unread: 1,
+        createdAt: 5000,
+      },
     ];
     const result = dedupeThreads(dup);
     expect(result).toHaveLength(1);
@@ -217,8 +253,26 @@ describe("Duplicate 'AVENTA SHOP Support' Conversations — dedupeThreads()", ()
   it("does NOT merge distinct seller threads (different sellerId)", async () => {
     const { dedupeThreads } = await import("@/services/firebase/messages");
     const distinct = [
-      { id: "a", subject: "s", participant: "Seller A", sellerId: "seller-1", lastMessage: "m", lastAt: 1000, unread: 0, createdAt: 1000 },
-      { id: "b", subject: "s", participant: "Seller B", sellerId: "seller-2", lastMessage: "m", lastAt: 2000, unread: 0, createdAt: 2000 },
+      {
+        id: "a",
+        subject: "s",
+        participant: "Seller A",
+        sellerId: "seller-1",
+        lastMessage: "m",
+        lastAt: 1000,
+        unread: 0,
+        createdAt: 1000,
+      },
+      {
+        id: "b",
+        subject: "s",
+        participant: "Seller B",
+        sellerId: "seller-2",
+        lastMessage: "m",
+        lastAt: 2000,
+        unread: 0,
+        createdAt: 2000,
+      },
     ];
     const result = dedupeThreads(distinct);
     expect(result).toHaveLength(2);
@@ -227,8 +281,26 @@ describe("Duplicate 'AVENTA SHOP Support' Conversations — dedupeThreads()", ()
   it("merges duplicate threads with the SAME sellerId (one thread per seller)", async () => {
     const { dedupeThreads } = await import("@/services/firebase/messages");
     const dup = [
-      { id: "a", subject: "s", participant: "Seller A", sellerId: "seller-1", lastMessage: "m1", lastAt: 1000, unread: 1, createdAt: 1000 },
-      { id: "b", subject: "s", participant: "Seller A", sellerId: "seller-1", lastMessage: "m2", lastAt: 3000, unread: 1, createdAt: 3000 },
+      {
+        id: "a",
+        subject: "s",
+        participant: "Seller A",
+        sellerId: "seller-1",
+        lastMessage: "m1",
+        lastAt: 1000,
+        unread: 1,
+        createdAt: 1000,
+      },
+      {
+        id: "b",
+        subject: "s",
+        participant: "Seller A",
+        sellerId: "seller-1",
+        lastMessage: "m2",
+        lastAt: 3000,
+        unread: 1,
+        createdAt: 3000,
+      },
     ];
     const result = dedupeThreads(dup);
     expect(result).toHaveLength(1);
@@ -238,8 +310,26 @@ describe("Duplicate 'AVENTA SHOP Support' Conversations — dedupeThreads()", ()
   it("sorts deduped results by most recent activity (lastAt desc)", async () => {
     const { dedupeThreads } = await import("@/services/firebase/messages");
     const threads = [
-      { id: "a", subject: "s", participant: "Support A", sellerId: null, lastMessage: "m", lastAt: 1000, unread: 0, createdAt: 1000 },
-      { id: "b", subject: "s", participant: "Seller X", sellerId: "seller-x", lastMessage: "m", lastAt: 5000, unread: 0, createdAt: 5000 },
+      {
+        id: "a",
+        subject: "s",
+        participant: "Support A",
+        sellerId: null,
+        lastMessage: "m",
+        lastAt: 1000,
+        unread: 0,
+        createdAt: 1000,
+      },
+      {
+        id: "b",
+        subject: "s",
+        participant: "Seller X",
+        sellerId: "seller-x",
+        lastMessage: "m",
+        lastAt: 5000,
+        unread: 0,
+        createdAt: 5000,
+      },
     ];
     const result = dedupeThreads(threads);
     expect(result[0].id).toBe("b");

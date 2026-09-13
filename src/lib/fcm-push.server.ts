@@ -31,13 +31,17 @@ async function getUserFCMTokens(userId: string): Promise<string[]> {
 
   if (!response.ok) return [];
 
-  const data = await response.json() as { documents?: Array<{ name: string; fields: Record<string, { stringValue?: string }> }> };
+  const data = (await response.json()) as {
+    documents?: Array<{ name: string; fields: Record<string, { stringValue?: string }> }>;
+  };
   if (!data.documents) return [];
 
-  return data.documents.map((doc) => {
-    const fields = doc.fields;
-    return fields.token?.stringValue ?? "";
-  }).filter(Boolean);
+  return data.documents
+    .map((doc) => {
+      const fields = doc.fields;
+      return fields.token?.stringValue ?? "";
+    })
+    .filter(Boolean);
 }
 
 /** Send a push notification to a user's devices via FCM HTTP v1 API */

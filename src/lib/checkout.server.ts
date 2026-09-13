@@ -375,9 +375,7 @@ async function deductWalletInTransaction(input: {
 
       // 4. Calculate balance from transaction-locked reads
       const walletBalance = calculateWalletBalanceFromDocs(
-        new Map(
-          Array.from(docs.entries()).filter(([name]) => name !== userDocName),
-        ),
+        new Map(Array.from(docs.entries()).filter(([name]) => name !== userDocName)),
       );
 
       // 5. Check balance — this is the CRITICAL concurrency-safe check
