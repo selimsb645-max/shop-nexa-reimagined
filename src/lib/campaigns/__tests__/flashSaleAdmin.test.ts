@@ -307,7 +307,6 @@ describe("admin listing — derived status view", () => {
 // conflict prevention, stock guards, price safety and audit.
 // ───────────────────────────────────────────────────────────────
 describe("firestore.rules — flashSales security audit", () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const fs = require("fs") as typeof import("fs");
   const rules = fs.readFileSync("firestore.rules", "utf-8");
   const blockMatch = rules.match(/match \/flashSales\/\{campaignId\} \{[\s\S]*?\n {4}\}/);

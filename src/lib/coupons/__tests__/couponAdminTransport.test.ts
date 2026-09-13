@@ -6,9 +6,9 @@
  * must role-verify every call before touching the admin core.
  */
 import { describe, it, expect } from "vitest";
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+
 const fs = require("fs") as typeof import("fs");
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+
 const path = require("path") as typeof import("path");
 
 const read = (...parts: string[]) => fs.readFileSync(path.join(process.cwd(), ...parts), "utf-8");

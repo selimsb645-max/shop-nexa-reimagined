@@ -36,7 +36,9 @@ for (const role of ["admin", "seller"]) {
     const text = (await page.evaluate(() => document.body.innerText)).replace(/\s+/g, " ");
     const found = needles.filter((n) => text.includes(n));
     const len = text.length;
-    console.log(`${found.length === needles.length ? "OK " : "MISS"} ${role} ${route} bodyLen=${len} found=[${found}] missing=[${needles.filter(n => !found.includes(n))}]`);
+    console.log(
+      `${found.length === needles.length ? "OK " : "MISS"} ${role} ${route} bodyLen=${len} found=[${found}] missing=[${needles.filter((n) => !found.includes(n))}]`,
+    );
   }
   await page.close();
 }

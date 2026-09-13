@@ -351,7 +351,7 @@ describe("TEST CASES: All 10 Required Scenarios", () => {
   });
 
   it("3. Insufficient balance — fails, balance unchanged", () => {
-    let balance = 300;
+    const balance = 300;
     const amount = 500;
     expect(balance < amount).toBe(true);
     // No deduction

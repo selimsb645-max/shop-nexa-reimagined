@@ -39,8 +39,16 @@ function arg(name, def) {
 }
 
 const ROLES = {
-  admin: { email: "admin@aventa.test", password: "audit-pass-123", routesFile: "scripts/routes-admin.json" },
-  seller: { email: "seller@aventa.test", password: "audit-pass-123", routesFile: "scripts/routes-seller.json" },
+  admin: {
+    email: "admin@aventa.test",
+    password: "audit-pass-123",
+    routesFile: "scripts/routes-admin.json",
+  },
+  seller: {
+    email: "seller@aventa.test",
+    password: "audit-pass-123",
+    routesFile: "scripts/routes-seller.json",
+  },
 };
 
 const role = arg("role", "admin");
@@ -51,7 +59,10 @@ const done = new Set();
 if (existsSync(RESULTS)) {
   for (const line of readFileSync(RESULTS, "utf-8").split("\n")) {
     if (!line.trim()) continue;
-    try { const r = JSON.parse(line); done.add(`${r.role}|${r.route}|${r.viewport}`); } catch {}
+    try {
+      const r = JSON.parse(line);
+      done.add(`${r.role}|${r.route}|${r.viewport}`);
+    } catch {}
   }
 }
 
@@ -60,9 +71,10 @@ if (listOnly) {
   process.exit(0);
 }
 
-const viewports = viewportArg === "all"
-  ? Object.entries(VIEWPORTS)
-  : [[viewportArg, VIEWPORTS[viewportArg]]].filter(([, v]) => v);
+const viewports =
+  viewportArg === "all"
+    ? Object.entries(VIEWPORTS)
+    : [[viewportArg, VIEWPORTS[viewportArg]]].filter(([, v]) => v);
 
 if (!viewports.length) {
   console.error("unknown viewport:", viewportArg);
@@ -109,7 +121,9 @@ async function signIn(page, email, password) {
     await emailInput.fill(email);
     await passInput.fill(password);
     const submit = page
-      .locator('button[type="submit"], button:has-text("Log in"), button:has-text("Sign in"), button:has-text("Login")')
+      .locator(
+        'button[type="submit"], button:has-text("Log in"), button:has-text("Sign in"), button:has-text("Login")',
+      )
       .first();
     await submit.click();
     await page.waitForTimeout(3000);
@@ -156,7 +170,10 @@ function pageChecks() {
       const ix = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left));
       const iy = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
       if (ix > 12 && iy > 12 && ix * iy > 0.35 * Math.min(a.width * a.height, b.width * b.height)) {
-        overlaps.push([btns[i].textContent?.trim().slice(0, 20), btns[j].textContent?.trim().slice(0, 20)]);
+        overlaps.push([
+          btns[i].textContent?.trim().slice(0, 20),
+          btns[j].textContent?.trim().slice(0, 20),
+        ]);
         if (overlaps.length >= 5) break;
       }
     }
@@ -169,7 +186,12 @@ function pageChecks() {
     for (const el of document.querySelectorAll("button, a[href], [role='button'], input, select")) {
       const r = el.getBoundingClientRect();
       if (r.width > 0 && r.height > 0 && (r.height < 24 || r.width < 24)) {
-        tinyTargets.push({ tag: el.tagName.toLowerCase(), cls: String(el.className).slice(0, 40), h: Math.round(r.height), w: Math.round(r.width) });
+        tinyTargets.push({
+          tag: el.tagName.toLowerCase(),
+          cls: String(el.className).slice(0, 40),
+          h: Math.round(r.height),
+          w: Math.round(r.width),
+        });
         if (tinyTargets.length >= 6) break;
       }
     }
@@ -213,7 +235,10 @@ console.log(`[audit] logged in as ${role}`);
 for (const [vpName, vp] of viewports) {
   await page.setViewportSize(vp);
   for (const route of routes) {
-    if (done.has(`${role}|${route}|${vpName}`)) { console.log(`  SKIP          ${route} @${vpName}`); continue; }
+    if (done.has(`${role}|${route}|${vpName}`)) {
+      console.log(`  SKIP          ${route} @${vpName}`);
+      continue;
+    }
     const url = `${BASE}${route}`;
     consoleErrors.length = 0;
     let status = "PASS";
@@ -248,7 +273,9 @@ for (const [vpName, vp] of viewports) {
       shot,
     };
     appendFileSync(RESULTS, JSON.stringify(record) + "\n");
-    const extra = checks ? ` overflowX=${checks.overflowX} clipped=${checks.clipped.length} tblscroll=${checks.scrollableTables}` : "";
+    const extra = checks
+      ? ` overflowX=${checks.overflowX} clipped=${checks.clipped.length} tblscroll=${checks.scrollableTables}`
+      : "";
     console.log(`  ${status.padEnd(13)} ${route} @${vpName}${extra}`);
   }
 }

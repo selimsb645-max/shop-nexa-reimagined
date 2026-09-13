@@ -1213,11 +1213,6 @@ export function ProductDetailPage() {
                         <div>
                           <h5 className="text-xs md:text-sm font-bold text-slate-800 flex items-center gap-1.5">
                             {rev.userName}
-                            {Boolean(true) && (
-                              <span className="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.2 rounded font-semibold">
-                                Verified Purchase
-                              </span>
-                            )}
                           </h5>
                           <span className="text-[11px] text-slate-400">
                             {rev.createdAt

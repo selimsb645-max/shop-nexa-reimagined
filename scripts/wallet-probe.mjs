@@ -2,7 +2,9 @@ import { chromium } from "playwright";
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 const errors = [];
-page.on("console", m => { if (m.type() === "error") errors.push(m.text().slice(0, 200)); });
+page.on("console", (m) => {
+  if (m.type() === "error") errors.push(m.text().slice(0, 200));
+});
 await page.goto("http://localhost:5173/login", { waitUntil: "domcontentloaded" });
 const e = page.locator('input[type="email"], input[name="email"]').first();
 await e.waitFor({ state: "visible", timeout: 30000 });
@@ -12,7 +14,9 @@ await page.locator('button[type="submit"]').first().click();
 await page.waitForTimeout(4000);
 await page.goto("http://localhost:5173/seller/wallet", { waitUntil: "domcontentloaded" });
 await page.waitForTimeout(6000);
-const main = await page.evaluate(() => (document.querySelector("main") || document.body).innerText.replace(/\s+/g, " "));
+const main = await page.evaluate(() =>
+  (document.querySelector("main") || document.body).innerText.replace(/\s+/g, " "),
+);
 console.log("WALLET MAIN >>>", main.slice(0, 500));
 console.log("CONSOLE ERR >>>", errors.slice(0, 6));
 await browser.close();

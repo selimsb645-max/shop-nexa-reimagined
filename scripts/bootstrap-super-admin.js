@@ -55,7 +55,9 @@ if (!uid) {
 }
 
 if (uid.length < 20) {
-  console.error("\n❌ ERROR: The UID looks too short. Firebase Auth UIDs are typically 28+ characters.");
+  console.error(
+    "\n❌ ERROR: The UID looks too short. Firebase Auth UIDs are typically 28+ characters.",
+  );
   console.error("   Please verify the UID from Firebase Console → Authentication → Users.\n");
   process.exit(1);
 }
@@ -66,7 +68,9 @@ const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT;
 if (!serviceAccountJson) {
   console.error("\n❌ ERROR: FIREBASE_SERVICE_ACCOUNT environment variable is not set.");
   console.error("   Obtain the service account JSON from:");
-  console.error("   Firebase Console → Project Settings → Service Accounts → Generate New Private Key\n");
+  console.error(
+    "   Firebase Console → Project Settings → Service Accounts → Generate New Private Key\n",
+  );
   process.exit(1);
 }
 
@@ -79,7 +83,9 @@ try {
 }
 
 if (!serviceAccount.project_id || !serviceAccount.client_email || !serviceAccount.private_key) {
-  console.error("\n❌ ERROR: Service account JSON is missing required fields (project_id, client_email, private_key).");
+  console.error(
+    "\n❌ ERROR: Service account JSON is missing required fields (project_id, client_email, private_key).",
+  );
   process.exit(1);
 }
 
@@ -137,8 +143,8 @@ async function bootstrap() {
   console.log("\n╔══════════════════════════════════════════════════════╗");
   console.log("║  The following fields will be SET on this document:  ║");
   console.log("║                                                       ║");
-  console.log("║    role:      \"admin\"                                 ║");
-  console.log("║    adminRole:  \"super_admin\"                           ║");
+  console.log('║    role:      "admin"                                 ║');
+  console.log('║    adminRole:  "super_admin"                           ║');
   console.log("║    blocked:    false                                  ║");
   console.log("║                                                       ║");
   console.log("║  This grants FULL Super Admin access to this user.    ║");
@@ -173,16 +179,18 @@ async function bootstrap() {
     blocked: false,
     // Preserve existing fields if document already exists
     // Only set new admin-related fields
-    ...(userDoc.exists ? {} : {
-      // If creating new document, set minimal required fields
-      email: userRecord.email || null,
-      displayName: userRecord.displayName || null,
-      photoURL: userRecord.photoURL || null,
-      uid: uid,
-      emailVerified: userRecord.emailVerified || false,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    }),
+    ...(userDoc.exists
+      ? {}
+      : {
+          // If creating new document, set minimal required fields
+          email: userRecord.email || null,
+          displayName: userRecord.displayName || null,
+          photoURL: userRecord.photoURL || null,
+          uid: uid,
+          emailVerified: userRecord.emailVerified || false,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        }),
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
   };
 
@@ -199,7 +207,11 @@ async function bootstrap() {
   const verifyDoc = await userDocRef.get();
   const verifyData = verifyDoc.data();
 
-  if (verifyData.role === "admin" && verifyData.adminRole === "super_admin" && verifyData.blocked === false) {
+  if (
+    verifyData.role === "admin" &&
+    verifyData.adminRole === "super_admin" &&
+    verifyData.blocked === false
+  ) {
     console.log("  ✓ Verification PASSED — all fields correct.\n");
     console.log("╔══════════════════════════════════════════════════════╗");
     console.log("║  ✅ Super Admin Bootstrap COMPLETE                    ║");

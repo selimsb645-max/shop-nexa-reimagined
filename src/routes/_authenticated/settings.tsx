@@ -31,6 +31,7 @@ import { Spinner } from "@/components/common/Spinner";
 import { useAuth } from "@/context/AuthContext";
 import { usePushNotifications } from "@/context/PushNotificationContext";
 import { useI18n } from "@/i18n/I18nContext";
+import type { TranslationKeys } from "@/i18n";
 import { getCustomerSettings, saveCustomerSettings } from "@/services/firebase/customerSettings";
 import { resetPassword, signOut } from "@/services/firebase/auth";
 import { DEFAULT_SETTINGS, type CustomerSettings } from "@/types/customer";
@@ -454,7 +455,7 @@ function SessionRow({
   revoking,
 }: {
   session: DeviceSession;
-  t: (key: any) => string;
+  t: (key: keyof TranslationKeys, params?: Record<string, string | number>) => string;
   onRevoke: (sessionId: string) => void;
   revoking: boolean;
 }) {

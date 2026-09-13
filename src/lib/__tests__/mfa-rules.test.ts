@@ -10,7 +10,7 @@
  *    their own `enabled` flag or paste their own recovery hashes)
  */
 import { describe, it, expect } from "vitest";
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+
 const fs = require("fs") as typeof import("fs");
 
 const rules = fs.readFileSync("firestore.rules", "utf-8");

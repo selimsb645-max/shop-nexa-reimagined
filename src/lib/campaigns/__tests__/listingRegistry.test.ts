@@ -196,7 +196,7 @@ describe("QC → campaign backbone arrow", () => {
 describe("campaignProductCatalog — Firestore rules", () => {
   const fs = require("fs");
   const rules = fs.readFileSync("firestore.rules", "utf-8");
-  const block = rules.match(/match \/campaignProductCatalog\/\{productId\} \{[\s\S]*?\n    \}/);
+  const block = rules.match(/match \/campaignProductCatalog\/\{productId\} \{[\s\S]*?\n {4}\}/);
 
   it("has a dedicated match block for the catalog collection", () => {
     expect(block).toBeTruthy();
@@ -212,7 +212,7 @@ describe("campaignProductCatalog — Firestore rules", () => {
   });
 
   it("isCampaignManager covers super/admin/platform/marketing only", () => {
-    const fn = rules.match(/function isCampaignManager\(\)[\s\S]*?\n    \}/);
+    const fn = rules.match(/function isCampaignManager\(\)[\s\S]*?\n {4}\}/);
     expect(fn).toBeTruthy();
     expect(fn[0]).toContain("super_admin");
     expect(fn[0]).toContain("marketing_admin");

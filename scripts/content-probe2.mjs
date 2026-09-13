@@ -12,8 +12,10 @@ async function signIn(page, email) {
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 const errors = [];
-page.on("console", m => { if (m.type() === "error") errors.push(m.text().slice(0, 180)); });
-page.on("pageerror", e => errors.push("PAGEERR: " + e.message.slice(0, 180)));
+page.on("console", (m) => {
+  if (m.type() === "error") errors.push(m.text().slice(0, 180));
+});
+page.on("pageerror", (e) => errors.push("PAGEERR: " + e.message.slice(0, 180)));
 await signIn(page, "admin@aventa.test");
 for (const route of ["/admin/orders", "/admin/finance", "/admin/wallets", "/admin/coupons"]) {
   errors.length = 0;

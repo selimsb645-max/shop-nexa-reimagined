@@ -40,21 +40,23 @@ export const Route = createFileRoute("/_authenticated/orders_/$status")({
       {error instanceof Error ? error.message : "Something went wrong"}
     </div>
   ),
-  notFoundComponent: () => {
-    const { t } = useI18n();
-    return (
-      <div className="p-10 text-center">
-        <h1 className="text-lg font-bold text-gray-800">{t("orders.unknownStatus")}</h1>
-        <Link
-          to="/account"
-          className="mt-3 inline-block text-sm font-semibold text-orange-500 hover:underline"
-        >
-          {t("orders.backToAccount")}
-        </Link>
-      </div>
-    );
-  },
+  notFoundComponent: OrderStatusNotFound,
 });
+
+function OrderStatusNotFound() {
+  const { t } = useI18n();
+  return (
+    <div className="p-10 text-center">
+      <h1 className="text-lg font-bold text-gray-800">{t("orders.unknownStatus")}</h1>
+      <Link
+        to="/account"
+        className="mt-3 inline-block text-sm font-semibold text-orange-500 hover:underline"
+      >
+        {t("orders.backToAccount")}
+      </Link>
+    </div>
+  );
+}
 
 const TAB_ICON: Record<OrderView, React.ReactNode> = {
   pending: <Clock3 className="h-4 w-4" />,

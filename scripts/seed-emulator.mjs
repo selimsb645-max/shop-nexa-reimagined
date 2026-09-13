@@ -48,14 +48,17 @@ async function makeUser(email, password, displayName) {
   } else {
     const signin = await fetch(
       "http://localhost:9099/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=emulator",
-      { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email, password }) },
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      },
     );
     uid = (await signin.json()).localId;
   }
   console.log(`auth user ${email} -> ${uid}`);
   return uid;
 }
-
 
 // ── auth users ──────────────────────────────────────────────────────
 const ADMIN = await makeUser("admin@aventa.test", "audit-pass-123", "Aventa Admin");
@@ -117,7 +120,12 @@ await putDoc(`sellers/${SELLER}`, {
   availableBalance: v.f(48000),
   pendingBalance: v.f(22000),
   withdrawnTotal: v.f(55000),
-  bankInfo: v.map({ bankName: v.s("BRAC Bank"), accountName: v.s("Dhaka Gadgets BD"), accountNumber: v.s("1501203344556"), branch: v.s("Dhanmondi") }),
+  bankInfo: v.map({
+    bankName: v.s("BRAC Bank"),
+    accountName: v.s("Dhaka Gadgets BD"),
+    accountNumber: v.s("1501203344556"),
+    branch: v.s("Dhanmondi"),
+  }),
   verified: v.b(true),
   totalProducts: v.n(8),
   totalOrders: v.n(34),
@@ -160,12 +168,48 @@ for (const [id, name, order] of CATS) {
 
 // ── products ────────────────────────────────────────────────────────
 const PRODUCTS = [
-  ["prd-01", "Wireless Earbuds Pro", "wireless-earbuds-pro", "electronics", "published", 2450, 42, 4.5],
+  [
+    "prd-01",
+    "Wireless Earbuds Pro",
+    "wireless-earbuds-pro",
+    "electronics",
+    "published",
+    2450,
+    42,
+    4.5,
+  ],
   ["prd-02", "Smart Watch X9", "smart-watch-x9", "electronics", "published", 5990, 18, 4.7],
-  ["prd-03", "Bluetooth Speaker Mini", "bluetooth-speaker-mini", "electronics", "published", 1899, 60, 4.2],
-  ["prd-04", "Power Bank 20000mAh", "power-bank-20000mah", "electronics", "published", 2150, 8, 4.4],
+  [
+    "prd-03",
+    "Bluetooth Speaker Mini",
+    "bluetooth-speaker-mini",
+    "electronics",
+    "published",
+    1899,
+    60,
+    4.2,
+  ],
+  [
+    "prd-04",
+    "Power Bank 20000mAh",
+    "power-bank-20000mah",
+    "electronics",
+    "published",
+    2150,
+    8,
+    4.4,
+  ],
   ["prd-05", "USB-C Fast Charger", "usb-c-fast-charger", "electronics", "draft", 990, 100, 0],
-  ["prd-06", "Cotton Panjabi Classic", "cotton-panjabi-classic", "fashion", "published", 1750, 25, 4.1],
+  [
+    "prd-06",
+    "Cotton Panjabi Classic",
+    "cotton-panjabi-classic",
+    "fashion",
+    "published",
+    1750,
+    25,
+    4.1,
+  ],
   ["prd-07", "Table Lamp Warm", "table-lamp-warm", "home-living", "published", 1250, 12, 4.0],
   ["prd-08", "Hair Dryer Ionic", "hair-dryer-ionic", "beauty", "archived", 3200, 5, 3.9],
 ];
@@ -174,7 +218,9 @@ for (const [id, title, slug, cat, status, price, stock, rating] of PRODUCTS) {
     title: v.s(title),
     slug: v.s(slug),
     shortDescription: v.s(`${title} — genuine product with warranty.`),
-    description: v.s(`${title}. Imported authentic product. 7-day replacement warranty. Cash on delivery available nationwide.`),
+    description: v.s(
+      `${title}. Imported authentic product. 7-day replacement warranty. Cash on delivery available nationwide.`,
+    ),
     brand: v.s("Aventa"),
     price: v.f(price),
     compareAtPrice: v.f(price * 1.25),
@@ -206,16 +252,17 @@ for (const [id, title, slug, cat, status, price, stock, rating] of PRODUCTS) {
 //   admin list    → collectionGroup("orders"), filtered to users/* parents
 const ORDER_STATUSES = ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"];
 const SETTLEMENT_STATUSES = ["released", "released", "hold", "hold", "pending", "reversed"];
-const orderItem = (pid, qty) => v.map({
-  productId: v.s(pid),
-  title: v.s(PRODUCTS.find((p) => p[0] === pid)[1]),
-  image: v.s(""),
-  price: v.f(PRODUCTS.find((p) => p[0] === pid)[5]),
-  quantity: v.n(qty),
-  sellerId: v.s(SELLER),
-  slug: v.s(PRODUCTS.find((p) => p[0] === pid)[2]),
-  stock: v.n(99),
-});
+const orderItem = (pid, qty) =>
+  v.map({
+    productId: v.s(pid),
+    title: v.s(PRODUCTS.find((p) => p[0] === pid)[1]),
+    image: v.s(""),
+    price: v.f(PRODUCTS.find((p) => p[0] === pid)[5]),
+    quantity: v.n(qty),
+    sellerId: v.s(SELLER),
+    slug: v.s(PRODUCTS.find((p) => p[0] === pid)[2]),
+    stock: v.n(99),
+  });
 const sellerItem = (pid, qty) => {
   const price = PRODUCTS.find((p) => p[0] === pid)[5];
   return v.map({
@@ -339,7 +386,12 @@ await putDoc("qcReviews/qcr-01", {
   status: v.s("PENDING_REVIEW"),
   checklist: v.arr([
     v.map({ id: v.s("title"), label: v.s("Title quality"), pass: v.b(true), note: v.s("") }),
-    v.map({ id: v.s("images"), label: v.s("Images"), pass: v.b(false), note: v.s("No images uploaded") }),
+    v.map({
+      id: v.s("images"),
+      label: v.s("Images"),
+      pass: v.b(false),
+      note: v.s("No images uploaded"),
+    }),
     v.map({ id: v.s("description"), label: v.s("Description"), pass: v.b(true), note: v.s("") }),
   ]),
   reviewerUid: v.null(),
@@ -389,16 +441,13 @@ const WTXS = [
   ["sale", 3500, "ord-audit-06 settled", 1],
 ];
 for (const [type, amount, note, dAgo] of WTXS) {
-  await putDoc(
-    `sellers/${SELLER}/walletTx/tx-${String(dAgo).padStart(3, "0")}`,
-    {
-      type: v.s(type),
-      amount: v.f(amount),
-      status: v.s("completed"),
-      note: v.s(note),
-      createdAt: v.n(now - dAgo * 864e5),
-    },
-  );
+  await putDoc(`sellers/${SELLER}/walletTx/tx-${String(dAgo).padStart(3, "0")}`, {
+    type: v.s(type),
+    amount: v.f(amount),
+    status: v.s("completed"),
+    note: v.s(note),
+    createdAt: v.n(now - dAgo * 864e5),
+  });
 }
 
 // v1 settlementTx ledger (seller Earnings/Settlements "recent transactions")
@@ -410,19 +459,16 @@ const STXS = [
   ["sale", "ord-audit-06", 3500, 3150, "pending", 1],
 ];
 for (const [type, oid, amount, se, st, dAgo] of STXS) {
-  await putDoc(
-    `sellers/${SELLER}/settlementTx/stx-${String(dAgo).padStart(2, "0")}-${type}`,
-    {
-      type: v.s(type),
-      orderId: oid ? v.s(oid) : v.null(),
-      amount: v.f(amount),
-      sellerEarnings: v.f(se),
-      settlementStatus: v.s(st),
-      note: v.s(""),
-      createdBy: v.s("system"),
-      createdAt: v.n(now - dAgo * 864e5),
-    },
-  );
+  await putDoc(`sellers/${SELLER}/settlementTx/stx-${String(dAgo).padStart(2, "0")}-${type}`, {
+    type: v.s(type),
+    orderId: oid ? v.s(oid) : v.null(),
+    amount: v.f(amount),
+    sellerEarnings: v.f(se),
+    settlementStatus: v.s(st),
+    note: v.s(""),
+    createdBy: v.s("system"),
+    createdAt: v.n(now - dAgo * 864e5),
+  });
 }
 
 // v2 sellerLedger (wallet page): transactionId/seq/balance* chain —
@@ -616,7 +662,12 @@ await putDoc("returns/ret-01", {
 for (const [id, uid, title, body] of [
   ["ntf-01", SELLER, "Payout processed", "Your bank payout of ৳30,000 was processed successfully."],
   ["ntf-02", SELLER, "New order received", "Order ord-audit-06 — 1x Cotton Panjabi Classic."],
-  ["ntf-03", ADMIN, "Settlement awaiting hold release", "2 settlements scheduled for release this week."],
+  [
+    "ntf-03",
+    ADMIN,
+    "Settlement awaiting hold release",
+    "2 settlements scheduled for release this week.",
+  ],
 ]) {
   await putDoc(`notifications/${id}`, {
     userId: v.s(uid),

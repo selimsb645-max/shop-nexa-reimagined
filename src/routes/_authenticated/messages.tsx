@@ -938,7 +938,7 @@ function OrderConversationView({
 
     // Look up the product's sellerId from the first item
     let sellerId: string | null = null;
-    let sellerShopName = "Seller";
+    const sellerShopName = "Seller";
     if (order.items.length > 0) {
       try {
         const product = await getProductById(order.items[0].productId);

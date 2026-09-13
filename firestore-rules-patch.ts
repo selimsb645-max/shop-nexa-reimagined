@@ -1,6 +1,6 @@
 /**
  * PATCH: firestore.rules — Settlement Protection
- * 
+ *
  * Add these rules to your existing firestore.rules file.
  * These ensure that settlement data is NEVER writable by clients.
  */
