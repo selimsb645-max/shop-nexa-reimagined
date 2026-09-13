@@ -41,7 +41,7 @@ describe("Inbox Conversation Detail — Hooks Violation Fix", () => {
   });
 
   it("derived variables (threads, notifications, tickets, orders) are computed before early returns", () => {
-    const threadsLine = lineOf("const threads = dedupeThreads(realtimeThreads.length");
+    const threadsLine = lineOf("const threads = dedupeThreads(");
     const firstReturnLine = lineOf("if (activeThreadId && user?.uid)");
     expect(threadsLine).toBeGreaterThan(0);
     expect(threadsLine).toBeLessThan(firstReturnLine);
@@ -50,7 +50,7 @@ describe("Inbox Conversation Detail — Hooks Violation Fix", () => {
   it("no hooks are called after the first conditional return in CommunicationCenter", () => {
     const firstReturnLine = lineOf("if (activeThreadId && user?.uid)");
     // Find the main return statement that renders the full page
-    const mainReturnLine = lineOf("ServicePageLayout title={t(");
+    const mainReturnLine = lineOf("<ServicePageLayout");
     // Between firstReturnLine and mainReturnLine, there should be no
     // new hook calls (useMemo, useState, useEffect, useQuery, etc.)
     const section = LINES.slice(firstReturnLine - 1, mainReturnLine - 1).join("\n");
