@@ -29,7 +29,7 @@ export async function deactivateExpiredCoupons(): Promise<number> {
   // Query: WHERE active == true AND expiresAt != null AND expiresAt < now
   // Firestore structured query
   const queryRes = await fetch(
-    `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/coupons:runQuery`,
+    `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery`,
     {
       method: "POST",
       headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },

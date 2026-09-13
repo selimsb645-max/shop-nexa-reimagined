@@ -98,7 +98,7 @@ export const getPublicStoreBySlug = createServerFn({ method: "POST" })
 
     // Query sellers collection by shopSlug
     const res = await fetch(
-      `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/sellers:runQuery`,
+      `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery`,
       {
         method: "POST",
         headers: {
@@ -190,7 +190,7 @@ export const reserveShopSlug = createServerFn({ method: "POST" })
 
     // Prefix range query: shopSlug in [base, base + '\uf8ff')
     const res = await fetch(
-      `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/sellers:runQuery`,
+      `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery`,
       {
         method: "POST",
         headers: {
@@ -463,7 +463,7 @@ export const listPublicStores = createServerFn({ method: "POST" })
     const token = await getAccessToken();
 
     const res = await fetch(
-      `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/sellers:runQuery`,
+      `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery`,
       {
         method: "POST",
         headers: {
