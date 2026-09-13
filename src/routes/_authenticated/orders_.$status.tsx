@@ -37,7 +37,7 @@ export const Route = createFileRoute("/_authenticated/orders_/$status")({
   component: OrderStatusPage,
   errorComponent: ({ error }) => (
     <div role="alert" className="p-10 text-center text-sm text-gray-600">
-      {error.message}
+      {error instanceof Error ? error.message : "Something went wrong"}
     </div>
   ),
   notFoundComponent: () => {

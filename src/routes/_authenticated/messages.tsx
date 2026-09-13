@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, ErrorComponentProps } from "@tanstack/react-router";
 import { useEffect, useRef, useState, useMemo, Component, type ReactNode } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -100,14 +100,14 @@ export const Route = createFileRoute("/_authenticated/messages")({
  * conversation failing to load doesn't take down the entire page with
  * the generic root "This page didn't load" error.
  */
-function MessagesRouteError({ error, reset }: { error: Error; reset: () => void }) {
+function MessagesRouteError({ error, reset }: ErrorComponentProps) {
   console.error("[messages] route error:", error);
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4">
       <div className="text-center">
         <h2 className="text-lg font-semibold">Something went wrong</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          {error.message || "Failed to load this conversation."}
+          {error instanceof Error ? error.message : "Failed to load this conversation."}
         </p>
       </div>
       <div className="flex gap-2">
