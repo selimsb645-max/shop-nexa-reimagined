@@ -274,58 +274,58 @@ function CouponsAdmin() {
           {/* Desktop: table */}
           <div className="hidden overflow-x-auto rounded-lg border bg-background lg:block">
             <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left">
-              <tr>
-                <th className="px-3 py-2">{t("admin.code")}</th>
-                <th className="px-3 py-2">{t("admin.type")}</th>
-                <th className="px-3 py-2">{t("admin.value")}</th>
-                <th className="px-3 py-2">{t("admin.minSubtotal")}</th>
-                <th className="px-3 py-2">{t("admin.uses")}</th>
-                <th className="px-3 py-2">{t("admin.expires")}</th>
-                <th className="px-3 py-2">{t("admin.active")}</th>
-                <th className="px-3 py-2 text-right">{t("admin.actions")}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {coupons.map((c) => (
-                <tr key={c.code}>
-                  <td className="px-3 py-2 font-mono">{c.code}</td>
-                  <td className="px-3 py-2 capitalize">{c.type}</td>
-                  <td className="px-3 py-2">
-                    {c.type === "percent" ? `${c.value}%` : formatPrice(c.value)}
-                  </td>
-                  <td className="px-3 py-2">{formatPrice(c.minSubtotal)}</td>
-                  <td className="px-3 py-2">
-                    {c.uses}
-                    {c.usageLimit ? `/${c.usageLimit}` : ""}
-                  </td>
-                  <td className="px-3 py-2 text-xs">
-                    {c.expiresAt ? formatDate(c.expiresAt) : "—"}
-                  </td>
-                  <td className="px-3 py-2">
-                    <button
-                      onClick={() => onToggle(c)}
-                      className={
-                        "rounded-full px-2 py-0.5 text-xs " +
-                        (c.active
-                          ? "bg-emerald-500/10 text-emerald-600"
-                          : "bg-muted text-muted-foreground")
-                      }
-                    >
-                      {c.active ? "Active" : "Disabled"}
-                    </button>
-                  </td>
-                  <td className="px-3 py-2 text-right">
-                    <button
-                      onClick={() => onDelete(c)}
-                      className="rounded-md border p-1.5 text-destructive hover:bg-destructive/10"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </td>
+              <thead className="bg-muted/50 text-left">
+                <tr>
+                  <th className="px-3 py-2">{t("admin.code")}</th>
+                  <th className="px-3 py-2">{t("admin.type")}</th>
+                  <th className="px-3 py-2">{t("admin.value")}</th>
+                  <th className="px-3 py-2">{t("admin.minSubtotal")}</th>
+                  <th className="px-3 py-2">{t("admin.uses")}</th>
+                  <th className="px-3 py-2">{t("admin.expires")}</th>
+                  <th className="px-3 py-2">{t("admin.active")}</th>
+                  <th className="px-3 py-2 text-right">{t("admin.actions")}</th>
                 </tr>
-              ))}
-            </tbody>
+              </thead>
+              <tbody className="divide-y">
+                {coupons.map((c) => (
+                  <tr key={c.code}>
+                    <td className="px-3 py-2 font-mono">{c.code}</td>
+                    <td className="px-3 py-2 capitalize">{c.type}</td>
+                    <td className="px-3 py-2">
+                      {c.type === "percent" ? `${c.value}%` : formatPrice(c.value)}
+                    </td>
+                    <td className="px-3 py-2">{formatPrice(c.minSubtotal)}</td>
+                    <td className="px-3 py-2">
+                      {c.uses}
+                      {c.usageLimit ? `/${c.usageLimit}` : ""}
+                    </td>
+                    <td className="px-3 py-2 text-xs">
+                      {c.expiresAt ? formatDate(c.expiresAt) : "—"}
+                    </td>
+                    <td className="px-3 py-2">
+                      <button
+                        onClick={() => onToggle(c)}
+                        className={
+                          "rounded-full px-2 py-0.5 text-xs " +
+                          (c.active
+                            ? "bg-emerald-500/10 text-emerald-600"
+                            : "bg-muted text-muted-foreground")
+                        }
+                      >
+                        {c.active ? "Active" : "Disabled"}
+                      </button>
+                    </td>
+                    <td className="px-3 py-2 text-right">
+                      <button
+                        onClick={() => onDelete(c)}
+                        className="rounded-md border p-1.5 text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
             </table>
           </div>
         </>
