@@ -221,7 +221,106 @@ function ProductsPage({ sellerId }: { sellerId: string }) {
           )}
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border bg-background">
+        <>
+          {/* Mobile product cards */}
+          <div className="space-y-3 md:hidden">
+            {filtered.map((p) => {
+              const review = qcReviews.get(p.id);
+              const qcStatus = qcStatusFor(p, review);
+              const badge =
+                QC_BADGES[
+                  qcStatus === "QC_FAILED" && review?.decision === "rejected"
+                    ? "REJECTED"
+                    : qcStatus
+                ] ?? QC_BADGES.DRAFT;
+              const canSubmit = qcStatus === "DRAFT" || qcStatus === "QC_FAILED";
+              return (
+                <div key={p.id} className="rounded-lg border bg-background p-4">
+                  <div className="flex items-start gap-3">
+                    <img
+                      src={p.images[0]}
+                      alt=""
+                      className="h-12 w-12 shrink-0 rounded-md object-cover"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-medium">{p.title}</div>
+                      <div className="truncate text-xs text-muted-foreground">
+                        {p.sku || `/${p.slug}`}
+                      </div>
+                      <div className="mt-1 flex items-center gap-2">
+                        <span className="text-sm font-bold">{formatPrice(p.price)}</span>
+                        <span
+                          className={
+                            p.stock === 0
+                              ? "text-xs text-destructive"
+                              : p.stock <= 5
+                                ? "text-xs text-orange-600"
+                                : "text-xs text-muted-foreground"
+                          }
+                        >
+                          Stock: {p.stock}
+                        </span>
+                      </div>
+                    </div>
+                    <span
+                      className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${badge.cls}`}
+                    >
+                      {badge.label}
+                    </span>
+                  </div>
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    {qcStatus === "DRAFT" || qcStatus === "QC_FAILED" ? (
+                      <button
+                        onClick={() => onSubmitForQc(p)}
+                        disabled={submittingId === p.id}
+                        className="flex items-center gap-1 rounded-md bg-primary px-2.5 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                      >
+                        {submittingId === p.id ? (
+                          <Spinner className="h-3 w-3" />
+                        ) : (
+                          <Send className="h-3 w-3" />
+                        )}
+                        {qcStatus === "QC_FAILED" ? "Resubmit for QC" : "Submit for QC"}
+                      </button>
+                    ) : null}
+                    {qcStatus !== "DRAFT" && qcStatus !== "ARCHIVED" && (
+                      <Link
+                        to="/seller/products/$id/qc"
+                        params={{ id: p.id }}
+                        className="rounded-md border px-2.5 py-1.5 text-xs font-medium hover:bg-muted"
+                      >
+                        View QC
+                      </Link>
+                    )}
+                    <Link
+                      to="/seller/products/$id/edit"
+                      params={{ id: p.id }}
+                      className="flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-xs font-medium hover:bg-muted"
+                    >
+                      <Edit2 className="h-3 w-3" /> Edit
+                    </Link>
+                    {qcStatus === "DRAFT" && (
+                      <button
+                        onClick={() => onArchive(p)}
+                        className="rounded-md border px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted"
+                      >
+                        Archive
+                      </button>
+                    )}
+                    <button
+                      onClick={() => onDelete(p.id, p.title)}
+                      className="rounded-md border px-2.5 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden overflow-x-auto rounded-lg border bg-background md:block">
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-xs uppercase text-muted-foreground">
               <tr>
@@ -340,7 +439,8 @@ function ProductsPage({ sellerId }: { sellerId: string }) {
               })}
             </tbody>
           </table>
-        </div>
+          </div>
+        </>
       )}
     </div>
   );

@@ -127,7 +127,7 @@ function Notifs({ sellerId }: { sellerId: string }) {
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1">
+      <div className="flex flex-wrap items-center gap-2 pb-1">
         {FILTER_TABS.map((tab) => (
           <button
             key={tab.key}

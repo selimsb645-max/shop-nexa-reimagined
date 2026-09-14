@@ -107,8 +107,38 @@ function OrdersPage({ sellerId }: { sellerId: string }) {
           </p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border bg-background">
-          <table className="w-full text-sm">
+        <>
+          {/* Mobile order cards */}
+          <div className="space-y-3 md:hidden">
+            {filtered.map((o) => (
+              <Link
+                key={o.id}
+                to="/seller/orders/$orderId"
+                params={{ orderId: o.id }}
+                className="block rounded-lg border bg-background p-4 transition-colors hover:bg-muted/40"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-sm font-bold">#{o.id.slice(0, 8)}</span>
+                  <StatusPill status={o.status} />
+                </div>
+                <div className="mt-2 text-sm font-medium">{o.buyerName}</div>
+                <div className="mt-1 text-xs text-muted-foreground">{o.buyerEmail ?? "—"}</div>
+                <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+                  <span>
+                    {o.items.length} {t("seller.items").toLowerCase()}
+                  </span>
+                  <span>{formatDateTime(o.createdAt)}</span>
+                </div>
+                <div className="mt-2 text-right text-sm font-bold">
+                  {formatPrice(o.subtotal)}
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden overflow-x-auto rounded-lg border bg-background md:block">
+            <table className="w-full text-sm">
             <thead className="bg-muted/50 text-xs uppercase text-muted-foreground">
               <tr>
                 <th className="px-4 py-3 text-left">{t("seller.order")}</th>
@@ -145,7 +175,8 @@ function OrdersPage({ sellerId }: { sellerId: string }) {
               ))}
             </tbody>
           </table>
-        </div>
+          </div>
+        </>
       )}
     </div>
   );
