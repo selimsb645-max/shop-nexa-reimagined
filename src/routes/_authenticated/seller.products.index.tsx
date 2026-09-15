@@ -321,124 +321,128 @@ function ProductsPage({ sellerId }: { sellerId: string }) {
 
           {/* Desktop table */}
           <div className="hidden overflow-x-auto rounded-lg border bg-background md:block">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-xs uppercase text-muted-foreground">
-              <tr>
-                <th className="px-4 py-3 text-left">{t("seller.product")}</th>
-                <th className="px-4 py-3 text-left">SKU</th>
-                <th className="px-4 py-3 text-right">Price</th>
-                <th className="px-4 py-3 text-right">Stock</th>
-                <th className="px-4 py-3 text-left">QC Status</th>
-                <th className="px-4 py-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {filtered.map((p) => {
-                const review = qcReviews.get(p.id);
-                const qcStatus = qcStatusFor(p, review);
-                const badge =
-                  QC_BADGES[
-                    qcStatus === "QC_FAILED" && review?.decision === "rejected"
-                      ? "REJECTED"
-                      : qcStatus
-                  ] ?? QC_BADGES.DRAFT;
-                const canSubmit = qcStatus === "DRAFT" || qcStatus === "QC_FAILED";
-                return (
-                  <tr key={p.id} className="hover:bg-muted/30">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={
-                            p.images[0] ||
-                            "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5jcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMzAwIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YzZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzljYTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg=="
-                          }
-                          alt=""
-                          className="h-10 w-10 rounded-md object-cover"
-                        />
-                        <div className="min-w-0">
-                          <div className="truncate font-medium">{p.title}</div>
-                          <div className="text-xs text-muted-foreground">/{p.slug}</div>
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50 text-xs uppercase text-muted-foreground">
+                <tr>
+                  <th className="px-4 py-3 text-left">{t("seller.product")}</th>
+                  <th className="px-4 py-3 text-left">SKU</th>
+                  <th className="px-4 py-3 text-right">Price</th>
+                  <th className="px-4 py-3 text-right">Stock</th>
+                  <th className="px-4 py-3 text-left">QC Status</th>
+                  <th className="px-4 py-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {filtered.map((p) => {
+                  const review = qcReviews.get(p.id);
+                  const qcStatus = qcStatusFor(p, review);
+                  const badge =
+                    QC_BADGES[
+                      qcStatus === "QC_FAILED" && review?.decision === "rejected"
+                        ? "REJECTED"
+                        : qcStatus
+                    ] ?? QC_BADGES.DRAFT;
+                  const canSubmit = qcStatus === "DRAFT" || qcStatus === "QC_FAILED";
+                  return (
+                    <tr key={p.id} className="hover:bg-muted/30">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={
+                              p.images[0] ||
+                              "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5jcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMzAwIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YzZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzljYTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg=="
+                            }
+                            alt=""
+                            className="h-10 w-10 rounded-md object-cover"
+                          />
+                          <div className="min-w-0">
+                            <div className="truncate font-medium">{p.title}</div>
+                            <div className="text-xs text-muted-foreground">/{p.slug}</div>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">{p.sku || "—"}</td>
-                    <td className="px-4 py-3 text-right">{formatPrice(p.price)}</td>
-                    <td className="px-4 py-3 text-right">
-                      <span
-                        className={
-                          p.stock === 0 ? "text-destructive" : p.stock <= 5 ? "text-orange-600" : ""
-                        }
-                      >
-                        {p.stock}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap items-center gap-2">
-                        {qcStatus === "DRAFT" || qcStatus === "ARCHIVED" ? (
-                          <span
-                            className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${badge.cls}`}
-                          >
-                            {badge.label}
-                          </span>
-                        ) : (
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">{p.sku || "—"}</td>
+                      <td className="px-4 py-3 text-right">{formatPrice(p.price)}</td>
+                      <td className="px-4 py-3 text-right">
+                        <span
+                          className={
+                            p.stock === 0
+                              ? "text-destructive"
+                              : p.stock <= 5
+                                ? "text-orange-600"
+                                : ""
+                          }
+                        >
+                          {p.stock}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          {qcStatus === "DRAFT" || qcStatus === "ARCHIVED" ? (
+                            <span
+                              className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${badge.cls}`}
+                            >
+                              {badge.label}
+                            </span>
+                          ) : (
+                            <Link
+                              to="/seller/products/$id/qc"
+                              params={{ id: p.id }}
+                              className={`rounded-full px-2.5 py-0.5 text-xs font-medium underline-offset-2 hover:underline ${badge.cls}`}
+                              title="View QC details"
+                            >
+                              {badge.label}
+                            </Link>
+                          )}
+                          {canSubmit && (
+                            <button
+                              onClick={() => onSubmitForQc(p)}
+                              disabled={submittingId === p.id}
+                              className="flex items-center gap-1 rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                            >
+                              {submittingId === p.id ? (
+                                <Spinner className="h-3 w-3" />
+                              ) : (
+                                <Send className="h-3 w-3" />
+                              )}
+                              {qcStatus === "QC_FAILED" ? "Resubmit for QC" : "Submit for QC"}
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex justify-end gap-1">
                           <Link
-                            to="/seller/products/$id/qc"
+                            to="/seller/products/$id/edit"
                             params={{ id: p.id }}
-                            className={`rounded-full px-2.5 py-0.5 text-xs font-medium underline-offset-2 hover:underline ${badge.cls}`}
-                            title="View QC details"
+                            className="flex h-8 w-8 items-center justify-center rounded-md border hover:bg-muted"
+                            title="Edit"
                           >
-                            {badge.label}
+                            <Edit2 className="h-4 w-4" />
                           </Link>
-                        )}
-                        {canSubmit && (
+                          {qcStatus === "DRAFT" && (
+                            <button
+                              onClick={() => onArchive(p)}
+                              className="flex h-8 w-8 items-center justify-center rounded-md border text-muted-foreground hover:bg-muted"
+                              title="Archive"
+                            >
+                              <Archive className="h-4 w-4" />
+                            </button>
+                          )}
                           <button
-                            onClick={() => onSubmitForQc(p)}
-                            disabled={submittingId === p.id}
-                            className="flex items-center gap-1 rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                            onClick={() => onDelete(p.id, p.title)}
+                            className="flex h-8 w-8 items-center justify-center rounded-md border text-destructive hover:bg-destructive/10"
+                            title="Delete"
                           >
-                            {submittingId === p.id ? (
-                              <Spinner className="h-3 w-3" />
-                            ) : (
-                              <Send className="h-3 w-3" />
-                            )}
-                            {qcStatus === "QC_FAILED" ? "Resubmit for QC" : "Submit for QC"}
+                            <Trash2 className="h-4 w-4" />
                           </button>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex justify-end gap-1">
-                        <Link
-                          to="/seller/products/$id/edit"
-                          params={{ id: p.id }}
-                          className="flex h-8 w-8 items-center justify-center rounded-md border hover:bg-muted"
-                          title="Edit"
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </Link>
-                        {qcStatus === "DRAFT" && (
-                          <button
-                            onClick={() => onArchive(p)}
-                            className="flex h-8 w-8 items-center justify-center rounded-md border text-muted-foreground hover:bg-muted"
-                            title="Archive"
-                          >
-                            <Archive className="h-4 w-4" />
-                          </button>
-                        )}
-                        <button
-                          onClick={() => onDelete(p.id, p.title)}
-                          className="flex h-8 w-8 items-center justify-center rounded-md border text-destructive hover:bg-destructive/10"
-                          title="Delete"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </>
       )}

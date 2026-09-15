@@ -158,7 +158,7 @@ export function maskPhone(phone: string): string {
 /* ------------------------------------------------------------------ */
 
 function fsBaseUrl(projectId: string): string {
-  const emulatorHost = Deno.env.get("FIRESTORE_EMULATOR_HOST");
+  const emulatorHost = getEnv("FIRESTORE_EMULATOR_HOST");
   if (emulatorHost) {
     return `http://${emulatorHost}/v1/projects/${projectId}/databases/(default)/documents`;
   }
@@ -349,6 +349,19 @@ export interface VerificationProvider {
   sendOtp(phone: string, otp: string): Promise<{ delivered: boolean; mock?: boolean }>;
 }
 
+/* Runtime-agnostic env reader (same pattern as email.server.ts).
+ * Deno.env in test polyfill / Deno deploy; process.env on Node
+ * (Nitro/Vercel production). Raw Deno.env.get here previously crashed
+ * with ReferenceError in real Node production — fixed Sep 15, 2026. */
+function getEnv(name: string): string | undefined {
+  if (typeof Deno !== "undefined" && typeof Deno?.env?.get === "function") {
+    const v = Deno.env.get(name);
+    if (v !== undefined) return v;
+  }
+  const proc = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process;
+  return proc?.env?.[name];
+}
+
 /** Mock provider — logs OTP to console, returns it for dev/testing */
 class MockVerificationProvider implements VerificationProvider {
   name = "mock";
@@ -361,9 +374,9 @@ class MockVerificationProvider implements VerificationProvider {
 class SmsVerificationProvider implements VerificationProvider {
   name = "sms";
   async sendOtp(phone: string, otp: string) {
-    const apiUrl = Deno.env.get("SMS_GATEWAY_URL");
-    const apiKey = Deno.env.get("SMS_GATEWAY_API_KEY");
-    const deviceId = Deno.env.get("SMS_GATEWAY_DEVICE_ID");
+    const apiUrl = getEnv("SMS_GATEWAY_URL");
+    const apiKey = getEnv("SMS_GATEWAY_API_KEY");
+    const deviceId = getEnv("SMS_GATEWAY_DEVICE_ID");
     if (!apiUrl || !apiKey) {
       throw new Error("SMS gateway not configured");
     }
@@ -387,8 +400,8 @@ class SmsVerificationProvider implements VerificationProvider {
 class WhatsAppVerificationProvider implements VerificationProvider {
   name = "whatsapp";
   async sendOtp(phone: string, otp: string) {
-    const apiUrl = Deno.env.get("WHATSAPP_API_URL");
-    const apiKey = Deno.env.get("WHATSAPP_API_KEY");
+    const apiUrl = getEnv("WHATSAPP_API_URL");
+    const apiKey = getEnv("WHATSAPP_API_KEY");
     if (!apiUrl || !apiKey) {
       throw new Error("WhatsApp gateway not configured");
     }
@@ -408,13 +421,56 @@ class WhatsAppVerificationProvider implements VerificationProvider {
   }
 }
 
+/** WhatsApp TEST provider — CallMeBot (free, for testing only).
+ *
+ * Sends the OTP to ONE pre-registered WhatsApp number (the owner's test
+ * phone) via the free CallMeBot gateway. The customer-entered phone is
+ * included in the message for traceability, but delivery always goes to
+ * the registered test number — CallMeBot only delivers to the number that
+ * registered the API key. This is the test channel: when the marketplace
+ * goes live for real, switch VERIFICATION_PROVIDER back to "sms" (or a
+ * proper WhatsApp Business provider).
+ *
+ * One-time setup: send "I allow callmebot to send me messages" to the
+ * CallMeBot bot number from the test WhatsApp, receive the API key, then
+ * set env vars:
+ *   VERIFICATION_PROVIDER=whatsapp_test
+ *   CALLMEBOT_PHONE=<registered number, international format e.g. 8801XXXXXXXXX>
+ *   CALLMEBOT_APIKEY=<the key CallMeBot sent>
+ */
+class WhatsAppTestVerificationProvider implements VerificationProvider {
+  name = "whatsapp_test";
+  async sendOtp(phone: string, otp: string) {
+    const apiKey = getEnv("CALLMEBOT_APIKEY");
+    const testPhone = getEnv("CALLMEBOT_PHONE");
+    if (!apiKey || !testPhone) {
+      throw new Error("WhatsApp test gateway not configured (CALLMEBOT_APIKEY / CALLMEBOT_PHONE)");
+    }
+    const text = encodeURIComponent(
+      `AVENTA SHOP verification code: ${otp} (valid 5 min). Test delivery for order phone ${phone}.`,
+    );
+    const url = `https://api.callmebot.com/whatsapp.php?phone=${encodeURIComponent(testPhone)}&text=${text}&apikey=${encodeURIComponent(apiKey)}`;
+    let res: Response;
+    try {
+      res = await fetch(url);
+    } catch {
+      return { delivered: false };
+    }
+    if (!res.ok) return { delivered: false };
+    // CallMeBot answers 200 with a text body; errors carry "Error"/"invalid"
+    const body = await res.text().catch(() => "");
+    if (/error|invalid|not authorized/i.test(body)) return { delivered: false };
+    return { delivered: true };
+  }
+}
+
 let _provider: VerificationProvider | null = null;
 
-function getProvider(): VerificationProvider {
+export function getProvider(): VerificationProvider {
   if (_provider) return _provider;
 
-  const providerName = Deno.env.get("VERIFICATION_PROVIDER") ?? "mock";
-  const isProduction = Deno.env.get("NODE_ENV") === "production";
+  const providerName = getEnv("VERIFICATION_PROVIDER") ?? "mock";
+  const isProduction = getEnv("NODE_ENV") === "production";
 
   // PRODUCTION SAFETY: Never fall back to mock in production.
   // If the env var is missing or "mock" in production, fail safely.
@@ -431,6 +487,9 @@ function getProvider(): VerificationProvider {
       break;
     case "whatsapp":
       _provider = new WhatsAppVerificationProvider();
+      break;
+    case "whatsapp_test":
+      _provider = new WhatsAppTestVerificationProvider();
       break;
     case "mock":
     default:

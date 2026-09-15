@@ -129,9 +129,7 @@ function OrdersPage({ sellerId }: { sellerId: string }) {
                   </span>
                   <span>{formatDateTime(o.createdAt)}</span>
                 </div>
-                <div className="mt-2 text-right text-sm font-bold">
-                  {formatPrice(o.subtotal)}
-                </div>
+                <div className="mt-2 text-right text-sm font-bold">{formatPrice(o.subtotal)}</div>
               </Link>
             ))}
           </div>
@@ -139,42 +137,44 @@ function OrdersPage({ sellerId }: { sellerId: string }) {
           {/* Desktop table */}
           <div className="hidden overflow-x-auto rounded-lg border bg-background md:block">
             <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-xs uppercase text-muted-foreground">
-              <tr>
-                <th className="px-4 py-3 text-left">{t("seller.order")}</th>
-                <th className="px-4 py-3 text-left">{t("seller.buyer")}</th>
-                <th className="px-4 py-3 text-right">{t("seller.items")}</th>
-                <th className="px-4 py-3 text-right">{t("seller.total")}</th>
-                <th className="px-4 py-3 text-left">{t("seller.status")}</th>
-                <th className="px-4 py-3 text-left">{t("seller.placed")}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {filtered.map((o) => (
-                <tr key={o.id} className="hover:bg-muted/30">
-                  <td className="px-4 py-3">
-                    <Link
-                      to="/seller/orders/$orderId"
-                      params={{ orderId: o.id }}
-                      className="font-medium text-primary hover:underline"
-                    >
-                      #{o.id.slice(0, 8)}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="font-medium">{o.buyerName}</div>
-                    <div className="text-xs text-muted-foreground">{o.buyerEmail ?? "—"}</div>
-                  </td>
-                  <td className="px-4 py-3 text-right">{o.items.length}</td>
-                  <td className="px-4 py-3 text-right">{formatPrice(o.subtotal)}</td>
-                  <td className="px-4 py-3">
-                    <StatusPill status={o.status} />
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">{formatDateTime(o.createdAt)}</td>
+              <thead className="bg-muted/50 text-xs uppercase text-muted-foreground">
+                <tr>
+                  <th className="px-4 py-3 text-left">{t("seller.order")}</th>
+                  <th className="px-4 py-3 text-left">{t("seller.buyer")}</th>
+                  <th className="px-4 py-3 text-right">{t("seller.items")}</th>
+                  <th className="px-4 py-3 text-right">{t("seller.total")}</th>
+                  <th className="px-4 py-3 text-left">{t("seller.status")}</th>
+                  <th className="px-4 py-3 text-left">{t("seller.placed")}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y">
+                {filtered.map((o) => (
+                  <tr key={o.id} className="hover:bg-muted/30">
+                    <td className="px-4 py-3">
+                      <Link
+                        to="/seller/orders/$orderId"
+                        params={{ orderId: o.id }}
+                        className="font-medium text-primary hover:underline"
+                      >
+                        #{o.id.slice(0, 8)}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="font-medium">{o.buyerName}</div>
+                      <div className="text-xs text-muted-foreground">{o.buyerEmail ?? "—"}</div>
+                    </td>
+                    <td className="px-4 py-3 text-right">{o.items.length}</td>
+                    <td className="px-4 py-3 text-right">{formatPrice(o.subtotal)}</td>
+                    <td className="px-4 py-3">
+                      <StatusPill status={o.status} />
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {formatDateTime(o.createdAt)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </>
       )}
