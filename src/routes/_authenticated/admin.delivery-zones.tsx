@@ -77,6 +77,8 @@ function AdminDeliveryZonesPage() {
     );
   }
 
+  const sortedZones = [...zones].sort((a, b) => a.priority - b.priority);
+
   return (
     <div className="space-y-6 p-4 md:p-6">
       <div className="flex items-center justify-between">
@@ -118,90 +120,158 @@ function AdminDeliveryZonesPage() {
         </div>
       </div>
 
-      {/* Zone list */}
-      <div className="overflow-hidden rounded-lg border">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/50">
-            <tr>
-              <th className="px-4 py-3 text-left font-medium">Priority</th>
-              <th className="px-4 py-3 text-left font-medium">Zone Name</th>
-              <th className="px-4 py-3 text-left font-medium">Charge</th>
-              <th className="px-4 py-3 text-left font-medium">ETA (days)</th>
-              <th className="px-4 py-3 text-left font-medium">Status</th>
-              <th className="px-4 py-3 text-right font-medium">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {[...zones]
-              .sort((a, b) => a.priority - b.priority)
-              .map((zone) => (
-                <tr key={zone.id} className="border-t hover:bg-muted/30">
-                  <td className="px-4 py-3">
-                    <span className="inline-flex items-center gap-1 text-muted-foreground">
-                      <GripVertical className="h-3 w-3" /> {zone.priority}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="font-medium">{zone.labelEn}</div>
-                    <div className="text-xs text-muted-foreground">{zone.labelBn}</div>
-                    <div className="text-xs text-muted-foreground mt-0.5">{zone.description}</div>
-                  </td>
-                  <td className="px-4 py-3 font-semibold">{formatPrice(zone.charge)}</td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {zone.etaDays[0]}–{zone.etaDays[1]}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
-                        zone.active
-                          ? "bg-emerald-100 text-emerald-700"
-                          : "bg-slate-100 text-slate-500"
-                      }`}
-                    >
-                      <span
-                        className={`h-1.5 w-1.5 rounded-full ${zone.active ? "bg-emerald-500" : "bg-slate-400"}`}
-                      />
-                      {zone.active ? "Active" : "Disabled"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex justify-end gap-1">
-                      <button
-                        onClick={() => toggleActive(zone.id)}
-                        className="rounded p-1.5 text-muted-foreground hover:bg-muted"
-                        title={zone.active ? "Disable" : "Enable"}
-                      >
-                        <Power className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => {
-                          setEditingZone(zone);
-                          setShowForm(true);
-                        }}
-                        className="rounded p-1.5 text-muted-foreground hover:bg-muted"
-                        title="Edit"
-                      >
-                        <Edit3 className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => deleteZone(zone.id)}
-                        className="rounded p-1.5 text-red-500 hover:bg-red-50"
-                        title="Delete"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-          </tbody>
-        </table>
-      </div>
-
-      {zones.length === 0 && (
+      {zones.length === 0 ? (
         <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
           No delivery zones configured. Click "Add Zone" to create one.
         </div>
+      ) : (
+        <>
+          {/* Mobile zone cards */}
+          <div className="space-y-3 lg:hidden">
+            {sortedZones.map((zone) => (
+              <div key={zone.id} className="rounded-lg border bg-background p-4 space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <div className="font-medium text-sm">{zone.labelEn}</div>
+                    <div className="text-xs text-muted-foreground">{zone.labelBn}</div>
+                  </div>
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
+                      zone.active
+                        ? "bg-emerald-100 text-emerald-700"
+                        : "bg-slate-100 text-slate-500"
+                    }`}
+                  >
+                    <span
+                      className={`h-1.5 w-1.5 rounded-full ${zone.active ? "bg-emerald-500" : "bg-slate-400"}`}
+                    />
+                    {zone.active ? "Active" : "Disabled"}
+                  </span>
+                </div>
+
+                {zone.description && (
+                  <div className="text-xs text-muted-foreground">{zone.description}</div>
+                )}
+
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs border-t pt-2 text-muted-foreground">
+                  <div>
+                    <span className="font-semibold text-foreground">{formatPrice(zone.charge)}</span>
+                    <span className="mx-1">·</span>
+                    <span>ETA: {zone.etaDays[0]}–{zone.etaDays[1]} days</span>
+                  </div>
+                  <div className="inline-flex items-center gap-1">
+                    <GripVertical className="h-3 w-3" /> Priority: {zone.priority}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-1 border-t pt-2">
+                  <button
+                    onClick={() => toggleActive(zone.id)}
+                    className="rounded p-1.5 text-muted-foreground hover:bg-muted"
+                    title={zone.active ? "Disable" : "Enable"}
+                  >
+                    <Power className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingZone(zone);
+                      setShowForm(true);
+                    }}
+                    className="rounded p-1.5 text-muted-foreground hover:bg-muted"
+                    title="Edit"
+                  >
+                    <Edit3 className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => deleteZone(zone.id)}
+                    className="rounded p-1.5 text-red-500 hover:bg-red-50"
+                    title="Delete"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden overflow-x-auto rounded-lg border bg-background lg:block">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50">
+                <tr>
+                  <th className="px-4 py-3 text-left font-medium">Priority</th>
+                  <th className="px-4 py-3 text-left font-medium">Zone Name</th>
+                  <th className="px-4 py-3 text-left font-medium">Charge</th>
+                  <th className="px-4 py-3 text-left font-medium">ETA (days)</th>
+                  <th className="px-4 py-3 text-left font-medium">Status</th>
+                  <th className="px-4 py-3 text-right font-medium">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedZones.map((zone) => (
+                  <tr key={zone.id} className="border-t hover:bg-muted/30">
+                    <td className="px-4 py-3">
+                      <span className="inline-flex items-center gap-1 text-muted-foreground">
+                        <GripVertical className="h-3 w-3" /> {zone.priority}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="font-medium">{zone.labelEn}</div>
+                      <div className="text-xs text-muted-foreground">{zone.labelBn}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">{zone.description}</div>
+                    </td>
+                    <td className="px-4 py-3 font-semibold">{formatPrice(zone.charge)}</td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {zone.etaDays[0]}–{zone.etaDays[1]}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
+                          zone.active
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-slate-100 text-slate-500"
+                        }`}
+                      >
+                        <span
+                          className={`h-1.5 w-1.5 rounded-full ${zone.active ? "bg-emerald-500" : "bg-slate-400"}`}
+                        />
+                        {zone.active ? "Active" : "Disabled"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex justify-end gap-1">
+                        <button
+                          onClick={() => toggleActive(zone.id)}
+                          className="rounded p-1.5 text-muted-foreground hover:bg-muted"
+                          title={zone.active ? "Disable" : "Enable"}
+                        >
+                          <Power className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEditingZone(zone);
+                            setShowForm(true);
+                          }}
+                          className="rounded p-1.5 text-muted-foreground hover:bg-muted"
+                          title="Edit"
+                        >
+                          <Edit3 className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => deleteZone(zone.id)}
+                          className="rounded p-1.5 text-red-500 hover:bg-red-50"
+                          title="Delete"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       {/* Edit/Create form modal */}
@@ -380,7 +450,7 @@ function ZoneForm({
             </button>
             <button
               type="submit"
-              className="flex items-center gap-1 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              className="flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
             >
               <Save className="h-4 w-4" /> Save
             </button>

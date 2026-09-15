@@ -269,110 +269,192 @@ function ProductsAdmin() {
         )}
       </div>
 
-      <div className="overflow-x-auto rounded-lg border bg-background">
-        {loading ? (
-          <div className="flex items-center gap-2 p-8 text-sm text-muted-foreground">
-            <Spinner /> Loading products…
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="p-8 text-sm text-muted-foreground">No products found.</div>
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left">
-              <tr>
-                <th className="px-3 py-2">
-                  <input
-                    type="checkbox"
-                    checked={selected.size === filtered.length && filtered.length > 0}
-                    onChange={toggleAll}
-                  />
-                </th>
-                <th className="px-3 py-2">{t("admin.product")}</th>
-                <th className="px-3 py-2">{t("admin.price")}</th>
-                <th className="px-3 py-2">{t("admin.stock")}</th>
-                <th className="px-3 py-2">{t("admin.status")}</th>
-                <th className="px-3 py-2">Approval</th>
-                <th className="px-3 py-2">{t("admin.created")}</th>
-                <th className="px-3 py-2 text-right">{t("admin.actions")}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {filtered.map((p) => (
-                <tr key={p.id}>
-                  <td className="px-3 py-2 align-top">
+      {loading ? (
+        <div className="flex items-center gap-2 rounded-lg border bg-background p-8 text-sm text-muted-foreground">
+          <Spinner /> Loading products…
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="rounded-lg border bg-background p-8 text-sm text-muted-foreground">
+          No products found.
+        </div>
+      ) : (
+        <>
+          {/* Mobile product cards */}
+          <div className="space-y-3 lg:hidden">
+            {filtered.map((p) => (
+              <div key={p.id} className="rounded-lg border bg-background p-4 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3 min-w-0">
                     <input
                       type="checkbox"
                       checked={selected.has(p.id)}
                       onChange={() => toggle(p.id)}
+                      className="mt-1"
                     />
-                  </td>
-                  <td className="px-3 py-2">
-                    <div className="flex items-center gap-3">
-                      {p.images[0] ? (
-                        <img
-                          src={p.images[0]}
-                          alt=""
-                          className="h-10 w-10 rounded-md object-cover"
-                        />
-                      ) : (
-                        <div className="h-10 w-10 rounded-md bg-muted" />
-                      )}
-                      <div>
-                        <div className="font-medium">{p.title}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {p.categorySlug} {p.sku ? `· SKU ${p.sku}` : ""}
-                        </div>
+                    {p.images[0] ? (
+                      <img
+                        src={p.images[0]}
+                        alt=""
+                        className="h-12 w-12 rounded-md object-cover flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="h-12 w-12 rounded-md bg-muted flex-shrink-0" />
+                    )}
+                    <div className="min-w-0">
+                      <div className="font-medium text-sm truncate">{p.title}</div>
+                      <div className="text-xs text-muted-foreground truncate">
+                        {p.categorySlug} {p.sku ? `· SKU ${p.sku}` : ""}
                       </div>
                     </div>
-                  </td>
-                  <td className="px-3 py-2">{formatPrice(p.price)}</td>
-                  <td className="px-3 py-2">{p.stock}</td>
-                  <td className="px-3 py-2 capitalize">{p.status}</td>
-                  <td className="px-3 py-2">
-                    {p.approved ? (
-                      <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs text-emerald-600">
-                        Approved
-                      </span>
-                    ) : (
-                      <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-xs text-amber-600">
-                        Pending
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-3 py-2 text-xs text-muted-foreground">
-                    {formatDate(p.createdAt)}
-                  </td>
-                  <td className="px-3 py-2">
-                    <div className="flex justify-end gap-1">
-                      <button
-                        onClick={() => onApprove(p.id, !p.approved)}
-                        title={p.approved ? "Revoke approval" : "Approve"}
-                        className="rounded-md border p-1.5 hover:bg-muted"
-                      >
-                        {p.approved ? <X className="h-4 w-4" /> : <Check className="h-4 w-4" />}
-                      </button>
-                      <Link
-                        to="/admin/products/$id/edit"
-                        params={{ id: p.id }}
-                        className="rounded-md border px-2 py-1 text-xs hover:bg-muted"
-                      >
-                        Edit
-                      </Link>
-                      <button
-                        onClick={() => onDelete(p.id)}
-                        className="rounded-md border p-1.5 text-destructive hover:bg-destructive/10"
-                        title="Delete"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
+                  </div>
+                  {p.approved ? (
+                    <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs text-emerald-600 flex-shrink-0">
+                      Approved
+                    </span>
+                  ) : (
+                    <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-xs text-amber-600 flex-shrink-0">
+                      Pending
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs border-t pt-2 text-muted-foreground">
+                  <div>
+                    <span className="font-semibold text-foreground">{formatPrice(p.price)}</span>
+                    <span className="mx-1">·</span>
+                    <span>Stock: {p.stock}</span>
+                    <span className="mx-1">·</span>
+                    <span className="capitalize">{p.status}</span>
+                  </div>
+                  <div>{formatDate(p.createdAt)}</div>
+                </div>
+
+                <div className="flex items-center justify-end gap-1 border-t pt-2">
+                  <button
+                    onClick={() => onApprove(p.id, !p.approved)}
+                    title={p.approved ? "Revoke approval" : "Approve"}
+                    className="rounded-md border p-1.5 hover:bg-muted"
+                  >
+                    {p.approved ? <X className="h-4 w-4" /> : <Check className="h-4 w-4" />}
+                  </button>
+                  <Link
+                    to="/admin/products/$id/edit"
+                    params={{ id: p.id }}
+                    className="rounded-md border px-2 py-1 text-xs hover:bg-muted"
+                  >
+                    Edit
+                  </Link>
+                  <button
+                    onClick={() => onDelete(p.id)}
+                    className="rounded-md border p-1.5 text-destructive hover:bg-destructive/10"
+                    title="Delete"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden overflow-x-auto rounded-lg border bg-background lg:block">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50 text-left">
+                <tr>
+                  <th className="px-3 py-2">
+                    <input
+                      type="checkbox"
+                      checked={selected.size === filtered.length && filtered.length > 0}
+                      onChange={toggleAll}
+                    />
+                  </th>
+                  <th className="px-3 py-2">{t("admin.product")}</th>
+                  <th className="px-3 py-2">{t("admin.price")}</th>
+                  <th className="px-3 py-2">{t("admin.stock")}</th>
+                  <th className="px-3 py-2">{t("admin.status")}</th>
+                  <th className="px-3 py-2">Approval</th>
+                  <th className="px-3 py-2">{t("admin.created")}</th>
+                  <th className="px-3 py-2 text-right">{t("admin.actions")}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+              </thead>
+              <tbody className="divide-y">
+                {filtered.map((p) => (
+                  <tr key={p.id}>
+                    <td className="px-3 py-2 align-top">
+                      <input
+                        type="checkbox"
+                        checked={selected.has(p.id)}
+                        onChange={() => toggle(p.id)}
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <div className="flex items-center gap-3">
+                        {p.images[0] ? (
+                          <img
+                            src={p.images[0]}
+                            alt=""
+                            className="h-10 w-10 rounded-md object-cover"
+                          />
+                        ) : (
+                          <div className="h-10 w-10 rounded-md bg-muted" />
+                        )}
+                        <div>
+                          <div className="font-medium">{p.title}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {p.categorySlug} {p.sku ? `· SKU ${p.sku}` : ""}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-3 py-2">{formatPrice(p.price)}</td>
+                    <td className="px-3 py-2">{p.stock}</td>
+                    <td className="px-3 py-2 capitalize">{p.status}</td>
+                    <td className="px-3 py-2">
+                      {p.approved ? (
+                        <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs text-emerald-600">
+                          Approved
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-xs text-amber-600">
+                          Pending
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2 text-xs text-muted-foreground">
+                      {formatDate(p.createdAt)}
+                    </td>
+                    <td className="px-3 py-2">
+                      <div className="flex justify-end gap-1">
+                        <button
+                          onClick={() => onApprove(p.id, !p.approved)}
+                          title={p.approved ? "Revoke approval" : "Approve"}
+                          className="rounded-md border p-1.5 hover:bg-muted"
+                        >
+                          {p.approved ? <X className="h-4 w-4" /> : <Check className="h-4 w-4" />}
+                        </button>
+                        <Link
+                          to="/admin/products/$id/edit"
+                          params={{ id: p.id }}
+                          className="rounded-md border px-2 py-1 text-xs hover:bg-muted"
+                        >
+                          Edit
+                        </Link>
+                        <button
+                          onClick={() => onDelete(p.id)}
+                          className="rounded-md border p-1.5 text-destructive hover:bg-destructive/10"
+                          title="Delete"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </div>
   );
 }

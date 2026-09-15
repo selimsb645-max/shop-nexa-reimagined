@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { NO_IMAGE_PLACEHOLDER } from "@/utils/noImage";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -105,7 +106,62 @@ function AdminInventoryPage() {
             <p className="text-sm text-muted-foreground">No products found</p>
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-2xl border bg-background shadow-sm">
+          <>
+          <div className="space-y-3 md:hidden">
+            {filteredProducts.map((product: Product) => (
+              <div key={product.id} className="rounded-lg border bg-background p-4 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <img
+                    src={product.images[0] ?? NO_IMAGE_PLACEHOLDER}
+                    alt={product.title}
+                    className="h-10 w-10 shrink-0 rounded-lg object-cover"
+                  />
+                  <span className="min-w-0 truncate font-medium">{product.title}</span>
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                  <span>
+                    {t("admin.price")}:{" "}
+                    <span className="font-medium text-foreground">
+                      {formatPrice(product.price)}
+                    </span>
+                  </span>
+                  <span>
+                    {t("admin.stock")}:{" "}
+                    <span
+                      className={`font-medium ${
+                        product.stock === 0
+                          ? "text-red-500"
+                          : product.stock <= 5
+                            ? "text-orange-500"
+                            : ""
+                      }`}
+                    >
+                      {product.stock}
+                    </span>
+                  </span>
+                  <span className="break-all">{product.categorySlug}</span>
+                </div>
+                <div className="mt-2">
+                  <span
+                    className={`rounded-full px-2 py-1 text-xs font-medium ${
+                      product.stock === 0
+                        ? "bg-red-100 text-red-700"
+                        : product.stock <= 5
+                          ? "bg-orange-100 text-orange-700"
+                          : "bg-green-100 text-green-700"
+                    }`}
+                  >
+                    {product.stock === 0
+                      ? "Out of Stock"
+                      : product.stock <= 5
+                        ? "Low Stock"
+                        : "In Stock"}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="hidden overflow-x-auto rounded-2xl border bg-background shadow-sm md:block">
             <table className="w-full">
               <thead>
                 <tr className="border-b bg-muted/50 text-left text-xs font-semibold text-muted-foreground">
@@ -122,7 +178,7 @@ function AdminInventoryPage() {
                     <td className="p-3">
                       <div className="flex items-center gap-2">
                         <img
-                          src={product.images[0] ?? ""}
+                          src={product.images[0] ?? NO_IMAGE_PLACEHOLDER}
                           alt={product.title}
                           className="h-10 w-10 rounded-lg object-cover"
                         />
@@ -166,6 +222,7 @@ function AdminInventoryPage() {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </main>
     </div>

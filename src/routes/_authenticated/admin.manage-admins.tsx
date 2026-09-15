@@ -196,48 +196,51 @@ function ManageAdminsPage() {
       </div>
 
       {/* ── Admin list ──────────────────────────────────────────────────── */}
-      <div className="overflow-x-auto rounded-lg border bg-background">
-        {loading ? (
-          <div className="flex items-center gap-2 p-8 text-sm text-muted-foreground">
-            <Spinner /> Loading admins…
-          </div>
-        ) : admins.length === 0 ? (
-          <div className="p-8 text-sm text-muted-foreground">No admin users found.</div>
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left">
-              <tr>
-                <th className="px-3 py-2">Admin</th>
-                <th className="px-3 py-2">Role</th>
-                <th className="px-3 py-2">Permissions</th>
-                <th className="px-3 py-2 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {admins.map((a) => {
-                const isSelf = a.uid === user?.uid;
-                const perms = ROLE_PERMISSIONS[a.adminRole] ?? [];
-                return (
-                  <tr key={a.uid} className={isSelf ? "bg-amber-50/50" : undefined}>
-                    <td className="px-3 py-2">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs">
-                          {(a.displayName || a.email || "?").slice(0, 1).toUpperCase()}
-                        </div>
-                        <div>
-                          <div className="font-medium">
-                            {a.displayName || "—"}
-                            {isSelf && (
-                              <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-700">
-                                You
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-xs text-muted-foreground">{a.email}</div>
-                        </div>
+      {loading ? (
+        <div className="flex items-center gap-2 rounded-lg border bg-background p-8 text-sm text-muted-foreground">
+          <Spinner /> Loading admins…
+        </div>
+      ) : admins.length === 0 ? (
+        <div className="rounded-lg border bg-background p-8 text-sm text-muted-foreground">
+          No admin users found.
+        </div>
+      ) : (
+        <>
+          {/* Mobile admin cards */}
+          <div className="space-y-3 md:hidden">
+            {admins.map((a) => {
+              const isSelf = a.uid === user?.uid;
+              const perms = ROLE_PERMISSIONS[a.adminRole] ?? [];
+              return (
+                <div
+                  key={a.uid}
+                  className={
+                    "rounded-lg border bg-background p-4 space-y-3 " +
+                    (isSelf ? "bg-amber-50/50" : "")
+                  }
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs flex-shrink-0 font-medium">
+                        {(a.displayName || a.email || "?").slice(0, 1).toUpperCase()}
                       </div>
-                    </td>
-                    <td className="px-3 py-2">
+                      <div className="min-w-0">
+                        <div className="font-medium text-sm truncate">
+                          {a.displayName || "—"}
+                          {isSelf && (
+                            <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-700">
+                              You
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-muted-foreground truncate">{a.email}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs border-t pt-2 text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <span>Role:</span>
                       {isSelf ? (
                         <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-700">
                           <Crown className="h-3 w-3" />
@@ -250,7 +253,7 @@ function ManageAdminsPage() {
                             handleChangeRole(a.uid, e.target.value as AdminRole, a.email)
                           }
                           disabled={processing === a.uid}
-                          className="rounded-md border bg-background px-2 py-1 text-xs"
+                          className="rounded-md border bg-background px-2 py-1 text-xs text-foreground"
                         >
                           {ADMIN_ROLE_OPTIONS.map((opt) => (
                             <option key={opt.value} value={opt.value}>
@@ -259,33 +262,114 @@ function ManageAdminsPage() {
                           ))}
                         </select>
                       )}
-                    </td>
-                    <td className="px-3 py-2">
-                      <span className="text-xs text-muted-foreground">
-                        {perms.length} permissions
-                      </span>
-                    </td>
-                    <td className="px-3 py-2 text-right">
-                      {isSelf ? (
-                        <span className="text-xs text-muted-foreground">Cannot remove self</span>
-                      ) : (
-                        <button
-                          onClick={() => handleRemoveAdmin(a.uid, a.email)}
-                          disabled={processing === a.uid}
-                          className="flex items-center gap-1 rounded-md border border-destructive/30 px-2 py-1 text-xs text-destructive hover:bg-destructive/5 disabled:opacity-50"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                          Revoke
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
-      </div>
+                    </div>
+                    <div>{perms.length} permissions</div>
+                  </div>
+
+                  <div className="flex items-center justify-end border-t pt-2">
+                    {isSelf ? (
+                      <span className="text-xs text-muted-foreground">Cannot remove self</span>
+                    ) : (
+                      <button
+                        onClick={() => handleRemoveAdmin(a.uid, a.email)}
+                        disabled={processing === a.uid}
+                        className="flex items-center gap-1 rounded-md border border-destructive/30 px-2 py-1 text-xs text-destructive hover:bg-destructive/5 disabled:opacity-50"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                        Revoke
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden overflow-x-auto rounded-lg border bg-background md:block">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50 text-left">
+                <tr>
+                  <th className="px-3 py-2">Admin</th>
+                  <th className="px-3 py-2">Role</th>
+                  <th className="px-3 py-2">Permissions</th>
+                  <th className="px-3 py-2 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {admins.map((a) => {
+                  const isSelf = a.uid === user?.uid;
+                  const perms = ROLE_PERMISSIONS[a.adminRole] ?? [];
+                  return (
+                    <tr key={a.uid} className={isSelf ? "bg-amber-50/50" : undefined}>
+                      <td className="px-3 py-2">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs">
+                            {(a.displayName || a.email || "?").slice(0, 1).toUpperCase()}
+                          </div>
+                          <div>
+                            <div className="font-medium">
+                              {a.displayName || "—"}
+                              {isSelf && (
+                                <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-700">
+                                  You
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-xs text-muted-foreground">{a.email}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-3 py-2">
+                        {isSelf ? (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-700">
+                            <Crown className="h-3 w-3" />
+                            {a.adminRole}
+                          </span>
+                        ) : (
+                          <select
+                            value={a.adminRole}
+                            onChange={(e) =>
+                              handleChangeRole(a.uid, e.target.value as AdminRole, a.email)
+                            }
+                            disabled={processing === a.uid}
+                            className="rounded-md border bg-background px-2 py-1 text-xs"
+                          >
+                            {ADMIN_ROLE_OPTIONS.map((opt) => (
+                              <option key={opt.value} value={opt.value}>
+                                {opt.label}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </td>
+                      <td className="px-3 py-2">
+                        <span className="text-xs text-muted-foreground">
+                          {perms.length} permissions
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 text-right">
+                        {isSelf ? (
+                          <span className="text-xs text-muted-foreground">Cannot remove self</span>
+                        ) : (
+                          <button
+                            onClick={() => handleRemoveAdmin(a.uid, a.email)}
+                            disabled={processing === a.uid}
+                            className="flex items-center gap-1 rounded-md border border-destructive/30 px-2 py-1 text-xs text-destructive hover:bg-destructive/5 disabled:opacity-50"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                            Revoke
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
 
       {/* ── Role legend ─────────────────────────────────────────────────── */}
       <div className="rounded-lg border bg-background p-4">
@@ -323,7 +407,7 @@ function ManageAdminsPage() {
                     </span>
                   ))}
                   {perms.length > 5 && (
-                    <span className="text-[10px] text-muted-foreground">
+                    <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
                       +{perms.length - 5} more
                     </span>
                   )}
@@ -336,92 +420,87 @@ function ManageAdminsPage() {
 
       {/* ── Promote user modal ──────────────────────────────────────────── */}
       {showPromoteModal && (
-        <div className="space-y-4 rounded-lg border bg-background p-4">
-          <div className="flex items-center justify-between">
-            <h3 className="flex items-center gap-2 text-sm font-semibold">
-              <Search className="h-4 w-4" />
-              Promote a User to Admin
-            </h3>
-            <button
-              onClick={() => {
-                setShowPromoteModal(false);
-                setSearchQuery("");
-              }}
-              className="text-xs text-muted-foreground hover:text-foreground"
-            >
-              Cancel
-            </button>
-          </div>
-          <input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search name or email…"
-            className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-          />
-          {loading ? (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Spinner /> Loading users…
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-lg space-y-4 rounded-lg border bg-background p-6 shadow-lg">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Promote User to Admin</h2>
+              <button
+                onClick={() => {
+                  setShowPromoteModal(false);
+                  setSearchQuery("");
+                }}
+                className="text-sm text-muted-foreground hover:text-foreground"
+              >
+                Cancel
+              </button>
             </div>
-          ) : nonAdminUsers.length === 0 ? (
-            <div className="text-sm text-muted-foreground">
-              {searchQuery ? "No matching users found." : "No non-admin users available."}
-            </div>
-          ) : (
-            <div className="max-h-80 overflow-y-auto rounded-md border">
-              <table className="w-full text-sm">
-                <thead className="bg-muted/50 text-left">
-                  <tr>
-                    <th className="px-3 py-2">User</th>
-                    <th className="px-3 py-2">Current Role</th>
-                    <th className="px-3 py-2 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {nonAdminUsers.slice(0, 50).map((u) => (
-                    <tr key={u.uid}>
-                      <td className="px-3 py-2">
-                        <div className="flex items-center gap-2">
-                          {u.photoURL ? (
-                            <img
-                              src={u.photoURL}
-                              alt=""
-                              className="h-7 w-7 rounded-full object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-xs">
-                              {(u.displayName || u.email || "?").slice(0, 1).toUpperCase()}
-                            </div>
-                          )}
-                          <div>
-                            <div className="font-medium">{u.displayName || "—"}</div>
-                            <div className="text-xs text-muted-foreground">{u.email}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-3 py-2">
-                        <span className="rounded-full bg-muted px-2 py-0.5 text-xs capitalize">
-                          {u.role}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2 text-right">
-                        <button
-                          onClick={() => handlePromote(u.uid, u.email)}
-                          disabled={processing === u.uid}
-                          className="rounded-md bg-slate-900 px-2.5 py-1 text-xs font-medium text-white hover:bg-slate-800 disabled:opacity-50"
-                        >
-                          {processing === u.uid ? "Promoting…" : "Promote to Admin"}
-                        </button>
-                      </td>
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search name or email…"
+              className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+            />
+            {loading ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Spinner /> Loading users…
+              </div>
+            ) : nonAdminUsers.length === 0 ? (
+              <div className="text-sm text-muted-foreground">
+                {searchQuery ? "No matching users found." : "No non-admin users available."}
+              </div>
+            ) : (
+              <div className="max-h-80 overflow-y-auto rounded-md border">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/50 text-left">
+                    <tr>
+                      <th className="px-3 py-2">User</th>
+                      <th className="px-3 py-2">Current Role</th>
+                      <th className="px-3 py-2 text-right">Action</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-          <p className="text-xs text-muted-foreground">
-            Promoted users get the "Admin" role by default. You can change their specific role from
-            the admin list above after promotion.
-          </p>
+                  </thead>
+                  <tbody className="divide-y">
+                    {nonAdminUsers.slice(0, 50).map((u) => (
+                      <tr key={u.uid}>
+                        <td className="px-3 py-2">
+                          <div className="flex items-center gap-2">
+                            {u.photoURL ? (
+                              <img
+                                src={u.photoURL}
+                                alt=""
+                                className="h-7 w-7 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-xs">
+                                {(u.displayName || u.email || "?").slice(0, 1).toUpperCase()}
+                              </div>
+                            )}
+                            <div>
+                              <div className="font-medium">{u.displayName || "—"}</div>
+                              <div className="text-xs text-muted-foreground">{u.email}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-3 py-2">
+                          <span className="rounded-full bg-muted px-2 py-0.5 text-xs capitalize">
+                            {u.role}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 text-right">
+                          <button
+                            onClick={() => handlePromote(u.uid, u.email)}
+                            disabled={processing === u.uid}
+                            className="rounded-md bg-slate-900 px-2.5 py-1 text-xs font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+                          >
+                            Promote
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

@@ -179,104 +179,181 @@ function SellersAdmin() {
           </div>
         )}
       </div>
-      <div className="overflow-x-auto rounded-lg border bg-background">
-        {loading ? (
-          <div className="flex items-center gap-2 p-8 text-sm text-muted-foreground">
-            <Spinner /> Loading sellers…
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="p-8 text-sm text-muted-foreground">No sellers found.</div>
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left">
-              <tr>
-                <th className="px-3 py-2">{t("admin.shop")}</th>
-                <th className="px-3 py-2">{t("admin.contact")}</th>
-                <th className="px-3 py-2">{t("admin.location")}</th>
-                <th className="px-3 py-2">{t("admin.status")}</th>
-                <th className="px-3 py-2">{t("admin.applied")}</th>
-                <th className="px-3 py-2 text-right">{t("admin.actions")}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {filtered.map((s) => (
-                <tr key={s.uid}>
-                  <td className="px-3 py-2">
-                    <div className="flex items-center gap-3">
-                      {s.logoUrl ? (
-                        <img src={s.logoUrl} alt="" className="h-10 w-10 rounded-md object-cover" />
-                      ) : (
-                        <div className="h-10 w-10 rounded-md bg-muted" />
-                      )}
-                      <div>
-                        <div className="font-medium">{s.shopName}</div>
-                        <div className="text-xs text-muted-foreground">/{s.shopSlug}</div>
-                      </div>
+
+      {loading ? (
+        <div className="flex items-center gap-2 rounded-lg border bg-background p-8 text-sm text-muted-foreground">
+          <Spinner /> Loading sellers…
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="rounded-lg border bg-background p-8 text-sm text-muted-foreground">
+          No sellers found.
+        </div>
+      ) : (
+        <>
+          {/* Mobile seller cards */}
+          <div className="space-y-3 lg:hidden">
+            {filtered.map((s) => (
+              <div key={s.uid} className="rounded-lg border bg-background p-4 space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    {s.logoUrl ? (
+                      <img src={s.logoUrl} alt="" className="h-10 w-10 rounded-md object-cover flex-shrink-0" />
+                    ) : (
+                      <div className="h-10 w-10 rounded-md bg-muted flex-shrink-0" />
+                    )}
+                    <div className="min-w-0">
+                      <div className="font-medium text-sm truncate">{s.shopName}</div>
+                      <div className="text-xs text-muted-foreground truncate">/{s.shopSlug}</div>
                     </div>
-                  </td>
-                  <td className="px-3 py-2 text-xs">
-                    <div>{s.email}</div>
-                    <div className="text-muted-foreground">{s.phone}</div>
-                  </td>
-                  <td className="px-3 py-2 text-xs">
-                    {s.city}, {s.country}
-                  </td>
-                  <td className="px-3 py-2 capitalize">
-                    <span
-                      className={
-                        "rounded-full px-2 py-0.5 text-xs " +
-                        (s.status === "approved"
-                          ? "bg-emerald-500/10 text-emerald-600"
-                          : s.status === "pending_review"
-                            ? "bg-amber-500/10 text-amber-600"
-                            : s.status === "suspended"
-                              ? "bg-orange-500/10 text-orange-600"
-                              : "bg-destructive/10 text-destructive")
-                      }
+                  </div>
+                  <span
+                    className={
+                      "rounded-full px-2 py-0.5 text-xs capitalize flex-shrink-0 " +
+                      (s.status === "approved"
+                        ? "bg-emerald-500/10 text-emerald-600"
+                        : s.status === "pending_review"
+                          ? "bg-amber-500/10 text-amber-600"
+                          : s.status === "suspended"
+                            ? "bg-orange-500/10 text-orange-600"
+                            : "bg-destructive/10 text-destructive")
+                    }
+                  >
+                    {s.status}
+                  </span>
+                </div>
+
+                <div className="text-xs space-y-1 text-muted-foreground border-t pt-2">
+                  <div className="truncate">{s.email} {s.phone ? `· ${s.phone}` : ""}</div>
+                  <div>{s.city}, {s.country}</div>
+                  <div>Applied {formatDate(s.createdAt)}</div>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-end gap-1 border-t pt-2">
+                  {s.status !== "approved" && (
+                    <button
+                      onClick={() => act(s, "approved")}
+                      className="rounded-md bg-emerald-600 px-2 py-1 text-xs font-medium text-white hover:bg-emerald-700"
                     >
-                      {s.status}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2 text-xs text-muted-foreground">
-                    {formatDate(s.createdAt)}
-                  </td>
-                  <td className="px-3 py-2">
-                    <div className="flex flex-wrap justify-end gap-1">
-                      {s.status !== "approved" && (
-                        <button
-                          onClick={() => act(s, "approved")}
-                          className="rounded-md bg-emerald-600 px-2 py-1 text-xs font-medium text-white hover:bg-emerald-700"
-                        >
-                          Approve
-                        </button>
-                      )}
-                      {s.status !== "rejected" && (
-                        <button
-                          onClick={() => {
-                            const reason = prompt("Rejection reason (optional):") ?? "";
-                            act(s, "rejected", reason);
-                          }}
-                          className="rounded-md border px-2 py-1 text-xs hover:bg-muted"
-                        >
-                          Reject
-                        </button>
-                      )}
-                      {s.status !== "suspended" && (
-                        <button
-                          onClick={() => act(s, "suspended")}
-                          className="rounded-md border px-2 py-1 text-xs hover:bg-muted"
-                        >
-                          Suspend
-                        </button>
-                      )}
-                    </div>
-                  </td>
+                      Approve
+                    </button>
+                  )}
+                  {s.status !== "rejected" && (
+                    <button
+                      onClick={() => {
+                        const reason = prompt("Rejection reason (optional):") ?? "";
+                        act(s, "rejected", reason);
+                      }}
+                      className="rounded-md border px-2 py-1 text-xs hover:bg-muted"
+                    >
+                      Reject
+                    </button>
+                  )}
+                  {s.status !== "suspended" && (
+                    <button
+                      onClick={() => act(s, "suspended")}
+                      className="rounded-md border px-2 py-1 text-xs hover:bg-muted"
+                    >
+                      Suspend
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden overflow-x-auto rounded-lg border bg-background lg:block">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50 text-left">
+                <tr>
+                  <th className="px-3 py-2">{t("admin.shop")}</th>
+                  <th className="px-3 py-2">{t("admin.contact")}</th>
+                  <th className="px-3 py-2">{t("admin.location")}</th>
+                  <th className="px-3 py-2">{t("admin.status")}</th>
+                  <th className="px-3 py-2">{t("admin.applied")}</th>
+                  <th className="px-3 py-2 text-right">{t("admin.actions")}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+              </thead>
+              <tbody className="divide-y">
+                {filtered.map((s) => (
+                  <tr key={s.uid}>
+                    <td className="px-3 py-2">
+                      <div className="flex items-center gap-3">
+                        {s.logoUrl ? (
+                          <img src={s.logoUrl} alt="" className="h-10 w-10 rounded-md object-cover" />
+                        ) : (
+                          <div className="h-10 w-10 rounded-md bg-muted" />
+                        )}
+                        <div>
+                          <div className="font-medium">{s.shopName}</div>
+                          <div className="text-xs text-muted-foreground">/{s.shopSlug}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-3 py-2 text-xs">
+                      <div>{s.email}</div>
+                      <div className="text-muted-foreground">{s.phone}</div>
+                    </td>
+                    <td className="px-3 py-2 text-xs">
+                      {s.city}, {s.country}
+                    </td>
+                    <td className="px-3 py-2 capitalize">
+                      <span
+                        className={
+                          "rounded-full px-2 py-0.5 text-xs " +
+                          (s.status === "approved"
+                            ? "bg-emerald-500/10 text-emerald-600"
+                            : s.status === "pending_review"
+                              ? "bg-amber-500/10 text-amber-600"
+                              : s.status === "suspended"
+                                ? "bg-orange-500/10 text-orange-600"
+                                : "bg-destructive/10 text-destructive")
+                        }
+                      >
+                        {s.status}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 text-xs text-muted-foreground">
+                      {formatDate(s.createdAt)}
+                    </td>
+                    <td className="px-3 py-2">
+                      <div className="flex flex-wrap justify-end gap-1">
+                        {s.status !== "approved" && (
+                          <button
+                            onClick={() => act(s, "approved")}
+                            className="rounded-md bg-emerald-600 px-2 py-1 text-xs font-medium text-white hover:bg-emerald-700"
+                          >
+                            Approve
+                          </button>
+                        )}
+                        {s.status !== "rejected" && (
+                          <button
+                            onClick={() => {
+                              const reason = prompt("Rejection reason (optional):") ?? "";
+                              act(s, "rejected", reason);
+                            }}
+                            className="rounded-md border px-2 py-1 text-xs hover:bg-muted"
+                          >
+                            Reject
+                          </button>
+                        )}
+                        {s.status !== "suspended" && (
+                          <button
+                            onClick={() => act(s, "suspended")}
+                            className="rounded-md border px-2 py-1 text-xs hover:bg-muted"
+                          >
+                            Suspend
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </div>
   );
 }

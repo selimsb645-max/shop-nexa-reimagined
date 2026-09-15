@@ -193,7 +193,7 @@ function AdminLocationsPage() {
           </div>
 
           {/* Type Tabs */}
-          <div className="flex gap-2 mb-3 overflow-x-auto pb-1">
+          <div className="flex flex-wrap gap-2 mb-3 pb-1">
             {typeKeys.map((key) => (
               <button
                 key={key}

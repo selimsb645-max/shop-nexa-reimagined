@@ -155,7 +155,7 @@ function WalletsPage() {
             className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm outline-none focus:border-[#f57224]"
           />
         </div>
-        <div className="flex gap-1 rounded-xl border border-slate-200 bg-white p-1">
+        <div className="flex flex-wrap gap-1 rounded-xl border border-slate-200 bg-white p-1">
           {STATUS_FILTERS.map((s) => (
             <button
               key={s}

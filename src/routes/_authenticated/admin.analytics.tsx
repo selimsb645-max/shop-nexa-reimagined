@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { NO_IMAGE_PLACEHOLDER } from "@/utils/noImage";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -110,7 +111,7 @@ function AdminAnalyticsPage() {
                   <div key={product.id} className="flex items-center gap-3">
                     <span className="w-6 text-sm font-bold text-muted-foreground">#{i + 1}</span>
                     <img
-                      src={product.images[0] ?? ""}
+                      src={product.images[0] ?? NO_IMAGE_PLACEHOLDER}
                       alt={product.title}
                       className="h-10 w-10 rounded-lg object-cover"
                     />
@@ -147,7 +148,7 @@ function AdminAnalyticsPage() {
                   <div key={product.id} className="flex items-center gap-3">
                     <span className="w-6 text-sm font-bold text-muted-foreground">#{i + 1}</span>
                     <img
-                      src={product.images[0] ?? ""}
+                      src={product.images[0] ?? NO_IMAGE_PLACEHOLDER}
                       alt={product.title}
                       className="h-10 w-10 rounded-lg object-cover"
                     />

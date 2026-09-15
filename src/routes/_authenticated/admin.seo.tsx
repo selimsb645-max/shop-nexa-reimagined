@@ -101,8 +101,59 @@ function AdminSEOPage() {
             <Loader className="mx-auto h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-2xl border bg-background shadow-sm">
-            <table className="w-full">
+          <>
+          <div className="space-y-3 lg:hidden">
+              {allProducts.slice(0, 20).map((product) => {
+                let score = 0;
+                if (product.images.length > 0) score += 30;
+                if (product.description.length > 50) score += 30;
+                if (product.tags.length > 0) score += 20;
+                if (product.compareAtPrice !== null) score += 20;
+                return (
+                  <div key={product.id} className="rounded-lg border bg-background p-4 shadow-sm">
+                    <div className="flex items-start justify-between gap-2">
+                      <Link
+                        to="/product/$slug"
+                        params={{ slug: product.slug }}
+                        className="min-w-0 truncate font-medium hover:text-primary"
+                      >
+                        {product.title}
+                      </Link>
+                      <span
+                        className={`shrink-0 rounded-full px-2 py-1 text-xs font-medium ${
+                          score >= 80
+                            ? "bg-green-100 text-green-700"
+                            : score >= 50
+                              ? "bg-orange-100 text-orange-700"
+                              : "bg-red-100 text-red-700"
+                        }`}
+                      >
+                        {score}
+                      </span>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                      <span>
+                        {t("admin.images")}:{" "}
+                        <span className={product.images.length > 0 ? "text-green-500" : "text-red-500"}>
+                          {product.images.length > 0 ? "✓" : "✗"}
+                        </span>
+                      </span>
+                      <span>
+                        {t("admin.descLength")}: {product.description.length}
+                      </span>
+                      <span>
+                        {t("admin.tags")}: {product.tags.length}
+                      </span>
+                      <span className="min-w-0 break-all">
+                        {t("admin.slug")}: {product.slug}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="hidden overflow-x-auto rounded-2xl border bg-background shadow-sm lg:block">
+              <table className="w-full">
               <thead>
                 <tr className="border-b bg-muted/50 text-left text-xs font-semibold text-muted-foreground">
                   <th className="p-3">{t("admin.product")}</th>
@@ -160,6 +211,7 @@ function AdminSEOPage() {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </main>
     </div>

@@ -171,7 +171,7 @@ function CategoriesAdmin() {
 
       <div className="rounded-lg border bg-background p-4">
         <h2 className="mb-3 text-sm font-semibold">{t("admin.addCategory")}</h2>
-        <div className="grid gap-3 md:grid-cols-5">
+        <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-5">
           <input
             placeholder={t("admin.name")}
             value={newCat.name}

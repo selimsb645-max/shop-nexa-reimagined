@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { NO_IMAGE_PLACEHOLDER } from "@/utils/noImage";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ImageUp, Trash2, Loader2 } from "lucide-react";
@@ -178,7 +179,7 @@ function BannersAdmin() {
             onChange={(e) => e.target.files?.[0] && onUpload(e.target.files[0])}
           />
           {form.imageUrl && (
-            <img src={form.imageUrl} alt="" className="h-12 rounded-md object-cover" />
+            <img src={form.imageUrl || NO_IMAGE_PLACEHOLDER} alt="" className="h-12 rounded-md object-cover" />
           )}
           <label className="flex items-center gap-2 text-sm">
             <input
@@ -209,7 +210,7 @@ function BannersAdmin() {
         <div className="grid gap-4 md:grid-cols-2">
           {banners.map((b) => (
             <div key={b.id} className="overflow-hidden rounded-lg border bg-background">
-              <img src={b.imageUrl} alt="" className="h-40 w-full object-cover" />
+              <img src={b.imageUrl || NO_IMAGE_PLACEHOLDER} alt="" className="h-40 w-full object-cover" />
               <div className="p-4">
                 <div className="mb-1 flex items-center gap-2">
                   <span className="rounded-full bg-muted px-2 py-0.5 text-xs capitalize">

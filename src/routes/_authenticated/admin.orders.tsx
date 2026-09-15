@@ -72,62 +72,100 @@ function OrdersAdmin() {
           </select>
         </div>
       </div>
-      <div className="overflow-x-auto rounded-lg border bg-background">
-        {loading ? (
-          <div className="flex items-center gap-2 p-8 text-sm text-muted-foreground">
-            <Spinner /> Loading orders…
+
+      {loading ? (
+        <div className="flex items-center gap-2 rounded-lg border bg-background p-8 text-sm text-muted-foreground">
+          <Spinner /> Loading orders…
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="rounded-lg border bg-background p-8 text-sm text-muted-foreground">
+          No orders found.
+        </div>
+      ) : (
+        <>
+          {/* Mobile order cards */}
+          <div className="space-y-3 lg:hidden">
+            {filtered.map((o) => (
+              <div key={o.id} className="rounded-lg border bg-background p-4 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-mono text-xs font-bold">#{o.id.slice(0, 8)}</span>
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-xs capitalize">{o.status}</span>
+                </div>
+                <div>
+                  <div className="text-sm font-medium">{o.shippingAddress.fullName || "—"}</div>
+                  <div className="text-xs text-muted-foreground">{o.shippingAddress.phone}</div>
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground border-t pt-2">
+                  <div>
+                    <span>{o.items.length} items</span> • <span className="capitalize">{o.payment.method.replace(/_/g, " ")} ({o.payment.status})</span>
+                  </div>
+                  <div>{formatDateTime(o.createdAt)}</div>
+                </div>
+                <div className="flex items-center justify-between gap-2 border-t pt-2">
+                  <div className="font-medium text-sm">{formatPrice(o.total)}</div>
+                  <Link
+                    to="/admin/orders/$userId/$orderId"
+                    params={{ userId: o.userId, orderId: o.id }}
+                    className="rounded-md border px-2 py-1 text-xs hover:bg-muted"
+                  >
+                    Manage
+                  </Link>
+                </div>
+              </div>
+            ))}
           </div>
-        ) : filtered.length === 0 ? (
-          <div className="p-8 text-sm text-muted-foreground">No orders found.</div>
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left">
-              <tr>
-                <th className="px-3 py-2">{t("admin.order")}</th>
-                <th className="px-3 py-2">{t("admin.buyer")}</th>
-                <th className="px-3 py-2">{t("admin.items")}</th>
-                <th className="px-3 py-2">{t("admin.total")}</th>
-                <th className="px-3 py-2">{t("admin.payment")}</th>
-                <th className="px-3 py-2">{t("admin.status")}</th>
-                <th className="px-3 py-2">{t("admin.placed")}</th>
-                <th className="px-3 py-2"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {filtered.map((o) => (
-                <tr key={o.id}>
-                  <td className="px-3 py-2 font-mono text-xs">#{o.id.slice(0, 8)}</td>
-                  <td className="px-3 py-2">
-                    <div className="text-sm">{o.shippingAddress.fullName || "—"}</div>
-                    <div className="text-xs text-muted-foreground">{o.shippingAddress.phone}</div>
-                  </td>
-                  <td className="px-3 py-2 text-xs">{o.items.length}</td>
-                  <td className="px-3 py-2 font-medium">{formatPrice(o.total)}</td>
-                  <td className="px-3 py-2 text-xs capitalize">
-                    {o.payment.method.replace(/_/g, " ")}
-                    <div className="text-muted-foreground">{o.payment.status}</div>
-                  </td>
-                  <td className="px-3 py-2 capitalize">
-                    <span className="rounded-full bg-muted px-2 py-0.5 text-xs">{o.status}</span>
-                  </td>
-                  <td className="px-3 py-2 text-xs text-muted-foreground">
-                    {formatDateTime(o.createdAt)}
-                  </td>
-                  <td className="px-3 py-2 text-right">
-                    <Link
-                      to="/admin/orders/$userId/$orderId"
-                      params={{ userId: o.userId, orderId: o.id }}
-                      className="rounded-md border px-2 py-1 text-xs hover:bg-muted"
-                    >
-                      Manage
-                    </Link>
-                  </td>
+
+          {/* Desktop table */}
+          <div className="hidden overflow-x-auto rounded-lg border bg-background lg:block">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50 text-left">
+                <tr>
+                  <th className="px-3 py-2">{t("admin.order")}</th>
+                  <th className="px-3 py-2">{t("admin.buyer")}</th>
+                  <th className="px-3 py-2">{t("admin.items")}</th>
+                  <th className="px-3 py-2">{t("admin.total")}</th>
+                  <th className="px-3 py-2">{t("admin.payment")}</th>
+                  <th className="px-3 py-2">{t("admin.status")}</th>
+                  <th className="px-3 py-2">{t("admin.placed")}</th>
+                  <th className="px-3 py-2"></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+              </thead>
+              <tbody className="divide-y">
+                {filtered.map((o) => (
+                  <tr key={o.id}>
+                    <td className="px-3 py-2 font-mono text-xs">#{o.id.slice(0, 8)}</td>
+                    <td className="px-3 py-2">
+                      <div className="text-sm">{o.shippingAddress.fullName || "—"}</div>
+                      <div className="text-xs text-muted-foreground">{o.shippingAddress.phone}</div>
+                    </td>
+                    <td className="px-3 py-2 text-xs">{o.items.length}</td>
+                    <td className="px-3 py-2 font-medium">{formatPrice(o.total)}</td>
+                    <td className="px-3 py-2 text-xs capitalize">
+                      {o.payment.method.replace(/_/g, " ")}
+                      <div className="text-muted-foreground">{o.payment.status}</div>
+                    </td>
+                    <td className="px-3 py-2 capitalize">
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-xs">{o.status}</span>
+                    </td>
+                    <td className="px-3 py-2 text-xs text-muted-foreground">
+                      {formatDateTime(o.createdAt)}
+                    </td>
+                    <td className="px-3 py-2 text-right">
+                      <Link
+                        to="/admin/orders/$userId/$orderId"
+                        params={{ userId: o.userId, orderId: o.id }}
+                        className="rounded-md border px-2 py-1 text-xs hover:bg-muted"
+                      >
+                        Manage
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </div>
   );
 }

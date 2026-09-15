@@ -178,7 +178,7 @@ function AdminReviewsPage() {
         </div>
 
         {/* Tab filters */}
-        <div className="flex gap-2 border-b border-slate-200">
+        <div className="flex flex-wrap gap-2 border-b border-slate-200">
           {[
             { id: "pending" as const, label: "Pending", icon: Clock },
             { id: "approved" as const, label: "Approved", icon: Check },

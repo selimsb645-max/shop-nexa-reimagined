@@ -37,10 +37,6 @@ export function ServicePageLayout({
     <div className="min-h-screen flex flex-col bg-slate-50 font-sans antialiased">
       {/* Orange gradient header */}
       <header className="relative overflow-hidden bg-gradient-to-r from-orange-500 via-orange-500 to-orange-600 text-white">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-white/10 blur-2xl"
-        />
         <div className="relative mx-auto max-w-5xl px-4 pb-4 pt-4 sm:px-6">
           <div className="flex items-center gap-2">
             <Link

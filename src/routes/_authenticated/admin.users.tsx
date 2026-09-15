@@ -137,88 +137,164 @@ function UsersAdmin() {
           </select>
         </div>
       </div>
-      <div className="overflow-x-auto rounded-lg border bg-background">
-        {loading ? (
-          <div className="flex items-center gap-2 p-8 text-sm text-muted-foreground">
-            <Spinner /> Loading users…
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="p-8 text-sm text-muted-foreground">No users found.</div>
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left">
-              <tr>
-                <th className="px-3 py-2">{t("admin.user")}</th>
-                <th className="px-3 py-2">{t("admin.role")}</th>
-                <th className="px-3 py-2">{t("admin.status")}</th>
-                <th className="px-3 py-2">{t("admin.joined")}</th>
-                <th className="px-3 py-2 text-right">{t("admin.actions")}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {filtered.map((r) => (
-                <tr key={r.uid} className={r.blocked ? "bg-destructive/5" : undefined}>
-                  <td className="px-3 py-2">
-                    <div className="flex items-center gap-3">
-                      {r.photoURL ? (
-                        <img
-                          src={r.photoURL}
-                          alt=""
-                          className="h-8 w-8 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs">
-                          {(r.displayName || r.email || "?").slice(0, 1).toUpperCase()}
-                        </div>
-                      )}
-                      <div>
-                        <div className="font-medium">{r.displayName || "—"}</div>
-                        <div className="text-xs text-muted-foreground">{r.email}</div>
+
+      {loading ? (
+        <div className="flex items-center gap-2 rounded-lg border bg-background p-8 text-sm text-muted-foreground">
+          <Spinner /> Loading users…
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="rounded-lg border bg-background p-8 text-sm text-muted-foreground">
+          No users found.
+        </div>
+      ) : (
+        <>
+          {/* Mobile user cards */}
+          <div className="space-y-3 lg:hidden">
+            {filtered.map((r) => (
+              <div
+                key={r.uid}
+                className={
+                  "rounded-lg border bg-background p-4 space-y-3 " +
+                  (r.blocked ? "bg-destructive/5" : "")
+                }
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-3 min-w-0">
+                    {r.photoURL ? (
+                      <img
+                        src={r.photoURL}
+                        alt=""
+                        className="h-9 w-9 rounded-full object-cover flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-xs flex-shrink-0 font-medium">
+                        {(r.displayName || r.email || "?").slice(0, 1).toUpperCase()}
                       </div>
+                    )}
+                    <div className="min-w-0">
+                      <div className="font-medium text-sm truncate">{r.displayName || "—"}</div>
+                      <div className="text-xs text-muted-foreground truncate">{r.email}</div>
                     </div>
-                  </td>
-                  <td className="px-3 py-2">
+                  </div>
+                  {r.blocked ? (
+                    <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs text-destructive flex-shrink-0">
+                      Blocked
+                    </span>
+                  ) : (
+                    <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs text-emerald-600 flex-shrink-0">
+                      Active
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs border-t pt-2 text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <span>Role:</span>
                     <select
                       value={r.role}
                       onChange={(e) => onRoleChange(r, e.target.value as UserRole)}
-                      className="rounded-md border bg-background px-2 py-1 text-xs"
+                      className="rounded-md border bg-background px-2 py-1 text-xs text-foreground"
                     >
                       <option value="customer">{t("admin.customer")}</option>
                       <option value="seller">{t("admin.seller")}</option>
                       <option value="admin">{t("admin.adminRole")}</option>
                     </select>
-                  </td>
-                  <td className="px-3 py-2">
-                    {r.blocked ? (
-                      <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs text-destructive">
-                        Blocked
-                      </span>
-                    ) : (
-                      <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs text-emerald-600">
-                        Active
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-3 py-2 text-xs text-muted-foreground">
-                    {formatDate(r.createdAt)}
-                  </td>
-                  <td className="px-3 py-2 text-right">
-                    <button
-                      onClick={() => onToggleBlock(r)}
-                      className={
-                        "rounded-md border px-2 py-1 text-xs hover:bg-muted " +
-                        (r.blocked ? "text-emerald-600" : "text-destructive")
-                      }
-                    >
-                      {r.blocked ? "Unblock" : "Block"}
-                    </button>
-                  </td>
+                  </div>
+                  <div>Joined {formatDate(r.createdAt)}</div>
+                </div>
+
+                <div className="flex items-center justify-end border-t pt-2">
+                  <button
+                    onClick={() => onToggleBlock(r)}
+                    className={
+                      "rounded-md border px-2 py-1 text-xs hover:bg-muted " +
+                      (r.blocked ? "text-emerald-600" : "text-destructive")
+                    }
+                  >
+                    {r.blocked ? "Unblock" : "Block"}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden overflow-x-auto rounded-lg border bg-background lg:block">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50 text-left">
+                <tr>
+                  <th className="px-3 py-2">{t("admin.user")}</th>
+                  <th className="px-3 py-2">{t("admin.role")}</th>
+                  <th className="px-3 py-2">{t("admin.status")}</th>
+                  <th className="px-3 py-2">{t("admin.joined")}</th>
+                  <th className="px-3 py-2 text-right">{t("admin.actions")}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+              </thead>
+              <tbody className="divide-y">
+                {filtered.map((r) => (
+                  <tr key={r.uid} className={r.blocked ? "bg-destructive/5" : undefined}>
+                    <td className="px-3 py-2">
+                      <div className="flex items-center gap-3">
+                        {r.photoURL ? (
+                          <img
+                            src={r.photoURL}
+                            alt=""
+                            className="h-8 w-8 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs">
+                            {(r.displayName || r.email || "?").slice(0, 1).toUpperCase()}
+                          </div>
+                        )}
+                        <div>
+                          <div className="font-medium">{r.displayName || "—"}</div>
+                          <div className="text-xs text-muted-foreground">{r.email}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-3 py-2">
+                      <select
+                        value={r.role}
+                        onChange={(e) => onRoleChange(r, e.target.value as UserRole)}
+                        className="rounded-md border bg-background px-2 py-1 text-xs"
+                      >
+                        <option value="customer">{t("admin.customer")}</option>
+                        <option value="seller">{t("admin.seller")}</option>
+                        <option value="admin">{t("admin.adminRole")}</option>
+                      </select>
+                    </td>
+                    <td className="px-3 py-2">
+                      {r.blocked ? (
+                        <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs text-destructive">
+                          Blocked
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs text-emerald-600">
+                          Active
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2 text-xs text-muted-foreground">
+                      {formatDate(r.createdAt)}
+                    </td>
+                    <td className="px-3 py-2 text-right">
+                      <button
+                        onClick={() => onToggleBlock(r)}
+                        className={
+                          "rounded-md border px-2 py-1 text-xs hover:bg-muted " +
+                          (r.blocked ? "text-emerald-600" : "text-destructive")
+                        }
+                      >
+                        {r.blocked ? "Unblock" : "Block"}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </div>
   );
 }
