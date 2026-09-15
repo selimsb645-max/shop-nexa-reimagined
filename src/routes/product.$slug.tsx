@@ -26,7 +26,7 @@ import {
   Send,
 } from "lucide-react";
 
-import { getOptimizedImageUrl, getResponsiveSrcSet } from "@/services/cloudinary";
+import { getOptimizedImageUrl, getResponsiveSrcSet } from "@/services/imagekit";
 import { getPublicStoreByUid, type PublicStoreData } from "@/lib/store.functions";
 
 import { BackButton } from "@/components/common/BackButton";

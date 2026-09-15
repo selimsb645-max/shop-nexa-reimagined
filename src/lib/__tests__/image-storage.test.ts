@@ -1,11 +1,14 @@
 /**
- * Image-storage audit (Sep 7, 2026) — Firebase Storage removal lock.
+ * Image-storage audit (updated Sep 15, 2026) — ImageKit migration lock.
  *
- * Covers the banner migration to Cloudinary, the unchanged product /
- * avatar / logo upload flows, and the repository-wide static guarantees:
- *  - no `firebase/storage` SDK usage anywhere in src/ (dependency = NONE)
+ * Covers the Cloudinary → ImageKit migration, the signed upload flow for
+ * product / avatar / logo / banner images, and the repository-wide static
+ * guarantees:
+ *  - no Cloudinary usage anywhere in src/ (dependency = NONE — the account
+ *    was permanently banned; the service must never come back)
+ *  - no `firebase/storage` SDK usage anywhere in src/
+ *  - the private API key stays server-side (imagekit-auth.server.ts only)
  *  - banner METADATA writes stay admin-gated in the Firestore rules
- *  - firebase.json no longer deploys storage rules
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import fs from "node:fs";
@@ -28,10 +31,38 @@ function pngFile(sizeBytes = 100): File {
   return new File([new Uint8Array(sizeBytes)], "img.png", { type: "image/png" });
 }
 
-describe("Cloudinary upload flows (mocked fetch)", () => {
+const FAKE_UPLOAD_RESPONSE = {
+  url: "https://ik.imagekit.io/a54npygmh/shop-nexa/test_XYZ.png",
+  filePath: "/shop-nexa/test_XYZ.png",
+  name: "test.png",
+  size: 42,
+  width: 10,
+  height: 10,
+};
+
+vi.mock("firebase/auth", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("firebase/auth")>();
+  return {
+    ...actual,
+    getAuth: () => ({
+      currentUser: { getIdToken: async () => "fake-id-token-1234567890" },
+    }),
+  };
+});
+
+vi.mock("@/lib/imagekit-auth.functions", () => ({
+  getImageKitAuthFn: async () => ({
+    signature: "fake-signature",
+    token: "fake-token",
+    expire: 1900000000,
+  }),
+}));
+
+describe("ImageKit signed upload flows (mocked fetch)", () => {
   let calls: Array<{ url: string; body: FormData }>;
 
   beforeEach(() => {
+    vi.stubEnv("VITE_IMAGEKIT_PUBLIC_KEY", "public_test_key");
     calls = [];
     vi.stubGlobal(
       "fetch",
@@ -40,14 +71,7 @@ describe("Cloudinary upload flows (mocked fetch)", () => {
         return {
           ok: true,
           text: async () => "",
-          json: async () => ({
-            secure_url: "https://res.cloudinary.com/cwq5zgzp/image/upload/v1/shop-nexa/test",
-            public_id: "shop-nexa/test",
-            bytes: 42,
-            format: "png",
-            width: 10,
-            height: 10,
-          }),
+          json: async () => FAKE_UPLOAD_RESPONSE,
         };
       }),
     );
@@ -57,18 +81,23 @@ describe("Cloudinary upload flows (mocked fetch)", () => {
     vi.unstubAllGlobals();
   });
 
-  it("banner upload goes to the Cloudinary banners folder and returns the persisted CDN URL", async () => {
+  it("banner upload is SIGNED and goes to the ImageKit banners folder", async () => {
     const { uploadBannerImage } = await import("@/services/firebase/adminSettings");
     const url = await uploadBannerImage(pngFile());
 
     expect(calls).toHaveLength(1);
-    expect(calls[0].url).toBe("https://api.cloudinary.com/v1_1/cwq5zgzp/image/upload");
+    expect(calls[0].url).toBe("https://upload.imagekit.io/api/v1/files/upload");
     expect(calls[0].body.get("folder")).toBe("shop-nexa/banners");
-    expect(calls[0].body.get("upload_preset")).toBe("aventa_products");
     expect(calls[0].body.get("tags")).toBe("banner");
+    // Signed-upload credentials must be present — never an unsigned preset.
+    expect(calls[0].body.get("signature")).toBe("fake-signature");
+    expect(calls[0].body.get("token")).toBe("fake-token");
+    expect(calls[0].body.get("expire")).toBe("1900000000");
+    expect(calls[0].body.get("publicKey")).toBe("public_test_key");
+    expect(calls[0].body.get("useUniqueFileName")).toBe("true");
+    expect(calls[0].body.get("upload_preset")).toBeNull();
     // The URL that admin.banners.tsx persists into the banner doc imageUrl:
-    expect(url).toContain("res.cloudinary.com");
-    expect(url).not.toContain("firebasestorage");
+    expect(url).toContain("ik.imagekit.io");
   });
 
   it("rejects non-image and oversized banner uploads before any network call", async () => {
@@ -82,32 +111,69 @@ describe("Cloudinary upload flows (mocked fetch)", () => {
     expect(calls).toHaveLength(0);
   });
 
-  it("product image flow unchanged — products folder, url + publicId path", async () => {
+  it("product image flow — products folder, uid/pid tags, url + publicId path", async () => {
     const { uploadProductImage } = await import("@/services/firebase/storage");
     const result = await uploadProductImage("sellerA", "prod1", pngFile());
 
     expect(calls[0].body.get("folder")).toBe("shop-nexa/products");
     expect(calls[0].body.get("tags")).toBe("uid:sellerA,pid:prod1");
-    expect(result.url).toContain("res.cloudinary.com");
-    expect(result.path).toBe("shop-nexa/test");
+    expect(result.url).toContain("ik.imagekit.io");
+    expect(result.path).toBe("shop-nexa/test_XYZ.png");
   });
 
-  it("avatar flow unchanged — avatars folder with uid tag", async () => {
+  it("avatar flow — avatars folder with uid tag", async () => {
     const { uploadAvatar } = await import("@/services/firebase/storage");
     const url = await uploadAvatar("userA", pngFile());
 
     expect(calls[0].body.get("folder")).toBe("shop-nexa/avatars");
     expect(calls[0].body.get("tags")).toBe("uid:userA");
-    expect(url).toContain("res.cloudinary.com");
+    expect(url).toContain("ik.imagekit.io");
   });
 
-  it("shop logo flow unchanged — logos folder with uid tag", async () => {
+  it("shop logo flow — logos folder with uid tag", async () => {
     const { uploadShopLogo } = await import("@/services/firebase/storage");
     const url = await uploadShopLogo("sellerB", pngFile());
 
     expect(calls[0].body.get("folder")).toBe("shop-nexa/logos");
     expect(calls[0].body.get("tags")).toBe("uid:sellerB");
-    expect(url).toContain("res.cloudinary.com");
+    expect(url).toContain("ik.imagekit.io");
+  });
+});
+
+describe("Optimized URL generation (ImageKit)", () => {
+  it("builds transformation URLs with quality, format, and width", async () => {
+    const { getOptimizedImageUrl } = await import("@/services/imagekit");
+    const out = getOptimizedImageUrl(
+      "https://ik.imagekit.io/a54npygmh/shop-nexa/products/a.jpg",
+      400,
+    );
+    expect(out).toBe(
+      "https://ik.imagekit.io/a54npygmh/tr:q-80,f-auto,w-400/shop-nexa/products/a.jpg",
+    );
+
+    const noWidth = getOptimizedImageUrl("shop-nexa/products/a.jpg");
+    expect(noWidth).toBe(
+      "https://ik.imagekit.io/a54npygmh/tr:q-80,f-auto/shop-nexa/products/a.jpg",
+    );
+  });
+
+  it("passes through already-transformed, external, and legacy URLs untouched", async () => {
+    const { getOptimizedImageUrl } = await import("@/services/imagekit");
+    const transformed = "https://ik.imagekit.io/a54npygmh/tr:w-200,q-80/f-auto/shop-nexa/a.jpg";
+    expect(getOptimizedImageUrl(transformed, 400)).toBe(transformed);
+    const external = "https://example.com/pic.jpg";
+    expect(getOptimizedImageUrl(external, 400)).toBe(external);
+    const legacy = "https://res.cloudinary.com/cwq5zgzp/image/upload/v1/shop-nexa/a.jpg";
+    expect(getOptimizedImageUrl(legacy, 400)).toBe(legacy);
+  });
+
+  it("srcset formats every width", async () => {
+    const { getResponsiveSrcSet } = await import("@/services/imagekit");
+    const out = getResponsiveSrcSet("shop-nexa/products/a.jpg", [200, 400]);
+    expect(out).toBe(
+      "https://ik.imagekit.io/a54npygmh/tr:q-80,f-auto,w-200/shop-nexa/products/a.jpg 200w, " +
+        "https://ik.imagekit.io/a54npygmh/tr:q-80,f-auto,w-400/shop-nexa/products/a.jpg 400w",
+    );
   });
 });
 
@@ -135,6 +201,41 @@ describe("Banner metadata authorization (static rules audit)", () => {
     const route = read("src/routes/_authenticated/admin.banners.tsx");
     expect(route).toContain("uploadBannerImage");
     expect(route).toMatch(/imageUrl:\s*url/);
+  });
+});
+
+describe("Cloudinary removal lock (static)", () => {
+  it("no file in src/ references Cloudinary APIs or the SDK", () => {
+    const offenders = collectSourceFiles(SRC_ROOT).filter((f) =>
+      /cloudinary|@cloudinary\/url-gen|api\.cloudinary\.com|upload_preset/.test(
+        fs.readFileSync(f, "utf-8"),
+      ),
+    );
+    expect(offenders).toEqual([]);
+  });
+
+  it("@cloudinary/url-gen is no longer a dependency", () => {
+    const pkg = JSON.parse(read("package.json"));
+    expect(pkg.dependencies?.["@cloudinary/url-gen"]).toBeUndefined();
+    expect(pkg.devDependencies?.["@cloudinary/url-gen"]).toBeUndefined();
+  });
+});
+
+describe("ImageKit private key server-only lock (static)", () => {
+  it("IMAGEKIT_PRIVATE_KEY is only referenced by the server signature module", () => {
+    const offenders = collectSourceFiles(SRC_ROOT).filter((f) =>
+      f.includes("imagekit-auth.server")
+        ? false
+        : fs.readFileSync(f, "utf-8").includes("IMAGEKIT_PRIVATE_KEY"),
+    );
+    expect(offenders).toEqual([]);
+  });
+
+  it("the private key is never hardcoded anywhere in src/", () => {
+    const offenders = collectSourceFiles(SRC_ROOT).filter((f) =>
+      /private_[A-Za-z0-9+/]{20,}=/.test(fs.readFileSync(f, "utf-8")),
+    );
+    expect(offenders).toEqual([]);
   });
 });
 

@@ -12,7 +12,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { getDb } from "./config";
-import { uploadToCloudinary } from "@/services/cloudinary";
+import { uploadToImageKit } from "@/services/imagekit";
 import type { Banner, SiteSettings } from "@/types/admin";
 
 const SETTINGS_COL = "settings";
@@ -188,12 +188,12 @@ export async function deleteBanner(id: string): Promise<void> {
 }
 
 /**
- * Upload a banner image to Cloudinary (shop-nexa/banners folder).
+ * Upload a banner image to ImageKit (shop-nexa/banners folder).
  * Banner METADATA writes (create/update/delete of banner docs) stay
  * admin-gated by the Firestore `banners` rules (canWriteMasterData);
  * this function only returns the CDN URL that the admin form persists.
  */
 export async function uploadBannerImage(file: File): Promise<string> {
-  const result = await uploadToCloudinary(file, "banners", ["banner"]);
+  const result = await uploadToImageKit(file, "banners", ["banner"]);
   return result.url;
 }

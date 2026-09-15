@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { Heart, Star, ShoppingCart } from "lucide-react";
 import type { Product } from "@/types/commerce";
 import { Truck } from "lucide-react";
-import { getOptimizedImageUrl, getResponsiveSrcSet } from "@/services/cloudinary";
+import { getOptimizedImageUrl, getResponsiveSrcSet } from "@/services/imagekit";
 import { formatPrice } from "@/utils/format";
 import { useWishlist } from "@/context/WishlistContext";
 
