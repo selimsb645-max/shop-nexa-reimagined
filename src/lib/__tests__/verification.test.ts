@@ -282,6 +282,28 @@ describe("OTP Delivery Providers (env-driven)", () => {
     expect(url).toContain("phone=8801712345678"); // registered test number
     expect(url).toContain("apikey=test-key-123");
     expect(url).toContain(encodeURIComponent("123456")); // the OTP
+    // Approved copy: brand + 5-minute expiry + never-share warning (Bengali)
+    expect(url).toContain(encodeURIComponent("AVENTA SHOP: আপনার অর্ডার নিশ্চিত করতে"));
+    expect(url).toContain(encodeURIComponent("৫ মিনিটের মধ্যে ব্যবহার করুন"));
+    expect(url).toContain(encodeURIComponent("কারও সাথে শেয়ার করবেন না"));
+  });
+
+  it("defaults to the owner's registered test number when CALLMEBOT_PHONE is unset", async () => {
+    vi.stubEnv("VERIFICATION_PROVIDER", "whatsapp_test");
+    vi.stubEnv("CALLMEBOT_APIKEY", "test-key-123");
+    delete process.env.CALLMEBOT_PHONE;
+    const fetched: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL) => {
+        fetched.push(String(input));
+        return { ok: true, text: async () => "Message queued. You will receive it soon." };
+      }),
+    );
+    const { getProvider } = await import("../verification.server");
+    const result = await getProvider().sendOtp("01998765432", "123456");
+    expect(result.delivered).toBe(true);
+    expect(fetched[0]).toContain("phone=8801324997271"); // owner's test WhatsApp
   });
 
   it("fails safely (delivered=false) when CallMeBot returns an error body", async () => {
@@ -300,7 +322,7 @@ describe("OTP Delivery Providers (env-driven)", () => {
     expect(result.delivered).toBe(false);
   });
 
-  it("throws when the WhatsApp test provider is not configured", async () => {
+  it("throws when the WhatsApp test provider is not configured (missing API key)", async () => {
     vi.stubEnv("VERIFICATION_PROVIDER", "whatsapp_test");
     vi.stubEnv("CALLMEBOT_PHONE", "");
     vi.stubEnv("CALLMEBOT_APIKEY", "");

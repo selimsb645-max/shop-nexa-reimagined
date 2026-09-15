@@ -362,6 +362,15 @@ function getEnv(name: string): string | undefined {
   return proc?.env?.[name];
 }
 
+/* Approved OTP message copy (owner, Sep 15, 2026). Same security model
+ * as the verification flow: 6-digit code, 5-minute expiry, never share. */
+function otpMessage(otp: string): string {
+  return (
+    `AVENTA SHOP: আপনার অর্ডার নিশ্চিত করতে আপনার Verification Code: ${otp}। ` +
+    "এই কোডটি ৫ মিনিটের মধ্যে ব্যবহার করুন। কারও সাথে শেয়ার করবেন না।"
+  );
+}
+
 /** Mock provider — logs OTP to console, returns it for dev/testing */
 class MockVerificationProvider implements VerificationProvider {
   name = "mock";
@@ -388,7 +397,7 @@ class SmsVerificationProvider implements VerificationProvider {
       },
       body: JSON.stringify({
         recipients: [phone],
-        message: `Your AVENTA SHOP verification code is ${otp}. Valid for 5 minutes.`,
+        message: otpMessage(otp),
         ...(deviceId ? { deviceId } : {}),
       }),
     });
@@ -442,13 +451,12 @@ class WhatsAppTestVerificationProvider implements VerificationProvider {
   name = "whatsapp_test";
   async sendOtp(phone: string, otp: string) {
     const apiKey = getEnv("CALLMEBOT_APIKEY");
-    const testPhone = getEnv("CALLMEBOT_PHONE");
-    if (!apiKey || !testPhone) {
-      throw new Error("WhatsApp test gateway not configured (CALLMEBOT_APIKEY / CALLMEBOT_PHONE)");
+    // Default = owner's registered test WhatsApp (test-only hardcode; overridable via env)
+    const testPhone = getEnv("CALLMEBOT_PHONE") ?? "8801324997271";
+    if (!apiKey) {
+      throw new Error("WhatsApp test gateway not configured (CALLMEBOT_APIKEY)");
     }
-    const text = encodeURIComponent(
-      `AVENTA SHOP verification code: ${otp} (valid 5 min). Test delivery for order phone ${phone}.`,
-    );
+    const text = encodeURIComponent(otpMessage(otp) + ` (Test — order phone: ${phone})`);
     const url = `https://api.callmebot.com/whatsapp.php?phone=${encodeURIComponent(testPhone)}&text=${text}&apikey=${encodeURIComponent(apiKey)}`;
     let res: Response;
     try {

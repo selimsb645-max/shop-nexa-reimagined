@@ -393,7 +393,8 @@ export function VerificationGate({
           </div>
           <h2 className="text-lg font-bold text-slate-800 mb-1">Enter Verification Code</h2>
           <p className="text-sm text-slate-500">
-            Code sent to <span className="font-medium text-slate-700">{maskedPhone}</span>
+            Enter the 6-digit verification code sent to{" "}
+            <span className="font-medium text-slate-700">{maskedPhone}</span>
           </p>
           {mockOtp && (
             <div className="mt-2 inline-block bg-amber-50 border border-amber-200 rounded-lg px-3 py-1">
