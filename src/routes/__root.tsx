@@ -17,6 +17,7 @@ import { I18nProvider } from "../i18n/I18nContext";
 import { MobileBottomNav } from "../components/layout/MobileBottomNav";
 import { PushNotificationProvider } from "../context/PushNotificationContext";
 import { PWAInstallPrompt } from "../components/layout/PWAInstallPrompt";
+import { SupportChatWidget } from "../components/support/SupportChatWidget";
 import {
   buildMetaTags,
   organizationJsonLd,
@@ -182,6 +183,7 @@ function RootComponent() {
                 </div>
                 <MobileBottomNav />
                 <PWAInstallPrompt />
+                <SupportChatWidget />
                 <Toaster position="top-right" richColors />
               </WishlistProvider>
             </CartProvider>
