@@ -17,7 +17,8 @@
 const URL_ENDPOINT =
   (import.meta.env.VITE_IMAGEKIT_URL_ENDPOINT as string | undefined) ||
   "https://ik.imagekit.io/a54npygmh";
-const PUBLIC_KEY = (import.meta.env.VITE_IMAGEKIT_PUBLIC_KEY as string | undefined) || "";
+const PUBLIC_KEY = (import.meta.env.VITE_IMAGEKIT_PUBLIC_KEY as string | undefined) ||
+  "public_MG5z3pKC0TZDHJKHkn5dKfyDSH0";
 
 const UPLOAD_API = "https://upload.imagekit.io/api/v1/files/upload";
 
