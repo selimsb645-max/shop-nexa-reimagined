@@ -24,6 +24,8 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useSellerProfile } from "@/hooks/useSellerProfile";
+import { useAuth } from "@/context/AuthContext";
+import { deactivateSellerMode } from "@/lib/sellerMode";
 import { toast } from "sonner";
 import { SELLER_STATUS_CONFIG } from "@/types/seller";
 
@@ -33,6 +35,7 @@ interface Props {
 
 export function SellerShell({ children }: Props) {
   const { profile } = useSellerProfile();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -43,6 +46,9 @@ export function SellerShell({ children }: Props) {
   // customer homepage still logged in as themselves (per spec: Seller Logout
   // only ends the Seller session, never the account session).
   const onExitSellerMode = () => {
+    // Clear the persisted lock FIRST — otherwise SellerModeGuard would
+    // immediately bounce this navigation right back into /seller.
+    deactivateSellerMode(user?.uid);
     toast.success("Exited Seller Mode");
     navigate({ to: "/" });
   };

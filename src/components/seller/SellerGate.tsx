@@ -1,8 +1,11 @@
 import type { ReactNode } from "react";
+import { useEffect } from "react";
 import { Link } from "@tanstack/react-router";
 import { Ban, Clock, Lock, FileWarning, Loader, XCircle } from "lucide-react";
 import { SellerShell } from "./SellerShell";
 import { useSellerProfile } from "@/hooks/useSellerProfile";
+import { useAuth } from "@/context/AuthContext";
+import { activateSellerMode } from "@/lib/sellerMode";
 import { REGISTRATION_STEPS } from "@/types/seller";
 
 interface Props {
@@ -11,6 +14,16 @@ interface Props {
 
 export function SellerGate({ children }: Props) {
   const { profile, loading, error } = useSellerProfile();
+  const { user } = useAuth();
+
+  // Once the seller is actually approved and looking at their dashboard,
+  // "lock" Seller Mode: this persists across browser restarts until they
+  // explicitly exit via SellerShell's "Exit Seller Mode" action.
+  useEffect(() => {
+    if (profile?.status === "approved" && user?.uid) {
+      activateSellerMode(user.uid);
+    }
+  }, [profile?.status, user?.uid]);
 
   if (loading) {
     return (

@@ -18,6 +18,7 @@ import { MobileBottomNav } from "../components/layout/MobileBottomNav";
 import { PushNotificationProvider } from "../context/PushNotificationContext";
 import { PWAInstallPrompt } from "../components/layout/PWAInstallPrompt";
 import { SupportChatWidget } from "../components/support/SupportChatWidget";
+import { SellerModeGuard } from "../components/seller/SellerModeGuard";
 import {
   buildMetaTags,
   organizationJsonLd,
@@ -177,6 +178,7 @@ function RootComponent() {
           <I18nBridge>
             <CartProvider>
               <WishlistProvider>
+                <SellerModeGuard />
                 {/* Required: nested routes render here. */}
                 <div className="animate-fade-in pb-24 md:pb-0">
                   <Outlet />
