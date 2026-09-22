@@ -64,6 +64,13 @@ function fail(code: string, message: string): never {
 // ───────────────────────────────────────────────────────────────
 
 export async function verifyCouponSeller(projectId: string, uid: string): Promise<void> {
+  // Mirrors the canonical approved-seller check used everywhere else
+  // in the app (SellerGate, seller-messages.server.ts, seller
+  // inventory): sellers/{uid}.status === "approved" is the ONLY
+  // source of truth for seller authorization. There is NO code path
+  // anywhere in this app that ever sets users/{uid}.role to "seller"
+  // — seller approval only ever writes the sellers/{uid} doc — so a
+  // check requiring that role would reject every real seller.
   const [userPath, sellerPath] = [
     docPath(projectId, ["users", uid]),
     docPath(projectId, ["sellers", uid]),
@@ -71,10 +78,9 @@ export async function verifyCouponSeller(projectId: string, uid: string): Promis
   const docs = await batchGetDocs(projectId, [userPath, sellerPath]);
   const userDoc = docs.get(userPath);
   const sellerDoc = docs.get(sellerPath);
-  if (!userDoc?.exists || String(userDoc.data["role"] ?? "") !== "seller") {
-    fail("coupon/unauthorized", "coupon/unauthorized: only sellers can manage seller coupons.");
-  }
-  if (userDoc.data["blocked"] === true) {
+  // A missing users/{uid} doc is not itself disqualifying (legacy
+  // accounts) — only an explicit blocked:true flag is enforced.
+  if (userDoc?.exists && userDoc.data["blocked"] === true) {
     fail("coupon/unauthorized", "coupon/unauthorized: account is blocked.");
   }
   if (!sellerDoc?.exists || String(sellerDoc.data["status"] ?? "") !== "approved") {
