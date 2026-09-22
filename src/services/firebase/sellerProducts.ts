@@ -5,7 +5,6 @@ import {
   doc,
   getDoc,
   getDocs,
-  runTransaction,
   limit as fbLimit,
   orderBy,
   query,
@@ -13,8 +12,9 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import { getDb } from "./config";
+import { getDb, getFirebaseAuth } from "./config";
 import { getSiteSetting } from "./adminSettings";
+import { restockProduct } from "@/lib/seller-inventory.functions";
 import type { Product } from "@/types/commerce";
 
 const PRODUCTS = "products";
@@ -217,28 +217,25 @@ export async function setProductStock(sellerId: string, id: string, stock: numbe
   const existing = await getSellerProduct(sellerId, id);
   if (!existing) throw new Error("Product not found.");
   const newStock = Math.max(0, Math.floor(stock));
-  const db = getDb();
-  const productRef = doc(db, PRODUCTS, id);
 
-  // Atomic update: read + write inside a transaction so concurrent edits
-  // (dashboard quick-actions, inventory page, order flows) never clobber
-  // each other. Ownership is verified above AND re-checked inside the
-  // transaction; Firestore rules still enforce sellerId == auth.uid.
-  let previousStock: number | null = null;
-  let title = "";
-  await runTransaction(db, async (tx) => {
-    const snap = await tx.get(productRef);
-    if (!snap.exists()) throw new Error("Product not found.");
-    const data = snap.data() as Product;
-    if (data.sellerId !== sellerId) throw new Error("Permission denied.");
-    previousStock = data.stock;
-    title = data.title;
-    tx.update(productRef, { stock: newStock, updatedAt: serverTimestamp() });
+  // Inventory counters (stock/availableStock/reservedStock/soldStock)
+  // are SERVER-CONTROLLED — Firestore rules reject ANY client SDK
+  // write to `products.stock`, even from the owning seller (see
+  // firestore.rules `match /products/{id}`, and inventory.server.ts).
+  // This goes through an Admin-SDK-backed server function instead,
+  // which re-verifies ownership and approval status, and keeps
+  // availableStock consistent in the same transaction.
+  const user = getFirebaseAuth().currentUser;
+  if (!user) throw new Error("You must be signed in.");
+  const idToken = await user.getIdToken();
+
+  const result = await restockProduct({
+    data: { idToken, productId: id, newStock },
   });
 
-  // Low stock check — only if stock went down (outside the transaction)
-  if (previousStock !== null && newStock < previousStock) {
-    await notifyLowStock(sellerId, id, title, newStock);
+  // Low stock check — only if stock went down
+  if (result.newStock < result.previousStock) {
+    await notifyLowStock(sellerId, id, result.title || existing.title, result.newStock);
   }
 }
 
