@@ -158,8 +158,17 @@ export async function verifyIdToken(
       throw new Error("Invalid test token.");
     }
   }
-  const apiKey = Deno.env.get("VITE_FIREBASE_API_KEY") ?? Deno.env.get("FIREBASE_API_KEY");
-  if (!apiKey) throw new Error("Server auth verification is not configured.");
+  // This is the Firebase Web API key — a PUBLIC identifier, not a secret
+  // (see the same value already shipped in src/services/firebase/config.ts,
+  // sent to every browser). The env var lets ops override/rotate it without
+  // a code change, but the server must not fail closed just because nobody
+  // set that var: fall back to the known-public key so token verification
+  // (and everything that depends on it — wallet, orders, chat, etc.) works
+  // out of the box, exactly like the ImageKit public-key fix.
+  const apiKey =
+    Deno.env.get("VITE_FIREBASE_API_KEY") ??
+    Deno.env.get("FIREBASE_API_KEY") ??
+    "AIzaSyCjPujDgUn2c1aLKWLMXTsV3rNM3Q2J1wQ";
   const res = await fetch(
     `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${apiKey}`,
     {
