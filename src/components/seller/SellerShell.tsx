@@ -24,7 +24,6 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useSellerProfile } from "@/hooks/useSellerProfile";
-import { signOut } from "@/services/firebase/auth";
 import { toast } from "sonner";
 import { SELLER_STATUS_CONFIG } from "@/types/seller";
 
@@ -38,9 +37,13 @@ export function SellerShell({ children }: Props) {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const onSignOut = async () => {
-    await signOut();
-    toast.success("Signed out");
+  // "Exit Seller Mode" — leaves the dedicated Seller Workspace and returns to
+  // the main Customer Website. This does NOT sign the account out: the same
+  // Firebase auth session stays active, so the user lands back on the
+  // customer homepage still logged in as themselves (per spec: Seller Logout
+  // only ends the Seller session, never the account session).
+  const onExitSellerMode = () => {
+    toast.success("Exited Seller Mode");
     navigate({ to: "/" });
   };
 
@@ -135,9 +138,10 @@ export function SellerShell({ children }: Props) {
                 <Bell className="w-5 h-5" />
               </Link>
               <button
-                onClick={onSignOut}
+                onClick={onExitSellerMode}
                 className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
-                title="Sign out"
+                title="Exit Seller Mode"
+                aria-label="Exit Seller Mode"
               >
                 <LogOut className="w-5 h-5" />
               </button>

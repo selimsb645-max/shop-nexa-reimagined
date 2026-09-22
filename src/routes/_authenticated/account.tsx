@@ -428,16 +428,32 @@ function AccountPage() {
               badge={recentIds.length}
             />
             <DarazServiceIcon
-              to="/seller/register"
+              to={profile?.role === "seller" ? "/seller" : "/seller/register"}
               icon={<Store className="h-6 w-6" />}
-              label={t("account.beSeller")}
+              label={
+                profile?.role === "seller" ? t("account.sellerDashboard") : t("account.beSeller")
+              }
               highlight
             />
           </div>
         </DarazCard>
 
-        {/* ===== Become a Seller banner ===== */}
-        {profile?.role !== "seller" && (
+        {/* ===== Seller entry banner: dashboard for approved sellers, registration CTA otherwise ===== */}
+        {profile?.role === "seller" ? (
+          <Link
+            to="/seller"
+            className="flex items-center gap-3 rounded-2xl bg-gradient-to-r from-[#0f172a] to-[#1e3a8a] border border-[#1e3a8a] p-4 transition hover:shadow-md active:scale-[0.99]"
+          >
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-white/15 text-white shadow-md">
+              <Store className="h-6 w-6" strokeWidth={2} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-sm font-bold text-white">{t("account.sellerDashboard")}</h3>
+              <p className="truncate text-xs text-white/70">{t("account.sellerDashboardHint")}</p>
+            </div>
+            <ChevronRight className="h-5 w-5 shrink-0 text-white" strokeWidth={2.5} />
+          </Link>
+        ) : (
           <Link
             to="/seller/register"
             className="flex items-center gap-3 rounded-2xl bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 p-4 transition hover:shadow-md active:scale-[0.99]"

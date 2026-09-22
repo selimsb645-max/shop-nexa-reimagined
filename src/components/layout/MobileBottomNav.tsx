@@ -2,7 +2,7 @@
  * Pocket Storefront design: a visible, safe-area-aware mobile navigation keeps
  * AVENTA SHOP's five primary destinations within thumb reach without covering content.
  */
-import { Link } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import { Home, LayoutGrid, MessageCircle, ShoppingCart, User } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useCart } from "@/context/CartContext";
@@ -30,6 +30,7 @@ function Indicator() {
 }
 
 export function MobileBottomNav() {
+  const location = useLocation();
   const { count: cartCount } = useCart();
   const { user } = useAuth();
   const { data: msgCount = 0 } = useQuery({
@@ -38,6 +39,13 @@ export function MobileBottomNav() {
     enabled: Boolean(user && firebaseConfigured),
     refetchInterval: 30_000,
   });
+
+  // Hide on the dedicated Seller Workspace and Admin console — those surfaces
+  // own their own navigation (SellerShell / SuperAdminLayout); the customer
+  // bottom bar must never float on top of them.
+  if (location.pathname.startsWith("/seller") || location.pathname.startsWith("/admin")) {
+    return null;
+  }
 
   return (
     <nav

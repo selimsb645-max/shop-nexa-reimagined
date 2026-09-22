@@ -370,9 +370,17 @@ function SettingsPage() {
               label={t("account.myOrders")}
               hint="Track & manage orders"
             />
-            {profile?.role !== "seller" && (
+            {profile?.role === "seller" ? (
               <DarazLinkRow
-                to="/seller.register"
+                to="/seller"
+                icon={<Store className="h-5 w-5" />}
+                label={t("account.sellerDashboard")}
+                hint={t("account.sellerDashboardHint")}
+                highlight
+              />
+            ) : (
+              <DarazLinkRow
+                to="/seller/register"
                 icon={<Store className="h-5 w-5" />}
                 label="Become a Seller"
                 hint="Start selling on AVENTA SHOP"

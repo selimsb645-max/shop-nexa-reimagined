@@ -451,6 +451,7 @@ export interface TranslationKeys {
   "account.addresses": string;
   "account.notifs": string;
   "account.beSeller": string;
+  "account.sellerDashboard": string;
   "account.accountSettings": string;
   "account.accountPrefs": string;
   "account.accountPrefsHint": string;
@@ -703,6 +704,9 @@ export interface TranslationKeys {
   "account.backHome": string;
   "account.becomeSeller": string;
   "account.becomeSellerHint": string;
+  "account.sellerDashboardHint": string;
+  "seller.exitMode": string;
+  "seller.exitModeConfirm": string;
   "orders.unknownStatus": string;
   "orders.backToAccount": string;
   "messages.paymentMethod": string;
