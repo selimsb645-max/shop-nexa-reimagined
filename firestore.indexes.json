@@ -1,217 +1,273 @@
 {
-  "indexes": [
-    {
-      "collectionGroup": "orders",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
+    "indexes": [
         {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "withdrawals",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "settlementTx",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "walletTx",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "notifications",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collection": "returns",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "userId",
-          "order": "ASCENDING"
+            "collectionGroup": "orders",
+            "queryScope": "COLLECTION_GROUP",
+            "fields": [
+                {
+                    "fieldPath": "createdAt",
+                    "order": "DESCENDING"
+                }
+            ]
         },
         {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
+            "collectionGroup": "withdrawals",
+            "queryScope": "COLLECTION_GROUP",
+            "fields": [
+                {
+                    "fieldPath": "createdAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "settlementTx",
+            "queryScope": "COLLECTION_GROUP",
+            "fields": [
+                {
+                    "fieldPath": "createdAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "walletTx",
+            "queryScope": "COLLECTION_GROUP",
+            "fields": [
+                {
+                    "fieldPath": "createdAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "notifications",
+            "queryScope": "COLLECTION_GROUP",
+            "fields": [
+                {
+                    "fieldPath": "createdAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collection": "returns",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "userId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "createdAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collection": "messages",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "threadId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "createdAt",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "sellerConversations",
+            "queryScope": "COLLECTION_GROUP",
+            "fields": [
+                {
+                    "fieldPath": "sellerId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "lastAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "sellerConversations",
+            "queryScope": "COLLECTION_GROUP",
+            "fields": [
+                {
+                    "fieldPath": "customerId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "lastAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "campaignProductCatalog",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "eligible",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "updatedAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "flashSales",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "productId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "active",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "lastAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "qcReviews",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "status",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "submittedAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "qcReviews",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "sellerUid",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "submittedAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "sellerLedger",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "sellerId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "seq",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "sellerLedger",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "sellerId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "type",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "seq",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "sellerFinance",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "status",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "updatedAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collection": "conversations",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "sellerId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "lastAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collection": "conversations",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "customerId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "lastAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collection": "conversations",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "sellerId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "sellerUnread",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collection": "conversations",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "customerId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "threadId",
+                    "order": "ASCENDING"
+                }
+            ]
         }
-      ]
-    },
-    {
-      "collection": "messages",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "threadId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "sellerConversations",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        {
-          "fieldPath": "sellerId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "lastAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "sellerConversations",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        {
-          "fieldPath": "customerId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "lastAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "campaignProductCatalog",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "eligible",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "updatedAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "flashSales",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "productId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "active",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "lastAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "qcReviews",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "submittedAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "qcReviews",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "sellerUid",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "submittedAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "sellerLedger",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "sellerId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "seq",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "sellerLedger",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "sellerId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "type",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "seq",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "sellerFinance",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "updatedAt",
-          "order": "DESCENDING"
-        }
-      ]
-    }
-  ],
-  "fieldOverrides": []
+    ],
+    "fieldOverrides": []
 }
