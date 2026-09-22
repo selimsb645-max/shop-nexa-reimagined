@@ -95,12 +95,6 @@ export function SellerShell({ children }: Props) {
           <div className="flex items-center justify-between h-14">
             {/* Logo */}
             <div className="flex items-center gap-3">
-              <button
-                className="lg:hidden p-1.5 hover:bg-white/10 rounded-lg transition-colors"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              >
-                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-              </button>
               <Link to="/" className="flex items-center gap-2">
                 <div className="bg-white rounded-lg px-2 py-1">
                   <img
@@ -221,8 +215,9 @@ export function SellerShell({ children }: Props) {
           </Link>
         ))}
         <button
-          onClick={() => setMobileMenuOpen(true)}
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-colors ${
+            mobileMenuOpen ||
             !["/seller", "/seller/products", "/seller/orders", "/seller/wallet"].some((r) =>
               isActive(r, r === "/seller"),
             )
@@ -230,7 +225,7 @@ export function SellerShell({ children }: Props) {
               : "text-slate-400"
           }`}
         >
-          <Menu className="w-5 h-5" />
+          {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           <span className="text-[10px] font-medium">More</span>
         </button>
       </nav>
